@@ -1,0 +1,27 @@
+{
+  "name": "DistributionRematchLsid",
+  "description": "Performs import of distribution shapefile into layers db",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "bieUrl": {
+      "type": "auto"
+    },
+    "updateAll": {
+      "description": "Update all LSIDs, not only search for missing LSIDs.",
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
+    }
+  },
+  "output": {
+    "sql": {
+      "description": "layersdb.distributions update sql for lsids"
+    }
+  }
+}

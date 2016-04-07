@@ -1,0 +1,92 @@
+{
+  "name": "LayerDistancesCreateOne",
+  "description": "Calculate layer distances",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "type": "auto"
+    },
+    "fieldId1": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId2": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId3": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId4": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId5": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId6": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId7": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId8": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId9": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId10": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId11": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId12": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId13": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId14": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId15": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId16": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId17": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "grdResolutions": {
+      "description": "Resolutions available for calculating distances",
+      "type": "auto"
+    }
+  },
+  "output": {
+    "append": {
+      "description": "values to append to layer distance properties file"
+    }
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "name": "Calculator",
+  "description": "lots of text that will be provided as html",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    //cannot be run more than once at a time
+    "public": true,
+    //is a public runnable service
+    "calculator.path": "/usr/bin/calc",
+    "a.random.config.number": 3
+  },
+  "input": {
+    "biocacheServerUrl": {
+      "name": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "firstNumber": {
+      "name": "first number",
+      "type": "Double",
+      "min": 0,
+      "max": 1,
+      "mandatory": true,
+      "default": 0.5
+    },
+    "comment": {
+      "name": "comment",
+      "type": "String",
+      "maxLength": 20,
+      "mandatory": false,
+      "default": ""
+    },
+    "operation": {
+      "name": "operation",
+      "type": "StringList",
+      "max": 20,
+      "mandatory": true,
+      "default": "+",
+      "list": [
+        "+",
+        "-",
+        "/",
+        "*"
+      ]
+    },
+    "secondNumber": {
+      "name": "second number",
+      "type": "Double",
+      "min": 0,
+      "max": 1,
+      "mandatory": true,
+      "default": 0.5
+    },
+    "inputProcess": {
+      "name": "other process output for input here",
+      "type": "process",
+      "processType": "CalculatorProcess",
+      "mandatory": true
+    },
+    "layers": {
+      "name": "some layers",
+      "type": "layer",
+      "layerRestrictions": [
+        "contextual",
+        "indb"
+      ],
+      "min": 0,
+      "max": 20,
+      "mandatory": false
+    },
+    "layersExtra": {
+      "name": "another layers",
+      "type": "layer",
+      "layerRestrictions": [
+        "environmental"
+      ],
+      "min": 1,
+      "max": 1,
+      "mandatory": true
+    },
+    "area": {
+      "name": "an area",
+      "type": "area",
+      "areaRestrictions": [
+        "wkt",
+        "notEnvelope"
+      ],
+      "minAreaSqkm": -1,
+      "maxAreaSqkm": 1000
+    }
+  },
+  "output": {
+    "layer1": {
+      "name": "an output layer",
+      "type": "shapefile",
+      "layerType": "contextual",
+      "path": [
+        "layers/output.shp"
+      ],
+      "sld": [
+        "layers/output.sld"
+      ]
+    },
+    "layer2": {
+      "name": "an output layer",
+      "type": "raster",
+      "layerType": "environmental",
+      "path": [
+        "layers/output.bil"
+      ],
+      "sld": [
+        "layers/output.sld"
+      ]
+    },
+    "metadata": {
+      "name": "metadata view",
+      "type": "metadata",
+      "path": "metadata.html"
+    },
+    "files": {
+      "name": "generic output file",
+      "type": "file",
+      "path": [
+        "info.png"
+      ]
+    },
+    "internalFiles": {
+      "name": "file that will replace an internal file rather than a public one",
+      "type": "internalFile",
+      "path": [
+        "info.png"
+      ]
+    },
+    "deleteInternalFiles": {
+      "name": "file that will replace an internal file rather than a public one",
+      "type": "deleteInternalFile",
+      "path": [
+        "tabulation/cl22_cl21"
+      ]
+    },
+    "sql": {
+      "name": "data for layers database",
+      "type": "sql",
+      "path": [
+        "data.sql"
+      ]
+    },
+    "nextProcess": {
+      "name": "next process to run",
+      "type": "process",
+      "processType": [
+        "Calculator2Process"
+      ],
+      "automatic": false
+    }
+  }
+}

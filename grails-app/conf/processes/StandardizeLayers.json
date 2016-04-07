@@ -1,0 +1,36 @@
+{
+  "name": "StandardizeLayers",
+  "description": "Produce standardized layers",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "type": "auto"
+    },
+    "shpResolutions": {
+      "description": "Resolutions for standardizing shapefiles into",
+      "type": "auto"
+    },
+    "grdResolutions": {
+      "description": "Resolutions for standardizing grid files into",
+      "type": "auto"
+    },
+    "fieldId": {
+      "description": "fieldId of a single layer to standardize. All missing standardized layers will be produced if this is not defined.",
+      "optional": true,
+      "type": "string"
+    }
+  },
+  "output": {
+    "files": {
+      "description": "new grid files, not for geoserver"
+    },
+    "process": {
+      "description": "additional processes"
+    }
+  }
+}

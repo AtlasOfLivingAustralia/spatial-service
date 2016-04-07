@@ -1,0 +1,95 @@
+{
+  "name": "Maxent",
+  "description": "Maxent prediction.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "area": {
+      "description": "Area to restrict the prediction.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1,
+        "minArea": -1,
+        "maxArea": -1
+      }
+    },
+    "layer": {
+      "description": "Layers to use in the prediction. 1 to 10.",
+      "type": "layer",
+      "constraints": {
+        "min": 1,
+        "max": 10,
+        "contextual": true,
+        "environmental": true,
+        "analysis": true
+      }
+    },
+    "resolution": {
+      "description": "The layer resolution to use.",
+      "type": "list",
+      "constraints": {
+        "selection": "single",
+        "content": [
+          "0.01",
+          "0.1",
+          "0.5",
+          "1.0"
+        ]
+      }
+    },
+    "species": {
+      "description": "Occurrences to use in the prediction.",
+      "type": "species",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    "testPercentage": {
+      "description": "Test Percentage",
+      "type": "double",
+      "constraints": {
+        "min": 0,
+        "max": 1,
+        "default": 0.5
+      }
+    },
+    "jackknife": {
+      "description": "Use jackknife.",
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
+    },
+    "responseCurves": {
+      "description": "Use response curves.",
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
+    }
+  },
+  "output": {
+    "layers": {
+      "description": "Output layers."
+    },
+    "files": {
+      "description": "Output files."
+    },
+    "metadata": {
+      "description": "Prediction metadata."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

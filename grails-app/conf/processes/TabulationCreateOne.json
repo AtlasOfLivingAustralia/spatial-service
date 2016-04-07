@@ -1,0 +1,29 @@
+{
+  "name": "TabulationCreateOne",
+  "description": "Intersect 2 shapefiles and store the intersection for tabulation import",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "name": "layersServiceUrl",
+      "type": "auto"
+    },
+    "fieldId1": {
+      "description": "field or tabulation",
+      "type": "string"
+    },
+    "fieldId2": {
+      "description": "field or tabulation",
+      "type": "string"
+    }
+  },
+  "output": {
+    "sql": {
+      "description": "sql to import the intersection"
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "name": "MapImage",
+  "description": "Export map image.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "layersServiceUrl": {
+      "description": "layersServiceUrl",
+      "type": "auto"
+    },
+    "geoserverUrl": {
+      "description": "geoserverUrl",
+      "type": "auto"
+    },
+    "bbox": {
+      "description": "bounding box JSON",
+      "type": "string",
+      "constraints": {
+        "default": "[-180, -70, 180, 70]"
+      }
+    },
+    "baseMap": {
+      "description": "base map",
+      "type": "list",
+      "constraints": {
+        "contents": [
+          "outline",
+          "normal",
+          "hybrid",
+          "minimal"
+        ],
+        "default": "outline"
+      }
+    },
+    "windowSize": {
+      "description": "window size JSON",
+      "type": "string",
+      "constraints": {
+        "default": "[1920, 1080]"
+      }
+    },
+    "mapLayers": {
+      "description": "map layers JSON",
+      "type": "string"
+    },
+    "comment": {
+      "description": "comment",
+      "type": "string"
+    },
+    "outputType": {
+      "description": "output type",
+      "type": "list",
+      "constraints": {
+        "default": "png",
+        "contents": [
+          "png",
+          "jpg",
+          "pdf"
+        ]
+      }
+    },
+    "resolution": {
+      "description": "resolution",
+      "type": "list",
+      "constraints": {
+        "default": "print",
+        "contents": [
+          "print",
+          "screen"
+        ]
+      }
+    }
+  },
+  "output": {
+    "files": {
+      "description": "Output files."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

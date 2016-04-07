@@ -1,0 +1,12 @@
+{
+  "group1": {
+    "total": 4
+  },
+  "group2": {
+    "total": 100,
+    "pool": {
+      "LongProcess": 90,
+      "CalculatorProcess": 2
+    }
+  }
+}

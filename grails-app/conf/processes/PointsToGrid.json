@@ -1,0 +1,96 @@
+{
+  "name": "PointsToGrid",
+  "description": "Points to grid.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "area": {
+      "description": "Area to restrict the species.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1,
+        "minArea": -1,
+        "maxArea": -1
+      }
+    },
+    "species": {
+      "description": "Occurrences to use in points to grid.",
+      "type": "species",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    "gridCellSize": {
+      "description": "grid cell size",
+      "type": "double",
+      "constraints": {
+        "min": 0.0001,
+        "max": 1,
+        "default": 0.05
+      }
+    },
+    "sitesBySpecies": {
+      "description": "Produce sites by species matrix.",
+      "type": "boolean",
+      "constraints": {
+        "default": true
+      }
+    },
+    "occurrenceDensity": {
+      "description": "Produce occurrence density layer.",
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
+    },
+    "speciesRichness": {
+      "description": "Produce species richness layer.",
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
+    },
+    "movingAverage": {
+      "description": "The number of cells in the moving average window (for occurrence density and species richness layers)",
+      "type": "list",
+      "constraints": {
+        "selection": "single",
+        "content": [
+          "1x1 (no moving average)",
+          "3x3",
+          "5x5",
+          "7x7",
+          "9x9",
+          "11x11",
+          "13x13",
+          "15x15"
+        ],
+        "default": "9x9"
+      }
+    }
+  },
+  "output": {
+    "layers": {
+      "description": "Output layers."
+    },
+    "files": {
+      "description": "Output files."
+    },
+    "metadata": {
+      "description": "Points to grid metadata."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}
