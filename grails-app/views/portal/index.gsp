@@ -16,7 +16,7 @@
             collectionsUrl: '${config.collections.url}',
             userObjectsField: '${config.userObjectsField}',
             gazField: '${config.gazField}',
-            userId: ${userId},
+            userId: '${userId}',
             hoverLayers: [],
             proxyUrl: '${createLink(controller:'portal', action:'proxy')}'
         }
