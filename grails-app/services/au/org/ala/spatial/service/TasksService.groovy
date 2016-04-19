@@ -26,9 +26,11 @@ class TasksService {
     def objectDao
 
     def cancel(task) {
+        def response = null
+
         if (task?.slave?.url) {
             def url = task.slave.url + "/task/cancel"
-            def response = grails.converters.JSON.parse(Util.getUrl(url))
+            response = grails.converters.JSON.parse(Util.getUrl(url))
         }
 
         // TODO: confirm the task is not finished before setting as cancelled
