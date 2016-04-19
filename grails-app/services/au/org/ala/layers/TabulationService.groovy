@@ -339,8 +339,13 @@ class TabulationService {
 
         //grid
         for (Tabulation t : tabulations) {
-            if (row) grid[order2.get(t.getPid2())] = t.getSpeciest2() == null ? 0 : t.getSpeciest2();
-            else grid[order1.get(t.getPid1())] = t.getSpeciest1() == null ? 0 : t.getSpeciest1();
+            if (origObjects1.size() <= origObjects2.size()) {
+                if (row) grid[order2.get(t.getPid2())] = t.getSpeciest2() == null ? 0 : t.getSpeciest2();
+                else grid[order1.get(t.getPid1())] = t.getSpeciest1() == null ? 0 : t.getSpeciest1();
+            } else {
+                if (row) grid[order2.get(t.getPid1())] = t.getSpeciest1() == null ? 0 : t.getSpeciest1();
+                else grid[order1.get(t.getPid2())] = t.getSpeciest2() == null ? 0 : t.getSpeciest2();
+            }
         }
 
         return grid;
