@@ -8,13 +8,19 @@
 </head>
 
 <body>
-<g:if env="development">
-    <g:renderException exception="${exception}"/>
-</g:if>
-<g:else>
     <ul class="errors">
         <li>An error has occurred</li>
     </ul>
+    <div 
+<g:if env="development">
+  style="display:block;"
+</g:if>
+<g:else>
+  style="display:none;"
 </g:else>
+>
+    <g:renderException exception="${exception}"/>
+</div>
+
 </body>
 </html>
