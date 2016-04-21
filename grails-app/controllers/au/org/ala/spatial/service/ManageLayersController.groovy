@@ -20,12 +20,11 @@ import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.converters.XML
 import org.apache.commons.io.IOUtils
-import org.apache.ivy.util.FileUtil
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.h2.store.fs.FileUtils
 import org.hibernate.criterion.CriteriaSpecification
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
+import org.apache.commons.io.FileUtils
 
 import java.text.SimpleDateFormat
 
@@ -122,7 +121,7 @@ class ManageLayersController {
             fileService.unzip(uploadFile.getPath(), uploadFile.getParent(), true)
 
             //delete uploaded zip now that it has been unzipped
-            FileUtil.forceDelete(uploadFile)
+            uploadFile.delete()
 
             manageLayersService.processUpload(uploadFile.getParentFile(), id)
         } catch (err) {
@@ -160,17 +159,17 @@ class ManageLayersController {
         File uploadDir = new File(dir)
 
         if (!uploadDir.exists()) {
-            FileUtils.createDirectory(dir)
+            new File(dir).mkdirs()
 
             for (File src : new File('/data/ala/data/layers/ready/shape/').listFiles()) {
                 if (src.getName().startsWith(id + '.')) {
-                    FileUtil.copy(src, new File((uploadDir + '/' + src.getName()) as String), null)
+                    FileUtils.copyFile(src, new File((uploadDir + '/' + src.getName()) as String))
                 }
             }
 
             for (File src : new File('/data/ala/data/layers/ready/diva/').listFiles()) {
                 if (src.getName().startsWith(id + '.')) {
-                    FileUtil.copy(src, new File((uploadDir + '/' + src.getName()) as String), null)
+                    FileUtils.copyFile(src, new File((uploadDir + '/' + src.getName()) as String))
                 }
             }
         }

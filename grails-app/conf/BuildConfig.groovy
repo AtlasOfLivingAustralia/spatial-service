@@ -57,12 +57,11 @@ grails.project.dependency.resolution = {
             excludes "spring-context", "spring-jdbc", "spring-orm", "spring-oxm", "ands-pid-client"
         }
 
-        runtime 'postgresql:postgresql:9.0-801.jdbc4'
-
         runtime 'jfree:jfreechart:1.0.13'
 
         runtime 'com.thoughtworks.xstream:xstream:1.4.2'
 
+        runtime 'commons-io:commons-io:2.4'
 
     }
 
