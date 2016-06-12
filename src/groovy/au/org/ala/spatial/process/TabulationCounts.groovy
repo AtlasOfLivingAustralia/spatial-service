@@ -216,22 +216,22 @@ class TabulationCounts extends SlaveProcess {
                 if (new File(filename + ".shp").exists()) {
                     SimpleShapeFile ssf = new SimpleShapeFile(filename, fieldName)
 
-                    String[] catagories
+                    String[] categories
                     int column_idx = ssf.getColumnIdx(fieldName)
-                    catagories = ssf.getColumnLookup(column_idx)
-                    int[] values = ssf.intersect(points, catagories, column_idx, 4)
+                    categories = ssf.getColumnLookup(column_idx)
+                    int[] values = ssf.intersect(points, categories, column_idx, 4)
 
-                    // catagories to pid
+                    // categories to pid
                     List fieldObjects = getObjects(field.id)
-                    int[] catToPid = new int[catagories.length]
+                    int[] catToPid = new int[categories.length]
                     for (int j = 0; j < fieldObjects.size(); j++) {
-                        for (int i = 0; i < catagories.length; i++) {
-                            if ((catagories[i] == null || fieldObjects.get(j).id == null) &&
-                                    catagories[i].compareTo(fieldObjects.get(j).id.toString())) {
+                        for (int i = 0; i < categories.length; i++) {
+                            if ((categories[i] == null || fieldObjects.get(j).id == null) &&
+                                    categories[i].compareTo(fieldObjects.get(j).id.toString())) {
                                 catToPid[i] = j
                                 break
-                            } else if (catagories[i] != null && fieldObjects.get(j).id != null &&
-                                    catagories[i].compareTo(fieldObjects.get(j).id.toString()) == 0) {
+                            } else if (categories[i] != null && fieldObjects.get(j).id != null &&
+                                    categories[i].compareTo(fieldObjects.get(j).id.toString()) == 0) {
                                 catToPid[i] = j
                                 break
                             }

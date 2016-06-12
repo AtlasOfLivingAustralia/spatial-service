@@ -349,7 +349,7 @@
             if (!options.matchCase)
                 term = term.toLowerCase();
             var data = cache.load(term);
-            // recieve the cached data
+            // receive the cached data
             if (data && data.length) {
                 success(term, data);
                 // if an AJAX url has been supplied, try loading the data now

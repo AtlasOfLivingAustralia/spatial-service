@@ -98,7 +98,7 @@ public class SpeciesDensity {
      *
      * @param records         all occurrence records for this density grid as Records.
      * @param outputDirectory path to output directory as String.
-     * @param filename        output filename as String. No file extentions.
+     * @param filename        output filename as String. No file extensions.
      * @param threadCount     number of threads to use during calculations as int.
      * @param outputDivaGrid  true to write a diva grid, as boolean.
      * @param outputASC       true to write an ascii grid, as boolean.

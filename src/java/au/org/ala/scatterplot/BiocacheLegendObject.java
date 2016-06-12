@@ -100,7 +100,7 @@ public class BiocacheLegendObject extends LegendObject {
             categoriesNumeric.put((float) d, value);
 
 
-            //check for endpoint (repitition of colour)
+            //check for endpoint (repetition of colour)
             if (previous != null
                     && previous.getRed() == item.getRed()
                     && previous.getGreen() == item.getGreen()
@@ -204,7 +204,7 @@ public class BiocacheLegendObject extends LegendObject {
             }
             categoriesNumeric.put((float) d, value);
 
-            //check for endpoint (repitition of colour)
+            //check for endpoint (repetition of colour)
             if (p != null && c.length > 4 && p.length > 4
                     && p[1].equals(c[1]) && p[2].equals(c[2]) && p[3].equals(c[3])
                     && !isDecade && !isYear) {
