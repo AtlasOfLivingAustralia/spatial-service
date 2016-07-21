@@ -216,8 +216,8 @@ class SlaveService {
         return true
     }
 
-    def getFile(path) {
-        def remote = peekFile(path)
+    def getFile(path, String spatialServiceUrl = grailsApplication.config.spatialService.url) {
+        def remote = peekFile(path, spatialServiceUrl)
 
         //compare p list with local files
         def fetch = []
@@ -233,7 +233,7 @@ class SlaveService {
         if (fetch.size() < remote.size()) {
             //fetch only some
             fetch.each {
-                getFile(it)
+                getFile(it, spatialServiceUrl)
             }
         } else if (fetch.size() > 0) {
             //fetch all files
@@ -242,7 +242,7 @@ class SlaveService {
 
             try {
                 def shortpath = path.replace(grailsApplication.config.data.dir, '')
-                def url = grailsApplication.config.spatialService.url + "/master/resource?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
+                def url = spatialServiceUrl + "/master/resource?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
                         "&api_key=" + grailsApplication.config.serviceKey
 
                 def os = new BufferedOutputStream(new FileOutputStream(tmpFile))
@@ -294,12 +294,12 @@ class SlaveService {
 //        }
     }
 
-    List peekFile(String path) {
+    List peekFile(String path, String spatialServiceUrl = grailsApplication.config.spatialService.url) {
         List map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]]
 
         try {
             String shortpath = path.replace(grailsApplication.config.data.dir.toString(), '')
-            String url = grailsApplication.config.spatialService.url + "/master/resourcePeek?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
+            String url = spatialServiceUrl + "/master/resourcePeek?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
                     "&api_key=" + grailsApplication.config.serviceKey
 
             map = JSON.parse(Util.getUrl(url)) as List

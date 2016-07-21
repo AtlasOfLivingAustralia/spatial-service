@@ -103,7 +103,7 @@ grails.project.dependency.resolution = {
         //compile ":handlebars-asset-pipeline:1.3.0.1"
 
         //runtime ":ala-bootstrap3:1.3"
-        runtime ":ala-bootstrap2:2.3"
+        runtime ":ala-bootstrap2:2.4.2"
         runtime ":ala-auth:1.3.2-SNAPSHOT"
 
         runtime "org.grails.plugins:cors:1.1.8"

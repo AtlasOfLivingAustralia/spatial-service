@@ -25,7 +25,7 @@ class PortalController {
 
         json.putAt('api_key', grailsApplication.config.api_key)
 
-        def r = webService.doPost(grailsApplication.config.layersService.url + "/shape/upload/wkt", json)
+        def r = webService.doPostJSON(grailsApplication.config.layersService.url + "/shape/upload/wkt", json)
 
         JSONParser jp = new JSONParser()
         render jp.parse(r) as JSON
@@ -48,7 +48,7 @@ class PortalController {
     def q() {
         def json = request.getJSON()
 
-        def r = webService.doPost(grailsApplication.config.biocacheServiceUrl + "/webportal/params", json)
+        def r = webService.doPost(json.ws + "/webportal/params", json)
 
         render([qid: r] as JSON)
     }

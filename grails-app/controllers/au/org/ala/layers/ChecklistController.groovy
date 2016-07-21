@@ -42,8 +42,22 @@ class ChecklistController {
         render checklists as JSON
     }
 
-    def show(Long spcode) {
-        Boolean noWkt = params.containsKey('nowkt') ? params.nowkt : false
-        render distributionDao.getDistributionBySpcode(spcode, Distribution.SPECIES_CHECKLIST, noWkt) as JSON
+    def show(Long id) {
+        boolean noWkt = params.containsKey('nowkt') ? params.nowkt.toString().toBoolean() : false
+        Distribution distribution = distributionDao.getDistributionBySpcode(id, Distribution.SPECIES_CHECKLIST, noWkt)
+
+        if (distribution == null) {
+            render(status: 404, text: 'invalid distribution spcode')
+        } else {
+            addImageUrl(distribution)
+            def ds = distribution.toMap().findAll {
+                i -> i.value != null && !"class".equals(i.key)
+            }
+            render ds as JSON
+        }
+    }
+
+    void addImageUrl(Distribution d) {
+        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx());
     }
 }

@@ -43,10 +43,10 @@ class TabulationController {
 
     def show(String func1, String fid1, String fid2, String type) {
         String wkt = params.containsKey('wkt') ? params.wkt : ''
-        String response = tabulationService.generateTabulationCSVHTML(fid1, fid2, wkt, func1, "html".equals(type) ? "csv" : type);
+        String data = tabulationService.generateTabulationCSVHTML(fid1, fid2, wkt, func1, "html".equals(type) ? "csv" : type);
 
         if ("html".equals(type)) {
-            CSVReader reader = new CSVReader(new StringReader(response));
+            CSVReader reader = new CSVReader(new StringReader(data));
             List<String[]> csv = reader.readAll()
             reader.close()
 
@@ -68,7 +68,7 @@ class TabulationController {
             OutputStream os = null
             try {
                 os = response.getOutputStream()
-                os.write(response.getBytes("UTF-8"));
+                os.write(data.getBytes("UTF-8"));
                 os.flush()
             } catch (err) {
             } finally {

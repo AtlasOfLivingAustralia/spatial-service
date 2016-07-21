@@ -68,15 +68,15 @@
                         scope.q
 
                         scope.addToMap = function () {
-                            scope.wkt = scope.selectedArea.wkt
-                            scope.q = scope.selectedArea.q
                             if (scope.intersect.value.length > 0) {
-                                LayersService.getObject(scope.intersect.data.id).then(function (data) {
+                                LayersService.getObject(scope.intersect.data.pid).then(function (data) {
                                     data.data.layertype = 'area'
                                     data.data.q = scope.q
                                     MapService.add(data.data)
                                 })
                             } else {
+                                scope.wkt = scope.selectedArea.wkt
+                                scope.q = scope.selectedArea.q
                                 if (scope.selectedArea.wkt !== undefined && scope.selectedArea.wkt.length > 0) {
                                     LayersService.createFromWkt(scope.selectedArea.wkt, 'test', 'description').then(function (data) {
                                         LayersService.getObject(data.data.id).then(function (data) {
@@ -113,17 +113,22 @@
 
                         scope.setPid = function (pid) {
                             LayersService.getObject(pid).then(function (obj) {
+                                obj = obj.data
                                 scope.selectedArea.obj = obj
-                                scope.selectedArea.name = obj.name.length > 0 ? obj.name : 'area'
+                                scope.selectedArea.name = obj.name && obj.name.length > 0 ? obj.name : 'area'
                                 if (obj.area === undefined || obj.area == 0) {
                                     LayersService.getWkt(pid).then(function (wkt) {
-                                        scope.selectedArea.wkt = wkt
+                                        scope.selectedArea.wkt = wkt.data
                                     })
                                 } else {
                                     scope.selectedArea.q = [obj.fid + ':"' + obj.name + '"']
                                 }
                                 scope.selectedArea.pid = pid
-                                scope.selectedArea.wms = obj.wmsurl
+                                if (obj.wmsurl !== undefined) {
+                                    scope.selectedArea.wms = obj.wmsurl
+                                } else {
+                                    scope.selectedArea.wms = obj.data.wmsurl
+                                }
                             })
                         }
 
@@ -187,6 +192,7 @@
 
                                         scope.intersect.data = data.data[0]
                                         scope.intersect.value = data.data[0].field + ':"' + data.data[0].value + '"'
+                                        scope.q = scope.intersect.value
                                     }
                                 })
                             }

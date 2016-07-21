@@ -68,7 +68,9 @@ input {
                                                                               data-toggle="tab">Other Fields</a>
                 </li></g:if>
                 <li role="presentation" class=""><a href="#geoserverPreview" aria-controls="geoserverPreview" role="tab"
-                                                    data-toggle="tab">Map</a></li>
+                                                    data-toggle="tab" onclick="setTimeout(function () {
+                            map.invalidateSize()
+                        }, 0)">Map</a></li>
                 <li role="presentation" class=""><a href="#backgroundProcesses" aria-controls="backgroundProcesses"
                                                     role="tab"
                                                     data-toggle="tab">Background Processes</a></li>
@@ -118,17 +120,14 @@ input {
                     <script>
                         var map = L.map('map').setView([-22, 122], 4);
 
-                        L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.png', {
-                            attribution: '&copy; <a href="http://osm.org/copyright" title="OpenStreetMap" target="_blank">OpenStreetMap</a> contributors | Tiles Courtesy of <a href="http://www.mapquest.com/" title="MapQuest" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png" width="16" height="16">',
-                            subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
+                        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         }).addTo(map);
 
                         var wmsLayer = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {
-                            layers: '${layer_id}',
+                            layers: '${name}',
                             format: 'image/png',
                             version: '1.1.0',
-                            style: '${id}',
-                            styles: '${id}',
                             transparent: true
                         }).addTo(map);
 

@@ -101,7 +101,7 @@
                             var fq = scope.getFq()
 
                             BiocacheService.speciesCount({
-                                qid: fq.join('%20AND%20'),
+                                q: fq,
                                 bs: SpatialPortalConfig.biocacheServiceUrl
                             }).then(function (data) {
                                 var layer = scope.layers[scope.layers.length - 1];

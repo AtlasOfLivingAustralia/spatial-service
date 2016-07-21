@@ -15,9 +15,10 @@
                 $scope.species = {}
 
                 $scope.init = function (species) {
-                    $scope.speciesOrig = species
+                    $scope.speciesOrig = { q: species.q, fq: species.fq, wkt: species.wkt, bs: species.bs, ws: species.ws }
 
                     //remove geospatial_kosher
+                    //TODO: include all combinations
                     var fq = [species.q]
                     for (var i = 0; i < species.fq.length; i++) {
                         if (species.fq[i] !== 'geospatial_kosher:true' &&
@@ -26,43 +27,35 @@
                             fq.push(species.fq[i])
                         }
                     }
-                    var q = fq[0]
-                    fq.splice(0, 1)
+                    var q = fq
+                    $scope.species = { q: q, wkt: species.wkt, bs: species.bs, ws: species.ws }
 
-                    BiocacheService.newLayer({
-                        q: q,
-                        fq: fq,
-                        bs: species.bs,
-                        ws: species.ws
-                    }, {area: {wkt: species.wkt}}, species.name).then(function (data) {
-                        $scope.species = data
-                        BiocacheService.speciesCount($scope.species, ['geospatial_kosher:true']).then(function (data) {
-                            $scope.speciesCountKosher = data
-                        })
+                    BiocacheService.speciesCount($scope.species, ['geospatial_kosher:true']).then(function (data) {
+                        $scope.speciesCountKosher = data
+                    })
 
-                        BiocacheService.speciesCount($scope.species, ['geospatial_kosher:*']).then(function (data) {
-                            $scope.speciesCountKosherAny = data
-                        })
+                    BiocacheService.speciesCount($scope.species, ['geospatial_kosher:*']).then(function (data) {
+                        $scope.speciesCountKosherAny = data
+                    })
 
-                        BiocacheService.speciesCount($scope.species).then(function (data) {
-                            $scope.speciesCountAll = data
-                        })
+                    BiocacheService.speciesCount($scope.species).then(function (data) {
+                        $scope.speciesCountAll = data
+                    })
 
-                        BiocacheService.count($scope.species, ['geospatial_kosher:true']).then(function (data) {
-                            $scope.countKosher = data
-                        })
+                    BiocacheService.count($scope.species, ['geospatial_kosher:true']).then(function (data) {
+                        $scope.countKosher = data
+                    })
 
-                        BiocacheService.count($scope.species, ['geospatial_kosher:*']).then(function (data) {
-                            $scope.countKosherAny = data
-                        })
+                    BiocacheService.count($scope.species, ['geospatial_kosher:*']).then(function (data) {
+                        $scope.countKosherAny = data
+                    })
 
-                        BiocacheService.count($scope.species).then(function (data) {
-                            $scope.countAll = data
-                        })
+                    BiocacheService.count($scope.species).then(function (data) {
+                        $scope.countAll = data
+                    })
 
-                        BiocacheService.dataProviderList($scope.speciesOrig).then(function (data) {
-                            $scope.dataProviderList = data
-                        })
+                    BiocacheService.dataProviderList($scope.speciesOrig).then(function (data) {
+                        $scope.dataProviderList = data
                     })
                 };
 

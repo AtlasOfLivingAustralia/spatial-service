@@ -56,7 +56,7 @@ class UrlMappings {
         "/layers/shapes"(controller: "layer", action: "shapes")
         "/layers/rif-cs"(controller: "layer", action: "rif-cs")
         "/layers/index"(controller: "layer", action: "list")
-        "/layers/more/$id"(controller: "layer", action: "more")
+        "/layers/view/more/$id"(controller: "layer", action: "more")
         "/layers/csv"(controller: "layer", action: "csvlist")
 
         "/object/$pid"(controller: "object", action: "show")
@@ -74,7 +74,7 @@ class UrlMappings {
         "/shape/upload/wkt/$pid"(controller: "shapes", action: "uploadWithWkt")
         "/shape/upload/geojson"(controller: "shapes", action: "uploadGeojson")
         "/shape/upload/geojson/$pid"(controller: "shapes", action: "uploadWithGeojson")
-        "/shape/upload/shp"(controller: "shapes", action: 'uploadShp')
+        "/shape/upload/shp"(controller: "shapes", action: 'uploadShapeFile')
         "/shape/upload/shp/$shapeId/$featureIndex"(controller: "shapes", action: 'saveFeatureFromShapeFile')
         "/shape/upload/shp/$objectPid/$shapeId/$featureIndex"(controller: "shapes", action: 'updateFromShapeFileFeature')
         "/shape/upload/pointradius/$latitude/$longitude/$radius"(controller: "shapes", action: 'createPointRadius')

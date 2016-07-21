@@ -63,8 +63,9 @@
                         } else if ($scope.area == 'gazetteer') {
                         } else if ($scope.area.startsWith('preset_')) {
                             for (var i = 0; i < $scope.defaultAreas.length; i++) {
-                                if ($scope.area.endsWith($scope.defaultAreas[i].label.replace(' ', '_'))) {
-                                    $scope.selectedArea.name = $scope.defaultAreas[i].label
+                                if ($scope.area.endsWith($scope.defaultAreas[i].name.replace(' ', '_'))) {
+                                    $scope.selectedArea.name = $scope.defaultAreas[i].name
+                                    $scope.selectedArea.wkt = $scope.defaultAreas[i].wkt
                                     break;
                                 }
                             }
@@ -118,7 +119,7 @@
                                 LayersService.createFromWkt($scope.selectedArea.wkt, 'test', 'description').then(function (data) {
                                     LayersService.getObject(data.data.id).then(function (data) {
                                         data.data.layertype = 'area'
-                                        data.data.wkt = $scope.selectedArea.area.wkt
+                                        data.data.wkt = $scope.selectedArea.wkt
                                         MapService.add(data.data)
                                     })
                                 })
@@ -169,17 +170,21 @@
 
                 $scope.setPid = function (pid) {
                     LayersService.getObject(pid).then(function (obj) {
+                        obj = obj.data
                         $scope.selectedArea.obj = obj
                         $scope.selectedArea.name = obj.name.length > 0 ? obj.name : 'area'
-                        if (obj.area === undefined || obj.area == 0) {
-                            LayersService.getWkt(pid).then(function (wkt) {
-                                $scope.selectedArea.wkt = wkt
-                            })
-                        } else {
-                            $scope.selectedArea.q = obj.fid + ':"' + encodeURIComponent(obj.name) + '"'
-                        }
-                        $scope.selectedArea.pid = data.data.pid
-                        $scope.selectedArea.wms = obj.wmsurl
+                        LayersService.getField(obj.fid, 0, 0, '').then(function (data) {
+                            if (data.data === undefined || data.data.id === undefined) {
+                                LayersService.getWkt(pid).then(function (wkt) {
+                                    $scope.selectedArea.wkt = wkt
+                                })
+                            } else {
+                                $scope.selectedArea.q = obj.fid + ':"' + obj.name + '"'
+                                $scope.selectedArea.obj.q = $scope.selectedArea.q
+                            }
+                            $scope.selectedArea.pid = obj.pid
+                            $scope.selectedArea.wms = obj.wmsurl
+                        })
                     })
                 }
             }])

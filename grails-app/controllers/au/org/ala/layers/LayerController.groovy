@@ -20,14 +20,31 @@ import au.org.ala.layers.dto.Layer
 import grails.converters.JSON
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.time.DateUtils
 import org.codehaus.groovy.grails.io.support.IOUtils
 
 class LayerController {
 
     def layerDao
+    def fieldDao
 
     def list() {
-        render(view: "index.gsp", model: [layers: layerDao.getLayers()])
+        def fields = fieldDao.getFieldsByCriteria('')
+        def layers = layerDao.getLayers().collect { layer ->
+            def map = layer.toMap()
+            fields.each { field ->
+                if (field.spid == layer.id.toString()) {
+                    if (map?.lastUpdated) {
+                        map.put('lastUpdated', field?.lastUpdated?.getTime() < map?.layersUpdated?.getTime() ? field.lastUpdated : map.layersUpdated)
+                    } else {
+                        map.put('lastUpdated', field.lastUpdated)
+                    }
+                }
+            }
+            map
+        }
+
+        render(view: "index.gsp", model: [layers: layers])
     }
 
     def img(String id) {
@@ -65,7 +82,7 @@ class LayerController {
         List layers = layerDao.getLayers();
 
         String header = "";
-        header += "UID,";
+        header += "ID,";
         header += "Short name,";
         header += "Name,";
         header += "Description,";

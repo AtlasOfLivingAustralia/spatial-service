@@ -172,6 +172,9 @@
                                     transparent: true
                                 }
                             }
+                            if (id.colorType === '-1') {
+                                selected.layer.leaflet.layerParams.ENV = 'colormode%3A-1%3Bname%3Acircle%3Bsize%3A3%3Bopacity%3A1%3Bcolor%3A' + id.color
+                            }
 
                             //id.q + (id.fq !== undefined && id.fq.length > 0 ? " AND " + (id.fq.join(" AND ")) : '')
 

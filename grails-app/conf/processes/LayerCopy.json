@@ -1,0 +1,32 @@
+{
+  "name": "LayerCopy",
+  "description": "Performs initial layer creation tasks; diva grid, geotiff, sld creation, geoserver upload (on publish)",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "type": "auto"
+    },
+    "layerId": {
+      "type": "string"
+    },
+    "fieldId": {
+      "type": "string"
+    }
+  },
+  "output": {
+    "layers": {
+      "description": "new layer files, shp, diva grid, sld, geotiff"
+    },
+    "sql": {
+      "description": "layersdb.tabulations update sql for species counts column"
+    },
+    "process": {
+      "description": "additional processes"
+    }
+  }
+}

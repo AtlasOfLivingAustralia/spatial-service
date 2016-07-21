@@ -25,6 +25,11 @@
                 ng-disabled="selectedArea.wkt.length == 0">Delete and redraw
         </button>
     </div>
+    <div ng-show="type == 'pointOnLayer'">
+        <button class="btn" ng-click="enableDrawing()"
+                ng-disabled="selectedArea.wkt.length == 0">Delete and redraw
+        </button>
+    </div>
     <br/>
     <button class="btn btn-default" ng-click="cancel()">Cancel</button>
     <button class="btn btn-default" ng-click="ok()">Next ></button>

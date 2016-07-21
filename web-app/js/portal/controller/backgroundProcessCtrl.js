@@ -49,9 +49,7 @@
                         if (value.type == 'area') {
                             v = {
                                 area: {
-                                    q: [],
-                                    wkt: '',
-                                    bbox: [],
+                                    qid: '',
                                     pid: '',
                                     name: '',
                                     wms: '',
@@ -59,7 +57,7 @@
                                 }
                             }
                         } else if (value.type == 'species') {
-                            v = {q: [], name: '', bs: '', ws: ''}
+                            v = {qid: '', name: '', bs: '', ws: ''}
                         } else if (value.type == 'layer') {
                             v = {layers: []}
                         } else if (value.type == 'boolean') {
@@ -134,7 +132,9 @@
                         for (k in c) {
                             if ($scope.values[i] !== undefined && $scope.values[i] != null) {
                                 if ($scope.values[i].area !== undefined) {
-                                    inputs[k] = $scope.values[i].area
+                                    inputs[k] = { pid: $scope.values[i].area.pid, qid: $scope.values[i].area.qid }
+                                } else if ($scope.values[i].q !== undefined) {
+                                    inputs[k] = { qid: $scope.values[i].qid, ws: $scope.values[i].ws, bs: $scope.values[i].bs }
                                 } else if ($scope.values[i].layers !== undefined) {
                                     var layers = []
                                     for (j in $scope.values[i].layers) {
@@ -285,7 +285,7 @@
                                 } else if (value.type == 'area') {
                                     return $scope.values[i].area.length == 0
                                 } else if (value.type == 'species') {
-                                    var v = {q: [], name: '', bs: '', ws: ''}
+                                    var v = {qid: '', name: '', bs: '', ws: ''}
                                 } else if (value.type == 'layer') {
                                     return $scope.values[i].layers.length < value.constraints.min || $scope.values[i].layers.length > value.constraints.max
                                 } else if (value.type == 'boolean') {

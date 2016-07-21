@@ -22,11 +22,12 @@ class NameSearchUpdate extends SlaveProcess {
     void start() {
         //run namesearch update query
         String sql = "DELETE FROM obj_names; INSERT INTO obj_names (name)" +
-                "  SELECT lower(objects.name) FROM fields, objects" +
+                "  SELECT lower(objects.name) FROM fields INNER JOIN objects ON fields.id = objects.fid " +
                 "  LEFT OUTER JOIN obj_names ON lower(objects.name)=obj_names.name" +
-                "  WHERE obj_names.name IS NULL" + "  AND fields.namesearch = true" +
-                " AND fields.id = objects.fid" + " GROUP BY lower(objects.name);" +
-                "  UPDATE objects SET name_id=obj_names.id FROM obj_names WHERE name_id IS NULL AND lower(objects.name)=obj_names.name;";
+                "  WHERE obj_names.name IS NULL AND fields.namesearch = true" +
+                "  GROUP BY lower(objects.name);" +
+                "  UPDATE objects SET name_id=obj_names.id FROM obj_names WHERE " +
+                "  lower(objects.name)=obj_names.name;";
 
         FileUtils.writeStringToFile(new File(getTaskPath() + 'update.sql'), sql)
 

@@ -317,6 +317,9 @@ public class GeomMakeValid {
             geos_cut_edges = new_cut_edges;
         }
 
+        if (geos_area == null) {
+            return null;
+        }
         if (geos_area.getNumPoints() > 0) {
             vgeoms[nvgeoms++] = geos_area;
         }

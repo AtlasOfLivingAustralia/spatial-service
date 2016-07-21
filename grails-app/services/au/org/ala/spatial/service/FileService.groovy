@@ -159,15 +159,20 @@ class FileService {
             def e = !upload && entry.getName().startsWith('/') ?
                     grailsApplication.config.data.dir + entry.getName() :
                     path + '/' + entry.getName()
-            new File(e).getParentFile().mkdirs()
-            def bos = new BufferedOutputStream(new FileOutputStream(e))
+            if (e.endsWith('/')) {
+                new File(e).mkdirs()
+            } else {
+                new File(e).getParentFile().mkdirs()
 
-            int len
-            while ((len = zf.read(buffer)) >= 0) {
-                bos.write(buffer, 0, len)
+                def bos = new BufferedOutputStream(new FileOutputStream(e))
+
+                int len
+                while ((len = zf.read(buffer)) >= 0) {
+                    bos.write(buffer, 0, len)
+                }
+                bos.flush()
+                bos.close()
             }
-            bos.flush()
-            bos.close()
         }
 
         zf.closeEntry()

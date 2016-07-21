@@ -15,6 +15,8 @@
 
 package au.org.ala.layers
 
+import grails.converters.JSON
+
 class SearchController {
 
     def searchDao
@@ -37,6 +39,6 @@ class SearchController {
             render status: 404, text: 'Failed to parse search parameter q'
         }
 
-        return searchDao.findByCriteria(q, limit);
+        render text: (searchDao.findByCriteria(q, limit) as JSON).toString(), contentType: 'application/json';
     }
 }

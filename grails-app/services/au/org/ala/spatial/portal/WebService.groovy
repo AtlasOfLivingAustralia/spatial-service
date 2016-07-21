@@ -18,6 +18,7 @@ package au.org.ala.spatial.portal
 import grails.converters.JSON
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.PostMethod
+import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.servlet.HttpHeaders
 import org.springframework.http.MediaType
@@ -277,6 +278,55 @@ class WebService {
                 }
             }
             post.addParameter('bbox', 'true');
+            int result = client.executeMethod(post);
+            String response = post.getResponseBodyAsString();
+
+            if (result == 200) {
+                return response
+            } else {
+            }
+        } catch (SocketTimeoutException e) {
+            def error = [error: "Timed out calling web service. URL= ${url}."]
+            log.error(error, e)
+            return error
+        } catch (Exception e) {
+            def error = [error     : "Failed calling web service. ${e.getMessage()} URL= ${url}.",
+                         statusCode: conn?.responseCode ?: "",
+                         detail    : conn?.errorStream?.text]
+            log.error(error, e)
+            return error
+        }
+    }
+
+    def doPostJSON(String url, Map postBody) {
+        def conn = null
+        def charEncoding = 'utf-8'
+        try {
+
+//            conn = new URL(url).openConnection()
+//            conn.setDoOutput(true)
+//            conn.setRequestProperty("Content-Type", "application/json;charset=${charEncoding}");
+//            conn.setRequestProperty("Authorization", "1234");
+
+//            def user = getUserService().getUser()
+//            if (user) {
+//                conn.setRequestProperty(grailsApplication.config.app.http.header.userId, user.userId) // used by ecodata
+//                conn.setRequestProperty("Cookie", "ALA-Auth="+java.net.URLEncoder.encode(user.userName, charEncoding)) // used by specieslist
+//            }
+//            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream(), charEncoding)
+//            wr.write((postBody as JSON).toString())
+//            wr.flush()
+//            def resp = conn.inputStream.text
+//            wr.close()
+//            return [resp: JSON.parse(resp?:"{}"), statusCode: conn.responseCode] // fail over to empty json object if empty response string otherwise JSON.parse fails
+
+
+            HttpClient client = new HttpClient();
+            PostMethod post = new PostMethod(url);
+
+            StringRequestEntity requestEntity = new StringRequestEntity((postBody as JSON).toString())
+
+            post.setRequestEntity(requestEntity)
             int result = client.executeMethod(post);
             String response = post.getResponseBodyAsString();
 

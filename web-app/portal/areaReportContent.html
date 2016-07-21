@@ -8,22 +8,22 @@
                 <td>{{item.name}}</td>
                 <td style="text-align:right">{{item.value}}</td>
                 <td>
-                    <button ng-show="item.q !== undefined && (item.occurrences === undefined || !item.occurrences)"
-                            class="btn btn-xs" ng-click="list(item.q)">list
+                    <button ng-show="item.query !== undefined && (item.occurrences === undefined || !item.occurrences)"
+                            class="btn btn-xs" ng-click="list(item)">list
                     </button>
                 </td>
                 <td>
-                    <button ng-show="item.q !== undefined && (item.map === undefined || item.map)" class="btn btn-xs"
+                    <button ng-show="item.query !== undefined && (item.map === undefined || item.map)" class="btn btn-xs"
                             ng-click="map(item)">Map all
                     </button>
                 </td>
                 <td>
-                    <button ng-show="item.q !== undefined && (item.map === undefined || item.map)" class="btn btn-xs"
+                    <button ng-show="item.query !== undefined && (item.map === undefined || item.map)" class="btn btn-xs"
                             ng-click="sample(item)">Sample
                     </button>
                 </td>
-                <td><a ng-show="item.q !== undefined && (item.occurrences === undefined || item.occurrences)"
-                       target="_blank" href="${config.biocacheUrl}/occurrences/search?q={{item.q}}">View Records</a>
+                <td><a ng-show="item.query !== undefined && (item.occurrences === undefined || item.occurrences)"
+                       target="_blank" href="{{item.query.bs}}/occurrences/search?q={{item.formattedQ}}">View Records</a>
                     <br/><a ng-show="item.link" target="_blank" href="{{item.link}}">{{item.linkName}}</a></td>
             </tr>
             </tbody>

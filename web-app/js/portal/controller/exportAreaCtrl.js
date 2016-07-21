@@ -34,14 +34,6 @@
                 $scope.ok = function (data) {
                     if ($scope.step == 2) {
 
-                        var q = ''
-                        if ($scope.selectedArea.area.q && $scope.selectedArea.area.q.length > 0) {
-                            q = $scope.selectedArea.area.q
-                        }
-                        if ($scope.selectedArea.area.wkt && $scope.selectedArea.area.wkt.length > 0) {
-                            q = '*:*&wkt=' + $scope.selectedArea.area.wkt
-                        }
-
                         var url = LayersService.getAreaDownloadUrl($scope.selectedArea.area.pid, $scope.type, $scope.selectedArea.area.name)
 
                         var link = document.createElement("a");

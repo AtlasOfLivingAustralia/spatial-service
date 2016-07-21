@@ -19,6 +19,7 @@ import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Layer
 import au.org.ala.layers.util.Bil2diva
 import au.org.ala.layers.util.Diva2bil
+import grails.converters.JSON
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 import org.apache.commons.httpclient.auth.AuthScope
@@ -38,6 +39,7 @@ class ManageLayersService {
     def fieldDao
     def layerDao
     def tasksService
+    def slaveService
 
     private getPublishService() {
         grailsApplication.mainContext.publishService
@@ -181,6 +183,21 @@ class ManageLayersService {
             def bil = null
             def grd = null
             def count = 0
+
+            //flatten directories
+            def moved = true
+            while (moved) {
+                moved = false
+                pth.listFiles().each { f ->
+                    if (f.isDirectory()) {
+                        f.listFiles().each { sf ->
+                            FileUtils.moveToDirectory(sf, f.getParentFile(), false)
+                        }
+                        f.delete()
+                        moved = true
+                    }
+                }
+            }
             pth.listFiles().each { f ->
                 if (count == 0 && f.getPath().toLowerCase().endsWith(".shp")) {
                     shp = f
@@ -748,6 +765,8 @@ class ManageLayersService {
 
             JSONObject bbox = (JSONObject) ((JSONObject) jo.get("featureType")).get("nativeBoundingBox");
 
+            extents = new double[4]
+
             extents[0] = Double.parseDouble(bbox.get("minx").toString())
             extents[1] = Double.parseDouble(bbox.get("miny").toString())
             extents[2] = Double.parseDouble(bbox.get("maxx").toString())
@@ -809,7 +828,7 @@ class ManageLayersService {
     }
 
 
-    def createOrUpdateLayer(Map layer, String id) {
+    def createOrUpdateLayer(Map layer, String id, boolean createTask = true) {
         Map retMap = [:]
 
         if (layer.name == null || layer.name.isEmpty()) {
@@ -924,12 +943,16 @@ class ManageLayersService {
                 if (layer.source != null) newLayer.setSource_link(layer.source_link.toString())
                 if (layer.source != null) newLayer.setSource(layer.source.toString())
                 if (layer.type != null) newLayer.setType(layer.type.toString())
-                if ("environmental".equalsIgnoreCase(layer.type.toString())) {
-                    newLayer.setPath_orig('layer/' + layer.name)
-                } else if (new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/" + id + ".shp").exists()) {
-                    newLayer.setPath_orig('layer/' + layer.name)
+                if (layer?.path_orig) {
+                    newLayer.setPath_orig(layer.path_orig.toString())
                 } else {
-                    newLayer.setPath_orig('layer/' + layer.name)
+                    if ("environmental".equalsIgnoreCase(layer.type.toString())) {
+                        newLayer.setPath_orig('layer/' + layer.name)
+                    } else if (new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/" + id + ".shp").exists()) {
+                        newLayer.setPath_orig('layer/' + layer.name)
+                    } else {
+                        newLayer.setPath_orig('layer/' + layer.name)
+                    }
                 }
 
                 //attempt to set layer id
@@ -945,7 +968,9 @@ class ManageLayersService {
                 //record layer.id
                 FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
 
-                tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)])
+                if (createTask) {
+                    tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)])
+                }
 
                 retMap.put('layer_id', newLayer.id)
                 retMap.put('message', 'Layer creation started')
@@ -975,7 +1000,7 @@ class ManageLayersService {
         columns
     }
 
-    def createOrUpdateField(Map field, String id) {
+    def createOrUpdateField(Map field, String id, boolean createTask = true) {
 
         def retMap = [:]
 
@@ -1069,14 +1094,16 @@ class ManageLayersService {
 
                 if ("contextual".equalsIgnoreCase(lyr.type.toString())) {
                     //match case insensitive for sname, sid, sdesc
-                    if (field.containsKey('sid') && !defaultField.columns.contains(field.sid)) {
-                        defaultField.columns.each { if (it.equalsIgnoreCase(field.sid)) field.sid = it }
-                    }
-                    if (field.containsKey('sname') && !defaultField.columns.contains(field.sname)) {
-                        defaultField.columns.each { if (it.equalsIgnoreCase(field.sname)) field.sname = it }
-                    }
-                    if (field.containsKey('sdesc') && !defaultField.columns.contains(field.sdesc)) {
-                        defaultField.columns.each { if (it.equalsIgnoreCase(field.sdesc)) field.sdesc = it }
+                    if (defaultField.columns instanceof List) {
+                        if (field.containsKey('sid') && !defaultField.columns.contains(field.sid)) {
+                            defaultField.columns.each { if (it.equalsIgnoreCase(field.sid)) field.sid = it }
+                        }
+                        if (field.containsKey('sname') && !defaultField.columns.contains(field.sname)) {
+                            defaultField.columns.each { if (it.equalsIgnoreCase(field.sname)) field.sname = it }
+                        }
+                        if (field.containsKey('sdesc') && !defaultField.columns.contains(field.sdesc)) {
+                            defaultField.columns.each { if (it.equalsIgnoreCase(field.sdesc)) field.sdesc = it }
+                        }
                     }
                 }
 
@@ -1127,11 +1154,13 @@ class ManageLayersService {
                 //create default layers table entry, this updates field.id
                 fieldDao.addField(newField)
 
-                //no need for field creation when type=Environmental, skip to standardizing layer
-                if ("Environmental".equalsIgnoreCase(lyr.type.toString())) {
-                    tasksService.create('StandardizeLayers', newField.getId(), [fieldId: String.valueOf(newField.getId())])
-                } else {
-                    tasksService.create('FieldCreation', newField.getId(), [fieldId: String.valueOf(newField.getId()), uploadId: id])
+                if (createTask) {
+                    //no need for field creation when type=Environmental, skip to standardizing layer
+                    if ("Environmental".equalsIgnoreCase(lyr.type.toString())) {
+                        tasksService.create('StandardizeLayers', newField.getId(), [fieldId: String.valueOf(newField.getId())])
+                    } else {
+                        tasksService.create('FieldCreation', newField.getId(), [fieldId: String.valueOf(newField.getId()), uploadId: id])
+                    }
                 }
 
                 //retrieve saved info
@@ -1336,6 +1365,70 @@ class ManageLayersService {
         } catch (err) {
             log.error 'failed to delete checklist.id file', err
         }
+    }
+
+    /**
+     * update postgres
+     * update files
+     * update geoserver
+     *
+     * @param spatialServiceUrl
+     * @param fieldId
+     * @param legacyFormat
+     * @return
+     */
+    def updateFromRemote(spatialServiceUrl, fieldId, boolean legacyFormat) {
+        def field = JSON.parse(httpCall("GET",
+                spatialServiceUrl + "/field/${fieldId}?pageSize=0",
+                null, null,
+                null,
+                null,
+                "application/json")[1])
+
+        def layer = JSON.parse(httpCall("GET",
+                spatialServiceUrl + "/layer/${field.spid}?pageSize=0",
+                null, null,
+                null,
+                null,
+                "application/json")[1])
+
+        //update postgres
+        if (legacyFormat) {
+            if (layer.type == 'Contextual') layer.path_orig = "shape/${layer.name}"
+            else layer.path_orig = "diva/${layer.name}"
+        }
+
+        layer.requestedId = layer.id + ''
+        field.requestedId = field.id + ''
+
+        createOrUpdateLayer(layer as Map, layer.id + '', false)
+
+        if (fieldDao.getFieldById(field.id, false) == null) {
+            createOrUpdateField(field as Map, layer.requestedId + '', false)
+        } else {
+            createOrUpdateField(field as Map, field.id + '', false)
+        }
+
+        //update files
+        slaveService.getFile("/layer/${layer.name}", spatialServiceUrl)
+        if (legacyFormat) {
+            //copy files
+            File layerDir = new File(grailsApplication.config.data.dir + '/layer/')
+            File dest
+            if (layer.type == 'Contextual') dest = new File("/data/ala/data/layers/ready/shape/")
+            else dest = new File("/data/ala/data/layers/ready/diva/")
+            layerDir.listFiles().each {
+                if (it.getName().startsWith(layer.name + '.')) {
+                    FileUtils.copyFileToDirectory(it, dest)
+                }
+            }
+        }
+
+        Map input = [layerId: layer.requestedId, fieldId: field.id] as Map
+        Task task = tasksService.create("LayerCopy", UUID.randomUUID(), input)
+
+        task
+
     }
 }
 

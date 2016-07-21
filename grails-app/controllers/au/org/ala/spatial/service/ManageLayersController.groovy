@@ -39,10 +39,10 @@ class ManageLayersController {
     ServiceAuthService serviceAuthService
 
     def index() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+//        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+//            redirect(url: grailsApplication.config.grails.serverURL)
+//            return
+//        }
 
         Map map = [:]
 
@@ -102,10 +102,10 @@ class ManageLayersController {
      * @throws Exception
      */
     def upload() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+//        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+//            redirect(url: grailsApplication.config.grails.serverURL)
+//            return
+//        }
 
         String id = String.valueOf(System.currentTimeMillis())
 
@@ -125,6 +125,7 @@ class ManageLayersController {
 
             manageLayersService.processUpload(uploadFile.getParentFile(), id)
         } catch (err) {
+            err.printStackTrace()
             log.error 'upload failed', err
         }
 
@@ -489,5 +490,18 @@ class ManageLayersController {
             json { render map as JSON }
             xml { render map as XML }
         }
+    }
+
+    /**
+     * Copy a remote field to local file system, local geoserver and local postgres.
+     *
+     * If it already exists it will be updated.
+     *
+     */
+    def copy() {
+        def spatialServiceUrl = params.spatialServiceUrl;
+        def fieldId = params.fieldId;
+
+        manageLayersService.updateFromRemote(spatialServiceUrl, fieldId, true)
     }
 }

@@ -1,9 +1,9 @@
 (function (angular) {
     'use strict';
-    angular.module('area-report-ctrl', ['map-service', 'biocache-service', 'lists-service'])
+    angular.module('area-report-ctrl', ['map-service', 'biocache-service', 'lists-service', 'layers-service'])
         .controller('AreaReportCtrl', ['$scope', 'MapService', '$timeout', '$rootScope', '$uibModalInstance',
-            'BiocacheService', 'data', '$http', 'ListsService',
-            function ($scope, MapService, $timeout, $rootScope, $uibModalInstance, BiocacheService, data, $http, ListsService) {
+            'BiocacheService', 'data', '$http', 'ListsService', 'LayersService',
+            function ($scope, MapService, $timeout, $rootScope, $uibModalInstance, BiocacheService, data, $http, ListsService, LayersService) {
                 $scope.area = data
 
                 $scope.openExpertDistribution = ''
@@ -77,11 +77,11 @@
                 }
                 $scope.gazPointCounts = function () {
                     if ($scope.area.wkt !== undefined && $scope.area.wkt.length > 0) {
-                        $http.get(LayersService.url() + "/objects/inarea/" + ListsService.gazField() + "?wkt=" + $scope.area.wkt + "&limit=9999999").then(function (response) {
+                        $http.get(LayersService.url() + "/objects/inarea/" + LayersService.gazField() + "?wkt=" + $scope.area.wkt + "&limit=9999999").then(function (response) {
                             $scope.setGazCount(response.data)
                         });
                     } else {
-                        $http.get(LayersService.url() + "/objects/inarea/" + ListsService.gazField() + "?pid=" + $scope.area.pid + "&limit=9999999").then(function (response) {
+                        $http.get(LayersService.url() + "/objects/inarea/" + LayersService.gazField() + "?pid=" + $scope.area.pid + "&limit=9999999").then(function (response) {
                             $scope.setGazCount(response.data)
                         });
                     }
@@ -115,6 +115,15 @@
                     $scope.pointOfInterestCounts()
                 }, 0)
 
+                var areaQ = $scope.area
+                if (areaQ.q === undefined) {
+                    areaQ.q = ["*:*"]
+                } else {
+                    areaQ.wkt = undefined
+                }
+                areaQ.bs = BiocacheService.newQuery().bs
+                areaQ.ws = BiocacheService.newQuery().ws
+
                 $scope.items = [
                     {
                         name: 'Area (sq km)',
@@ -124,22 +133,22 @@
                     },
                     {
                         name: 'Number of species',
-                        q: $scope.area.q,
+                        query: {q: areaQ.q, bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                         map: false
                     },
                     {
                         name: 'Number of species - spatially valid only',
-                        q: $scope.area.q + '&fq=geospatial_kosher:true',
+                        query: {q: areaQ.q.concat(["geospatial_kosher:true"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                         map: false
                     },
                     {
                         name: 'Occurrences',
-                        q: $scope.area.q,
+                        query: {q: areaQ.q, bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                         occurrences: true
                     },
                     {
                         name: 'Occurrences - spatially valid only',
-                        q: $scope.area.q + '&fq=geospatial_kosher:true',
+                        query: {q: areaQ.q.concat(["geospatial_kosher:true"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                         occurrences: true
                     },
                     {
@@ -174,115 +183,115 @@
                     },
                     {
                         name: 'Invasive Species',
-                        q: $scope.area.q + "&fq=species_list_uid:dr947 OR species_list_uid:dr707 OR species_list_uid:dr945 OR species_list_uid:dr873 OR species_list_uid:dr872 OR species_list_uid:dr1105 OR species_list_uid:dr1787 OR species_list_uid:dr943 OR species_list_uid:dr877 OR species_list_uid:dr878 OR species_list_uid:dr1013 OR species_list_uid:dr879 OR species_list_uid:dr880 OR species_list_uid:dr881 OR species_list_uid:dr882 OR species_list_uid:dr883 OR species_list_uid:dr927 OR species_list_uid:dr823"
+                        query: {q: areaQ.q.concat(["species_list_uid:dr947 OR species_list_uid:dr707 OR species_list_uid:dr945 OR species_list_uid:dr873 OR species_list_uid:dr872 OR species_list_uid:dr1105 OR species_list_uid:dr1787 OR species_list_uid:dr943 OR species_list_uid:dr877 OR species_list_uid:dr878 OR species_list_uid:dr1013 OR species_list_uid:dr879 OR species_list_uid:dr880 OR species_list_uid:dr881 OR species_list_uid:dr882 OR species_list_uid:dr883 OR species_list_uid:dr927 OR species_list_uid:dr823"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Threatened Species',
-                        q: $scope.area.q + "&fq=species_list_uid:dr1782 OR species_list_uid:dr967 OR species_list_uid:dr656 OR species_list_uid:dr649 OR species_list_uid:dr650 OR species_list_uid:dr651 OR species_list_uid:dr492 OR species_list_uid:dr1770 OR species_list_uid:dr493 OR species_list_uid:dr653 OR species_list_uid:dr884 OR species_list_uid:dr654 OR species_list_uid:dr655 OR species_list_uid:dr490 OR species_list_uid:dr2201"
+                        query: {q: areaQ.q.concat(["species_list_uid:dr1782 OR species_list_uid:dr967 OR species_list_uid:dr656 OR species_list_uid:dr649 OR species_list_uid:dr650 OR species_list_uid:dr651 OR species_list_uid:dr492 OR species_list_uid:dr1770 OR species_list_uid:dr493 OR species_list_uid:dr653 OR species_list_uid:dr884 OR species_list_uid:dr654 OR species_list_uid:dr655 OR species_list_uid:dr490 OR species_list_uid:dr2201"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Migratory species - EPBC',
-                        q: $scope.area.q + "&fq=species_list_uid:dr1005",
+                        query: {q: areaQ.q.concat(["species_list_uid:dr1005"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                         link: ListsService.url() + '/speciesListItem/list/dr1005',
                         linkName: 'Full list'
                     },
                     {
                         name: 'Australian iconic species',
-                        q: $scope.area.q + "&fq=species_list_uid:dr781",
+                        query: {q: areaQ.q.concat(["species_list_uid:dr781"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                         link: ListsService.url() + '/speciesListItem/list/dr781',
                         linkName: 'Full list'
                     },
                     {
                         name: 'Algae',
-                        q: $scope.area.q + "&fq=species_group:Algae"
+                        query: {q: areaQ.q.concat(["species_group:Algae"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Amphibians',
-                        q: $scope.area.q + "&fq=species_group:Amphibians"
+                        query: {q: areaQ.q.concat(["species_group:Amphibians"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Angiosperms',
-                        q: $scope.area.q + "&fq=species_group:Angiosperms"
+                        query: {q: areaQ.q.concat(["species_group:Angiosperms"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Animals',
-                        q: $scope.area.q + "&fq=species_group:Animals"
+                        query: {q: areaQ.q.concat(["species_group:Animals"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Arthropods',
-                        q: $scope.area.q + "&fq=species_group:Arthropods"
+                        query: {q: areaQ.q.concat(["species_group:Arthropods"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Bacteria',
-                        q: $scope.area.q + "&fq=species_group:Bacteria"
+                        query: {q: areaQ.q.concat(["species_group:Bacteria"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Birds',
-                        q: $scope.area.q + "&fq=species_group:Birds"
+                        query: {q: areaQ.q.concat(["species_group:Birds"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Bryophytes',
-                        q: $scope.area.q + "&fq=species_group:Bryophytes"
+                        query: {q: areaQ.q.concat(["species_group:Bryophytes"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Chromista',
-                        q: $scope.area.q + "&fq=species_group:Chromista"
+                        query: {q: areaQ.q.concat(["species_group:Chromista"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Crustaceans',
-                        q: $scope.area.q + "&fq=species_group:Crustaceans"
+                        query: {q: areaQ.q.concat(["species_group:Crustaceans"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Dicots',
-                        q: $scope.area.q + "&fq=species_group:Dicots"
+                        query: {q: areaQ.q.concat(["species_group:Dicots"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'FernsAndAllies',
-                        q: $scope.area.q + "&fq=species_group:FernsAndAllies"
+                        query: {q: areaQ.q.concat(["species_group:FernsAndAllies"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Fish',
-                        q: $scope.area.q + "&fq=species_group:Fish"
+                        query: {q: areaQ.q.concat(["species_group:Fish"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Fungi',
-                        q: $scope.area.q + "&fq=species_group:Fungi"
+                        query: {q: areaQ.q.concat(["species_group:Fungi"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Fish',
-                        q: $scope.area.q + "&fq=species_group:Fish"
+                        query: {q: areaQ.q.concat(["species_group:Fish"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Gymnosperms',
-                        q: $scope.area.q + "&fq=species_group:Gymnosperms"
+                        query: {q: areaQ.q.concat(["species_group:Gymnosperms"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Insects',
-                        q: $scope.area.q + "&fq=species_group:Insects"
+                        query: {q: areaQ.q.concat(["species_group:Insects"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Mammals',
-                        q: $scope.area.q + "&fq=species_group:Mammals"
+                        query: {q: areaQ.q.concat(["species_group:Mammals"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Molluscs',
-                        q: $scope.area.q + "&fq=species_group:Molluscs"
+                        query: {q: areaQ.q.concat(["species_group:Molluscs"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Monocots',
-                        q: $scope.area.q + "&fq=species_group:Monocots"
+                        query: {q: areaQ.q.concat(["species_group:Monocots"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Plants',
-                        q: $scope.area.q + "&fq=species_group:Plants"
+                        query: {q: areaQ.q.concat(["species_group:Plants"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt}
                     },
                     {
                         name: 'Protozoa',
-                        q: $scope.area.q + "&fq=species_group:Protozoa"
+                        query: {q: areaQ.q.concat(["species_group:Protozoa"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                     },
                     {
                         name: 'Reptiles',
-                        q: $scope.area.q + "&fq=species_group:Reptiles"
+                        query: {q: areaQ.q.concat(["species_group:Reptiles"]), bs: areaQ.bs, ws: areaQ.ws, wkt: areaQ.wkt},
                     }
                 ]
 
@@ -295,12 +304,13 @@
                 var items = $scope.items
                 var k
                 for (k in items) {
-                    if (items[k].q !== undefined) {
+                    if (items[k].query !== undefined) {
                         items[k].value = 'counting...'
+                        items[k].formattedQ = BiocacheService.getQString(items[k].query)
                         if (items[k].occurrences !== undefined && items[k].occurrences) {
-                            $scope.count(items[k], BiocacheService.count(items[k].q))
+                            $scope.count(items[k], BiocacheService.count(items[k].query))
                         } else {
-                            $scope.count(items[k], BiocacheService.speciesCount(items[k].q))
+                            $scope.count(items[k], BiocacheService.speciesCount(items[k].query))
                         }
                     }
                 }
@@ -310,7 +320,7 @@
                 }
 
                 $scope.map = function (item) {
-                    BiocacheService.newLayer(item, item.wkt, item.name).then(function (data) {
+                    BiocacheService.newLayer(item.query, undefined, item.name).then(function (data) {
                         MapService.add(data)
                     })
                 }

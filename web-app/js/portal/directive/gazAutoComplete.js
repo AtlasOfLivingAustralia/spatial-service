@@ -25,7 +25,7 @@
                         },
 
                         select: function (event, ui) {
-                            scope.custom()(ui.item.value)
+                            scope.custom()(ui.item.value.pid)
                             scope.label = ui.item.label
 
                             $timeout(function () {

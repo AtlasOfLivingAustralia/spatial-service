@@ -15,6 +15,7 @@
 
 package au.org.ala.layers
 
+import au.org.ala.layers.dto.Objects
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.layers.util.SpatialConversionUtils
 import grails.converters.JSON

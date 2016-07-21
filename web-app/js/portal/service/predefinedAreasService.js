@@ -18,7 +18,7 @@
                             16322156.76,
                             [112, -44, 154, -9]),
                         MapService.newArea("Current extent",
-                            ["longitude%3A[" + extents[0] + "%20TO%20" + extents[2] + "]", "latitude%3A[" + extents[1] + "%20TO%20" + extents[3] + "]"],
+                            ["longitude:[" + extents[0] + " TO " + extents[2] + "]", "latitude:[" + extents[1] + " TO " + extents[3] + "]"],
                             'POLYGON((' + extents[0] + ' ' + extents[1] + ',' + extents[0] + ' ' + extents[3] + ',' +
                             extents[2] + ' ' + extents[3] + ',' + extents[2] + ' ' + extents[1] + ',' +
                             extents[0] + ' ' + extents[1] + '))',

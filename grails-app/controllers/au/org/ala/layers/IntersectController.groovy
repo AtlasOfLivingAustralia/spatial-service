@@ -136,7 +136,7 @@ class IntersectController {
             log.error 'failed to get batch status: ' + id, err
         }
 
-        return map;
+        render map as JSON;
     }
 
     def batchDownload(String id) {
