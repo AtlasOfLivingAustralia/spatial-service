@@ -100,6 +100,10 @@ class TasksService {
         //get task spec
         def spec = masterService.spec(true).get(name)
 
+        if (spec == null) {
+            log.error("failed to find spec for: " + name)
+        }
+
         def task = null
 
         def tasks

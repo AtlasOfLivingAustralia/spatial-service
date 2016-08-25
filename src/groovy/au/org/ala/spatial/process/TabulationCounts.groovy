@@ -157,9 +157,11 @@ class TabulationCounts extends SlaveProcess {
         for (String k : speciesTotals.keySet()) {
             String pid = k;
             sqlUpdates.add("UPDATE tabulation SET " + "speciest1 = " + speciesTotals.get(k).cardinality()
-                    + " WHERE pid1='" + pid + "' AND fid1='" + fid1 + "' AND fid2='" + fid2 + "';");
+                    + " WHERE (pid1='" + pid + "' AND fid1='" + fid1 + "' AND fid2='" + fid2 + "') OR "
+                    + " (pid2='" + pid + "' AND fid2='" + fid1 + "' AND fid1='" + fid2 + "');");
             sqlUpdates.add("UPDATE tabulation SET " + "speciest2 = " + speciesTotals.get(k).cardinality()
-                    + " WHERE pid2='" + pid + "' AND fid1='" + fid1 + "' AND fid2='" + fid2 + "';");
+                    + " WHERE (pid2='" + pid + "' AND fid1='" + fid1 + "' AND fid2='" + fid2 + "') OR "
+                    + " (pid1='" + pid + "' AND fid2='" + fid1 + "' AND fid1='" + fid2 + "');");
         }
 
         return sqlUpdates;

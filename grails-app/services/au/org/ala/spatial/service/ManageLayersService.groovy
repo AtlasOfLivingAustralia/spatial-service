@@ -875,6 +875,10 @@ class ManageLayersService {
                     if (layer.containsKey('type')) originalLayer.setType(layer.type.toString())
 
                     layerDao.updateLayer(originalLayer)
+
+                    //record layer.id
+                    FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(originalLayer.getId()))
+
                     retMap.put('message', 'Layer updated')
                 } catch (err) {
                     log.error 'error updating layer: ' + id, err
