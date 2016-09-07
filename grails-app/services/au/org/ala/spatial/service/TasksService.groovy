@@ -26,18 +26,22 @@ class TasksService {
     def objectDao
 
     def cancel(task) {
-        def response = null
+        try {
+            def response = null
 
-        if (task?.slave?.url) {
-            def url = task.slave.url + "/task/cancel"
-            response = grails.converters.JSON.parse(Util.getUrl(url))
-        }
+            if (task?.slave) {
+                def url = task.slave + "/task/cancel"
+                response = grails.converters.JSON.parse(Util.getUrl(url))
+            }
 
-        // TODO: confirm the task is not finished before setting as cancelled
-        update(task.id, [status: 2, message: 'cancelled'])
+            // TODO: confirm the task is not finished before setting as cancelled
+            update(task.id, [status: 2, message: 'cancelled'])
 
-        if (response != null) {
-            return true
+            if (response != null) {
+                return true
+            }
+        } catch (Exception e) {
+            log.error("failed to cancel task: " + task?.id, e)
         }
 
         return false
@@ -123,7 +127,7 @@ class TasksService {
                 task.errors.each {
                     log.error it
                 }
-                }
+            }
             //}
 
             //inputs

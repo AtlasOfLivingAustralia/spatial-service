@@ -43,39 +43,44 @@ class TabulationController {
 
     def show(String func1, String fid1, String fid2, String type) {
         String wkt = params.containsKey('wkt') ? params.wkt : ''
-        String data = tabulationService.generateTabulationCSVHTML(fid1, fid2, wkt, func1, "html".equals(type) ? "csv" : type);
 
-        if ("html".equals(type)) {
-            CSVReader reader = new CSVReader(new StringReader(data));
-            List<String[]> csv = reader.readAll()
-            reader.close()
-
-            String label = 'Tabulation for "' + fieldDao.getFieldById(fid1).name + '" and "' +
-                    fieldDao.getFieldById(fid2).name + '"'
-            if ('area'.equals(func1)) label += ' - (sq km) for Area (square kilometres)'
-            if ('species'.equals(func1)) label += ' - Number of species'
-            if ('occurrences'.equals(func1)) label += ' - Number of occurrences'
-
-            String info = 'Occurrences and species numbers are reported correctly but the area of some intersections may be reported as "0" sq.km. when they are < 50% of the smallest grid cell used for tabulation.'
-
-            render(view: "show.gsp", model: [data: csv, label: label, info: info])
+        if ("data".equals(func1)) {
+            render tabulationService.tabulationDao.getTabulation(fid1, fid2, null) as JSON
         } else {
-            if ("csv".equals(type)) {
-                response.setContentType("text/comma-separated-values");
-            } else if ("json".equals(type)) {
-                response.setContentType("application/json");
-            }
-            OutputStream os = null
-            try {
-                os = response.getOutputStream()
-                os.write(data.getBytes("UTF-8"));
-                os.flush()
-            } catch (err) {
-            } finally {
-                if (os != null) {
-                    try {
-                        os.close()
-                    } catch (err) {
+            String data = tabulationService.generateTabulationCSVHTML(fid1, fid2, wkt, func1, "html".equals(type) ? "csv" : type);
+
+            if ("html".equals(type)) {
+                CSVReader reader = new CSVReader(new StringReader(data));
+                List<String[]> csv = reader.readAll()
+                reader.close()
+
+                String label = 'Tabulation for "' + fieldDao.getFieldById(fid1).name + '" and "' +
+                        fieldDao.getFieldById(fid2).name + '"'
+                if ('area'.equals(func1)) label += ' - (sq km) for Area (square kilometres)'
+                if ('species'.equals(func1)) label += ' - Number of species'
+                if ('occurrences'.equals(func1)) label += ' - Number of occurrences'
+
+                String info = 'Occurrences and species numbers are reported correctly but the area of some intersections may be reported as "0" sq.km. when they are < 50% of the smallest grid cell used for tabulation.'
+
+                render(view: "show.gsp", model: [data: csv, label: label, info: info])
+            } else {
+                if ("csv".equals(type)) {
+                    response.setContentType("text/comma-separated-values");
+                } else if ("json".equals(type)) {
+                    response.setContentType("application/json");
+                }
+                OutputStream os = null
+                try {
+                    os = response.getOutputStream()
+                    os.write(data.getBytes("UTF-8"));
+                    os.flush()
+                } catch (err) {
+                } finally {
+                    if (os != null) {
+                        try {
+                            os.close()
+                        } catch (err) {
+                        }
                     }
                 }
             }

@@ -161,7 +161,7 @@ batch_sampling_fields_limit = 1000
 // au.org.ala.spatial.slave config
 //
 //spatialService.url = "http://spatial-test.ala.org.au/spatial-service"
-spatialService.url = "http://localhost:8080/spatial-service"
+spatialService.url = "http://spatial-test.ala.org.au/spatial-service"
 data.dir = "/data/spatial-data"
 shp2pgsql.path = "/usr/bin/shp2pgsql"
 gdal.dir = "/usr/bin/"
@@ -207,11 +207,11 @@ bie.searchPath = '/search'
 records.url = 'http://biocache.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
 api_key = ''
-layersService.url = 'http://local.ala.org.au:8080/spatial-service'
+layersService.url = 'http://spatial-test.ala.org.au/spatial-service'
 lists.url = 'http://lists.ala.org.au'
 collections.url = 'http://collections.ala.org.au'
-sandboxUrl = 'http://sandbox.ala.org.au/ala-hub'
-sandboxServiceUrl = 'http://sandbox.ala.org.au/biocache-service'
+sandboxHubUrl = 'http://sandbox.ala.org.au/ala-hub'
+sandboxBiocacheServiceUrl = 'http://sandbox.ala.org.au/biocache-service'
 
 gazField = 'cl915'
 userObjectsField = 'cl1082'
@@ -219,3 +219,5 @@ userObjectsField = 'cl1082'
 apiKeyCheckUrlTemplate = 'http://auth.ala.org.au/apikey/ws/check?apikey={0}'
 
 wkhtmltopdf.path = "/usr/local/bin/wkhtmltopdf"
+
+spatialService.remote = "http://spatial-test.ala.org.au/spatial-service"

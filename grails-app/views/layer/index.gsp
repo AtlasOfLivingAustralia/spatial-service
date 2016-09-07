@@ -50,7 +50,7 @@
                 <td>${item.name}</td>
                 <td>${item.description}</td>
                 <td>${item.type}</td>
-                <td><g:formatDate format="yyyy-MM-dd" date="${item.lastUpdated}"/></td>
+                <td><g:formatDate format="yyyy-MM-dd" date="${item.last_update}"/></td>
                 <td>${item.source}</td>
                 <td>${item.keywords}</td>
                 <td><img defer_src="${grailsApplication.config.grails.serverURL}/layer/img/${item.name}.jpg" />

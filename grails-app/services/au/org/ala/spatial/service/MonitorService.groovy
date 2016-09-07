@@ -141,6 +141,14 @@ class MonitorService {
                         lock false
                     }
 
+                    //sort
+                    nextTasks.sort(new Comparator<Task>() {
+                        @Override
+                        int compare(Task o1, Task o2) {
+                            return slave.getPriority(o1) - slave.getPriority(o2)
+                        }
+                    })
+
                     for (def nextTask : nextTasks) {
                         //compare server capabilities against this task
                         if (slave.canAdd(nextTask)) {
@@ -172,6 +180,8 @@ class MonitorService {
                             i.put('biocacheServiceUrl', grailsApplication.config.biocacheServiceUrl)
                             i.put('shpResolutions', grailsApplication.config.shpResolutions)
                             i.put('grdResolutions', grailsApplication.config.grdResolutions)
+                            i.put('sandboxHubUrl', grailsApplication.config.sandboxHubUrl)
+                            i.put('sandboxBiocacheServiceUrl', grailsApplication.config.sandboxBiocacheServiceUrl)
 
                             def id = nextTask.id
                             def response = masterService.start(slave, nextTask, i)

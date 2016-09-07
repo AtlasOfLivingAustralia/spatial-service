@@ -184,6 +184,39 @@ class SlaveProcess {
         wkt
     }
 
+    /**
+     * get all files with an extension or exact match for values.
+     *
+     * value must begin with '/'
+     *
+     * @param value
+     */
+    void addOutputFiles(value, layers = false) {
+        def fstart = value.substring(0, value.lastIndexOf('/'))
+        def fend = value.substring(value.lastIndexOf('/') + 1)
+
+        if (layers) {
+            addOutput("layers", value)
+        }
+
+        if (!task.output.containsKey(name)) task.output.put(name, [])
+
+        File file = new File(slaveService.getFile() + fstart)
+        for (File f : file.listFiles()) {
+            if (f.getName().equals(fname) || f.getName().startsWith(fend + '.')) {
+                if (layers &&
+                        (f.getText().endsWith(".sld") || f.getText().endsWith(".grd") ||
+                                f.getText().endsWith(".gri") || f.getText().endsWith(".tif") ||
+                                f.getText().endsWith(".prj") || f.getText().endsWith(".shp"))) {
+                    addOutput("layers", fstart + f.getName())
+                } else {
+                    addOutput("files", fstart + f.getName())
+                }
+
+            }
+        }
+    }
+
     void addOutput(name, value) {
         if (!task.output.containsKey(name)) task.output.put(name, [])
         task.output.get(name).add(value)

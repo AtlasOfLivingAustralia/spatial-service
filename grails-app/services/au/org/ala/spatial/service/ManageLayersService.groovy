@@ -19,12 +19,16 @@ import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Layer
 import au.org.ala.layers.util.Bil2diva
 import au.org.ala.layers.util.Diva2bil
+import au.org.ala.spatial.Util
+import au.org.ala.spatial.analysis.layers.LayerDistanceIndex
 import grails.converters.JSON
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.methods.*
 import org.apache.commons.io.FileUtils
+import org.codehaus.groovy.grails.web.json.JSONArray
+import org.codehaus.jackson.map.ObjectMapper
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue
@@ -32,12 +36,16 @@ import org.json.simple.parser.JSONParser
 import org.opengis.feature.simple.SimpleFeatureType
 import org.opengis.feature.type.AttributeDescriptor
 
+import java.nio.file.Files
+import java.nio.file.attribute.BasicFileAttributes
+
 class ManageLayersService {
 
     def grailsApplication
     def layerIntersectDao
     def fieldDao
     def layerDao
+    def objectDao
     def tasksService
     def slaveService
 
@@ -80,6 +88,7 @@ class ManageLayersService {
             f.listFiles().each { file ->
                 if (file.getPath().toLowerCase().endsWith("original.name")) {
                     upload.put("raw_id", uploadId)
+                    upload.put("created", Files.readAttributes(file.toPath(), BasicFileAttributes.class).creationTime())
 
                     try {
 
@@ -398,9 +407,32 @@ class ManageLayersService {
         }
     }
 
-    def getAllLayers() {
-        def layers = layerDao.getLayers()
-        def fields = fieldDao.getFields()
+    def getAllLayers(url) {
+        def layers
+        def fields
+        if (!url) {
+            layers = layerDao.getLayers()
+            fields = fieldDao.getFields()
+        } else {
+            try {
+                layers = []
+                JSON.parse(Util.getUrl(url + '/layers')).each {
+                    def layer = new ObjectMapper().readValue(it.toString(), Layer.class);
+                    layers.push(layer)
+                }
+            } catch (err) {
+                log.error 'failed to get all layers', err
+            }
+            try {
+                fields = []
+                JSON.parse(Util.getUrl(url + '/fields')).each {
+                    def field = new ObjectMapper().readValue(it.toString(), Field.class);
+                    fields.push(field)
+                }
+            } catch (err) {
+                log.error 'failed to get all fields', err
+            }
+        }
 
         def list = []
         layers.each { l ->
@@ -1378,10 +1410,9 @@ class ManageLayersService {
      *
      * @param spatialServiceUrl
      * @param fieldId
-     * @param legacyFormat
      * @return
      */
-    def updateFromRemote(spatialServiceUrl, fieldId, boolean legacyFormat) {
+    def updateFromRemote(spatialServiceUrl, fieldId) {
         def field = JSON.parse(httpCall("GET",
                 spatialServiceUrl + "/field/${fieldId}?pageSize=0",
                 null, null,
@@ -1397,38 +1428,27 @@ class ManageLayersService {
                 "application/json")[1])
 
         //update postgres
-        if (legacyFormat) {
-            if (layer.type == 'Contextual') layer.path_orig = "shape/${layer.name}"
-            else layer.path_orig = "diva/${layer.name}"
-        }
-
         layer.requestedId = layer.id + ''
         field.requestedId = field.id + ''
 
+        //fix displaypath
+        def origDisplayPath = layer.displaypath
+        layer.displaypath = grailsApplication.config.geoserverUrl + layer.displaypath.substring(layer.displaypath.indexOf("/gwc/"))
+
+        //create as disabled if creating
+        if (!layerDao.getLayerById(layer.id, false)) {
+            layer.enabled = false
+        }
         createOrUpdateLayer(layer as Map, layer.id + '', false)
 
         if (fieldDao.getFieldById(field.id, false) == null) {
-            createOrUpdateField(field as Map, layer.requestedId + '', false)
+            field.enabled = false
+            createOrUpdateField(field as Map, field.requestedId + '', false)
         } else {
             createOrUpdateField(field as Map, field.id + '', false)
         }
 
-        //update files
-        slaveService.getFile("/layer/${layer.name}", spatialServiceUrl)
-        if (legacyFormat) {
-            //copy files
-            File layerDir = new File(grailsApplication.config.data.dir + '/layer/')
-            File dest
-            if (layer.type == 'Contextual') dest = new File("/data/ala/data/layers/ready/shape/")
-            else dest = new File("/data/ala/data/layers/ready/diva/")
-            layerDir.listFiles().each {
-                if (it.getName().startsWith(layer.name + '.')) {
-                    FileUtils.copyFileToDirectory(it, dest)
-                }
-            }
-        }
-
-        Map input = [layerId: layer.requestedId, fieldId: field.id] as Map
+        Map input = [layerId: layer.requestedId, fieldId: field.id, sourceUrl: spatialServiceUrl, displayPath: origDisplayPath] as Map
         Task task = tasksService.create("LayerCopy", UUID.randomUUID(), input)
 
         task

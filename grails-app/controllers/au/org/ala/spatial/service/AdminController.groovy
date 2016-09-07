@@ -40,11 +40,8 @@ class AdminController {
      * @return
      */
     def slaves() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
+        login('slaves')
+
         render masterService.slaves as JSON
     }
 
@@ -53,11 +50,8 @@ class AdminController {
      * @return
      */
     def tasks() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
+        login('tasks')
+
         List list
         if (params.containsKey('all')) {
             list = Task.list(params)
@@ -72,11 +66,8 @@ class AdminController {
      * @return
      */
     def reRegisterSlaves() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
+        login('reRegisterSlaves')
+
         int count = 0
         masterService.slaves.each { url, slave ->
             if (masterService.reRegister(slave)) {
@@ -86,6 +77,18 @@ class AdminController {
 
         Map map = [slavesReRegistered: count]
         render map as JSON
+    }
+
+    private def login(service) {
+        if (serviceAuthService.isValid(params['api_key'])) {
+            return
+        } else if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
+            redirect(url: grailsApplication.config.casServerLoginUrl + "?service=" +
+                    grailsApplication.config.serverName + createLink(controller: 'admin', action: service))
+        } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
+            Map err = [error: 'not authorised']
+            render err as JSON
+        }
     }
 
 }

@@ -18,10 +18,12 @@ package au.org.ala.layers
 import au.com.bytecode.opencsv.CSVWriter
 import au.org.ala.layers.dto.Layer
 import grails.converters.JSON
+import org.apache.commons.lang.ArrayUtils
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.lang.StringUtils
-import org.apache.commons.lang3.time.DateUtils
 import org.codehaus.groovy.grails.io.support.IOUtils
+
+import java.text.SimpleDateFormat
 
 class LayerController {
 
@@ -34,10 +36,10 @@ class LayerController {
             def map = layer.toMap()
             fields.each { field ->
                 if (field.spid == layer.id.toString()) {
-                    if (map?.lastUpdated) {
-                        map.put('lastUpdated', field?.lastUpdated?.getTime() < map?.layersUpdated?.getTime() ? field.lastUpdated : map.layersUpdated)
+                    if (map?.last_update) {
+                        map.put('last_update', field?.last_update?.getTime() < map?.last_update?.getTime() ? field.last_update : map.last_update)
                     } else {
-                        map.put('lastUpdated', field.lastUpdated)
+                        map.put('last_update', field.last_update)
                     }
                 }
             }
@@ -100,7 +102,8 @@ class LayerController {
         header += "Units,";
         header += "Notes,";
         header += "More information,";
-        header += "Keywords";
+        header += "Keywords,";
+        header += "Date Added";
 
         response.setContentType("text/csv; charset=UTF-8");
         response.setHeader("Content-Disposition", "inline;filename=ALA_Spatial_Layers.csv");
@@ -113,9 +116,10 @@ class LayerController {
 
             Iterator<Layer> it = layers.iterator();
             List<String[]> mylist = new Vector<String[]>();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd")
             while (it.hasNext()) {
                 Layer lyr = it.next();
-                mylist.add(lyr.toArray());
+                mylist.add(ArrayUtils.add(lyr.toArray(), lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added())));
             }
             cw.writeAll(mylist);
         } catch (err) {

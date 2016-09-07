@@ -187,7 +187,7 @@ class MasterController {
         }
 
         def limits = [:]
-        json.limits.each { name, lim ->
+        json.limits.queue.each { name, lim ->
             def pool = [:]
             if (lim.containsKey('pool') != null) {
                 lim.pool.each { pk, pv ->
@@ -198,10 +198,15 @@ class MasterController {
             limits.put(name, [total: lim.total, pool: pool, tasks: [:]])
         }
 
+
         Slave slave = masterService.slaves.get(json.url)
 
         if (slave == null) {
-            slave = new Slave([url: json.url, capabilities: cap, limits: limits, key: json.key, created: new Date()])
+            slave = new Slave([url         : json.url,
+                               capabilities: cap,
+                               limits      : [queue: limits, priority: json.limits?.priority ?: [:]],
+                               key         : json.key,
+                               created     : new Date()])
         } else {
             slave.capabilities = cap
             slave.created = new Date()

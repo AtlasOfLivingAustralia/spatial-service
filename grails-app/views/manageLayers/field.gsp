@@ -12,9 +12,14 @@
 <body>
 <ul class="breadcrumb">
     <li><g:link controller="main" action="index">Home</g:link></li>
-    <li><g:link controller="manageLayers" action="index">Manage Layers</g:link></li>
+    <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
     <li><g:link controller="manageLayers" action="layer" id="${raw_id}">Edit Layer</g:link></li>
     <li class="active">${is_field ? "Edit Field" : "Create Field"}</li>
+    <br>
+    <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
+    <li><g:link controller="manageLayers" action="uploads">Uploads</g:link></li>
+    <li><g:link controller="tasks" action="index">Tasks</g:link></li>
+    <li><g:link controller="tasks" action="remote">Copy Layer</g:link></li>
 </ul>
 
 <g:if test="${error != null}">

@@ -1,12 +1,25 @@
 {
-  "group1": {
-    "total": 4
-  },
-  "group2": {
-    "total": 100,
-    "pool": {
-      "LongProcess": 90,
-      "CalculatorProcess": 2
+  "queue": {
+    "group1": {
+      "total": 4
+    },
+    "group2": {
+      "minPriority": 50,
+      "total": 100,
+      "pool": {
+        "LongProcess": 90,
+        "CalculatorProcess": 2
+      }
     }
+  },
+  "priority": {
+    "LayerCopy": 50,
+    "LayerDistancesCreate": 0,
+    "LayerDistancesCreateOne": 0,
+    "TabulationCounts": 0,
+    "TabulationCreate": 0,
+    "TabulationCreateOne": 0,
+    "StandardizeLayers": 0,
+    "DownloadRecords": 0
   }
 }

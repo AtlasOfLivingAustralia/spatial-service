@@ -33,9 +33,12 @@ class FieldCreation extends SlaveProcess {
 
     void start() {
         String fieldId = task.input.fieldId
+        def ignoreNullObjects = task.input.ignoreNullObjects
 
         // get layer info
         Map field = getField(fieldId)
+
+
 
         if (field == null) {
             task.err.put(System.currentTimeMillis(), 'field not found for ' + fieldId)
@@ -100,7 +103,8 @@ class FieldCreation extends SlaveProcess {
                 task.message = 'aggregating shapes'
 
                 aggregateShapes(layer.name.toString(), field.sid.toString(), field.sname.toString(),
-                        (field.sdesc != null) ? field.sdesc.toString() : null, field.id.toString(), field.namesearch.toString())
+                        (field.sdesc != null) ? field.sdesc.toString() : null, field.id.toString(), field.namesearch.toString(),
+                        ignoreNullObjects)
 
                 task.message = 'creating sld'
                 createContextualFieldStyle(field.id.toString(), field.sid.toString(), name)
@@ -267,7 +271,8 @@ class FieldCreation extends SlaveProcess {
         }
     }
 
-    void aggregateShapes(String layername, String sid, String sname, String sdesc, String id, String namesearch) {
+    void aggregateShapes(String layername, String sid, String sname, String sdesc, String id, String namesearch,
+                         Boolean ignoreNullObjects) {
         //open shapefile
         try {
             String sql
@@ -317,7 +322,7 @@ class FieldCreation extends SlaveProcess {
                     desc = String.valueOf(f.getAttribute(confirmedSdesc))
                 }
 
-                if (i != null && i.length() > 0) {
+                if (i != null && i.trim().length() > 0) {
                     if (!map.containsKey(i)) {
                         map.put(i, [sid: i, sname: name, sdesc: desc, geom: []])
                     }

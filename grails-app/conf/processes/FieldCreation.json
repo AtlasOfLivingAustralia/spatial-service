@@ -16,6 +16,9 @@
     },
     "uploadId": {
       "type": "upload"
+    },
+    "ignoreNullObjects": {
+      "type": "boolean"
     }
   },
   "output": {

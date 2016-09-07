@@ -30,20 +30,45 @@ class TasksController {
     ServiceAuthService serviceAuthService
 
     def index() {
-        //TODO: restrict tasks by user permissions
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
+        login()
 
-        params.max = Math.min(params.max == null ? 10.0 : Double.parseDouble(params.max.toString()).doubleValue(), 10.0)
-        [taskInstanceList: Task.list(params), taskInstanceCount: Task.count]
+        if (!params?.max) params.max = 10
+        if (!params?.sort) params.sort = "created"
+        if (!params?.order) params.order = "desc"
+        if (!params?.offset) params.offset = 0
+
+        def list = Task.createCriteria().list(params) {
+            and {
+                if (params?.q) {
+                    or {
+                        ilike("message", "%${params.q}%")
+                        ilike("name", "%${params.q}%")
+                        ilike("tag", "%${params.q}%")
+                    }
+                }
+                if (params?.status) {
+                    eq("status", params.status.toInteger())
+                }
+            }
+        }
+        def count = Task.createCriteria().count() {
+            and {
+                if (params?.q) {
+                    or {
+                        ilike("message", "%${params.q}%")
+                        ilike("name", "%${params.q}%")
+                        ilike("tag", "%${params.q}%")
+                    }
+                }
+                if (params?.status) {
+                    eq("status", params.status.toInteger())
+                }
+            }
+        }
+        [taskInstanceList: list, taskInstanceCount: count]
     }
 
     def status(Task task) {
-        //TODO: restrict tasks by user permissions
-
         def status = tasksService.getStatus(task)
 
         if (params.containsKey('last')) {
@@ -61,24 +86,26 @@ class TasksController {
     }
 
     def show(Task task) {
-        //TODO: restrict tasks by user permissions
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
+        login()
 
         render task as JSON
     }
 
-    @Transactional
-    def create() {
-        //TODO: restrict tasks by user permissions
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+    private def login() {
+        if (serviceAuthService.isValid(params['api_key'])) {
+            return
+        } else if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
+            redirect(url: grailsApplication.config.casServerLoginUrl + "?service=" +
+                    grailsApplication.config.serverName + createLink(controller: 'tasks', action: 'index'))
+        } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
             Map err = [error: 'not authorised']
             render err as JSON
-            return
         }
+    }
+
+    @Transactional
+    def create() {
+        login()
 
         JSONObject input = null
         if (params.containsKey('input')) {
@@ -91,16 +118,15 @@ class TasksController {
 
     @Transactional
     def cancel(Task task) {
-        //TODO: restrict tasks by user permissions
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
+        login()
+
+        if (task?.status < 2) tasksService.cancel(task)
+
+        if (request.contentType?.equalsIgnoreCase("application/json")) {
+            render task as JSON
+        } else {
+            redirect(action: "index", params: params)
         }
-
-        tasksService.cancel(task)
-
-        render task as JSON
     }
 
     /**
@@ -109,12 +135,7 @@ class TasksController {
      * @return
      */
     def download(Task task) {
-        //TODO: restrict tasks by user permissions
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
+        login()
 
         String file = grailsApplication.config.publish.dir + "/" + task.id + ".zip"
 
@@ -124,12 +145,7 @@ class TasksController {
 
     @Transactional
     def reRun(Task task) {
-        //TODO: restrict tasks by user permissions
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
+        login()
 
         if (task != null) {
             def history = [:]
@@ -137,7 +153,11 @@ class TasksController {
             tasksService.update(task.id, [status: 0, slave: null, url: null, message: 'in queue', history: history])
         }
 
-        render task as JSON
+        if (request.contentType?.equalsIgnoreCase("application/json")) {
+            render task as JSON
+        } else {
+            redirect(action: "index", params: params)
+        }
     }
 
     def output() {
@@ -201,6 +221,40 @@ class TasksController {
                     null, "/usr/local/bin/wkhtmltopdf");
         } catch (Exception e) {
             e.printStackTrace(); ;
+        }
+    }
+
+    def cancelAll() {
+        login()
+
+        def list = Task.createCriteria().list() {
+            and {
+                if (params?.q) {
+                    or {
+                        ilike("message", "%${params.q}%")
+                        ilike("name", "%${params.q}%")
+                        ilike("tag", "%${params.q}%")
+                    }
+                }
+                if (params?.status) {
+                    eq("status", params.status.toInteger())
+                }
+            }
+        }
+
+        def cancelled = []
+        list.each {
+            //try to cancel tasks that are in queue or running
+            if (it.status == 0 || it.status == 1) {
+                cancelled.push(it)
+                tasksService.cancel(it)
+            }
+        }
+
+        if (request.contentType?.equalsIgnoreCase("application/json")) {
+            render cancelled as JSON
+        } else {
+            redirect(action: "index", params: params)
         }
     }
 }

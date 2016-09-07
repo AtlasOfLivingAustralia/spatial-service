@@ -44,6 +44,9 @@ class Task {
     // email
     String email
 
+    // user_id
+    String user_id
+
     static hasOne = [parent: Task]
     static hasMany = [children: Task, input: InputParameter, output: OutputParameter]
 
@@ -53,6 +56,7 @@ class Task {
         slave nullable: true
         email nullable: true
         tag nullable: true
+        user_id nullable: true
     }
 
     static mapping = {

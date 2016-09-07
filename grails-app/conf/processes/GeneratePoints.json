@@ -1,0 +1,44 @@
+{
+  "name": "PointsToGrid",
+  "description": "Points to grid.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "sandboxBiocacheServiceUrl": {
+      "description": "sandbox biocacheServiceUrl",
+      "type": "auto"
+    },
+    "sandboxHubUrl": {
+      "description": "sandbox HubUrl",
+      "type": "auto"
+    },
+    "area": {
+      "description": "Area to restrict the points.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1,
+        "minArea": -1,
+        "maxArea": -1
+      }
+    },
+    "distance": {
+      "description": "Grid resolution in decimal degrees.",
+      "type": "double",
+      "constraints": {
+        "min": 0.0001,
+        "max": 5,
+        "default": 0.1
+      }
+    }
+  },
+  "output": {
+    "species": {
+      "description": "Grid layer uploaded into sandbox."
+    }
+  }
+}

@@ -16,6 +16,12 @@
     },
     "fieldId": {
       "type": "string"
+    },
+    "sourceUrl": {
+      "type": "string"
+    },
+    "displayPath": {
+      "type": "string"
     }
   },
   "output": {

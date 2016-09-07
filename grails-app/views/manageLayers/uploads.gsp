@@ -1,0 +1,132 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<html>
+<head>
+    <title></title>
+    <meta name="layout" content="main"/>
+</head>
+
+<body>
+<ul class="breadcrumb">
+    <li><g:link controller="main" action="index">Home</g:link></li>
+    <li class="active">Uploads</li>
+    <br>
+    <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
+    <li><g:link controller="manageLayers" action="uploads">Uploads</g:link></li>
+    <li><g:link controller="tasks" action="index">Tasks</g:link></li>
+    <li><g:link controller="tasks" action="remote">Copy Layer</g:link></li>
+</ul>
+
+<g:if test="${error != null}">
+    <b class="error">${error}</b>
+    <br/>
+    <br/>
+</g:if>
+
+<div class="container-fluid">
+
+    <p>Upload a new grid file (zipped bil, hdr with prj) or a new shape file (zipped shape file with prj)</p>
+    <g:form method="POST" enctype="multipart/form-data"
+            action="upload">
+        <div class="input-group">
+            <input class="form-control" type="file" name="file">
+            <span class="input-group-btn">
+                <input class="form-control" type="submit" value="Upload">
+            </span>
+        </div>
+        <br/>
+        <br/>
+    </g:form>
+
+    <table class="table table-bordered" id="uploadTable">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Raw Id</th>
+            <th>Filename</th>
+            <th>Layer Id</th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <g:each var="item" in="${files}">
+            <tr>
+                <td>${item.created}</td>
+                <td>${item.raw_id}</td>
+                <td>${item.filename}</td>
+                <td>${item.layer_id}</td>
+                <td>
+                    <g:each in="${item.fields}" var="field">
+                        <g:link controller="manageLayers" action="field"
+                                id="${field.id}">${field.id}</g:link>, type:${field.type}<br/>
+                    </g:each>
+                </td>
+                <td><g:link controller="manageLayers" action="layer"
+                            id="${item.containsKey('layer_id') ? item.layer_id : item.raw_id}">
+                    <g:if test="${!item.containsKey('layer_id')}">create layer</g:if>
+                    <g:if test="${item.containsKey('layer_id')}">edit layer</g:if>
+                </g:link>
+                    <g:if test="${!item.containsKey('layer_id')}">
+                        <br/>
+                        <g:link controller="manageLayers" action="distribution"
+                                id="${item.containsKey('data_resource_uid') ? item.data_resource_uid : item.raw_id}">
+                            <g:if test="${!item.containsKey('data_resource_uid')}">import as expert distribution</g:if>
+                        </g:link><g:if
+                            test="${item.containsKey('data_resource_uid')}">Expert distribution exists: ${item.data_resource_uid}
+                        <g:link controller="manageLayers" action="delete"
+                                id="${item.raw_id}">delete distribution</g:link></g:if>
+                        <br/>
+                        <g:link controller="manageLayers" action="checklist"
+                                id="${item.containsKey('checklist') ? item.checklist : item.raw_id}">
+                            <g:if test="${!item.containsKey('checklist')}">import as checklist</g:if>
+                        </g:link><g:if
+                            test="${item.containsKey('checklist')}">Checklist exists: ${item.checklist}
+                        <g:link controller="manageLayers" action="delete"
+                                id="${item.raw_id}">delete checklist</g:link></g:if>
+                    </g:if></td>
+                <td><a onclick="return confirmDelete(${item.raw_id}, '${item.filename}');">delete</a></td>
+            </tr>
+        </g:each>
+        </tbody>
+    </table>
+</div>
+
+<script src="/spatial-service/js/jquery.js"></script>
+<script src="/spatial-service/js/jquery.dataTables.min.js"></script>
+
+<script>
+    function confirmDelete(id, name) {
+        if (confirm("Permanently delete layer " + name + "?")) {
+            var url = "delete/" + id
+            $(location).attr('href', url);
+        }
+    }
+
+    jQuery(document).ready(function () {
+        // setup the table
+
+        jQuery('#uploadTable').dataTable({
+            "aaSorting": [
+                [0, "desc"]
+            ],
+            "aLengthMenu": [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "All"]
+            ],
+            "sPaginationType": "full_numbers",
+            "sDom": '<"sort-options"fl<"clear">>rt<"pagination"ip<"clear">>',
+            "oLanguage": {
+                "sSearch": ""
+            }
+        });
+
+        jQuery("div.dataTables_filter input").attr("placeholder", "Filter within results");
+
+
+    });
+
+</script>
+</div>
+</body>
+</html>

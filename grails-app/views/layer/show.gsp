@@ -23,6 +23,10 @@
             <td>${layer.name}</td>
         </tr>
         <tr>
+            <td>Date added</td>
+            <td>${layer.dt_added}</td>
+        </tr>
+        <tr>
             <td>Metadata contact</td>
             <td>${layer.source}</td>
         </tr>

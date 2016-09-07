@@ -17,15 +17,15 @@
 <br/>
 <g:link controller="layer" action="list">Layers</g:link>
 <br/>
-<g:link controller="portal" action="index">Portal</g:link>
-<br/>
 <br/>
 <span>Admin</span>
 <br/>
-<g:link controller="manageLayers" action="index">manage layers</g:link>
+<g:link controller="manageLayers" action="uploads">uploads</g:link>
 <br/>
-<g:link controller="demo" action="tasks">test tasks</g:link>
+<g:link controller="manageLayers" action="layers">layers</g:link>
 <br/>
 <g:link controller="tasks" action="index">tasks</g:link>
+<br/>
+<g:link controller="tasks" action="remote">Copy Layer</g:link>
 </body>
 </html>

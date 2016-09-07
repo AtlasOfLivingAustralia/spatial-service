@@ -25,8 +25,10 @@ class Slave {
     def add(task, test = false) {
         def canAdd = false
         //try to add it
-        limits.each { name, lim ->
-            if (!canAdd) {
+        limits.queue.each { name, lim ->
+            //limit tasks by priority
+            def priority = getPriority(task)
+            if (!canAdd && priority >= (lim?.minPriority ?: 0)) {
                 //calc current size 
                 def size = 0
                 lim.tasks.each { id, t ->
@@ -59,7 +61,7 @@ class Slave {
 
     def hasTask(task) {
         def found = false
-        limits.each { name, lim ->
+        limits.queue.each { name, lim ->
             if (lim.tasks.containsKey(task.id)) {
                 found = true
             }
@@ -70,7 +72,7 @@ class Slave {
 
     def remove(task) {
         def removed = false
-        limits.each { name, lim ->
+        limits.queue.each { name, lim ->
             if (lim.tasks.containsKey(task.id)) {
                 removed = true
                 lim.tasks.remove(task.id)
@@ -82,9 +84,23 @@ class Slave {
 
     def tasks() {
         def list = []
-        limits.each { name, lim ->
+        limits.queue.each { name, lim ->
             list.addAll(lim.tasks.entrySet())
         }
         list
+    }
+
+    def getPriority(task) {
+        def priority = limits.priority?.getAt(task.name)
+        if (!priority) {
+//            if (!task?.spec?.private?.public) {
+//                //private tasks are lower priority
+//                priority = 49
+//            } else {
+            //default priority
+            priority = 50
+//            }
+        }
+        priority
     }
 }

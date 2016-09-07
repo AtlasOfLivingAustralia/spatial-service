@@ -39,16 +39,76 @@ class ManageLayersController {
     ServiceAuthService serviceAuthService
 
     def index() {
-//        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-//            redirect(url: grailsApplication.config.grails.serverURL)
-//            return
-//        }
+        login()
+    }
+
+    def layers() {
+        login()
+
+        Map map = [:]
+        map.put("layers", manageLayersService.getAllLayers())
+
+        map
+    }
+
+    def remote() {
+        login()
+
+        if (!params?.remoteUrl) params.remoteUrl = grailsApplication.config.spatialService.remote
+
+        def remote = manageLayersService.getAllLayers(params?.remoteUrl)
+        def local = manageLayersService.getAllLayers()
+
+        def all = [:]
+        remote.each { a ->
+            a.fields.each { b ->
+                def m = b.toMap()
+                m.putAt("layer", a)
+                all.put(b.id, [remote: m, local: null])
+            }
+        }
+        local.each { a ->
+            a.fields.each { b ->
+                def m = b.toMap()
+                m.putAt("layer", a)
+                def item = all.get(b.id) ?: [remote: null, local: m]
+                item.local = m
+                all.put(b.id, item)
+            }
+        }
+
+        def layersLocalOnly = []
+        def layersRemoteOnly = []
+        def layersBoth = []
+        all.each { k, v ->
+            def item = [id      : k, local: v.local, remote: v.remote,
+                        layerId : v?.local?.spid ?: v?.remote?.spid,
+                        dt_added: v?.local?.last_update ?: v?.remote?.last_update,
+                        name    : v?.local?.name ?: v?.remote?.name]
+            if (v.local && v.remote) {
+                layersBoth.push(item)
+            } else if (v.local) {
+                layersLocalOnly.push(item)
+            } else {
+                layersRemoteOnly.push(item)
+            }
+        }
+
+        Map map = [:]
+        map.put("layersLocalOnly", layersLocalOnly)
+        map.put("layersRemoteOnly", layersRemoteOnly)
+        map.put("layersBoth", layersBoth)
+        map.put("spatialServiceUrl", params.remoteUrl)
+
+        map
+    }
+
+    def uploads() {
+        login()
 
         Map map = [:]
 
         map.put("files", manageLayersService.listUploadedFiles())
-        map.put("layers", manageLayersService.getAllLayers())
-        map.put("task", Task.findAllByStatusBetween(0, 1))
 
         map
     }
@@ -59,10 +119,7 @@ class ManageLayersController {
      * @return
      */
     def records() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
 
         Map map = [:]
 
@@ -102,10 +159,7 @@ class ManageLayersController {
      * @throws Exception
      */
     def upload() {
-//        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-//            redirect(url: grailsApplication.config.grails.serverURL)
-//            return
-//        }
+        login()
 
         String id = String.valueOf(System.currentTimeMillis())
 
@@ -139,10 +193,8 @@ class ManageLayersController {
      * @return
      */
     def importLayer() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
+
         JSONParser jp = new JSONParser();
         String str = IOUtils.toString(new URL(params.url.toString()).openStream())
         JSONObject jo = (JSONObject) jp.parse(str)
@@ -187,10 +239,8 @@ class ManageLayersController {
      * @return
      */
     def importField() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
+
         JSONParser jp = new JSONParser();
         String str = IOUtils.toString(new URL(params.url.toString()).openStream())
         JSONObject jo = (JSONObject) jp.parse(str)
@@ -219,10 +269,7 @@ class ManageLayersController {
      * @return
      */
     def layer(String id) {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
 
         String layerId = id
         Map map = [:]
@@ -277,10 +324,7 @@ class ManageLayersController {
      * @return
      */
     def delete(String id) {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
 
         if (fieldDao.getFieldById(id, false) == null) {
             Map m = manageLayersService.getUpload(id, false)
@@ -305,10 +349,7 @@ class ManageLayersController {
      * @return
      */
     def field(String id) {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
 
         Map map = [:]
         Map layer = manageLayersService.layerMap(id)
@@ -381,10 +422,7 @@ class ManageLayersController {
      * @return
      */
     def distribution(String id) {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
 
         String uploadId = id
         Map map = [:]
@@ -440,10 +478,7 @@ class ManageLayersController {
      * @return
      */
     def checklist(String id) {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
-            redirect(url: grailsApplication.config.grails.serverURL)
-            return
-        }
+        login()
 
         String uploadId = id
         Map map = [:]
@@ -499,9 +534,23 @@ class ManageLayersController {
      *
      */
     def copy() {
+        login()
+
         def spatialServiceUrl = params.spatialServiceUrl;
         def fieldId = params.fieldId;
 
-        manageLayersService.updateFromRemote(spatialServiceUrl, fieldId, true)
+        manageLayersService.updateFromRemote(spatialServiceUrl, fieldId)
+    }
+
+    private def login() {
+        if (serviceAuthService.isValid(params['api_key'])) {
+            return
+        } else if (!authService.getUserId()) {
+            redirect(url: grailsApplication.config.casServerLoginUrl + "?service=" +
+                    grailsApplication.config.serverName + createLink(controller: 'manageLayers', action: 'index'))
+        } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
+            Map err = [error: 'not authorised']
+            render err as JSON
+        }
     }
 }
