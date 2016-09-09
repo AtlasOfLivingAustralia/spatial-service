@@ -17,13 +17,12 @@ package au.org.ala.layers
 
 import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.layers.util.SpatialConversionUtils
+import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.ParseException
 import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
-import org.apache.commons.fileupload.FileItem
-import org.apache.commons.fileupload.disk.DiskFileItemFactory
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.GetMethod
@@ -304,6 +303,42 @@ class ShapesController {
         render retMap as JSON
     }
 
+    def uploadKMLFile() {
+        String userId = params.containsKey("user_id") ? params.user_id : null;
+        String apiKey = params.containsKey("api_key") ? params.api_key : null;
+        String name = params.containsKey("name") ? params.name : null;
+        String description = params.containsKey("description") ? params.api_key : null;
+
+        // Use linked hash map to maintain key ordering
+        Map<Object, Object> retMap = new LinkedHashMap<Object, Object>();
+
+        if (false && !checkAPIKey(apiKey, userId)) {
+            retMap.put("error", "Invalid user ID or API key");
+            return retMap;
+        }
+
+        // Parse the request
+        Map<String, MultipartFile> items = request.getFileMap()
+
+        if (items.size() == 1) {
+            MultipartFile fileItem = items.values().getAt(0);
+
+            String kml = IOUtils.toString(fileItem.getInputStream())
+            String wkt = SpatialUtils.getKMLPolygonAsWKT(kml)
+
+            if (!isWKTValid(wkt)) {
+                retMap.put("error", "Invalid geometry");
+            } else {
+                String generatedPid = objectDao.createUserUploadedObject(wkt, name, description, userId);
+                retMap.put("id", Integer.parseInt(generatedPid));
+            }
+        } else {
+            retMap.put("error", "Multiple files sent in request. A single unzipped kml file should be supplied.");
+        }
+
+        render retMap as JSON
+    }
+
     private Map<Object, Object> handleZippedShapeFile(File zippedShp) throws IOException {
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>();
@@ -372,7 +407,7 @@ class ShapesController {
                 }
 
             } catch (Exception ex) {
-                logger.error("Error processsing shapefile feature request", ex);
+                log.error("Error processsing shapefile feature request", ex);
                 retMap.put("error", ex.getMessage());
             }
         } else {

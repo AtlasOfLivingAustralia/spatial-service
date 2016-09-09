@@ -21,6 +21,7 @@ import au.org.ala.layers.intersect.Grid
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.geom.MultiPolygon
 import com.vividsolutions.jts.io.WKTReader
+import com.vividsolutions.jts.io.WKTWriter
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DefaultTransaction
 import org.geotools.data.Transaction
@@ -32,8 +33,12 @@ import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
 import org.geotools.referencing.crs.DefaultGeographicCRS
+import org.geotools.xml.Parser
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
+import org.xml.sax.SAXException
+
+import javax.xml.parsers.ParserConfigurationException
 
 class SpatialUtils {
     static void grid2shp(String grdPath) {
@@ -216,5 +221,49 @@ class SpatialUtils {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    /**
+     * parse a KML containing a single placemark, or a placemark in a folder, into WKT.
+     *
+     * @param kmldata
+     * @return WKT if valid, null on error, empty string "" when placemark not matched.
+     */
+    static def String getKMLPolygonAsWKT(String kmldata) throws Exception {
+        Parser parser = new Parser(new org.geotools.kml.v22.KMLConfiguration());
+        SimpleFeature f = (SimpleFeature) parser.parse(new StringReader(kmldata));
+        Collection placemarks = (Collection) f.getAttribute("Feature");
+
+        Geometry g = null;
+        SimpleFeature sf = null;
+
+        //for <Placemark>
+        if (!placemarks.isEmpty() && !placemarks.isEmpty()) {
+            sf = (SimpleFeature) placemarks.iterator().next();
+            g = (Geometry) sf.getAttribute("Geometry");
+        }
+
+        //for <Folder><Placemark>
+        if (g == null && sf != null) {
+            placemarks = (Collection) sf.getAttribute("Feature");
+            if (placemarks != null && !placemarks.isEmpty()) {
+                g = (Geometry) ((SimpleFeature) placemarks.iterator().next()).getAttribute("Geometry");
+            } else {
+                placemarks = (Collection) sf.getAttribute("Folder");
+                if (placemarks != null && !placemarks.isEmpty()) {
+                    g = (Geometry) ((SimpleFeature) placemarks.iterator().next()).getAttribute("Geometry");
+                }
+            }
+        }
+
+        if (g != null) {
+            WKTWriter wr = new WKTWriter();
+            String wkt = wr.write(g);
+            return wkt.replace(" (", "(").replace(", ", ",").replace(") ", ")");
+        } else {
+            return "";
+        }
+
+        return null;
     }
 }

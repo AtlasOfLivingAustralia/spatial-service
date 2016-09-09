@@ -135,6 +135,10 @@ class ObjectController {
         render objectDao.getNearestObjectByIdAndLocation(id, limit, lng, lat) as JSON
     }
 
+    def intersectObject(String pid, Double lat, Double lng) {
+        render objectDao.intersectObject(pid, lat, lng) as JSON;
+    }
+
     def objectsInArea(String id) {
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
 

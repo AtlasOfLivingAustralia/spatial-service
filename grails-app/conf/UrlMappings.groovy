@@ -63,6 +63,7 @@ class UrlMappings {
         "/objects/$id"(controller: "object", action: "fieldObjects")
         "/objects/$id/$lat/$lng"(controller: "object", action: "fieldObjectsPoint")
         "/objects/inarea/$id"(controller: "object", action: "objectsInArea")
+        "/object/intersect/$pid/$lat/$lng"(controller: "object", action: "intersectObject")
 
         "/search"(controller: "search", action: "search")
 
@@ -77,6 +78,7 @@ class UrlMappings {
         "/shape/upload/shp"(controller: "shapes", action: 'uploadShapeFile')
         "/shape/upload/shp/$shapeId/$featureIndex"(controller: "shapes", action: 'saveFeatureFromShapeFile')
         "/shape/upload/shp/$objectPid/$shapeId/$featureIndex"(controller: "shapes", action: 'updateFromShapeFileFeature')
+        "/shape/upload/kml"(controller: "shapes", action: 'uploadKMLFile')
         "/shape/upload/pointradius/$latitude/$longitude/$radius"(controller: "shapes", action: 'createPointRadius')
         "/shape/upload/pointradius/$objectPid/$latitude/$longitude/$radius"(controller: "shapes", action: 'updateWithPointRadius')
         "/shape/upload/$pid"(controller: "shapes", action: "deleteShape")
