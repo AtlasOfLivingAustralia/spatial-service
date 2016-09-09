@@ -34,6 +34,8 @@ import org.geotools.geojson.geom.GeometryJSON
 import org.springframework.dao.DataAccessException
 import org.springframework.web.multipart.MultipartFile
 
+import javax.imageio.ImageIO
+import java.awt.image.BufferedImage
 import java.text.MessageFormat
 
 class ShapesController {
@@ -415,6 +417,25 @@ class ShapesController {
         }
 
         return retMap;
+    }
+
+    def shapeImage(String shapeId, String featureIndexes) {
+        try {
+            File shpFileDir = new File(System.getProperty("java.io.tmpdir"), shapeId);
+
+            BufferedImage bi = SpatialUtils.getShapeFileFeaturesAsImage(shpFileDir, featureIndexes,
+                    (params?.width ?: 640) as Integer, (params?.height ?: 480) as Integer)
+
+            response.setContentType("image/png");
+
+            ImageIO.write(bi, "png", response.outputStream);
+            response.outputStream.flush()
+
+        } catch (Exception ex) {
+            log.error("Error processsing shapefile feature request", ex);
+
+            render status: 404
+        }
     }
 
     def saveFeatureFromShapeFile(String shapeId, Integer featureIndex) {

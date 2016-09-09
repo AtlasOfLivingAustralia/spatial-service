@@ -24,21 +24,35 @@ import com.vividsolutions.jts.io.WKTReader
 import com.vividsolutions.jts.io.WKTWriter
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DefaultTransaction
+import org.geotools.data.FileDataStore
+import org.geotools.data.FileDataStoreFinder
 import org.geotools.data.Transaction
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
+import org.geotools.data.simple.SimpleFeatureCollection
+import org.geotools.data.simple.SimpleFeatureIterator
 import org.geotools.data.simple.SimpleFeatureSource
 import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
+import org.geotools.geometry.jts.ReferencedEnvelope
+import org.geotools.map.FeatureLayer
+import org.geotools.map.MapContent
+import org.geotools.referencing.CRS
 import org.geotools.referencing.crs.DefaultGeographicCRS
+import org.geotools.renderer.GTRenderer
+import org.geotools.renderer.lite.StreamingRenderer
+import org.geotools.styling.SLD
+import org.geotools.styling.Style
 import org.geotools.xml.Parser
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
-import org.xml.sax.SAXException
+import org.opengis.referencing.crs.CoordinateReferenceSystem
 
-import javax.xml.parsers.ParserConfigurationException
+import java.awt.*
+import java.awt.image.BufferedImage
+import java.util.List
 
 class SpatialUtils {
     static void grid2shp(String grdPath) {
@@ -265,5 +279,164 @@ class SpatialUtils {
         }
 
         return null;
+    }
+
+    static def BufferedImage getWktImage(wkt, width, height) throws Exception {
+        SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
+        builder.setCRS(DefaultGeographicCRS.WGS84);
+        builder.setName("id");
+        builder.add("the_geom", MultiPolygon.class);
+        final SimpleFeatureType type = builder.buildFeatureType();
+
+        List<SimpleFeature> features = new ArrayList<SimpleFeature>();
+        SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(type);
+
+        WKTReader reader = new WKTReader();
+
+        wkt.each { w ->
+            Geometry geom = reader.read(w);
+            featureBuilder.add(geom)
+            SimpleFeature feature = featureBuilder.buildFeature(null)
+            features.add(feature)
+        }
+        DefaultFeatureCollection collection = new DefaultFeatureCollection();
+        collection.addAll(features);
+
+        renderCollection(collection, width, height)
+    }
+
+    def static BufferedImage renderCollection(collection, width, height) {
+        MapContent map = new MapContent();
+        BufferedImage image = null;
+
+        try {
+            Style style = SLD.createPolygonStyle(Color.BLACK, Color.GRAY, 0.5f);
+            map.addLayer(new FeatureLayer(collection, style));
+
+            GTRenderer renderer = new StreamingRenderer();
+            renderer.setMapContent(map);
+
+            Rectangle imageBounds;
+            ReferencedEnvelope mapBounds;
+            mapBounds = map.getMaxBounds();
+            double heightToWidth = mapBounds.getSpan(1) / mapBounds.getSpan(0);
+            if (heightToWidth * width > height) {
+                imageBounds = new Rectangle(
+                        0, 0, (int) Math.round(height / heightToWidth), height);
+            } else {
+                imageBounds = new Rectangle(
+                        0, 0, width, (int) Math.round(width * heightToWidth));
+            }
+
+            image = new BufferedImage(imageBounds.width.toInteger(), imageBounds.height.toInteger(), BufferedImage.TYPE_INT_RGB);
+
+            Graphics2D gr = image.createGraphics();
+            gr.setPaint(Color.WHITE);
+            gr.fill(imageBounds);
+
+            renderer.paint(gr, imageBounds, mapBounds);
+        } catch (Exception e) {
+
+        } finally {
+            map.dispose();
+        }
+
+        image
+    }
+
+    def
+    static BufferedImage getShapeFileFeaturesAsImage(File shpFileDir, String featureIndexes, width, height) throws IOException {
+
+        if (!shpFileDir.exists() || !shpFileDir.isDirectory()) {
+            throw new IllegalArgumentException("Supplied directory does not exist or is not a directory");
+        }
+
+        DefaultFeatureCollection collection = new DefaultFeatureCollection();
+        FileDataStore store = null
+        SimpleFeatureIterator it = null
+
+        try {
+
+            File shpFile = null;
+            for (File f : shpFileDir.listFiles()) {
+                if (f.getName().endsWith(".shp")) {
+                    shpFile = f;
+                    break;
+                }
+            }
+
+            if (shpFile == null) {
+                throw new IllegalArgumentException("No .shp file present in directory");
+            }
+
+            store = FileDataStoreFinder.getDataStore(shpFile);
+
+            SimpleFeatureSource featureSource = store.getFeatureSource(store.getTypeNames()[0]);
+            SimpleFeatureCollection featureCollection = featureSource.getFeatures();
+            it = featureCollection.features();
+
+            //transform CRS to the same as the shapefile (at least try)
+            //default to 4326
+            CoordinateReferenceSystem crs = null;
+            try {
+                crs = store.getSchema().getCoordinateReferenceSystem();
+                if (crs == null) {
+                    //attempt to parse prj
+                    try {
+                        File prjFile = new File(shpFile.getPath().substring(0, shpFile.getPath().length() - 3) + "prj");
+                        if (prjFile.exists()) {
+                            String prj = FileUtils.readFileToString(prjFile);
+
+                            if (prj.equals("PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Mercator_Auxiliary_Sphere\"],PARAMETER[\"False_Easting\",0.0],PARAMETER[\"False_Northing\",0.0],PARAMETER[\"Central_Meridian\",0.0],PARAMETER[\"Standard_Parallel_1\",0.0],PARAMETER[\"Auxiliary_Sphere_Type\",0.0],UNIT[\"Meter\",1.0]]")) {
+                                //support for arcgis online default shp exports
+                                crs = CRS.decode("EPSG:3857");
+                            } else {
+                                crs = CRS.parseWKT(FileUtils.readFileToString(prjFile));
+                            }
+                        }
+                    } catch (Exception e) {
+                    }
+
+                    if (crs == null) {
+                        crs = DefaultGeographicCRS.WGS84;
+                    }
+                }
+            } catch (Exception e) {
+            }
+
+            List<SimpleFeature> features = new ArrayList<SimpleFeature>();
+
+            int i = 0;
+            boolean all = "all".equalsIgnoreCase(featureIndexes)
+            def indexes = []
+            if (!all) featureIndexes.split(",").each { indexes.push(it.toInteger()) }
+            while (it.hasNext()) {
+                SimpleFeature feature = (SimpleFeature) it.next();
+                if (all || indexes.contains(i)) {
+                    features.add(feature)
+                }
+                i++;
+            }
+
+
+            collection.addAll(features);
+        } catch (Exception e) {
+
+        } finally {
+            if (it != null) {
+                try {
+                    it.close()
+                } catch (Exception e) {
+                }
+            }
+            if (store != null) {
+                try {
+                    store.dispose()
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        renderCollection(collection, width, height)
     }
 }

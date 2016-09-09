@@ -78,6 +78,7 @@ class UrlMappings {
         "/shape/upload/shp"(controller: "shapes", action: 'uploadShapeFile')
         "/shape/upload/shp/$shapeId/$featureIndex"(controller: "shapes", action: 'saveFeatureFromShapeFile')
         "/shape/upload/shp/$objectPid/$shapeId/$featureIndex"(controller: "shapes", action: 'updateFromShapeFileFeature')
+        "/shape/upload/shp/image/$shapeId/$featureIndexes"(controller: "shapes", action: 'shapeImage')
         "/shape/upload/kml"(controller: "shapes", action: 'uploadKMLFile')
         "/shape/upload/pointradius/$latitude/$longitude/$radius"(controller: "shapes", action: 'createPointRadius')
         "/shape/upload/pointradius/$objectPid/$latitude/$longitude/$radius"(controller: "shapes", action: 'updateWithPointRadius')
