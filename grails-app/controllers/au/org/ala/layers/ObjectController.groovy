@@ -136,7 +136,8 @@ class ObjectController {
     }
 
     def intersectObject(String pid, Double lat, Double lng) {
-        render objectDao.intersectObject(pid, lat, lng) as JSON;
+        def obj = objectDao.intersectObject(pid, lat, lng) ?: [:]
+        render obj as JSON
     }
 
     def objectsInArea(String id) {

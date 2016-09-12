@@ -150,7 +150,7 @@ class ShapesController {
 
             wkt = geometry.toText();
         } catch (Exception ex) {
-            logger.error("Malformed GeoJSON geometry. Note that only GeoJSON geometries can be supplied here. Features and FeatureCollections cannot.", ex);
+            log.error("Malformed GeoJSON geometry. Note that only GeoJSON geometries can be supplied here. Features and FeatureCollections cannot.", ex);
             retMap.put("error", "Malformed GeoJSON geometry. Note that only GeoJSON geometries can be supplied here. Features and FeatureCollections cannot.");
             return retMap;
         }
@@ -177,7 +177,7 @@ class ShapesController {
             }
 
         } catch (Exception ex) {
-            logger.error("Error uploading geojson", ex);
+            log.error("Error uploading geojson", ex);
             retMap.put("error", "Unexpected error. Please notify support@ala.org.au.");
         }
 
@@ -370,7 +370,7 @@ class ShapesController {
         return retMap;
     }
 
-    private Map<String, Object> processShapeFileFeatureRequest(String json, Integer pid, String shapeFileId, int featureIndex) {
+    private Map<String, Object> processShapeFileFeatureRequest(String json, Integer pid, String shapeFileId, String featureIndex) {
         Map<String, Object> retMap = new HashMap<String, Object>();
 
         JSONRequestBodyParser reqBodyParser = new JSONRequestBodyParser();
@@ -394,9 +394,9 @@ class ShapesController {
             try {
                 File shpFileDir = new File(System.getProperty("java.io.tmpdir"), shapeFileId);
 
-                String wkt = SpatialConversionUtils.getShapeFileFeatureAsWKT(shpFileDir, featureIndex);
+                String wkt = SpatialUtils.getShapeFileFeaturesAsWkt(shpFileDir, featureIndex)
 
-                if (!isWKTValid(wkt)) {
+                if (wkt == null || !isWKTValid(wkt)) {
                     retMap.put("error", "Invalid geometry");
                 }
 
@@ -438,11 +438,11 @@ class ShapesController {
         }
     }
 
-    def saveFeatureFromShapeFile(String shapeId, Integer featureIndex) {
+    def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
         render processShapeFileFeatureRequest(request.reader.text, null, shapeId, featureIndex) as JSON
     }
 
-    def updateFromShapeFileFeature(Integer objectPid, String shapeId, Integer featureIndex) throws Exception {
+    def updateFromShapeFileFeature(Integer objectPid, String shapeId, String featureIndex) throws Exception {
         render processShapeFileFeatureRequest(request.reader.text, objectPid, shapeId, featureIndex) as JSON
     }
 
@@ -544,7 +544,7 @@ class ShapesController {
                 boolean success = objectDao.deleteUserUploadedObject(pid);
                 retMap.put("success", success);
             } catch (Exception ex) {
-                logger.error("Error deleting shape " + pid, ex);
+                log.error("Error deleting shape " + pid, ex);
                 retMap.put("error", "Unexpected error. Please notify support@ala.org.au.");
             }
             render retMap as JSON
@@ -587,7 +587,7 @@ class ShapesController {
                 int id = objectDao.createPointOfInterest(object_id, name, type, latitude, longitude, bearing, user_id, description, focal_length);
                 retMap.put("id", id);
             } catch (Exception ex) {
-                logger.error("Error creating point of interest", ex);
+                log.error("Error creating point of interest", ex);
                 retMap.put("error", "Unexpected error. Please notify support@ala.org.au.");
             }
         } else {
@@ -612,7 +612,7 @@ class ShapesController {
                 boolean success = objectDao.deletePointOfInterest(id);
                 retMap.put("deleted", success);
             } catch (Exception ex) {
-                logger.error("Error uploading point of interest " + id, ex);
+                log.error("Error uploading point of interest " + id, ex);
                 retMap.put("error", "Unexpected error. Please notify support@ala.org.au.");
             }
             render retMap as JSON
@@ -652,7 +652,7 @@ class ShapesController {
                     boolean updateSuccessful = objectDao.updatePointOfInterest(id, object_id, name, type, latitude, longitude, bearing, user_id, description, focal_length);
                     retMap.put("updated", updateSuccessful);
                 } catch (Exception ex) {
-                    logger.error("Error updating point of interest " + id, ex);
+                    log.error("Error updating point of interest " + id, ex);
                     retMap.put("error", "Unexpected error. Please notify support@ala.org.au.");
                 }
             } else {

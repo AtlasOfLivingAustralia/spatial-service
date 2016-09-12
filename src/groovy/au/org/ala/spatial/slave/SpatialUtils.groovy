@@ -19,6 +19,8 @@ import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.layers.grid.Grid2Shape
 import au.org.ala.layers.intersect.Grid
 import com.vividsolutions.jts.geom.Geometry
+import com.vividsolutions.jts.geom.GeometryCollection
+import com.vividsolutions.jts.geom.GeometryFactory
 import com.vividsolutions.jts.geom.MultiPolygon
 import com.vividsolutions.jts.io.WKTReader
 import com.vividsolutions.jts.io.WKTWriter
@@ -36,6 +38,7 @@ import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
+import org.geotools.geometry.jts.FactoryFinder
 import org.geotools.geometry.jts.ReferencedEnvelope
 import org.geotools.map.FeatureLayer
 import org.geotools.map.MapContent
@@ -438,5 +441,107 @@ class SpatialUtils {
         }
 
         renderCollection(collection, width, height)
+    }
+
+    def
+    static String getShapeFileFeaturesAsWkt(File shpFileDir, String featureIndexes) throws IOException {
+
+        if (!shpFileDir.exists() || !shpFileDir.isDirectory()) {
+            throw new IllegalArgumentException("Supplied directory does not exist or is not a directory");
+        }
+
+        List geometries = new ArrayList<Geometry>()
+        FileDataStore store = null
+        SimpleFeatureIterator it = null
+
+        try {
+
+            File shpFile = null;
+            for (File f : shpFileDir.listFiles()) {
+                if (f.getName().endsWith(".shp")) {
+                    shpFile = f;
+                    break;
+                }
+            }
+
+            if (shpFile == null) {
+                throw new IllegalArgumentException("No .shp file present in directory");
+            }
+
+            store = FileDataStoreFinder.getDataStore(shpFile);
+
+            SimpleFeatureSource featureSource = store.getFeatureSource(store.getTypeNames()[0]);
+            SimpleFeatureCollection featureCollection = featureSource.getFeatures();
+            it = featureCollection.features();
+
+            //transform CRS to the same as the shapefile (at least try)
+            //default to 4326
+            CoordinateReferenceSystem crs = null;
+            try {
+                crs = store.getSchema().getCoordinateReferenceSystem();
+                if (crs == null) {
+                    //attempt to parse prj
+                    try {
+                        File prjFile = new File(shpFile.getPath().substring(0, shpFile.getPath().length() - 3) + "prj");
+                        if (prjFile.exists()) {
+                            String prj = FileUtils.readFileToString(prjFile);
+
+                            if (prj.equals("PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Mercator_Auxiliary_Sphere\"],PARAMETER[\"False_Easting\",0.0],PARAMETER[\"False_Northing\",0.0],PARAMETER[\"Central_Meridian\",0.0],PARAMETER[\"Standard_Parallel_1\",0.0],PARAMETER[\"Auxiliary_Sphere_Type\",0.0],UNIT[\"Meter\",1.0]]")) {
+                                //support for arcgis online default shp exports
+                                crs = CRS.decode("EPSG:3857");
+                            } else {
+                                crs = CRS.parseWKT(FileUtils.readFileToString(prjFile));
+                            }
+                        }
+                    } catch (Exception e) {
+                    }
+
+                    if (crs == null) {
+                        crs = DefaultGeographicCRS.WGS84;
+                    }
+                }
+            } catch (Exception e) {
+            }
+
+            List<SimpleFeature> features = new ArrayList<SimpleFeature>();
+
+            int i = 0;
+            boolean all = "all".equalsIgnoreCase(featureIndexes)
+            def indexes = []
+            if (!all) featureIndexes.split(",").each { indexes.push(it.toInteger()) }
+            while (it.hasNext()) {
+                SimpleFeature feature = (SimpleFeature) it.next();
+                if (all || indexes.contains(i)) {
+                    geometries.add(feature.getDefaultGeometry())
+                }
+                i++;
+            }
+
+            GeometryFactory factory = FactoryFinder.getGeometryFactory(null);
+
+            // note the following geometry collection may be invalid (say with overlapping polygons)
+            GeometryCollection geometryCollection =
+                    (GeometryCollection) factory.buildGeometry(geometries);
+
+            return geometryCollection.union().toString()
+
+        } catch (Exception e) {
+            throw e
+        } finally {
+            if (it != null) {
+                try {
+                    it.close()
+                } catch (Exception e) {
+                }
+            }
+            if (store != null) {
+                try {
+                    store.dispose()
+                } catch (Exception e) {
+                }
+            }
+        }
+
+        return null
     }
 }
