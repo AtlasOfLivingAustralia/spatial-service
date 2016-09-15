@@ -1,0 +1,23 @@
+{
+  "name": "TabulationCopy",
+  "description": "Copy tabulations",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "type": "auto"
+    },
+    "sourceUrl": {
+      "type": "string"
+    }
+  },
+  "output": {
+    "sql": {
+      "description": "layersdb.tabulations update sql for species counts column"
+    }
+  }
+}

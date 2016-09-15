@@ -15,48 +15,59 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.legend.GridLegend
-import au.org.ala.layers.util.Bil2diva
-import au.org.ala.spatial.slave.SpatialUtils
-import au.org.ala.spatial.slave.Utils
-import au.org.ala.spatial.util.GeomMakeValid
 import grails.converters.JSON
-import org.apache.commons.io.FileUtils
+import org.json.simple.JSONObject
 
 class LayerCopy extends SlaveProcess {
 
     void start() {
-        String layerId = task.input.layerId
-        String fieldId = task.input.fieldId
+        def layerId = task.input.layerId
+        def fieldId = task.input.fieldId
+        def sourceUrl = task.input.sourceUrl
 
-        // get layer info
-        Map layer = getLayer(layerId)
+        //TODO: fetch default sld from geoserver
+        def displayPath = task.input.displayPath
 
-        if (layer == null) {
-            task.err.put(String.valueOf(System.currentTimeMillis()), "layer not found for id: " + layerId)
-            return
+        def field = getField(fieldId)
+        def layer = getLayer(layerId)
+
+        //get style
+        slaveService.getFile("/layer/${fieldId}.sld", sourceUrl)
+        addOutput('sld', '/layer/' + fieldId + ".sld")
+
+        //get layer files
+        //TODO: do not download layer files if they are already up to date
+        slaveService.getFile("/layer/${layer.name}", sourceUrl)
+        addOutputFiles("/layer/${layer.name}", true)
+
+        //get standardized files
+        def resolutions
+        if (layer.type == 'Contextual') resolutions = grailsApplication.config.shpResolutions
+        else resolutions = grailsApplication.config.grdResolutions
+        resolutions.each { res ->
+            slaveService.getFile("/standard_layer/${res}/${field.id}", sourceUrl)
+            addOutputFiles("/standard_layer/${res}/${field.id}")
         }
 
-        //upload shp into layersdb in a table with name layer.id
-        String dir = grailsApplication.config.data.dir
-        File diva = new File(dir + "/layer/" + layer.name + ".grd")
+        //get layerdistances
+        slaveService.getFile('/public/layerDistances.properties')
+        JSONObject dists = JSON.parse(au.org.ala.layers.util.Util.readUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json"))
+        def distString = ''
+        for (def f : getFields()) {
+            if ("e".equalsIgnoreCase(f.type) && !f.id.equals(field.id)) {
+                String c = (f.id.compareTo(field.id) < 0 ? f.id + " " + field.id : field.id + " " + f.id)
 
-        if (diva.exists()) {
-            addOutput('layers', "/layer/" + layer.name + '.grd')
-            addOutput('layers', "/layer/" + layer.name + '.gri')
-            addOutput('layers', "/layer/" + layer.name + '.sld')
-            addOutput('layers', "/layer/" + layer.name + '.tif')
-            addOutput('layers', "/layer/" + layer.name + '.prj')
+                if (dists.containsKey(c)) {
+                    if (distString.length() > 0) distString += '\n'
+                    distString += f.id + ' ' + field.id + '=' + dists.get(c).toString()
+                }
+            }
+        }
+        if (distString.length() > 0) {
+            addOutput('append', '/public/layerDistances.properties?' + distString)
         }
 
-        if (!diva.exists() && "Contextual".equalsIgnoreCase(layer.type.toString())) {
-            String newName = '/layer/' + layer.name
-            addOutput('layers', newName)
-        } else {
-            //TODO: grid as contextual copy
-        }
-
-        Map m = [fieldId: fieldId]
+        def m = [fieldId: String.valueOf(field.id), uploadId: layer.id]
         addOutput("process", "FieldCreation " + (m as JSON))
     }
 }

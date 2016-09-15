@@ -20,14 +20,12 @@ import au.org.ala.layers.dto.Layer
 import au.org.ala.layers.util.Bil2diva
 import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.analysis.layers.LayerDistanceIndex
 import grails.converters.JSON
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.methods.*
 import org.apache.commons.io.FileUtils
-import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.jackson.map.ObjectMapper
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.json.simple.JSONObject
@@ -461,78 +459,76 @@ class ManageLayersService {
 
         Map upload = getUpload(layerId);
 
-        if (upload.size() > 0) {
-            map.putAll(upload);
+        map.putAll(upload);
 
-
+        try {
+            JSONParser jp = new JSONParser();
+            JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(new File(layersDir + "/uploads/" + layerId + "/upload.json")));
+            map.putAll(jo);
+        } catch (Exception e) {
             try {
-                JSONParser jp = new JSONParser();
-                JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(new File(layersDir + "/uploads/" + layerId + "/upload.json")));
-                map.putAll(jo);
-            } catch (Exception e) {
-                try {
-                    Layer l = layerDao.getLayerById(Integer.parseInt(layerId));
-                    //try to get from layer info
-                    map.put("raw_id", l.getId());
-                    //TODO: stop this failing when the table is not yet created
-                    //map.put("columns", layerDao.getLayerColumns(l.getId()));
-                    map.put("test_url",
-                            grailsApplication.config.geoserver.url +
-                                    "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
+                Layer l = layerDao.getLayerById(Integer.parseInt(layerId.replaceAll("[ec]l", "")), false);
+                if (upload.size() == 0) map.putAll(l.toMap())
+                //try to get from layer info
+                map.put("raw_id", l.getId());
+                //TODO: stop this failing when the table is not yet created
+                //map.put("columns", layerDao.getLayerColumns(l.getId()));
+                map.put("test_url",
+                        grailsApplication.config.geoserver.url +
+                                "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
 
-                                    "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers");
-                } catch (Exception e2) {
-                    //log.error("failed to find layer for rawId: " + layerId, e2);
-                }
-
+                                "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers");
+            } catch (Exception e2) {
+                //log.error("failed to find layer for rawId: " + layerId, e2);
             }
 
-            map.put("has_layer", map.containsKey("layer_id"));
-            if (map.containsKey("layer_id")) {
-                Layer layer = layerDao.getLayerById(Integer.parseInt(map.layer_id), false)
+        }
 
-                map.putAll(layer.toMap());
+        map.put("has_layer", map.containsKey("layer_id"));
+        if (map.containsKey("layer_id")) {
+            Layer layer = layerDao.getLayerById(Integer.parseInt(map.layer_id), false)
 
-                List<Field> fieldList = fieldDao.getFields();
-                def fields = []
-                for (Field fs : fieldList) {
-                    if (fs.getSpid().equals(map.get('layer_id'))) {
-                        fields.add(fs);
-                    }
+            map.putAll(layer.toMap());
+
+            List<Field> fieldList = fieldDao.getFields();
+            def fields = []
+            for (Field fs : fieldList) {
+                if (fs.getSpid().equals(map.get('layer_id'))) {
+                    fields.add(fs);
                 }
-
-                map.put("fields", fields);
-
-            } else {
-                //fetch defaults
-
-                //extents
-                double[] extents = getExtents(layerId);
-                if (extents == null) {
-                    extents = [-180, -90, 180, 90]
-                }
-                map.put("minlongitude", extents[0]);
-                map.put("minlatitude", extents[1]);
-                map.put("maxlongitude", extents[2]);
-                map.put("maxlatitude", extents[3]);
-
-                File shp = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".shp");
-                File bil = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".bil");
-                if (shp.exists()) {
-                    List columns = getShapeFileColumns(shp);
-
-                    map.put("columns", columns);
-                    map.put("type", "Contextual");
-                } else if (bil.exists()) {
-                    double[] minmax = getMinMax(bil);
-                    map.put("environmentalvaluemin", minmax[0]);
-                    map.put("environmentalvaluemax", minmax[1]);
-
-                    map.put("type", "Environmental");
-                }
-
-                map.put("enabled", true);
             }
+
+            map.put("fields", fields);
+
+        } else {
+            //fetch defaults
+
+            //extents
+            double[] extents = getExtents(layerId);
+            if (extents == null) {
+                extents = [-180, -90, 180, 90]
+            }
+            map.put("minlongitude", extents[0]);
+            map.put("minlatitude", extents[1]);
+            map.put("maxlongitude", extents[2]);
+            map.put("maxlatitude", extents[3]);
+
+            File shp = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".shp");
+            File bil = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".bil");
+            if (shp.exists()) {
+                List columns = getShapeFileColumns(shp);
+
+                map.put("columns", columns);
+                map.put("type", "Contextual");
+            } else if (bil.exists()) {
+                double[] minmax = getMinMax(bil);
+                map.put("environmentalvaluemin", minmax[0]);
+                map.put("environmentalvaluemax", minmax[1]);
+
+                map.put("type", "Environmental");
+            }
+
+            map.put("enabled", true);
         }
 
         //get list of available classifications
@@ -824,7 +820,7 @@ class ManageLayersService {
                 extents[2] = Double.parseDouble(bbox.get("maxx").toString())
                 extents[3] = Double.parseDouble(bbox.get("maxy").toString())
             } catch (err2) {
-                log.error 'failed to parse bbox for upload id ' + rawId, err2
+                log.error 'failed to parse bbox for upload id ' + rawId
             }
 
         }
@@ -833,7 +829,7 @@ class ManageLayersService {
     }
 
     def fieldMap(fieldId) {
-        def layer = layerDao.getLayerById(Integer.parseInt(fieldDao.getFieldById(fieldId, true).spid))
+        def layer = layerDao.getLayerById(Integer.parseInt(fieldDao.getFieldById(fieldId, true).spid), false)
 
         def map = fieldMapDefault(String.valueOf(layer.id))
 
@@ -999,7 +995,9 @@ class ManageLayersService {
                 }
 
                 //create default layers table entry, this updates layer.id
-                layerDao.addLayer(newLayer)
+                Task.withNewTransaction {
+                    layerDao.addLayer(newLayer)
+                }
 
                 //record layer.id
                 FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
@@ -1097,16 +1095,13 @@ class ManageLayersService {
 
                     fieldDao.updateField(originalField)
 
-                    if (updateIntersect) {
-                        tasksService.create('TabulationSubTasks', null, [:])
-                    }
-                    if (updateIntersect) {
-                        tasksService.create('NameSearchUpdate', null, [:])
+                    if (createTask && updateIntersect) {
+                        tasksService.create('TabulationCreate', null, [:])
                     }
 
                     retMap.put('message', 'Field updated')
 
-                    if (updateNameSearch) {
+                    if (createTask && updateNameSearch) {
                         tasksService.create('NameSearchUpdate', null, null)
                     }
                 } catch (err) {
@@ -1188,7 +1183,9 @@ class ManageLayersService {
                 }
 
                 //create default layers table entry, this updates field.id
-                fieldDao.addField(newField)
+                Task.withNewTransaction {
+                    fieldDao.addField(newField)
+                }
 
                 if (createTask) {
                     //no need for field creation when type=Environmental, skip to standardizing layer
@@ -1433,7 +1430,7 @@ class ManageLayersService {
 
         //fix displaypath
         def origDisplayPath = layer.displaypath
-        layer.displaypath = grailsApplication.config.geoserverUrl + layer.displaypath.substring(layer.displaypath.indexOf("/gwc/"))
+        layer.displaypath = grailsApplication.config.geoserver.url + layer.displaypath.substring(layer.displaypath.indexOf("/gwc/"))
 
         //create as disabled if creating
         if (!layerDao.getLayerById(layer.id, false)) {

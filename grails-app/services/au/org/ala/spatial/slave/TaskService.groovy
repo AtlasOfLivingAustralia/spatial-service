@@ -16,6 +16,7 @@
 package au.org.ala.spatial.slave
 
 import au.org.ala.spatial.process.SlaveProcess
+import grails.converters.JSON
 import groovy.json.JsonOutput
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
@@ -166,8 +167,8 @@ class TaskService {
                 }
             }
         }
-        def json = jsonOutput.toJson(map)
-        zos.write(json.bytes)
+        def json = map as JSON
+        zos.write(json.toString().bytes)
         zos.closeEntry()
 
         //close

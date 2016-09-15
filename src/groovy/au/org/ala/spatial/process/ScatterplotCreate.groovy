@@ -34,8 +34,8 @@ class ScatterplotCreate extends SlaveProcess {
 
         Boolean grid = task.input.grid.toString().toBoolean()
 
-        def species1 = jp.parse(task.input.species1.toString())
-        def species2 = jp.parse(task.input.species2.toString())
+        def species1 = JSON.parse(task.input.species1.toString())
+        def species2 = JSON.parse(task.input.species2.toString())
         def layerList = (JSONArray) jp.parse(task.input.layer.toString())
 
         String[] layers = new String[layerList.size()]
@@ -50,12 +50,12 @@ class ScatterplotCreate extends SlaveProcess {
             layerUnits[idx] = l.environmentalvalueunits
         }
 
-        String fqs = species1.q.join("&fq=")
-        String fbs = "http://ala-cohen.it.csiro.au/biocache-service" //species1.bs
+        String fqs = species1.q
+        String fbs = species1.bs
         String fname = species1.name
 
-        String bqs = species2.q.size() > 0 ? species2.q.join("&fq=") : null
-        String bbs = "http://ala-cohen.it.csiro.au/biocache-service" //species2.bs
+        String bqs = species2.q
+        String bbs = species2.bs
         String bname = species2.name
 
         ScatterplotDTO desc = new ScatterplotDTO(fqs, fbs, fname, bqs, bbs, bname, '', null, null, null, null, grid ? 20 : -1, null, null, null)

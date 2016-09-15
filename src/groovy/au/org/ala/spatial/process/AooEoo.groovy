@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.util.SpatialUtil
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.WKTReader
+import grails.converters.JSON
 import org.apache.commons.io.FileUtils
 import org.json.simple.parser.JSONParser
 
@@ -30,7 +31,7 @@ class AooEoo extends SlaveProcess {
         String area = jp.parse(task.input.area.toString())
 
         //number of target species
-        def species = jp.parse(task.input.species.toString())
+        def species = JSON.parse(task.input.species.toString())
 
         new File(getTaskPath()).mkdirs()
 

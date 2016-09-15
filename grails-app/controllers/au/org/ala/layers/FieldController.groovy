@@ -56,7 +56,7 @@ class FieldController {
         Integer pageSize = params.containsKey('pageSize') ? Integer.parseInt(params.pageSize.toString()) : -1
 
         //test field id value
-        Field field = fieldDao.getFieldById(id)
+        Field field = fieldDao.getFieldById(id, false)
 
         if (field == null || id == null) {
             render(status: 404, text: 'Invalid field id')

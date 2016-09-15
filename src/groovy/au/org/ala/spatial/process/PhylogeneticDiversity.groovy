@@ -15,9 +15,6 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.scatterplot.Scatterplot
-import au.org.ala.scatterplot.ScatterplotDTO
-import au.org.ala.scatterplot.ScatterplotStyleDTO
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import org.apache.commons.httpclient.NameValuePair
@@ -35,7 +32,7 @@ class PhylogeneticDiversity extends SlaveProcess {
 
         String phyloServiceUrl = task.input.phyloServiceUrl
 
-        def species = jp.parse(task.input.species.toString())
+        def species = JSON.parse(task.input.species.toString())
 
         def trees = (JSONArray) jp.parse(task.input.phylo.toString())
 

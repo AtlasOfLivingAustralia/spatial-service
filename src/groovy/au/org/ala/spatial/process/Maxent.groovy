@@ -19,6 +19,7 @@ import au.org.ala.layers.grid.GridCutter
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.slave.Utils
+import grails.converters.JSON
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.json.simple.parser.JSONParser
@@ -58,7 +59,7 @@ class Maxent extends SlaveProcess {
         def resolution = task.input.resolution
 
         //number of target species
-        def species = jp.parse(task.input.species.toString())
+        def species = JSON.parse(task.input.species.toString())
 
         def jackknife = task.input.jackknife.toString().toBoolean()
         def responseCurves = task.input.responseCurves.toString().toBoolean()

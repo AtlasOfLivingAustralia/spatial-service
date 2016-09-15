@@ -19,6 +19,8 @@ import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.intersect.SimpleRegion
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.layers.legend.GridLegend
+import au.org.ala.layers.legend.Legend
+import au.org.ala.layers.legend.LegendEqualArea
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.FileLockService
@@ -199,18 +201,18 @@ class SlaveProcess {
             addOutput("layers", value)
         }
 
-        if (!task.output.containsKey(name)) task.output.put(name, [])
+        if (!task.output.containsKey(value)) task.output.put(value, [])
 
-        File file = new File(slaveService.getFile() + fstart)
+        File file = new File(grailsApplication.config.data.dir + fstart)
         for (File f : file.listFiles()) {
-            if (f.getName().equals(fname) || f.getName().startsWith(fend + '.')) {
+            if (f.getName().equals(fend) || f.getName().startsWith(fend + '.')) {
                 if (layers &&
                         (f.getText().endsWith(".sld") || f.getText().endsWith(".grd") ||
                                 f.getText().endsWith(".gri") || f.getText().endsWith(".tif") ||
                                 f.getText().endsWith(".prj") || f.getText().endsWith(".shp"))) {
-                    addOutput("layers", fstart + f.getName())
+                    addOutput("layers", fstart + '/' + f.getName())
                 } else {
-                    addOutput("files", fstart + f.getName())
+                    addOutput("files", fstart + '/' + f.getName())
                 }
 
             }
@@ -305,7 +307,7 @@ class SlaveProcess {
     }
 
     def facetCount(facet, species) {
-        String url = /*species.bs*/ 'http://biocache.ala.org.au/ws' + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q.join('&fq')
+        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q
         String response = Util.getUrl(url)
 
         JSONParser jp = new JSONParser()
@@ -313,7 +315,7 @@ class SlaveProcess {
     }
 
     def occurrenceCount(species) {
-        String url = /*species.bs*/ 'http://biocache.ala.org.au/ws' + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q.join('&fq')
+        String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q
         String response = Util.getUrl(url)
 
         JSONParser jp = new JSONParser()
@@ -321,7 +323,7 @@ class SlaveProcess {
     }
 
     def facet(facet, species) {
-        String url = /*species.bs*/ 'http://biocache.ala.org.au/ws' + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q.join('&fq')
+        String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q
         String response = Util.getUrl(url)
 
         response.split("\n")
@@ -329,7 +331,7 @@ class SlaveProcess {
 
     def downloadSpecies(species) {
         OccurrenceData od = new OccurrenceData();
-        String[] s = od.getSpeciesData(species.q.join('&fq'), /*species.bs*/ 'http://biocache.ala.org.au/ws', null, null);
+        String[] s = od.getSpeciesData(species.q, species.bs, null, null);
 
         def newFiles = []
 
@@ -814,7 +816,7 @@ class SlaveProcess {
         return new File(layerPath + ".grd").exists()
     }
 
-    void convertAsc(String asc, String grd) {
+    void convertAsc(String asc, String grd, Boolean saveImage = false) {
         try {
             task.message = "asc > grd"
             //read asc
@@ -863,7 +865,33 @@ class SlaveProcess {
             Grid g = new Grid(null);
             g.writeGrid(grd, data, lng1, lat1, lng1 + ncols * div, lat1 + nrows * div, div, div, nrows, ncols);
 
-            GridLegend.generateGridLegend(grd, grd + '.sld', 1, false)
+            if (!saveImage) {
+                GridLegend.generateGridLegend(grd, grd + '.sld', 1, false)
+            } else {
+                try {
+                    g = new Grid(grd)
+                    float[] d = g.getGrid();
+                    java.util.Arrays.sort(d);
+
+                    Legend legend = new LegendEqualArea();
+                    legend.generate(d);
+                    legend.determineGroupSizes(d);
+                    legend.evaluateStdDevArea(d);
+
+                    //must 'unsort' d
+                    d = null;
+                    g = null;
+                    System.gc();
+                    g = new Grid(grd);
+                    d = g.getGrid();
+                    legend.exportSLD(g, grd + ".sld", "", false, true);
+                    legend.exportImage(d, g.ncols, grd + ".png", 1, true);
+                    legend.generateLegend(grd + "_legend.png")
+                } catch (Exception e) {
+                    GridLegend.generateGridLegend(grd, grd + '.sld', 1, false)
+                    log.error('failed to make sld', e)
+                }
+            }
 
             def cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                        "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
@@ -880,10 +908,10 @@ class SlaveProcess {
         List speciesList = null
 
         try {
-            String url = species.bs + '/specieslist...'
+            String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=true&count=true&q=" + species.q
             speciesList = JSON.parse(Util.getUrl(url)) as List
         } catch (err) {
-            log.error 'failed to get all layers', err
+            log.error 'failed to get species list', err
         }
 
         speciesList

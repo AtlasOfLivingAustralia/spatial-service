@@ -170,13 +170,13 @@ class LayerController {
         } else {
             Layer l = null
             try {
-                l = layerDao.getLayerById(Integer.parseInt(id))
+                l = layerDao.getLayerById(Integer.parseInt(id), false)
             } catch (err) {
                 log.error 'failed to get layer: ' + id, err
             }
 
             if (l == null) {
-                l = layerDao.getLayerByName(id)
+                l = layerDao.getLayerByName(id, false)
             }
             render l == null ? l : l.toMap() as JSON
         }

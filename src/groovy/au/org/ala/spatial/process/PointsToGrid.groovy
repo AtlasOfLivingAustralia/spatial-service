@@ -17,11 +17,13 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.intersect.SimpleRegion
+import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.analysis.layers.OccurrenceDensity
 import au.org.ala.spatial.analysis.layers.Records
 import au.org.ala.spatial.analysis.layers.SitesBySpecies
 import au.org.ala.spatial.analysis.layers.SpeciesDensity
-import org.json.simple.parser.JSONParser
+import grails.converters.JSON
+import org.apache.commons.io.FileUtils
 
 import java.text.SimpleDateFormat
 
@@ -30,11 +32,10 @@ class PointsToGrid extends SlaveProcess {
     void start() {
 
         //area to restrict (only interested in area.q part)
-        JSONParser jp = new JSONParser()
-        def area = jp.parse(task.input.area.toString())
+        def area = JSON.parse(task.input.area.toString())
 
         //number of target species
-        def species = jp.parse(task.input.species.toString())
+        def species = JSON.parse(task.input.species.toString())
 
         new File(getTaskPath()).mkdirs()
 
@@ -63,15 +64,7 @@ class PointsToGrid extends SlaveProcess {
         task.message = "getting species data"
         Records records = null;
 
-        String qid = species.qid
-        if (!qid) {
-            qid = ''
-            for (int i = 0; i < species.q.size(); i++) {
-                if (qid.length() > 0) qid += "&fq="
-                qid += URLEncoder.encode(species.q[i].toString(), "UTF-8")
-            }
-        }
-        records = new Records(species.bs.toString(), qid, bbox, null, null);
+        records = new Records(species.bs.toString(), species.q, bbox, null, null);
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90;
@@ -118,7 +111,7 @@ class PointsToGrid extends SlaveProcess {
 //                envelopeGrid = new Grid(envelopeFile);
 //            }
 
-        SimpleRegion region = null;
+        SimpleRegion region = SimpleShapeFile.parseWKT("POLYGON((-180 -90,-180 90,180 90,180 -90, -180 -90))");
 
         if (sitesBySpecies) {
             task.message = "building sites by species matrix for " + records.getSpeciesSize() + " species in " + records.getRecordsSize() + " occurrences"
@@ -135,7 +128,18 @@ class PointsToGrid extends SlaveProcess {
             od.write(records, getTaskPath(), "occurrence_density", 1, true, true);
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "occurrence_density.asc", grailsApplication.config.data.dir + '/layer/' + task.id + "_occurrence_density");
+            convertAsc(getTaskPath() + "occurrence_density.asc", grailsApplication.config.data.dir + '/layer/' + task.id + "_occurrence_density", true);
+            try {
+                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + task.id + '_occurrence_density.png'),
+                        new File(getTaskPath() + 'occurrence_density.png'))
+                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + task.id + '_occurrence_density_legend.png'),
+                        new File(getTaskPath() + 'occurrence_density_legend.png'))
+
+                addOutput("files", "occurrence_density.png", true)
+                addOutput("files", "occurrence_density_legend.png", true)
+            } catch (Exception e) {
+
+            }
 
             addOutput("layers", "/layer/" + task.id + "_occurrence_density.sld")
             addOutput("layers", "/layer/" + task.id + "_occurrence_density.tif")
@@ -143,6 +147,7 @@ class PointsToGrid extends SlaveProcess {
 
             writeMetadata(getTaskPath() + "odensity_metadata.html", "Occurrence Density", records, bbox, occurrenceDensity, false, null, null, species.name.toString(), gridCellSize, movingAverageStr);
             addOutput("files", "odensity_metadata.html")
+            addOutput("files", "occurrence_density.png")
         }
 
         if (speciesRichness) {
@@ -150,7 +155,18 @@ class PointsToGrid extends SlaveProcess {
             SpeciesDensity sd = new SpeciesDensity(movingAverage, gridCellSize, bbox);
             sd.write(records, getTaskPath(), "species_richness", 1, true, true);
 
-            convertAsc(getTaskPath() + "species_richness.asc", grailsApplication.config.data.dir + '/layer/' + task.id + "_species_richness");
+            convertAsc(getTaskPath() + "species_richness.asc", grailsApplication.config.data.dir + '/layer/' + task.id + "_species_richness", true);
+            try {
+                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + task.id + '_species_richness.png'),
+                        new File(getTaskPath() + 'species_richness.png'))
+                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + task.id + '_species_richness_legend.png'),
+                        new File(getTaskPath() + 'species_richness_legend.png'))
+
+                addOutput("files", "species_richness.png", true)
+                addOutput("files", "species_richness_legend.png", true)
+            } catch (Exception e) {
+
+            }
 
             addOutput("layers", "/layer/" + task.id + "_species_richness.sld")
             addOutput("layers", "/layer/" + task.id + "_species_richness.tif")

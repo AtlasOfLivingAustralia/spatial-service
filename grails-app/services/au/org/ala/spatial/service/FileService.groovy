@@ -141,7 +141,7 @@ class FileService {
             def search = file.getName()
             files = file.getParentFile().listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String filename) {
-                    return filename.startsWith(search)
+                    return filename.equals(search) || filename.startsWith(search + '.')
                 }
             });
         }

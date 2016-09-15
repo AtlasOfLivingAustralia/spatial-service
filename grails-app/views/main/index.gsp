@@ -26,6 +26,6 @@
 <br/>
 <g:link controller="tasks" action="index">tasks</g:link>
 <br/>
-<g:link controller="tasks" action="remote">Copy Layer</g:link>
+<g:link controller="manageLayers" action="remote">Copy Layer</g:link>
 </body>
 </html>

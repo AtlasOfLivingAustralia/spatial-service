@@ -19,6 +19,8 @@ import au.org.ala.layers.dto.Objects
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import grails.transaction.Transactional
+import org.apache.commons.httpclient.HttpClient
+import org.apache.commons.httpclient.methods.PostMethod
 
 class TasksService {
 
@@ -243,12 +245,31 @@ class TasksService {
                 if (v instanceof List) {
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
                 } else if (v instanceof Map) {
+
+                    //register area pid
                     if (!v.containsKey('pid') && v.containsKey('wkt') && v.containsKey('name') && v.wkt.length() > 0) {
                         String pid = objectDao.createUserUploadedObject(v.wkt.toString(), v.name.toString(), '', null);
                         Objects object = objectDao.getObjectByPid(pid);
                         v.put('area_km', object.area_km)
                         v.put('pid', object.pid)
                     }
+
+                    //register species qid
+                    if (v.containsKey('q') && v.containsKey('bs') && v.q instanceof List) {
+
+                        PostMethod post = new PostMethod(v.bs + "/webportal/params")
+                        post.setRequestBody(v.toString())
+
+                        HttpClient client = new HttpClient()
+                        client.setConnectionTimeout(10000)
+                        client.setTimeout(600000)
+                        client.executeMethod(post)
+
+                        def r = JSON.parse(post.getResponseBodyAsString())
+
+                        v.put('q', 'qid:' + r)
+                    }
+
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
                 } else {
                     inputs.add(new InputParameter(name: k, value: v, task: task))

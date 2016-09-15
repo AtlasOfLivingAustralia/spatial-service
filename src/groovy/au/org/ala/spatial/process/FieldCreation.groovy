@@ -38,8 +38,6 @@ class FieldCreation extends SlaveProcess {
         // get layer info
         Map field = getField(fieldId)
 
-
-
         if (field == null) {
             task.err.put(System.currentTimeMillis(), 'field not found for ' + fieldId)
             return

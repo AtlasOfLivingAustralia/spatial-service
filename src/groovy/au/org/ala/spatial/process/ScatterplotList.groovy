@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.scatterplot.ScatterplotDTO
 import au.org.ala.scatterplot.ScatterplotStyleDTO
+import grails.converters.JSON
 import org.json.simple.JSONArray
 import org.json.simple.parser.JSONParser
 
@@ -29,8 +30,8 @@ class ScatterplotList extends SlaveProcess {
         JSONParser jp = new JSONParser()
         String area = jp.parse(task.input.area.toString())
 
-        def species1 = jp.parse(task.input.species1.toString())
-        def species2 = jp.parse(task.input.species2.toString())
+        def species1 = JSON.parse(task.input.species1.toString())
+        def species2 = JSON.parse(task.input.species2.toString())
         def layerList = (JSONArray) jp.parse(task.input.layer.toString())
 
         String[] layers = new String[layerList.size()]
@@ -45,12 +46,12 @@ class ScatterplotList extends SlaveProcess {
             layerUnits[idx] = l.environmentalvalueunits
         }
 
-        String fqs = species1.q.join("&fq=")
-        String fbs = "http://ala-cohen.it.csiro.au/biocache-service" //species1.bs
+        String fqs = species1.q
+        String fbs = species1.bs
         String fname = species1.name
 
-        String bqs = species2.q.join("&fq=")
-        String bbs = "http://ala-cohen.it.csiro.au/biocache-service" //species2.bs
+        String bqs = species2.q
+        String bbs = species2.bs
         String bname = species2.name
 
         ScatterplotDTO desc = new ScatterplotDTO(fqs, fbs, fname, bqs, bbs, bname, '', null, null, null, null, 20, null, null, null)
