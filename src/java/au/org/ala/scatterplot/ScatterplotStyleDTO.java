@@ -1,8 +1,11 @@
 package au.org.ala.scatterplot;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * Created by a on 10/03/2014.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ScatterplotStyleDTO {
 
     //appearance

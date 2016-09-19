@@ -19,24 +19,24 @@ import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.scatterplot.ScatterplotDTO
 import au.org.ala.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
-import org.json.simple.JSONArray
-import org.json.simple.parser.JSONParser
 
 class ScatterplotCreate extends SlaveProcess {
 
     void start() {
 
+        Boolean grid = task.input.grid.toString().toBoolean()
+
         //area to restrict (only interested in area.q part)
-        JSONParser jp = new JSONParser()
-        String area = jp.parse(task.input.area.toString())
+        def area = JSON.parse(task.input.area.toString())
 
         String layersServiceUrl = task.input.layersServiceUrl
 
-        Boolean grid = task.input.grid.toString().toBoolean()
-
         def species1 = JSON.parse(task.input.species1.toString())
         def species2 = JSON.parse(task.input.species2.toString())
-        def layerList = (JSONArray) jp.parse(task.input.layer.toString())
+        def layerList = JSON.parse(task.input.layer.toString())
+
+        def speciesArea1 = getSpeciesArea(species1, area)
+        def speciesArea2 = species2?.q ? getSpeciesArea(species2, area) : null
 
         String[] layers = new String[layerList.size()]
         String[] layerNames = new String[layerList.size()]
@@ -50,13 +50,13 @@ class ScatterplotCreate extends SlaveProcess {
             layerUnits[idx] = l.environmentalvalueunits
         }
 
-        String fqs = species1.q
-        String fbs = species1.bs
-        String fname = species1.name
+        String fqs = speciesArea1.q
+        String fbs = speciesArea1.bs
+        String fname = speciesArea1.name
 
-        String bqs = species2.q
-        String bbs = species2.bs
-        String bname = species2.name
+        String bqs = speciesArea2?.q
+        String bbs = speciesArea2?.bs
+        String bname = speciesArea2?.name
 
         ScatterplotDTO desc = new ScatterplotDTO(fqs, fbs, fname, bqs, bbs, bname, '', null, null, null, null, grid ? 20 : -1, null, null, null)
 

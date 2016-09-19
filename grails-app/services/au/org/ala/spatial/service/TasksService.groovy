@@ -19,8 +19,6 @@ import au.org.ala.layers.dto.Objects
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import grails.transaction.Transactional
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.methods.PostMethod
 
 class TasksService {
 
@@ -96,8 +94,8 @@ class TasksService {
     /*
     * add a task for 'name' and 'inputs'
     * 'input' is map of [inputName: inputValue]
-    *  'identifier' is used to tag the process for making this instance unique, e.g. hash of input
-     */
+    * 'identifier' is used to tag the process for making this instance unique, e.g. hash of input
+    */
 
     @Transactional(readOnly = false)
     def create(name, identifier, input) {
@@ -242,32 +240,28 @@ class TasksService {
                 }
             }
             input.each { k, v ->
-                if (v instanceof List) {
+                if (spec.input[k]?.type == 'area') {
+                    //register area pid
+                    def list = []
+                    v.each { a ->
+                        if (a instanceof Map && !a.containsKey('pid') && a.containsKey('wkt') && a.containsKey('name') && a.wkt.length() > 0) {
+                            String pid = objectDao.createUserUploadedObject(a.wkt.toString(), a.name.toString(), '', null);
+                            Objects object = objectDao.getObjectByPid(pid);
+                            a.put('area_km', object.area_km)
+                            a.put('pid', object.pid)
+                            list.push(a)
+                        } else {
+                            list.push(a)
+                        }
+                    }
+                    inputs.add(new InputParameter(name: k, value: (list as JSON).toString(), task: task))
+                } else if (v instanceof List) {
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
                 } else if (v instanceof Map) {
-
-                    //register area pid
-                    if (!v.containsKey('pid') && v.containsKey('wkt') && v.containsKey('name') && v.wkt.length() > 0) {
-                        String pid = objectDao.createUserUploadedObject(v.wkt.toString(), v.name.toString(), '', null);
-                        Objects object = objectDao.getObjectByPid(pid);
-                        v.put('area_km', object.area_km)
-                        v.put('pid', object.pid)
-                    }
-
                     //register species qid
                     if (v.containsKey('q') && v.containsKey('bs') && v.q instanceof List) {
 
-                        PostMethod post = new PostMethod(v.bs + "/webportal/params")
-                        post.setRequestBody(v.toString())
-
-                        HttpClient client = new HttpClient()
-                        client.setConnectionTimeout(10000)
-                        client.setTimeout(600000)
-                        client.executeMethod(post)
-
-                        def r = JSON.parse(post.getResponseBodyAsString())
-
-                        v.put('q', 'qid:' + r)
+                        v.put('q', 'qid:' + Util.makeQid(v))
                     }
 
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))

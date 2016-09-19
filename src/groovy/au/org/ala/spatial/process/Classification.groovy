@@ -15,12 +15,10 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.intersect.SimpleShapeFile
-import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.slave.Utils
+import grails.converters.JSON
 import org.apache.commons.io.FileUtils
-import org.json.simple.parser.JSONParser
 
 class Classification extends SlaveProcess {
 
@@ -29,22 +27,15 @@ class Classification extends SlaveProcess {
         slaveService.getFile('/modelling/aloc/aloc.jar')
 
         //list of layers
-        JSONParser jp = new JSONParser()
-        def layers = jp.parse(task.input.layer.toString())
+        def layers = JSON.parse(task.input.layer.toString())
         def envnameslist = new String[layers.size()]
         layers.eachWithIndex { l, idx ->
             envnameslist[idx] = l
         }
 
         //area to restrict
-        String area = jp.parse(task.input.area.toString())
-        String region = null
-        String envelope = null
-        if (area != null && area.startsWith("ENVELOPE")) {
-            envelope = LayerFilter.parseLayerFilters(area)
-        } else {
-            region = SimpleShapeFile.parseWKT(area)
-        }
+        def area = JSON.parse(task.input.area.toString())
+        def (region, envelope) = processArea(area[0])
 
         //target resolution
         def resolution = task.input.resolution

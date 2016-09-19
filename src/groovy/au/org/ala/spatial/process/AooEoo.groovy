@@ -20,22 +20,22 @@ import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
 import org.apache.commons.io.FileUtils
-import org.json.simple.parser.JSONParser
 
 class AooEoo extends SlaveProcess {
 
     void start() {
 
-        //area to restrict (only interested in area.q part)
-        JSONParser jp = new JSONParser()
-        String area = jp.parse(task.input.area.toString())
+        //area to restrict
+        def area = JSON.parse(task.input.area.toString())
 
         //number of target species
         def species = JSON.parse(task.input.species.toString())
 
+        def speciesArea = getSpeciesArea(species, area[0])
+
         new File(getTaskPath()).mkdirs()
 
-        def pointCount = facetCount("point-0.02", species)
+        def pointCount = facetCount("point-0.02", speciesArea)
         // aoo = 2km * 2km * number of 2km by 2km grid cells with an occurrence
         double aoo = 2.0 * 2.0 * pointCount
 

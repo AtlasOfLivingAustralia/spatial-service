@@ -32,6 +32,7 @@ import grails.converters.JSON
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.gdal.ogr.Geometry
 import org.json.simple.JSONArray
 import org.json.simple.parser.JSONParser
 
@@ -915,6 +916,83 @@ class SlaveProcess {
         }
 
         speciesList
+    }
+
+    def getAreaWkt(area) {
+        if (area.wkt) {
+            return area.wkt
+        }
+
+        if (area.pid) {
+            return getWkt(area.pid)
+        }
+
+        if (area.bbox) {
+            return "POLYGON ((${area.bbox[0]} ${area.bbox[1]},${area.bbox[0]} ${area.bbox[3]}," +
+                    "${area.bbox[2]} ${area.bbox[3]},${area.bbox[2]} ${area.bbox[1]},${area.bbox[0]} ${area.bbox[1]}))"
+        }
+
+        return null
+    }
+
+    def processArea(area) {
+        def wkt = getAreaWkt(area)
+
+        def region = null
+        def envelope = null
+        if (wkt.startsWith("ENVELOPE")) {
+            envelope = LayerFilter.parseLayerFilters(wkt)
+        } else {
+            region = SimpleShapeFile.parseWKT(wkt)
+        }
+
+        [region, envelope]
+    }
+
+    def getSpeciesArea(species, area) {
+        if (species.q.startsWith('qid:') && species.q.substring(4).isLong()) {
+            def qid = Util.getQid(species.bs, species.q.substring(4))
+            species.putAll(qid)
+        }
+
+        def q = [species.q] as Set
+        if (species.fq) q.addAll(species.fq)
+        if (species.fqs) q.addAll(species.fqs)
+
+        if (area.q) {
+            q.addAll(area.q)
+        } else if (area.wkt) {
+            if (!species.wkt) {
+                species.wkt = area.wkt
+            } else {
+                Geometry g1 = Geometry.CreateFromWkt(species.wkt)
+                Geometry g2 = Geometry.CreateFromWkt(area.wkt)
+
+                try {
+                    Geometry intersection = g1.Intersection(g2)
+                    if (intersection.Area() > 0) {
+                        species.wkt = intersection.ExportToWkt()
+                    } else {
+                        species.wkt = null
+                        q = ["-*:*"]
+                    }
+                } catch (Exception e) {
+                    species.wkt = null
+                    q = ["-*:*"]
+                }
+            }
+        }
+
+        if (q.size()) q.remove("*:*")
+
+        species.q = q[0]
+        if (q.size() > 1) species.fq = q.toList().subList(1, q.size())
+
+        species.q = "qid:" + Util.makeQid(species)
+        species.fq = null
+        species.wkt = null
+
+        species
     }
 
 }

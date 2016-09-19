@@ -16,31 +16,27 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.PrintMapComposer
+import grails.converters.JSON
 import org.apache.commons.io.FileUtils
-import org.json.simple.JSONArray
-import org.json.simple.parser.JSONParser
 
 class MapImage extends SlaveProcess {
 
     void start() {
 
-        ///area to restrict (area.q, area.pid)
-        //TODO: environmental envelope has no area.pid
-        JSONParser jp = new JSONParser()
-
-        JSONArray bboxJSON = (JSONArray) jp.parse(task.input.bbox.toString())
+        ///area to restrict
+        def bboxJSON = JSON.parse(task.input.bbox.toString())
         double[] bbox = new double[4]
         for (int i = 0; i < bboxJSON.size(); i++) {
             bbox[i] = (Double) bboxJSON.get(i)
         }
 
-        JSONArray windowSizeJSON = (JSONArray) jp.parse(task.input.windowSize.toString())
+        def windowSizeJSON = JSON.parse(task.input.windowSize.toString())
         int[] windowSize = new int[2]
         for (int i = 0; i < windowSizeJSON.size(); i++) {
             windowSize[i] = windowSizeJSON.get(i).toString().toInteger()
         }
 
-        JSONArray mapLayersJSON = (JSONArray) jp.parse(task.input.mapLayers.toString())
+        def mapLayersJSON = JSON.parse(task.input.mapLayers.toString())
         List<String> mapLayers = new ArrayList<String>()
         for (int i = 0; mapLayersJSON != null && i < mapLayersJSON.size(); i++) {
             mapLayers[i] = mapLayersJSON.get(i).toString()

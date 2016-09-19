@@ -16,8 +16,6 @@
 package au.org.ala.spatial.process
 
 import au.com.bytecode.opencsv.CSVReader
-import au.org.ala.layers.intersect.SimpleShapeFile
-import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.util.OccurrenceData
 import grails.converters.JSON
 import org.apache.commons.io.FileUtils
@@ -26,14 +24,8 @@ class GDMStep1 extends SlaveProcess {
 
     void start() {
 
-        String area = JSON.parse(task.input.area.toString())
-        String region = null
-        String envelope = null
-        if (area != null && area.startsWith("ENVELOPE")) {
-            envelope = LayerFilter.parseLayerFilters(area)
-        } else {
-            region = SimpleShapeFile.parseWKT(area)
-        }
+        def area = JSON.parse(task.input.area.toString())
+        def (region, envelope) = processArea(area[0])
 
         def layers = JSON.parse(task.input.layer.toString())
         def envnameslist = new String[layers.size()]

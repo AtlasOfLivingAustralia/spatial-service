@@ -15,38 +15,28 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.intersect.SimpleRegion
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.analysis.layers.OccurrenceDensity
-import au.org.ala.spatial.analysis.layers.Records
-import au.org.ala.spatial.analysis.layers.SitesBySpecies
-import au.org.ala.spatial.analysis.layers.SpeciesDensity
 import grails.converters.JSON
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.NameValuePair
 import org.apache.commons.httpclient.methods.PostMethod
-import org.json.simple.parser.JSONParser
-
-import java.text.SimpleDateFormat
 
 class GeneratePoints extends SlaveProcess {
 
     void start() {
 
-        //area to restrict (only interested in area.q part)
-        JSONParser jp = new JSONParser()
-        def area = jp.parse(task.input.area.toString())
+        //area to restrict
+        def area = JSON.parse(task.input.area.toString())
 
         def distance = task.input.distance.toString().toDouble()
         def userId = task.input.userId
         def sandboxBiocacheServiceUrl = task.input.sandboxBiocacheServiceUrl
         def sandboxHubUrl = task.input.sandboxHubUrl
 
-        double[] bbox = area.bbox
+        double[] bbox = area[0].bbox
 
-        def wkt = getWkt(areas.pid)
+        def wkt = getWkt(area[0].pid)
         def simpleArea = SimpleShapeFile.parseWKT(wkt)
 
         // dump the species data to a file

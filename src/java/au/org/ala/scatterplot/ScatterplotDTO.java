@@ -7,6 +7,7 @@ package au.org.ala.scatterplot;
 import au.com.bytecode.opencsv.CSVReader;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.io.Serializable;
 import java.io.StringReader;
@@ -14,6 +15,7 @@ import java.io.StringReader;
 /**
  * @author Adam
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ScatterplotDTO implements Serializable {
 
     private static Logger logger = Logger.getLogger(ScatterplotDTO.class);
@@ -213,7 +215,6 @@ public class ScatterplotDTO implements Serializable {
         this.backgroundOccurrencesBs = backgroundOccurrencesBs;
     }
 
-
     public boolean isEnvGrid() {
         return gridDivisions > 0;
     }
@@ -262,7 +263,7 @@ public class ScatterplotDTO implements Serializable {
         if (layers != null && layers.length >= 2) {
             this.layers = layers;
         } else if (layers != null && layers.length >= 1) {
-            setLayers(layers[0]);
+            setLayersFromString(layers[0]);
         }
     }
 
@@ -270,7 +271,7 @@ public class ScatterplotDTO implements Serializable {
         if (layernames != null && layernames.length >= 2) {
             this.layernames = layernames;
         } else if (layernames != null && layernames.length >= 1) {
-            setLayernames(layernames[0]);
+            setLayernamesFromString(layernames[0]);
         }
     }
 
@@ -278,7 +279,7 @@ public class ScatterplotDTO implements Serializable {
         if (layernames != null && layerunits.length >= 2) {
             this.layerunits = layerunits;
         } else if (layerunits != null && layerunits.length >= 1) {
-            setLayerunits(layerunits[0]);
+            setLayerunitsFromString(layerunits[0]);
         }
     }
 
@@ -286,7 +287,7 @@ public class ScatterplotDTO implements Serializable {
         return layers;
     }
 
-    public void setLayers(String layers) {
+    public void setLayersFromString(String layers) {
         this.layers = layers.split(":");
     }
 
@@ -301,7 +302,7 @@ public class ScatterplotDTO implements Serializable {
         return layerunits;
     }
 
-    public void setLayernames(String layernames) {
+    public void setLayernamesFromString(String layernames) {
         try {
             CSVReader reader = new CSVReader(new StringReader(layernames));
 
@@ -311,7 +312,7 @@ public class ScatterplotDTO implements Serializable {
         }
     }
 
-    public void setLayerunits(String layerunits) {
+    public void setLayerunitsFromString(String layerunits) {
         try {
             CSVReader reader = new CSVReader(new StringReader(layerunits));
 

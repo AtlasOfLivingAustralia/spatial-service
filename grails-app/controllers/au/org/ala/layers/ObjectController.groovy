@@ -143,7 +143,7 @@ class ObjectController {
     def objectsInArea(String id) {
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
 
-        String wkt = params.wkt;
+        String wkt = params.wkt ?: 'OBJECT(' + params.pid + ')';
 
         if (wkt.startsWith("ENVELOPE(")) {
             //get results of each filter

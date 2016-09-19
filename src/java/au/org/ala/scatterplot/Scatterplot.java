@@ -12,12 +12,13 @@ import au.org.ala.layers.legend.LegendObject;
 import au.org.ala.layers.util.LayerFilter;
 import au.org.ala.layers.util.Occurrences;
 import au.org.ala.layers.util.SpatialUtil;
-import com.thoughtworks.xstream.persistence.FilePersistenceStrategy;
-import com.thoughtworks.xstream.persistence.PersistenceStrategy;
-import com.thoughtworks.xstream.persistence.XmlArrayList;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartRenderingInfo;
 import org.jfree.chart.JFreeChart;
@@ -205,7 +206,8 @@ public class Scatterplot {
         double[] old_annotation = (scatterplotDataDTO != null
                 && scatterplotStyleDTO.getPrevSelection() != null) ?
                 scatterplotStyleDTO.getPrevSelection() : null;
-        if (scatterplotStyleDTO.getSelection() != null && old_annotation != null) {
+        if (scatterplotStyleDTO.getSelection() != null && old_annotation != null &&
+                scatterplotStyleDTO.getSelection().length == 4 && old_annotation.length == 4) {
             annotation_change = scatterplotStyleDTO.getSelection()[0] != old_annotation[0]
                     || scatterplotStyleDTO.getSelection()[1] != old_annotation[1]
                     || scatterplotStyleDTO.getSelection()[2] != old_annotation[2]
@@ -249,7 +251,7 @@ public class Scatterplot {
             plot.removeAnnotation(annotation);
         }
 
-        if (scatterplotStyleDTO.getSelection() != null) {
+        if (scatterplotStyleDTO.getSelection() != null && scatterplotStyleDTO.getSelection().length > 0) {
             annotation = new XYBoxAnnotation(
                     scatterplotStyleDTO.getSelection()[1]
                     , scatterplotStyleDTO.getSelection()[0]
@@ -284,11 +286,18 @@ public class Scatterplot {
             }
 
             if (aaDataset != null) {
-                plot.setRenderer(getActiveAreaRenderer());
+                try {
+                    plot.setRenderer(getActiveAreaRenderer());
 
-                int datasetCount = plot.getDatasetCount();
-                plot.setDataset(datasetCount, xyzDataset);
-                plot.setRenderer(datasetCount, getRenderer(legend, seriesColours, seriesNames, scatterplotDataDTO.getSeriesValues()));
+                    int datasetCount = plot.getDatasetCount();
+                    plot.setDataset(datasetCount, xyzDataset);
+                    plot.setRenderer(datasetCount, getRenderer(legend, seriesColours, seriesNames, scatterplotDataDTO.getSeriesValues()));
+                } catch (Exception e) {
+
+                    XYShapeRenderer sr = getRenderer(legend, seriesColours, seriesNames, scatterplotDataDTO.getSeriesValues());
+                    plot.setRenderer(sr);
+                }
+
             } else {
                 XYShapeRenderer sr = getRenderer(legend, seriesColours, seriesNames, scatterplotDataDTO.getSeriesValues());
                 plot.setRenderer(sr);
@@ -675,10 +684,13 @@ public class Scatterplot {
         ArrayList<double[]> records = new ArrayList<double[]>(points.length);
         double[][] d = scatterplotDataDTO.getData();
         for (int j = 0; j < d.length; j++) {
-            if (!Double.isNaN(d[j][col1]) && !Double.isNaN(d[j][col2])
-                    && region.isWithin(points[j * 2], points[j * 2 + 1])) {
-                double[] r = {d[j][col1], d[j][col2], 0};
-                records.add(r);
+            try {
+                if (!Double.isNaN(d[j][col1]) && !Double.isNaN(d[j][col2])
+                        && region.isWithin(points[j * 2], points[j * 2 + 1])) {
+                    double[] r = {d[j][col1], d[j][col2], 0};
+                    records.add(r);
+                }
+            } catch (Exception e) {
             }
         }
         if (records.size() > 0) {
@@ -1460,25 +1472,53 @@ public class Scatterplot {
 
 
     public void save(File file) {
-        PersistenceStrategy strategy = new FilePersistenceStrategy(file.getParentFile());
-        List list = new XmlArrayList(strategy);
-        list.add(scatterplotDTO);
-        list.add(scatterplotStyleDTO);
-        list.add(scatterplotDataDTO);
+        List list = new ArrayList();
         list.add(dir);
         list.add(resolution);
+
+        try {
+            //transform data for JSON
+            for (int i = 0; i < scatterplotDataDTO.data.length; i++) {
+                double d1 = scatterplotDataDTO.data[i][0];
+                double d2 = scatterplotDataDTO.data[i][1];
+                if (Double.isNaN(d1) || Double.isInfinite(d1)) {
+                    scatterplotDataDTO.data[i][0] = Double.MIN_VALUE;
+                }
+                if (Double.isNaN(d2) || Double.isInfinite(d2)) {
+                    scatterplotDataDTO.data[i][1] = Double.MIN_VALUE;
+                }
+            }
+
+            FileUtils.write(new File(file.getPath() + ".dto"), JSONObject.fromObject(scatterplotDTO).toString());
+            FileUtils.write(new File(file.getPath() + ".style"), JSONObject.fromObject(scatterplotStyleDTO).toString());
+            FileUtils.write(new File(file.getPath() + ".data"), JSONObject.fromObject(scatterplotDataDTO).toString());
+            FileUtils.write(file, JSONArray.fromObject(list).toString());
+        } catch (Exception e) {
+            logger.error("failed to save scatterplot data: " + file, e);
+        }
     }
 
     public static Scatterplot load(File file) {
         try {
-            PersistenceStrategy strategy = new FilePersistenceStrategy(file.getParentFile());
-            List list = new XmlArrayList(strategy);
+            JSONArray jo = JSONArray.fromObject(FileUtils.readFileToString(file));
 
-            Scatterplot scatterplot = new Scatterplot((ScatterplotDTO) list.get(0),
-                    (ScatterplotStyleDTO) list.get(1),
-                    (ScatterplotDataDTO) list.get(2),
-                    (String) list.get(3),
-                    (String) list.get(4));
+            //create ObjectMapper instance
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            //convert json string to object
+            ScatterplotDTO dto = objectMapper.readValue(new FileReader(new File(file.getPath() + ".dto")), ScatterplotDTO.class);
+            ScatterplotStyleDTO style = objectMapper.readValue(new FileReader(new File(file.getPath() + ".style")), ScatterplotStyleDTO.class);
+            ScatterplotDataDTO data = objectMapper.readValue(new FileReader(new File(file.getPath() + ".data")), ScatterplotDataDTO.class);
+
+            //transform data from JSON
+            for (int i = 0; i < data.data.length; i++) {
+                if (data.data[i][0] == Double.MIN_VALUE)
+                    data.data[i][0] = Double.NaN;
+                if (data.data[i][1] == Double.MIN_VALUE)
+                    data.data[i][1] = Double.NaN;
+            }
+
+            Scatterplot scatterplot = new Scatterplot(dto, style, data, jo.get(0).toString(), jo.get(1).toString());
 
             return scatterplot;
 

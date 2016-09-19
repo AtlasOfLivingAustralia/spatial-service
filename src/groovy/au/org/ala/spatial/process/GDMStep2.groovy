@@ -19,8 +19,6 @@ import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.layers.client.Client
 import au.org.ala.layers.dao.LayerDAO
 import au.org.ala.layers.intersect.IniReader
-import au.org.ala.layers.intersect.SimpleShapeFile
-import au.org.ala.layers.util.LayerFilter
 import grails.converters.JSON
 import org.apache.commons.io.FileUtils
 import org.jfree.chart.ChartFactory
@@ -59,14 +57,7 @@ class GDMStep2 extends SlaveProcess {
         Properties props = new Properties();
         props.load(new FileInputStream(getTaskPath() + "ala.properties"));
 
-        String area = JSON.parse(task.input.area.toString())
-        String region = null
-        String envelope = null
-        if (area != null && area.startsWith("ENVELOPE")) {
-            envelope = LayerFilter.parseLayerFilters(area)
-        } else {
-            region = SimpleShapeFile.parseWKT(area)
-        }
+        def area = JSON.parse(task.input.area.toString())
 
         def layers = JSON.parse(task.input.layer.toString())
         def envnameslist = new String[layers.size()]
@@ -85,7 +76,7 @@ class GDMStep2 extends SlaveProcess {
         // 7.1 generate/display charts
         generateCharts(getTaskPath())
 
-        generateMetadata(envnameslist, area, task.id, getTaskPath())
+        generateMetadata(envnameslist, area[0].area_km, task.id, getTaskPath())
 
         // 7.2 generate/display transform grid
         Iterator<File> files = FileUtils.iterateFiles(new File(getTaskPath()), ["grd"], false);

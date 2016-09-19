@@ -15,9 +15,8 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.layers.grid.GridCutter
 import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.intersect.SimpleRegion
-import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.analysis.layers.OccurrenceDensity
 import au.org.ala.spatial.analysis.layers.Records
 import au.org.ala.spatial.analysis.layers.SitesBySpecies
@@ -31,11 +30,16 @@ class PointsToGrid extends SlaveProcess {
 
     void start() {
 
+        def resolution = task.input.resolution.toString()
+
         //area to restrict (only interested in area.q part)
         def area = JSON.parse(task.input.area.toString())
+        def (region, envelope) = processArea(area[0])
 
         //number of target species
         def species = JSON.parse(task.input.species.toString())
+
+        def speciesArea = getSpeciesArea(species, area)
 
         new File(getTaskPath()).mkdirs()
 
@@ -54,17 +58,15 @@ class PointsToGrid extends SlaveProcess {
             return;
         }
 
-        double[] bbox = new double[4] // = area.bbox
-        bbox[0] = -180
-        bbox[1] = -90
-        bbox[2] = 180
-        bbox[3] = 90
+        double[] bbox = new double[4]
+        bbox[0] = area.bbox[0][0];
+        bbox[1] = area.bbox[0][1];
+        bbox[2] = area.bbox[0][2];
+        bbox[3] = area.bbox[0][3];
 
         // dump the species data to a file
         task.message = "getting species data"
-        Records records = null;
-
-        records = new Records(species.bs.toString(), species.q, bbox, null, null);
+        Records records = new Records(speciesArea.bs.toString(), speciesArea.q.toString(), bbox, null, null);
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90;
@@ -78,10 +80,6 @@ class PointsToGrid extends SlaveProcess {
         miny -= gridCellSize;
         maxx += gridCellSize;
         maxy += gridCellSize;
-//        bbox[0] = Math.max(bbox[0], minx);
-//        bbox[2] = Math.min(bbox[2], maxx);
-//        bbox[1] = Math.max(bbox[1], miny);
-//        bbox[3] = Math.min(bbox[3], maxy);
         bbox[0] = minx
         bbox[2] = maxx
         bbox[1] = miny
@@ -91,11 +89,6 @@ class PointsToGrid extends SlaveProcess {
         int occurrenceCount = records.getRecordsSize();
         int boundingboxcellcount = (int) ((bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) / (gridCellSize * gridCellSize));
         String error = null;
-//            if (boundingboxcellcount > AlaspatialProperties.getAnalysisLimitGridCells()) {
-//                error = "Too many potential output grid cells.  Decrease area or increase resolution.";
-//            } else if (occurrenceCount > AlaspatialProperties.getAnalysisLimitOccurrences()) {
-//                error = "Too many occurrences for the selected species.  " + occurrenceCount + " occurrences found, must be less than " + AlaspatialProperties.getAnalysisLimitOccurrences();
-//            } else
         if (occurrenceCount == 0) {
             error = "No occurrences found";
         }
@@ -104,14 +97,12 @@ class PointsToGrid extends SlaveProcess {
             return;
         }
 
-//            String envelopeFile = AlaspatialProperties.getAnalysisWorkingDir() + "envelope_" + getName();
+        String envelopeFile = getTaskPath() + "envelope_" + task.id
         Grid envelopeGrid = null;
-//            if (envelope != null) {
-//                GridCutter.makeEnvelope(envelopeFile, AlaspatialProperties.getLayerResolutionDefault(), envelope, AlaspatialProperties.getAnalysisLimitGridCells());
-//                envelopeGrid = new Grid(envelopeFile);
-//            }
-
-        SimpleRegion region = SimpleShapeFile.parseWKT("POLYGON((-180 -90,-180 90,180 90,180 -90, -180 -90))");
+        if (envelope != null) {
+            GridCutter.makeEnvelope(envelopeFile, resolution, envelope, Long.MAX_VALUE);
+            envelopeGrid = new Grid(envelopeFile);
+        }
 
         if (sitesBySpecies) {
             task.message = "building sites by species matrix for " + records.getSpeciesSize() + " species in " + records.getRecordsSize() + " occurrences"

@@ -16,13 +16,10 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.layers.grid.GridCutter
-import au.org.ala.layers.intersect.SimpleShapeFile
-import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.slave.Utils
 import grails.converters.JSON
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-import org.json.simple.parser.JSONParser
 
 class Maxent extends SlaveProcess {
 
@@ -31,8 +28,7 @@ class Maxent extends SlaveProcess {
         slaveService.getFile('/modelling/maxent/maxent.jar')
 
         //list of layers
-        JSONParser jp = new JSONParser()
-        def layers = jp.parse(task.input.layer.toString())
+        def layers = JSON.parse(task.input.layer.toString())
         def contextualLayers = []
         layers.each { layer ->
             if (layer.endsWith('_aloc')) {
@@ -46,20 +42,16 @@ class Maxent extends SlaveProcess {
         }
 
         //area to restrict
-        String area = jp.parse(task.input.area.toString())
-        String region = null
-        String envelope = null
-        if (area != null && area.startsWith("ENVELOPE")) {
-            envelope = LayerFilter.parseLayerFilters(area)
-        } else {
-            region = SimpleShapeFile.parseWKT(area)
-        }
+        def area = JSON.parse(task.input.area.toString())
+        def (region, envelope) = processArea(area[0])
 
         //target resolution
         def resolution = task.input.resolution
 
         //number of target species
         def species = JSON.parse(task.input.species.toString())
+
+        def speciesArea = getSpeciesArea(species, area)
 
         def jackknife = task.input.jackknife.toString().toBoolean()
         def responseCurves = task.input.responseCurves.toString().toBoolean()
@@ -68,7 +60,7 @@ class Maxent extends SlaveProcess {
         new File(getTaskPath()).mkdirs()
 
         def cutDataPath = cutGrid((layers as List).toArray(new String[layers.size()]), resolution.toString(), region, envelope, null);
-        def speciesPath = downloadSpecies(species)
+        def speciesPath = downloadSpecies(speciesArea)
 
         if (speciesPath.size() == 0) {
             //TODO: error
@@ -103,9 +95,9 @@ class Maxent extends SlaveProcess {
         } else {
             def replaceMap = [:]
 
-            replaceMap.put("Maxent model for species", "Maxent model for " + species.name)
+            replaceMap.put("Maxent model for species", "Maxent model for " + speciesArea.name)
 
-            String paramlist = "Model reference number: " + task.id + "<br>Species: " + species.name + "<br>Layers: <ul>";
+            String paramlist = "Model reference number: " + task.id + "<br>Species: " + speciesArea.name + "<br>Layers: <ul>";
 
             layers.each {
                 def field = getField(it)

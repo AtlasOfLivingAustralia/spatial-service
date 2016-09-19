@@ -1,6 +1,6 @@
 {
-  "name": "PointsToGrid",
-  "description": "Points to grid.",
+  "name": "GeneratePoints",
+  "description": "Generate points.",
   "isBackground": false,
   "version": 1.0,
   "private": {

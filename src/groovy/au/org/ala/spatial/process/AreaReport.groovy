@@ -15,25 +15,30 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.AreaReportPDF
-import org.json.simple.JSONObject
-import org.json.simple.parser.JSONParser
+import grails.converters.JSON
 
 class AreaReport extends SlaveProcess {
 
     void start() {
 
-        //area to restrict (area.q, area.pid)
-        //TODO: environmental envelope has no area.pid
-        JSONParser jp = new JSONParser()
-        JSONObject area = (JSONObject) jp.parse(task.input.area.toString())
+        def area = JSON.parse(task.input.area.toString())
+
+        //qid for this area
+        def q = "qid:" + Util.makeQid([
+                bs: grailsApplication.config.biocacheServiceUrl.toString(),
+                q : area[0].q,
+                fq: area[0].q.size() > 1 ? area[0].q.toList().subList(1, area[0].q.size()) : []
+        ])
 
         //test for pid
         new AreaReportPDF(grailsApplication.config.geoserver.url.toString(),
                 grailsApplication.config.biocacheServiceUrl.toString(),
-                area.q.toString(),
-                area.pid.toString(),
-                area.name.toString(),
+                q,
+                area[0].pid.toString(),
+                area[0].name.toString(),
+                area[0].area_km.toString(),
                 null, task.history,
                 grailsApplication.config.layersService.url.toString(),
                 null, grailsApplication.config.wkhtmltopdf.path.toString(),
