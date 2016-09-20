@@ -309,7 +309,7 @@ class ShapesController {
         String userId = params.containsKey("user_id") ? params.user_id : null;
         String apiKey = params.containsKey("api_key") ? params.api_key : null;
         String name = params.containsKey("name") ? params.name : null;
-        String description = params.containsKey("description") ? params.api_key : null;
+        String description = params.containsKey("description") ? params.description : null;
 
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>();
