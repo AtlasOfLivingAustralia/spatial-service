@@ -48,7 +48,7 @@ class TasksService {
     }
 
     def getStatus(Task task) {
-        def map = [status: task.status, message: task.message, id: task.id]
+        def map = [status: task.status, message: task.message, id: task.id, name: task.name]
 
         if (task.history) {
             map.put('history', task.history)
