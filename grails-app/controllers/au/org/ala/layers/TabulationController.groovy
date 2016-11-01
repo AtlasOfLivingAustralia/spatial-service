@@ -40,12 +40,25 @@ class TabulationController {
         render tabulationDao.listTabulations() as JSON
     }
 
+    def single(String fid, String pid) {
+        if ("single".equalsIgnoreCase(fid)) {
+            fid = pid
+            pid = params.containsKey('wkt') ? params.wkt : ''
+        }
+        render tabulationDao.getTabulationSingle(fid, pid) as JSON
+    }
 
     def show(String func1, String fid1, String fid2, String type) {
         String wkt = params.containsKey('wkt') ? params.wkt : ''
 
+        if ("single".equalsIgnoreCase(func1)) {
+            func1 = fid1
+            fid1 = fid2
+            fid2 = null
+        }
+
         if ("data".equals(func1)) {
-            render tabulationService.tabulationDao.getTabulation(fid1, fid2, null) as JSON
+            render tabulationService.tabulationDao.getTabulation(fid1, fid2, wkt) as JSON
         } else {
             String data = tabulationService.generateTabulationCSVHTML(fid1, fid2, wkt, func1, "html".equals(type) ? "csv" : type);
 
@@ -86,5 +99,4 @@ class TabulationController {
             }
         }
     }
-
 }

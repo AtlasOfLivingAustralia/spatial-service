@@ -39,6 +39,6 @@ class SearchController {
             render status: 404, text: 'Failed to parse search parameter q'
         }
 
-        render text: (searchDao.findByCriteria(q, limit) as JSON).toString(), contentType: 'application/json';
+        render searchDao.findByCriteria(q, limit) as JSON
     }
 }

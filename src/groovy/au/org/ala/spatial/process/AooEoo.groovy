@@ -59,7 +59,8 @@ class AooEoo extends SlaveProcess {
             if (eoo > 0) {
 
                 FileUtils.writeStringToFile(new File(getTaskPath() + "Area of Occupancy.wkt"), wkt)
-                addOutput("areas", "Area of Occupancy.wkt", true)
+                def values = [file: "Area of Occupancy.wkt", name: "Area of Occupancy", description: "Created by AOO and EOO Tool"]
+                addOutput("areas", values.toString(), true)
 
                 metadata = "<html><body>" +
                         "<div class='aooeoo'>" +

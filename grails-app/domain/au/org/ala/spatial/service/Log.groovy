@@ -15,34 +15,19 @@
 
 package au.org.ala.spatial.service
 
-class Task {
+class Log {
 
     // date/time created
     Date created = new Date(System.currentTimeMillis())
 
-    // name identifier
-    String name
+    // category 1
+    String category1
 
-    // log
-    Map history = [:]
+    // category 2
+    String category2
 
-    // tag
-    String tag
-
-    // 0 = in_queue, 1 = running, 2 = cancelled, 3 = error, 4 = finished
-    Integer status = 0
-
-    // status message
-    String message
-
-    // status base url
-    String url
-
-    // running slave
-    String slave
-
-    // email
-    String email
+    // data
+    String data
 
     // userId
     String userId
@@ -50,29 +35,21 @@ class Task {
     // sessionId
     String sessionId
 
-    static hasOne = [parent: Task]
-    static hasMany = [children: Task, input: InputParameter, output: OutputParameter]
-
     static constraints = {
-        message nullable: true
-        url nullable: true
-        slave nullable: true
-        email nullable: true
-        tag nullable: true
+        data nullable: true
         userId nullable: true
         sessionId nullable: true
+        category1 nullable: true
+        category2 nullable: true
     }
 
     static mapping = {
-        tag type: 'text'
-        url type: 'text'
-        email type: 'text'
-        slave type: 'text'
-        message type: 'text'
+        data type: 'text'
 
-        userId index: 'task_userId_idx'
-        sessionId index: 'task_sessionId_idx'
-        name index: 'task_name_idx'
+        userId index: 'log_userId_idx'
+        sessionId index: 'log_sessionId_idx'
+        category1 index: 'log_category1_idx'
+        category2 index: 'log_category1_idx'
 
         version false
     }

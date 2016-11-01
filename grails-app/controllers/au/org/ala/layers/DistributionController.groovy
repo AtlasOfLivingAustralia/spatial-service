@@ -99,12 +99,24 @@ class DistributionController {
 
             addImageUrls(distributions)
 
-            render distributions.collect { map ->
-                map.toMap().findAll {
-                    i -> i.value != null && !"class".equals(i.key)
-                }
-            } as JSON
+            render distributions as JSON
         }
+    }
+
+    def listLsids() {
+        List distributions = distributionDao.queryDistributions(null, null, null,
+                null, null, null, null, null, null, null, null, null,
+                null, null, Distribution.EXPERT_DISTRIBUTION, null, null)
+
+        def lsids = [:]
+
+        distributions.each { map ->
+            def c = 1;
+            if (lsids.containsKey(map.lsid)) c += lsids.get(map.lsid)
+            lsids.put(map.lsid, c)
+        }
+
+        render lsids as JSON
     }
 
     /**

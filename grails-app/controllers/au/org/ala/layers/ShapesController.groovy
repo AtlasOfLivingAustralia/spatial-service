@@ -231,7 +231,7 @@ class ShapesController {
     }
 
     def uploadWkt(String id) {
-        def namesearch = params.containsKey('namesearch') ? params.namesearch : false
+        def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
         //id can be null
         render processWKTRequest(request.JSON, id, namesearch) as JSON
@@ -246,7 +246,8 @@ class ShapesController {
     }
 
     def updateWithWKT(Integer pid) {
-        render processWKTRequest(request.JSON, pid, params.containsKey('namesearch') ? params.namesearch : "true") as JSON
+        def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
+        render processWKTRequest(request.JSON, pid, namesearch) as JSON
     }
 
     def uploadShapeFile() {
@@ -631,7 +632,7 @@ class ShapesController {
             reqBodyParser.addParameter("focal_length", Double.class, true);
             reqBodyParser.addParameter("api_key", String.class, false);
 
-            if (reqBodyParser.parseJSON(json)) {
+            if (reqBodyParser.parseJSON(request.JSON)) {
 
                 String object_id = (String) reqBodyParser.getParsedValue("object_id");
                 String name = (String) reqBodyParser.getParsedValue("name");

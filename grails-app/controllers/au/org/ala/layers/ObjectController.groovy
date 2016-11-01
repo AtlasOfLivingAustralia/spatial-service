@@ -20,6 +20,8 @@ import au.org.ala.layers.util.LayerFilter
 import au.org.ala.layers.util.SpatialConversionUtils
 import grails.converters.JSON
 
+import java.util.zip.GZIPOutputStream
+
 class ObjectController {
 
     def fieldDao
@@ -128,6 +130,20 @@ class ObjectController {
         Integer pageSize = params.containsKey('pageSize') ? params.pageSize as Integer : -1
 
         render objectDao.getObjectsById(id, start, pageSize) as JSON
+    }
+
+    def fieldObjectsCsv(String id) {
+        try {
+            response.setContentType("text/csv");
+            response.setHeader("Content-Disposition", "attachment; filename=\"objects-" + id + ".csv.gz\"");
+            GZIPOutputStream gzipped = new GZIPOutputStream(response.getOutputStream());
+            objectDao.writeObjectsToCSV(gzipped, id);
+            gzipped.flush();
+            gzipped.close();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            response.sendError(500, "Problem performing download");
+        }
     }
 
     def fieldObjectsPoint(String id, Double lat, Double lng) {

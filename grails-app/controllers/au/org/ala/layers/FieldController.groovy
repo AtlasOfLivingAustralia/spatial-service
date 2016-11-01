@@ -18,7 +18,6 @@ package au.org.ala.layers
 import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.ObjectDAO
 import au.org.ala.layers.dto.Field
-import au.org.ala.layers.dto.Layer
 import au.org.ala.layers.dto.Objects
 import grails.converters.JSON
 
@@ -31,7 +30,7 @@ class FieldController {
         if (params.containsKey('q')) {
             search()
         } else {
-            render fieldDao.getFields().collect { it.toMap().findAll { it.value != null } } as JSON
+            render fieldDao.getFields() as JSON
         }
     }
 
@@ -40,7 +39,7 @@ class FieldController {
      * @return
      */
     def db() {
-        render fieldDao.getFieldsByDB().collect { it.toMap().findAll { it.value != null } } as JSON
+        render fieldDao.getFieldsByDB() as JSON
     }
 
     /**
@@ -81,28 +80,10 @@ class FieldController {
 
     def search() {
         def q = params.containsKey('q') ? params.q.toString() : ''
-        render formatFields(fieldDao.getFieldsByCriteria(q), params.containsKey('q')) as JSON
+        render fieldDao.getFieldsByCriteria(q), params.containsKey('q') as JSON
     }
 
     def searchLayers() {
-        render formatLayers(fieldDao.getLayersByCriteria(params.q.toString())) as JSON
-    }
-
-    private List formatFields(List list, boolean includeLayer = false) {
-        list.collect { Field f ->
-            Map m = [name             : f.getName(), id: f.getId(), sid: f.getSid(), sname: f.getSname(), sdesc: f.getSdesc(),
-                     spid             : f.getSpid(), addtomap: f.isAddtomap(), enabled: f.isEnabled(), analysis: f.isAnalysis(),
-                     defaultlayer     : f.isDefaultlayer(), desc: f.getDesc(), indb: f.isIndb(), intersect: f.isIntersect(),
-                     namesearch       : f.isNamesearch(), layerbranch: f.isLayerbranch(), type: f.getType(),
-                     number_of_objects: f.getNumber_of_objects(), wms: f.getWms()]
-            if (includeLayer) m += [layer: f.getLayer().toMap()]
-            m
-        }
-    }
-
-    private List formatLayers(List list) {
-        list.collect { Layer l ->
-            l.toMap()
-        }
+        render fieldDao.getLayersByCriteria(params.q.toString()) as JSON
     }
 }

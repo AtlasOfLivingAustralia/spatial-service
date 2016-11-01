@@ -111,7 +111,7 @@ class TasksController {
         if (params.containsKey('input')) {
             input = (JSONObject) JSON.parse(params.input.toString())
         }
-        Task task = tasksService.create(params.name, params.identifier, input)
+        Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, params.userId, params.email)
 
         render task as JSON
     }
@@ -140,7 +140,6 @@ class TasksController {
         String file = grailsApplication.config.publish.dir + "/" + task.id + ".zip"
 
         render file: file, contentType: 'application/zip'
-
     }
 
     @Transactional

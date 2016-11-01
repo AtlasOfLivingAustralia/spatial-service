@@ -151,11 +151,7 @@ class LayerController {
 
     def index(String id) {
         if (id == null)
-            render layerDao.getLayers().collect {
-                it.toMap().findAll { i ->
-                    i.value != null
-                }
-            } as JSON
+            render layerDao.getLayers() as JSON
         else
             show(id)
     }
@@ -166,7 +162,7 @@ class LayerController {
      */
     def show(String id) {
         if (id == null) {
-            render layerDao.getLayers().collect { it.toMap() } as JSON
+            render layerDao.getLayers() as JSON
         } else {
             Layer l = null
             try {
@@ -178,7 +174,7 @@ class LayerController {
             if (l == null) {
                 l = layerDao.getLayerByName(id, false)
             }
-            render l == null ? l : l.toMap() as JSON
+            render l as JSON
         }
     }
 
@@ -187,15 +183,15 @@ class LayerController {
      *
      */
     def search() {
-        render layerDao.getLayersByCriteria(params.q.toString()).collect { it.toMap() } as JSON
+        render layerDao.getLayersByCriteria(params.q.toString()) as JSON
     }
 
     def grids() {
-        render layerDao.getLayersByEnvironment().collect { it.toMap() } as JSON
+        render layerDao.getLayersByEnvironment() as JSON
     }
 
     def shapes() {
-        render layerDao.getLayersByContextual().collect { it.toMap() } as JSON
+        render layerDao.getLayersByContextual() as JSON
     }
 
     /**

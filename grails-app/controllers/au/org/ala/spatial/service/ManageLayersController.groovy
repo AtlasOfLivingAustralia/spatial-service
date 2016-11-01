@@ -19,12 +19,12 @@ import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.converters.XML
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.hibernate.criterion.CriteriaSpecification
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
-import org.apache.commons.io.FileUtils
 
 import java.text.SimpleDateFormat
 
@@ -352,7 +352,7 @@ class ManageLayersController {
         login()
 
         Map map = [:]
-        Map layer = manageLayersService.layerMap(id)
+        Map layer = id.startsWith('cl') || id.startsWith('el') ? [:] : manageLayersService.layerMap(id)
         if (layer.size() < 2) {
             //this is a field id
             if ("POST".equalsIgnoreCase(request.method)) {

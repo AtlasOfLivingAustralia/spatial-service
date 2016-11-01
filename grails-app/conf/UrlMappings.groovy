@@ -6,22 +6,24 @@ class UrlMappings {
         //
         "/checklists"(controller: "checklist", action: "index")
         "/checklist/$id"(controller: "checklist", action: "show")
+        "/checklists/lsids"(controller: "checklist", action: "lsids")
 
         "/distribution/counts"(controller: "distribution", action: "count")
         "/distribution/radius/count"(controller: "distribution", action: "pointRadiusCount")
         "/distribution/radius"(controller: "distribution", action: "pointRadius")
-        "/distribution/lsid/$id"(controller: "distribution", action: "lsid")
-        "/distribution/lsids/$id"(controller: "distribution", action: "lsids")
-        "/distribution/map/$id"(controller: "distribution", action: "map")
-        "/distribution/map/png/$id"(controller: "distribution", action: "overviewMapPng")
+        "/distribution/lsid/$lsid"(controller: "distribution", action: "lsid")
+        "/distribution/lsids/$lsid"(controller: "distribution", action: "lsids")
+        "/distribution/map/$geomIdx"(controller: "distribution", action: "map")
+        "/distribution/map/png/$geomIdx"(controller: "distribution", action: "overviewMapPng")
         "/distribution/map/seed"(controller: "distribution", action: "overviewMapSeed")
-        "/distribution/outliers/$id"(controller: "distribution", action: "outliers")
-        "/distribution/map/lsid/$id"(controller: "distribution", action: "overviewMapPngLsid")
-        "/distribution/map/spcode/$id"(controller: "distribution", action: "overviewMapPngSpcode")
-        "/distribution/map/name/$id"(controller: "distribution", action: "overviewMapPngName")
-        "/distribution/map/lsids/$id"(controller: "distribution", action: "lsidMaps")
+        "/distribution/outliers/$outliers"(controller: "distribution", action: "outliers")
+        "/distribution/map/lsid/$lsid"(controller: "distribution", action: "overviewMapPngLsid")
+        "/distribution/map/spcode/$spcode"(controller: "distribution", action: "overviewMapPngSpcode")
+        "/distribution/map/name/$name"(controller: "distribution", action: "overviewMapPngName")
+        "/distribution/map/lsids/$lsid"(controller: "distribution", action: "lsidMaps")
         "/distribution/$id"(controller: "distribution", action: "show")
         "/distributions"(controller: "distribution", action: "index")
+        "/distributions/lsids"(controller: "distribution", action: "listLsids")
 
         "/attribution/clearCache"(controller: "distribution", action: "clearAttributionCache")
 
@@ -61,6 +63,7 @@ class UrlMappings {
 
         "/object/$pid"(controller: "object", action: "show")
         "/objects/$id"(controller: "object", action: "fieldObjects")
+        "/objects/csv/$id"(controller: "object", action: "fieldObjectsCsv")
         "/objects/$id/$lat/$lng"(controller: "object", action: "fieldObjectsPoint")
         "/objects/inarea/$id"(controller: "object", action: "objectsInArea")
         "/object/intersect/$pid/$lat/$lng"(controller: "object", action: "intersectObject")
@@ -86,11 +89,10 @@ class UrlMappings {
         "/poi"(controller: "shapes", action: "poi")
         "/poi/$id"(controller: "shapes", action: "poiRequest")
 
-        //"/tabulation/$func1/$func2/$fid1/$fid2/tabulation.html"(controller: "tabulation", action:"displayTabulation")
-        //"/tabulation/$func1/$func2/$fid1/$fid2/tabulation.$type"(controller: "tabulation", action:"displayTabulationCSVHTML")
         "/tabulation/$func1/$fid1/$fid2/tabulation.$type"(controller: "tabulation", action: "show")
         "/tabulations(.$format)?"(controller: "tabulation", action: "index")
         "/tabulations/"(controller: "tabulation", action: "index")
+        "/tabulation/$fid/$pid"(controller: "tabulation", action: "single")
 
         "/capabilities"(controller: "admin", action: "capabilities")
 

@@ -96,9 +96,8 @@ class TasksService {
     * 'input' is map of [inputName: inputValue]
     * 'identifier' is used to tag the process for making this instance unique, e.g. hash of input
     */
-
     @Transactional(readOnly = false)
-    def create(name, identifier, input) {
+    def create(name, identifier, input, sessionId, userId, email) {
         if (input == null) input = [:] as Map
 
         //get task spec
@@ -115,173 +114,172 @@ class TasksService {
             //is it a unique process already running or in queue?
             log.debug 'unique process:' + name + ' already running or in queue'
             task = tasks.get(0)
-        } else if ((tasks = Task.findAllByStatusLessThanAndNameAndTag(2, name, identifier)).size() > 0) {
-            //is it unique with name and tag?
-            log.debug 'process with name:' + name + ' and tag: ' + 'is already running or in queue'
+        } else if ((tasks = Task.findAllByStatusLessThanAndNameAndTagAndUserId(2, name, identifier, userId)).size() > 0) {
+            //is it unique with name and tag and user?
+            log.debug 'process with name:' + name + ' and tag: ' + ' and user: ' + userId + ' is already running or in queue'
             task = tasks.get(0)
-        } else {
+        } else if (spec != null) {
             //create task
-            task = new Task([name: String.valueOf(name), tag: String.valueOf(identifier)])
-            // Task.withTransaction {
+            task = new Task([name  : String.valueOf(name), tag: String.valueOf(identifier),
+                             userId: String.valueOf(userId), sessionId: String.valueOf(sessionId),
+                             email : String.valueOf(email)])
+
             if (!task.save()) {
                 task.errors.each {
                     log.error it
                 }
             }
-            //}
 
-            //inputs
-            def inputs = []
-            //input init from spec
-            spec.input.each { k, v ->
+            if (spec != null) {
+                //inputs
+                def inputs = []
+                //input init from spec
+                spec.input.each { k, v ->
 
-                if (v.containsKey('constraints')) {
-                    def i = !input.containsKey(k) ? null : input.get(k)
+                    if (v.containsKey('constraints')) {
+                        def i = !input.containsKey(k) ? null : input.get(k)
 
-                    //mandatory
-                    if (i == null && v.constraints.containsKey('mandatory') && v.constraints.mandatory.toString().toBoolean()) {
-                        //TODO: error
-                    }
-
-                    //default
-                    if (i == null && v.constraints.containsKey('default')) {
-                        input.put(k, v.constraints.default)
-                    }
-
-                    //restrictions
-                    if (i != null) {
-                        def number = null
-                        if ("double".equals(v.type)) {
-                            number = i.toString().toBigDecimal()
-                        } else if ("integer".equals(v.type)) {
-                            number = i.toString().toBigInteger()
-                        } else if ("string".equals(v.type)) {
-                            number = i.toString().length()
-                        } else if ("layers".equals(v.type)) {
-                            number = i.length
-                        } else if ("areas".equals(v.type)) {
-                            number = i.length
-                        } else if ("species".equals(v.type)) {
-                            number = i.length
-                        }
-                        //min/max
-                        if (number != null && v.constraints.containsKey('min') && v.constraints.min > number) {
-                            //TODO: error for min
-                        }
-                        if (number != null && v.constraints.containsKey('max') && v.constraints.max < number) {
-                            //TODO: error for max
+                        //mandatory
+                        if (i == null && v.constraints.containsKey('mandatory') && v.constraints.mandatory.toString().toBoolean()) {
                         }
 
-                        if ("areas".equals(v.type)) {
-                            //TODO: make sure each area exists and is a valid area for this spec
-                            if (v.constraints.containsKey('wkt') && v.constraints.wkt) {
+                        //default
+                        if (i == null && v.constraints.containsKey('default')) {
+                            input.put(k, v.constraints.default)
+                        }
 
+                        //restrictions
+                        if (i != null) {
+                            def number = null
+                            if ("double".equals(v.type)) {
+                                number = i.toString().toBigDecimal()
+                            } else if ("integer".equals(v.type)) {
+                                number = i.toString().toBigInteger()
+                            } else if ("string".equals(v.type)) {
+                                number = i.toString().length()
+                            } else if ("layers".equals(v.type)) {
+                                number = i.length
+                            } else if ("areas".equals(v.type)) {
+                                number = i.length
+                            } else if ("species".equals(v.type)) {
+                                number = i.length
                             }
-                            if (v.constraints.containsKey('pid') && v.constraints.pid) {
-
+                            //min/max
+                            if (number != null && v.constraints.containsKey('min') && v.constraints.min > number) {
+                                //TODO: error for min
                             }
-                            if (v.constraints.containsKey('envelope') && v.constraints.envelope) {
-
+                            if (number != null && v.constraints.containsKey('max') && v.constraints.max < number) {
+                                //TODO: error for max
                             }
-                        }
 
-                        if ("upload".equals(v.type)) {
-                            //TODO: confirm 'upload' value exists
-                        }
-
-                        if ("layers".equals(v.type)) {
-                            i.each { layer ->
-                                //TODO: make sure each layer exists and is a valid layer for this spec
-                                if (v.constraints.containsKey('environmental') && v.constraints.environmental) {
+                            if ("areas".equals(v.type)) {
+                                //TODO: make sure each area exists and is a valid area for this spec
+                                if (v.constraints.containsKey('wkt') && v.constraints.wkt) {
 
                                 }
-                                if (v.constraints.containsKey('contextual') && v.constraints.contextual) {
+                                if (v.constraints.containsKey('pid') && v.constraints.pid) {
 
                                 }
-                                if (v.constraints.containsKey('analysis') && v.constraints.analysis) {
-
-                                }
-                                if (v.constraints.containsKey('indb') && v.constraints.indb) {
+                                if (v.constraints.containsKey('envelope') && v.constraints.envelope) {
 
                                 }
                             }
-                        }
 
-                        if ("species".equals(v.type)) {
-                            int speciesCount = 0
-                            if (number != null && v.constraints.containsKey('minSpecies') && v.constraints.minSpecies > speciesCount) {
-                                //TODO: error for min species count
+                            if ("upload".equals(v.type)) {
+                                //TODO: confirm 'upload' value exists
                             }
 
-                            int occurrenceCount = 0
-                            if (number != null && v.constraints.containsKey('maxOccurrences') && v.constraints.maxOccurrences < occurrenceCount) {
-                                //TODO: error for max occurrence count
+                            if ("layers".equals(v.type)) {
+                                i.each { layer ->
+                                    //TODO: make sure each layer exists and is a valid layer for this spec
+                                    if (v.constraints.containsKey('environmental') && v.constraints.environmental) {
+
+                                    }
+                                    if (v.constraints.containsKey('contextual') && v.constraints.contextual) {
+
+                                    }
+                                    if (v.constraints.containsKey('analysis') && v.constraints.analysis) {
+
+                                    }
+                                    if (v.constraints.containsKey('indb') && v.constraints.indb) {
+
+                                    }
+                                }
                             }
 
-                            if (number != null && v.constraints.containsKey('minOccurrences') && v.constraints.minOccurrences > occurrenceCount) {
-                                //TODO: error for min occurrence count
-                            }
-                        }
+                            if ("species".equals(v.type)) {
+                                int speciesCount = 0
+                                if (number != null && v.constraints.containsKey('minSpecies') && v.constraints.minSpecies > speciesCount) {
+                                    //TODO: error for min species count
+                                }
 
-                        if ("process".equals(v.type)) {
-                            //TODO: check process is valid and finished
-                            String processName = 'todo'
-                            if (!v.constraints.name.equals(processName)) {
-                                //TODO: error
-                            }
-                        }
+                                int occurrenceCount = 0
+                                if (number != null && v.constraints.containsKey('maxOccurrences') && v.constraints.maxOccurrences < occurrenceCount) {
+                                    //TODO: error for max occurrence count
+                                }
 
-                        if ("stringList".equals(v.type)) {
-                            if (!v.constraints.list.contains(i)) {
-                                //TODO: error, not a valid list value
+                                if (number != null && v.constraints.containsKey('minOccurrences') && v.constraints.minOccurrences > occurrenceCount) {
+                                    //TODO: error for min occurrence count
+                                }
+                            }
+
+                            if ("process".equals(v.type)) {
+                                //TODO: check process is valid and finished
+                                String processName = 'todo'
+                                if (!v.constraints.name.equals(processName)) {
+                                    //TODO: error
+                                }
+                            }
+
+                            if ("stringList".equals(v.type)) {
+                                if (!v.constraints.list.contains(i)) {
+                                    //TODO: error, not a valid list value
+                                }
                             }
                         }
                     }
                 }
-            }
-            input.each { k, v ->
-                if (spec.input[k]?.type == 'area') {
-                    //register area pid
-                    def list = []
-                    v.each { a ->
-                        if (a instanceof Map && !a.containsKey('pid') && a.containsKey('wkt') && a.containsKey('name') && a.wkt.length() > 0) {
-                            String pid = objectDao.createUserUploadedObject(a.wkt.toString(), a.name.toString(), '', null);
-                            Objects object = objectDao.getObjectByPid(pid);
-                            a.put('area_km', object.area_km)
-                            a.put('pid', object.pid)
-                            list.push(a)
-                        } else {
-                            list.push(a)
+                input.each { k, v ->
+                    if (spec.input[k]?.type == 'area') {
+                        //register area pid
+                        def list = []
+                        v.each { a ->
+                            if (a instanceof Map && !a.containsKey('pid') && a.containsKey('wkt') && a.containsKey('name') && a.wkt.length() > 0) {
+                                String pid = objectDao.createUserUploadedObject(a.wkt.toString(), a.name.toString(), '', null);
+                                Objects object = objectDao.getObjectByPid(pid);
+                                a.put('area_km', object.area_km)
+                                a.put('pid', object.pid)
+                                list.push(a)
+                            } else {
+                                list.push(a)
+                            }
                         }
-                    }
-                    inputs.add(new InputParameter(name: k, value: (list as JSON).toString(), task: task))
-                } else if (v instanceof List) {
-                    inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
-                } else if (v instanceof Map) {
-                    //register species qid
-                    if (v.containsKey('q') && v.containsKey('bs') && v.q instanceof List) {
+                        inputs.add(new InputParameter(name: k, value: (list as JSON).toString(), task: task))
+                    } else if (v instanceof List) {
+                        inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
+                    } else if (v instanceof Map) {
+                        //register species qid
+                        if (v.containsKey('q') && v.containsKey('bs') && v.q instanceof List) {
 
-                        v.put('q', 'qid:' + Util.makeQid(v))
-                    }
+                            v.put('q', 'qid:' + Util.makeQid(v))
+                        }
 
-                    inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
-                } else {
-                    inputs.add(new InputParameter(name: k, value: v, task: task))
+                        inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
+                    } else {
+                        inputs.add(new InputParameter(name: k, value: v, task: task))
+                    }
                 }
-            }
-            InputParameter.withTransaction {
-                inputs.each {
-                    if (!it.save(flush: true)) {
-                        it.errors.each {
-                            log.error it
+                InputParameter.withTransaction {
+                    inputs.each {
+                        if (!it.save(flush: true)) {
+                            it.errors.each {
+                                log.error it
+                            }
                         }
                     }
                 }
             }
         }
-
-        //TODO: signal for required actions only, not a full refresh
-        //monitorService.signal()
 
         task
     }

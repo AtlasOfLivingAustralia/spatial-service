@@ -221,14 +221,14 @@ class PublishService {
         def errors = [:]
         try {
             def newAreas = []
-            output.files.each { file ->
+            output.files.each { json ->
 
-                def p = (file.startsWith('/') ? grailsApplication.config.data.dir + file : path + '/' + file)
-                def name = new File(p).getName().replace(".wkt", "")
+                def values = json as JSON
+                def p = (file.startsWith('/') ? grailsApplication.config.data.dir + file : path + '/' + values.file)
 
                 String wkt = FileUtils.readFileToString(new File(p))
 
-                String generatedPid = objectDao.createUserUploadedObject(wkt, name, 'Created by AOO EOO', null);
+                String generatedPid = objectDao.createUserUploadedObject(wkt, json.name, json.description, null);
 
                 newAreas.add(generatedPid)
             }
