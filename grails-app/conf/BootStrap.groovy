@@ -5,8 +5,12 @@ class BootStrap {
     def monitorService
     def slaveService
     def grailsApplication
+    def masterService
+    def tasksService
 
     def init = { servletContext ->
+        //avoid circular reference
+        masterService._tasksService = tasksService
 
         //layers-store classes requiring an updated marshaller
         [AnalysisLayer, Distribution, Facet, Field, Layer, Objects, SearchObject, Tabulation, Task].each { clazz ->

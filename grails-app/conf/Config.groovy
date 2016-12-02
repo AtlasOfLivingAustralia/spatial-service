@@ -221,3 +221,6 @@ apiKeyCheckUrlTemplate = 'http://auth.ala.org.au/apikey/ws/check?apikey={0}'
 wkhtmltopdf.path = "/usr/local/bin/wkhtmltopdf"
 
 spatialService.remote = "http://spatial-test.ala.org.au/spatial-service"
+
+journalmap.api_key = 'CgzJpD6MhDtYzUrX5xTu'
+journalmap.url = 'https://www.journalmap.org/'

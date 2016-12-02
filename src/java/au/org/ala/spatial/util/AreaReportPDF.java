@@ -61,6 +61,8 @@ public class AreaReportPDF {
     String speciesListThreatened;
     String speciesListInvasive;
 
+    String journalMapUrl;
+
     private Map progress;
     private String serverUrl;
     private String[][] reportLayers = {
@@ -92,13 +94,16 @@ public class AreaReportPDF {
     public AreaReportPDF(String geoserverUrl, String biocacheServiceUrl, String q, String pid, String areaName,
                          String area_km,
                          List<String> facets, Map progress, String serverUrl,
-                         String[][] reportLayers, String wkhtmltopdfPath, String outputPath) {
+                         String[][] reportLayers, String wkhtmltopdfPath, String outputPath,
+                         String journalMapUrl) {
 
         try {
             speciesListThreatened = URLEncoder.encode("species_list_uid:dr1782 OR species_list_uid:dr967 OR species_list_uid:dr656 OR species_list_uid:dr649 OR species_list_uid:dr650 OR species_list_uid:dr651 OR species_list_uid:dr492 OR species_list_uid:dr1770 OR species_list_uid:dr493 OR species_list_uid:dr653 OR species_list_uid:dr884 OR species_list_uid:dr654 OR species_list_uid:dr655 OR species_list_uid:dr490 OR species_list_uid:dr2201", "UTF-8");
             speciesListInvasive = URLEncoder.encode("species_list_uid:dr947 OR species_list_uid:dr707 OR species_list_uid:dr945 OR species_list_uid:dr873 OR species_list_uid:dr872 OR species_list_uid:dr1105 OR species_list_uid:dr1787 OR species_list_uid:dr943 OR species_list_uid:dr877 OR species_list_uid:dr878 OR species_list_uid:dr1013 OR species_list_uid:dr879 OR species_list_uid:dr880 OR species_list_uid:dr881 OR species_list_uid:dr882 OR species_list_uid:dr883 OR species_list_uid:dr927 OR species_list_uid:dr823", "UTF-8");
         } catch (Exception e) {
         }
+
+        this.journalMapUrl = journalMapUrl;
 
         this.areaName = areaName;
         this.progress = progress;
@@ -776,7 +781,7 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                //initCountEndemicSpecies();
+                initCountEndemicSpecies();
 
                 return null;
             }
@@ -785,16 +790,7 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                //initCountChecklistAreasAndSpecies();
-
-                return null;
-            }
-        });
-//
-        callables.add(new Callable() {
-            @Override
-            public Object call() throws Exception {
-                // initCountDistributionAreas();
+                initCountChecklistAreasAndSpecies();
 
                 return null;
             }
@@ -803,7 +799,7 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                //initDistributionsCsv("checklists");
+                initCountDistributionAreas();
 
                 return null;
             }
@@ -812,7 +808,7 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                //initDistributionsCsv("distributions");
+                initDistributionsCsv("checklists");
 
                 return null;
             }
@@ -821,7 +817,16 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                //initJournalmapCsv();
+                initDistributionsCsv("distributions");
+
+                return null;
+            }
+        });
+
+        callables.add(new Callable() {
+            @Override
+            public Object call() throws Exception {
+                initJournalmapCsv();
 
                 return null;
             }
@@ -893,104 +898,106 @@ public class AreaReportPDF {
         return callables;
     }
 
-//    private void initDistributionsCsv(String type) {
-//        setProgress("Getting information: " + type, 0);
-//        if (isCancelled()) return;
-//        StringBuilder sb = new StringBuilder();
-//        String[] list = Util.getDistributionsOrChecklists(type, wkt, null, null);
-//        for (String line : list) {
-//            if (sb.length() > 0) {
-//                sb.append("\n");
-//            }
-//            sb.append(line);
-//        }
-//        if ("checklists".equals(type)) {
-//            checklists = list;
-//            if (checklists.length <= 0) {
-//                counts.put("Checklist Areas", "0");
-//                counts.put("Checklist Species", "0");
-//            } else {
-//                String[] areaChecklistText = Util.getAreaChecklists(checklists);
-//                counts.put("Checklist Areas", String.valueOf(areaChecklistText.length - 1));
-//                counts.put("Checklist Species", String.valueOf(checklists.length - 1));
-//            }
-//        } else {
-//            distributions = list;
-//            if (distributions.length <= 0) {
-//                counts.put("Distribution Areas", "0");
-//            } else {
-//                counts.put("Distribution Areas", String.valueOf(distributions.length - 1));
-//            }
-//        }
-//
-//        csvs.put(type, sb.toString());
-//    }
-//
-//    private void initJournalmapCsv() {
-//        setProgress("Getting information: Journalmap", 0);
-//        if (isCancelled()) return;
-//        StringBuilder sb = new StringBuilder();
-//        List<JSONObject> list = CommonData.filterJournalMapArticles(wkt);
-//        //empty header
-//        sb.append("\n");
-//
-//        for (JSONObject jo : list) {
-//            if (sb.length() > 0) {
-//                sb.append("\n");
-//            }
-//            //authors (last_name, first_name), publish_year, title, publication.name, doi, JournalMap URL
-//            if (jo.containsKey("authors")) {
-//                String author = "";
-//                JSONArray ja = (JSONArray) jo.get("authors");
-//                for (int i = 0; i < ja.size(); i++) {
-//                    if (i > 0) author += ", ";
-//                    JSONObject o = (JSONObject) ja.get(i);
-//                    if (o.containsKey("last_name")) {
-//                        author += o.get("last_name") + ", ";
-//                    }
-//                    if (o.containsKey("first_name")) {
-//                        author += o.get("first_name");
-//                    }
-//                }
-//                sb.append("\"").append(author.replace("\"", "\"\"")).append("\".");
-//            }
-//            sb.append(",");
-//            if (jo.containsKey("publish_year")) {
-//                sb.append("\"").append(jo.get("publish_year").toString().replace("\"", "\"\"")).append(".\"");
-//            }
-//            sb.append(",");
-//            if (jo.containsKey("title")) {
-//                sb.append("\"").append(jo.get("title").toString().replace("\"", "\"\"")).append(".\"");
-//            }
-//            sb.append(",");
-//            if (jo.containsKey("publication")) {
-//                JSONObject o = (JSONObject) jo.get("publication");
-//                if (o.containsKey("name")) {
-//                    sb.append("\"").append(o.get("name").toString().replace("\"", "\"\"")).append(".\"");
-//                }
-//            }
-//            sb.append(",");
-//            if (jo.containsKey("doi")) {
-//                sb.append("\"").append(jo.get("doi").toString().replace("\"", "\"\"")).append(".\"");
-//            }
-//            sb.append(",");
-//            if (jo.containsKey("id")) {
-//                String journalmapUrl = CommonData.getSettings().getProperty("journalmap.url", null);
-//                String articleUrl = journalmapUrl + "articles/" + jo.get("id").toString();
-//                sb.append("<a href='" + articleUrl + "'>" + articleUrl + "</a>");
-//            }
-//        }
-//
-//        documents = list;
-//
-//        if (documents.size() <= 0) {
-//            counts.put("Journalmap", "0");
-//        } else {
-//            counts.put("Journalmap", String.valueOf(documents.size()));
-//        }
-//
-//        csvs.put("Journalmap", sb.toString());
-//    }
+    private void initDistributionsCsv(String type) {
+        setProgress("Getting information: " + type, 0);
+        if (isCancelled()) return;
+        StringBuilder sb = new StringBuilder();
+        String[] list = null;// = Util.getDistributionsOrChecklists(type, wkt, null, null);
+        for (String line : list) {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append(line);
+        }
+        if ("checklists".equals(type)) {
+            checklists = list;
+            if (checklists.length <= 0) {
+                counts.put("Checklist Areas", "0");
+                counts.put("Checklist Species", "0");
+            } else {
+                String[] areaChecklistText = Util.getAreaChecklists(checklists);
+                counts.put("Checklist Areas", String.valueOf(areaChecklistText.length - 1));
+                counts.put("Checklist Species", String.valueOf(checklists.length - 1));
+            }
+        } else {
+            distributions = list;
+            if (distributions.length <= 0) {
+                counts.put("Distribution Areas", "0");
+            } else {
+                counts.put("Distribution Areas", String.valueOf(distributions.length - 1));
+            }
+        }
+
+        csvs.put(type, sb.toString());
+    }
+
+    private void initJournalmapCsv() throws Exception {
+        JSONParser jp = new JSONParser();
+
+        setProgress("Getting information: Journalmap", 0);
+        if (isCancelled()) return;
+        StringBuilder sb = new StringBuilder();
+        List<JSONObject> list = (JSONArray) jp.parse(Util.getUrl(wkt));
+        //empty header
+        sb.append("\n");
+
+        for (JSONObject jo : list) {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            //authors (last_name, first_name), publish_year, title, publication.name, doi, JournalMap URL
+            if (jo.containsKey("authors")) {
+                String author = "";
+                JSONArray ja = (JSONArray) jo.get("authors");
+                for (int i = 0; i < ja.size(); i++) {
+                    if (i > 0) author += ", ";
+                    JSONObject o = (JSONObject) ja.get(i);
+                    if (o.containsKey("last_name")) {
+                        author += o.get("last_name") + ", ";
+                    }
+                    if (o.containsKey("first_name")) {
+                        author += o.get("first_name");
+                    }
+                }
+                sb.append("\"").append(author.replace("\"", "\"\"")).append("\".");
+            }
+            sb.append(",");
+            if (jo.containsKey("publish_year")) {
+                sb.append("\"").append(jo.get("publish_year").toString().replace("\"", "\"\"")).append(".\"");
+            }
+            sb.append(",");
+            if (jo.containsKey("title")) {
+                sb.append("\"").append(jo.get("title").toString().replace("\"", "\"\"")).append(".\"");
+            }
+            sb.append(",");
+            if (jo.containsKey("publication")) {
+                JSONObject o = (JSONObject) jo.get("publication");
+                if (o.containsKey("name")) {
+                    sb.append("\"").append(o.get("name").toString().replace("\"", "\"\"")).append(".\"");
+                }
+            }
+            sb.append(",");
+            if (jo.containsKey("doi")) {
+                sb.append("\"").append(jo.get("doi").toString().replace("\"", "\"\"")).append(".\"");
+            }
+            sb.append(",");
+            if (jo.containsKey("id")) {
+                String journalmapUrl = journalMapUrl;
+                String articleUrl = journalmapUrl + "articles/" + jo.get("id").toString();
+                sb.append("<a href='" + articleUrl + "'>" + articleUrl + "</a>");
+            }
+        }
+
+        documents = list;
+
+        if (documents.size() <= 0) {
+            counts.put("Journalmap", "0");
+        } else {
+            counts.put("Journalmap", String.valueOf(documents.size()));
+        }
+
+        csvs.put("Journalmap", sb.toString());
+    }
 
 
     private void initCsvSpecies() {
@@ -1058,11 +1065,11 @@ public class AreaReportPDF {
         speciesLinks.put("Occurrences", biocacheServiceUrl + "/occurrences/search?q=" + query);
     }
 
-//    private void initCountEndemicSpecies() {
-//        setProgress("Getting information: endemic species count", 0);
-//        if (isCancelled()) return;
-//        counts.put("Endemic Species", String.valueOf(getEndemicSpeciesCount(query)));
-//    }
+    private void initCountEndemicSpecies() {
+        setProgress("Getting information: endemic species count", 0);
+        if (isCancelled()) return;
+        //counts.put("Endemic Species", String.valueOf(getEndemicSpeciesCount(query)));
+    }
 
     private void initCountThreatenedSpecies() {
         setProgress("Getting information: threatened species", 0);
@@ -1071,30 +1078,30 @@ public class AreaReportPDF {
         counts.put("Endangered Species", String.valueOf(getSpeciesCount(q)));
     }
 
-//    private void initCountChecklistAreasAndSpecies() {
-//        setProgress("Getting information: checklist areas", 0);
-//        checklists = Util.getDistributionsOrChecklists(StringConstants.CHECKLISTS, wkt, null, null);
-//
-//        if (checklists.length <= 0) {
-//            counts.put("Checklist Areas", "0");
-//            counts.put("Checklist Species", "0");
-//        } else {
-//            String[] areaChecklistText = Util.getAreaChecklists(checklists);
-//            counts.put("Checklist Areas", String.valueOf(areaChecklistText.length - 1));
-//            counts.put("Checklist Species", String.valueOf(checklists.length - 1));
-//        }
-//    }
-//
-//    private void initCountDistributionAreas() {
-//        setProgress("Getting information: distribution areas", 0);
-//        String[] distributions = Util.getDistributionsOrChecklists(StringConstants.DISTRIBUTIONS, wkt, null, null);
-//
-//        if (checklists.length <= 0) {
-//            counts.put("Distribution Areas", "0");
-//        } else {
-//            counts.put("Distribution Areas", String.valueOf(distributions.length - 1));
-//        }
-//    }
+    private void initCountChecklistAreasAndSpecies() {
+        setProgress("Getting information: checklist areas", 0);
+        //checklists = Util.getDistributionsOrChecklists("checklists", wkt, null, null);
+
+        if (checklists.length <= 0) {
+            counts.put("Checklist Areas", "0");
+            counts.put("Checklist Species", "0");
+        } else {
+            String[] areaChecklistText = Util.getAreaChecklists(checklists);
+            counts.put("Checklist Areas", String.valueOf(areaChecklistText.length - 1));
+            counts.put("Checklist Species", String.valueOf(checklists.length - 1));
+        }
+    }
+
+    private void initCountDistributionAreas() {
+        setProgress("Getting information: distribution areas", 0);
+        //String[] distributions = Util.getDistributionsOrChecklists("distributions", wkt, null, null);
+
+        if (checklists.length <= 0) {
+            counts.put("Distribution Areas", "0");
+        } else {
+            counts.put("Distribution Areas", String.valueOf(distributions.length - 1));
+        }
+    }
 
     private void initCountArea() {
         DecimalFormat df = new DecimalFormat("###,###.##");

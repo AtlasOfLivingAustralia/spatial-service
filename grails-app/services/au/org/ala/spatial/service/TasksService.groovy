@@ -91,6 +91,10 @@ class TasksService {
         }
     }
 
+    def create(name, identifier, input) {
+        return create(name, identifier, input, null, null, null)
+    }
+
     /*
     * add a task for 'name' and 'inputs'
     * 'input' is map of [inputName: inputValue]

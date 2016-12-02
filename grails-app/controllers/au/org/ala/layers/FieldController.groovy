@@ -80,7 +80,7 @@ class FieldController {
 
     def search() {
         def q = params.containsKey('q') ? params.q.toString() : ''
-        render fieldDao.getFieldsByCriteria(q), params.containsKey('q') as JSON
+        render fieldDao.getFieldsByCriteria(q) as JSON
     }
 
     def searchLayers() {

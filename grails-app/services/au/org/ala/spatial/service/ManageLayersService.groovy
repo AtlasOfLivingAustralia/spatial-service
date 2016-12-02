@@ -148,7 +148,6 @@ class ManageLayersService {
                 processUpload(f, f.getName())
 
                 // try again
-                // TODO: fix possible recursion problem
                 if (canRetry) {
                     upload = getUpload(uploadId, false)
                 }
@@ -1003,7 +1002,7 @@ class ManageLayersService {
                 FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
 
                 if (createTask) {
-                    tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)])
+                    tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)], null, null, null)
                 }
 
                 retMap.put('layer_id', newLayer.id)

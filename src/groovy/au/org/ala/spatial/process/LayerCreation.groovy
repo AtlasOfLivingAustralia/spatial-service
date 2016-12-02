@@ -15,8 +15,10 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.layers.grid.GridClassBuilder
 import au.org.ala.layers.legend.GridLegend
 import au.org.ala.layers.util.Bil2diva
+import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.slave.Utils
 import au.org.ala.spatial.util.GeomMakeValid
@@ -40,6 +42,7 @@ class LayerCreation extends SlaveProcess {
         String dir = grailsApplication.config.data.dir
         File shpUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".shp")
         File bilUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".bil")
+        File txtUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".txt")
         File diva = new File(dir + "/layer/" + layer.name + ".grd")
 
         if (bilUploaded.exists()) {
@@ -83,11 +86,41 @@ class LayerCreation extends SlaveProcess {
             task.message = 'bil > diva'
             Bil2diva.bil2diva(outPath, outPath, layer.environmentalvalueunits.toString());
 
-            addOutput('layers', "/layer/" + layer.name + '.grd')
-            addOutput('layers', "/layer/" + layer.name + '.gri')
+            if ("Contextual".equalsIgnoreCase(layer.type.toString())) {
+                task.message = "process grid file to shapes"
 
-            //TODO: is this necessary? It is only a layer, not a field
-            GridLegend.generateGridLegend(diva.getPath().replace('.grd', ''), outPath, 1, false)
+                FileUtils.copyFile(txtUploaded, new File(dir + "/layer/" + layer.name + ".txt"))
+                GridClassBuilder.buildFromGrid(dir + "/layer/" + layer.name)
+
+                //replace grd/gri with polygon grid
+                if (new File(dir + "/layer/" + layer.name + "/polygon.grd").exists()) {
+                    if (new File(dir + "/layer/" + layer.name + ".grd").exists()) new File(dir + "/layer/" + layer.name + ".grd").delete();
+                    FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygon.grd"), new File(dir + "/layer/" + layer.name + ".grd"))
+                    if (new File(dir + "/layer/" + layer.name + ".gri").exists()) new File(dir + "/layer/" + layer.name + ".gri").delete();
+                    FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygon.gri"), new File(dir + "/layer/" + layer.name + ".gri"))
+                }
+                if (new File(dir + "/layer/" + layer.name + "/polygons.sld").exists()) {
+                    if (new File(dir + "/layer/" + layer.name + ".sld").exists()) new File(dir + "/layer/" + layer.name + ".sld").delete();
+                    FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygons.sld"), new File(dir + "/layer/" + layer.name + ".sld"))
+                    if (new File(dir + "/layer/" + layer.name + ".prj").exists()) new File(dir + "/layer/" + layer.name + ".prj").delete();
+                    FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygons.prj"), new File(dir + "/layer/" + layer.name + ".prj"))
+                }
+
+                addOutput('layers', "/layer/" + layer.name + '.grd')
+                addOutput('layers', "/layer/" + layer.name + '.gri')
+                addOutput('layers', "/layer/" + layer.name + '.bil')
+                addOutput('layers', "/layer/" + layer.name + '.hdr')
+
+                //bil may have changed
+                Diva2bil.diva2bil(outPath, outPath)
+
+                task.message = ""
+            } else {
+                addOutput('layers', "/layer/" + layer.name + '.grd')
+                addOutput('layers', "/layer/" + layer.name + '.gri')
+                GridLegend.generateGridLegend(diva.getPath().replace('.grd', ''), outPath, 1, false)
+            }
+
             addOutput('layers', "/layer/" + layer.name + '.sld')
 
             //bil 2 geotiff (?)
@@ -124,8 +157,6 @@ class LayerCreation extends SlaveProcess {
 
                 addOutput('layers', newName)
             }
-        } else {
-            //TODO: grid as contextual copy
         }
 
         //delete from uploads dir if master service is remote

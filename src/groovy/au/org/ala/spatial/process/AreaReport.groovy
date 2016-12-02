@@ -42,7 +42,8 @@ class AreaReport extends SlaveProcess {
                 null, task.history,
                 grailsApplication.config.layersService.url.toString(),
                 null, grailsApplication.config.wkhtmltopdf.path.toString(),
-                getTaskPath());
+                getTaskPath(),
+                grailsApplication.config.journalmap.url);
 
         File dir = new File(getTaskPath())
 

@@ -48,14 +48,14 @@ class FieldCreation extends SlaveProcess {
 
         // get upload dir contents, and the existing files
         task.message = 'getting layer files'
-        slaveService.getFile('/layer/' + layer.name + '.grd')
-        slaveService.getFile('/layer/' + layer.name + '.gri')
-        slaveService.getFile('/layer/' + layer.name + '.prj')
-        slaveService.getFile('/layer/' + layer.name + '.shp')
-        slaveService.getFile('/layer/' + layer.name + '.shx')
-        slaveService.getFile('/layer/' + layer.name + '.dbf')
-        slaveService.getFile('/layer/' + layer.name + '.tif')
-        slaveService.getFile('/layer/' + layer.name + '.sld')
+        slaveService.getFile('/layer/' + layer.name)
+//        slaveService.getFile('/layer/' + layer.name + '.gri')
+//        slaveService.getFile('/layer/' + layer.name + '.prj')
+//        slaveService.getFile('/layer/' + layer.name + '.shp')
+//        slaveService.getFile('/layer/' + layer.name + '.shx')
+//        slaveService.getFile('/layer/' + layer.name + '.dbf')
+//        slaveService.getFile('/layer/' + layer.name + '.tif')
+//        slaveService.getFile('/layer/' + layer.name + '.sld')
 
         //upload shp into layersdb in a table with name layer.id
         String dir = grailsApplication.config.data.dir
@@ -65,15 +65,7 @@ class FieldCreation extends SlaveProcess {
         String name = layer.name
 
         if ("a".equalsIgnoreCase(field.type.toString()) || "b".equalsIgnoreCase(field.type.toString())) {
-            //create grid as shape file
-
-            //process
-
-            //sld
-
-            //analysis
-
-            //tabulation
+            // all required file conversion tasks (convert to 4326, diva, create geotiff, upload to geoserver) are already done by LayerCreation
         } else if ("c".equalsIgnoreCase(field.type.toString())) {
             //create objects table values
             if (shpExisting.exists()) {

@@ -31,7 +31,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 class MasterService {
 
-    def tasksService
+    //avoid circular reference
+    def _tasksService
 
     Map<String, Slave> slaves = [:] as ConcurrentHashMap
 
@@ -117,7 +118,7 @@ class MasterService {
         }
 
         if (newValues.size() > 0) {
-            tasksService.update(task.id, newValues)
+            _tasksService.update(task.id, newValues)
 
             if (task.status == 4 || (newValues.containsKey('status') && newValues.status == 4)) {
                 finishTask(task)
