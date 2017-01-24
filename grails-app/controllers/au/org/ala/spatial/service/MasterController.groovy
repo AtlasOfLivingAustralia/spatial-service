@@ -168,7 +168,7 @@ class MasterController {
     }
 
     /**
-     * recieves slave registration requests containing [limit:, capabilities:]
+     * receives slave registration requests containing [limit:, capabilities:]
      * @return
      */
     @Transactional

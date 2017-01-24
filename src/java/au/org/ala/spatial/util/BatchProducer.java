@@ -132,7 +132,7 @@ public class BatchProducer {
         }
 
         if (newStatus != null) {
-            //remove keys that can become irrelevent with status updates
+            //remove keys that can become irrelevant with status updates
             m.remove("waiting");
 
             m.put("status", newStatus);
