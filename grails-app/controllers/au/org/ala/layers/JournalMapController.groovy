@@ -24,12 +24,12 @@ class JournalMapController {
     ObjectDAO objectDao
 
     def search() {
-        String wkt = params?.pid ? objectDao.getObjectByPid(params.pid).geometry : params.wkt
+        String wkt = params?.pid ? objectDao.getObjectsGeometryById(params.pid.toString(), "wkt") : params?.wkt
         render journalMapService.search(wkt, params?.max ?: 10) as JSON
     }
 
     def count() {
-        String wkt = params?.pid ? objectDao.getObjectByPid(params.pid).geometry : params.wkt
+        String wkt = params?.pid ? objectDao.getObjectsGeometryById(params.pid.toString(), "wkt") : params?.wkt
         def map = [count: journalMapService.count(wkt)]
         render map as JSON
     }

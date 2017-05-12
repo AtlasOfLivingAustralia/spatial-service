@@ -3,7 +3,7 @@
  * All Rights Reserved.
  *
  * The contents of this file are subject to the Mozilla Public
- * License Version 1.1 (the "License"); you may not use this file
+ * License Version 1.1 (the "License") you may not use this file
  * except in compliance with the License. You may obtain a copy of
  * the License at http://www.mozilla.org/MPL/
  *
@@ -21,6 +21,7 @@ import au.org.ala.spatial.util.BatchConsumer
 import au.org.ala.spatial.util.BatchProducer
 import com.vividsolutions.jts.geom.Geometry
 import grails.converters.JSON
+import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.geotools.geojson.geom.GeometryJSON
 
@@ -29,6 +30,8 @@ import java.util.zip.ZipOutputStream
 
 //TODO: replace batch intersections with a slave process
 class IntersectController {
+
+    final Logger log = Logger.getLogger(IntersectController.class)
 
     ObjectDAO objectDao
     LayerIntersectDAO layerIntersectDao
@@ -41,7 +44,7 @@ class IntersectController {
     def batch() {
         File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath());
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads)
 
         //help get params when they don't pick up automatically from a POST
         String fids = params.containsKey('fids') ? params.fids : ''
@@ -49,14 +52,14 @@ class IntersectController {
         String gridcache = params.containsKey('gridcache') ? params.gridcache : '0'
         try {
             if ("POST".equalsIgnoreCase(request.getMethod()) && !params.containsKey('fids') && !params.containsKey('points')) {
-                Scanner s = new Scanner(request.getInputStream(), "UTF-8").useDelimiter("\\A");
-                String body = s.hasNext() ? s.next() : "";
+                Scanner s = new Scanner(request.getInputStream(), "UTF-8").useDelimiter("\\A")
+                String body = s.hasNext() ? ++s : ""
 
                 for (String param : body.split("&")) {
                     if (param.startsWith("fids=")) {
-                        fids = param.substring(5);
+                        fids = param.substring(5)
                     } else if (param.startsWith("points=")) {
-                        points = param.substring(7);
+                        points = param.substring(7)
                     }
                 }
             }
@@ -65,78 +68,78 @@ class IntersectController {
         }
 
         if (points.isEmpty() || fids.isEmpty()) {
-            render null as JSON;
+            render null as JSON
         }
 
-        Map map = new HashMap();
+        Map map = new HashMap()
         String batchId
         try {
 
             // get limits
-            int pointsLimit, fieldsLimit;
+            int pointsLimit, fieldsLimit
 
-            String[] passwords = grailsApplication.config.batch_sampling_passwords.toString().split(',');
-            pointsLimit = Integer.parseInt(grailsApplication.config.batch_sampling_points_limit.toString());
-            fieldsLimit = Integer.parseInt(grailsApplication.config.batch_sampling_fields_limit.toString());
+            String[] passwords = grailsApplication.config.batch_sampling_passwords.toString().split(',')
+            pointsLimit = Integer.parseInt(grailsApplication.config.batch_sampling_points_limit.toString())
+            fieldsLimit = Integer.parseInt(grailsApplication.config.batch_sampling_fields_limit.toString())
 
-            String password = params.containsKey('pw') ? params.pw : null;
+            String password = params.containsKey('pw') ? params.pw : null
             for (int i = 0; password != null && i < passwords.length; i++) {
-                if (passwords[i].equals(password)) {
-                    pointsLimit = Integer.MAX_VALUE;
-                    fieldsLimit = Integer.MAX_VALUE;
+                if (passwords[i] == password) {
+                    pointsLimit = Integer.MAX_VALUE
+                    fieldsLimit = Integer.MAX_VALUE
                 }
             }
 
             // count fields
-            int countFields = 1;
-            int p = 0;
+            int countFields = 1
+            int p = 0
             while ((p = fids.indexOf(',', p + 1)) > 0)
-                countFields++;
+                countFields++
 
             // count points
-            int countPoints = 1;
-            p = 0;
+            int countPoints = 1
+            p = 0
             while ((p = points.indexOf(',', p + 1)) > 0)
-                countPoints++;
+                countPoints++
 
             if (countPoints / 2 > pointsLimit) {
-                map.put("error", "Too many points.  Maximum is " + pointsLimit);
+                map.put("error", "Too many points.  Maximum is " + pointsLimit)
             } else if (countFields > fieldsLimit) {
-                map.put("error", "Too many fields.  Maximum is " + fieldsLimit);
+                map.put("error", "Too many fields.  Maximum is " + fieldsLimit)
             } else {
-                batchId = BatchProducer.produceBatch(dir.getPath(), "request address:" + request.getRemoteAddr(), fids, points, gridcache);
+                batchId = BatchProducer.produceBatch(dir.getPath(), "request address:" + request.getRemoteAddr(), fids, points, gridcache)
 
-                map.put("batchId", batchId);
-                BatchProducer.addInfoToMap(dir.getPath(), batchId, map);
-                map.put("statusUrl", grailsApplication.config.grails.serverURL + '/intersect/batch/' + batchId);
+                map.put("batchId", batchId)
+                BatchProducer.addInfoToMap(dir.getPath(), batchId, map)
+                map.put("statusUrl", grailsApplication.config.grails.serverURL + '/intersect/batch/' + batchId)
             }
 
             render map as JSON
             return
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace()
         }
 
-        map.put("error", "failed to create new batch");
+        map.put("error", "failed to create new batch")
         render map as JSON
     }
 
     def batchStatus(String id) {
         File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath());
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads)
 
-        Map map = new HashMap();
+        Map map = new HashMap()
         try {
-            BatchProducer.addInfoToMap(dir.getPath(), id, map);
+            BatchProducer.addInfoToMap(dir.getPath(), id, map)
             if (map.get("finished") != null) {
-                map.put("downloadUrl", grailsApplication.config.grails.serverURL + '/intersect/batch/download/' + id);
+                map.put("downloadUrl", grailsApplication.config.grails.serverURL + '/intersect/batch/download/' + id)
             }
         } catch (err) {
             log.error 'failed to get batch status: ' + id, err
         }
 
-        render map as JSON;
+        render map as JSON
     }
 
     def batchDownload(String id) {
@@ -144,29 +147,29 @@ class IntersectController {
 
         File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath());
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads)
 
         OutputStream os = null
         BufferedInputStream bis = null
         ZipOutputStream zip = null
         try {
-            Map map = new HashMap();
-            BatchProducer.addInfoToMap(dir.getPath(), String.valueOf(id), map);
+            Map map = new HashMap()
+            BatchProducer.addInfoToMap(dir.getPath(), String.valueOf(id), map)
             if (map.get("finished") != null) {
-                os = response.getOutputStream();
+                os = response.getOutputStream()
 
-                bis = new BufferedInputStream(new FileInputStream(dir.getPath() + File.separator + id + File.separator + "sample.csv"));
+                bis = new BufferedInputStream(new FileInputStream(dir.getPath() + File.separator + id + File.separator + "sample.csv"))
 
                 if (!csv) {
-                    zip = new ZipOutputStream(os);
-                    zip.putNextEntry(new ZipEntry("sample.csv"));
+                    zip = new ZipOutputStream(os)
+                    zip.putNextEntry(new ZipEntry("sample.csv"))
 
-                    os = zip;
+                    os = zip
                 }
-                byte[] buffer = new byte[4096];
-                int size;
+                byte[] buffer = new byte[4096]
+                int size
                 while ((size = bis.read(buffer)) > 0) {
-                    os.write(buffer, 0, size);
+                    os.write(buffer, 0, size)
                 }
                 os.flush()
             }
@@ -175,29 +178,32 @@ class IntersectController {
         } finally {
             if (os != null) {
                 try {
-                    os.close();
+                    os.close()
                 } catch (err) {
+                    log.trace(err.getMessage(), err)
                 }
             }
             if (bis != null) {
                 try {
-                    bis.close();
+                    bis.close()
                 } catch (err) {
+                    log.trace(err.getMessage(), err)
                 }
             }
             if (zip != null) {
                 try {
-                    zip.close();
+                    zip.close()
                 } catch (err) {
+                    log.trace(err.getMessage(), err)
                 }
             }
         }
     }
 
     def reloadConfig() {
-        Map map = new HashMap();
-        layerIntersectDao.reload();
-        map.put("layerIntersectDao", "successful");
+        Map map = new HashMap()
+        layerIntersectDao.reload()
+        map.put("layerIntersectDao", "successful")
 
         render map as JSON
     }
@@ -211,20 +217,20 @@ class IntersectController {
     }
 
     def geojsonGeometryIntersect(String fid) {
-        String wkt = geoJsonToWkt(request.reader.text);
+        String wkt = geoJsonToWkt(request.reader.text)
         render objectDao.getObjectsIntersectingWithGeometry(fid, wkt) as JSON
     }
 
     String geoJsonToWkt(String geoJson) {
-        GeometryJSON gJson = new GeometryJSON();
-        Geometry geometry = gJson.read(new StringReader(geoJson));
+        GeometryJSON gJson = new GeometryJSON()
+        Geometry geometry = gJson.read(new StringReader(geoJson))
 
         if (!geometry.isValid()) {
-            return null;
+            return null
         }
 
-        String wkt = geometry.toText();
-        return wkt;
+        String wkt = geometry.toText()
+        return wkt
     }
 
     def objectIntersect(String fid, String pid) {
@@ -244,7 +250,7 @@ class IntersectController {
     }
 
     def geojsonPoiIntersectGet() {
-        String wkt = geoJsonToWkt(params.geojson.toString());
+        String wkt = geoJsonToWkt(params.geojson.toString())
         render objectDao.pointsOfInterestGeometryIntersect(wkt) as JSON
 
     }
@@ -254,30 +260,30 @@ class IntersectController {
     }
 
     def poiPointRadiusIntersectCount(Double lat, Double lng, Double radiusKm) {
-        Map map = new HashMap();
-        map.put("count", objectDao.getPointsOfInterestWithinRadiusCount(lat, lng, radiusKm));
+        Map map = new HashMap()
+        map.put("count", objectDao.getPointsOfInterestWithinRadiusCount(lat, lng, radiusKm))
 
         render map as JSON
     }
 
     def wktPoiIntersectGetCount() {
-        Map map = new HashMap();
-        map.put("count", objectDao.pointsOfInterestGeometryIntersectCount(params.wkt.toString()));
+        Map map = new HashMap()
+        map.put("count", objectDao.pointsOfInterestGeometryIntersectCount(params.wkt.toString()))
 
         render map as JSON
     }
 
     def geojsonPoiIntersectGetCount() {
-        String wkt = geoJsonToWkt(params.geojson.toString());
-        Map map = new HashMap();
-        map.put("count", objectDao.pointsOfInterestGeometryIntersectCount(wkt));
+        String wkt = geoJsonToWkt(params.geojson.toString())
+        Map map = new HashMap()
+        map.put("count", objectDao.pointsOfInterestGeometryIntersectCount(wkt))
 
         render map as JSON
     }
 
     def objectPoiIntersectCount(Integer pid) {
-        Map map = new HashMap();
-        map.put("count", objectDao.pointsOfInterestObjectIntersectCount(Integer.toString(pid)));
+        Map map = new HashMap()
+        map.put("count", objectDao.pointsOfInterestObjectIntersectCount(Integer.toString(pid)))
 
         render map as JSON
     }

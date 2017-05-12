@@ -37,6 +37,7 @@ class LayerDistancesService {
             layerSet.add(ks[1])
         }
         def layersOrdered = layerSet.toList()
+        def layerNames = new String[layersOrdered.size()]
 
         //match against layers
         def layerMatch = (0..layerSet.size()).collect { null }
@@ -45,19 +46,16 @@ class LayerDistancesService {
         def layers = layerDao.getLayers()
         layersOrdered.eachWithIndex { l, idx ->
             fields.each { f ->
-                layers.each { la ->
-                    if (String.valueOf(f.getSpid()).equals(String.valueOf(la.getId()))) {
-                        layerMatch.set(idx, la)
-                    }
-                }
-            }
-        }
-        layersOrdered.eachWithIndex { l, idx ->
-            fields.each { f ->
                 if (f.getId().equalsIgnoreCase(l)) {
                     layers.each { la ->
-                        if (String.valueOf(f.getSpid()).equalsIgnoreCase(String.valueOf(la.getId()))) {
+                        if (String.valueOf(f.getSpid()).equals(String.valueOf(la.getId()))) {
                             layerMatch.set(idx, la)
+                            if (type.equals("name")) {
+                                layerNames[idx] = la.getName()
+                            } else {
+                                layerNames[idx] = la.getDisplayname()
+                            }
+
                         }
                     }
                 }
@@ -68,21 +66,13 @@ class LayerDistancesService {
         def sb = new StringBuilder()
         layersOrdered.eachWithIndex { l, idx ->
             if (idx > 0) {
-                if (type.equals("name")) {
-                    sb.append(l.getName())
-                } else if (type.equals("displayname")) {
-                    sb.append(l.getDisplayname())
-                }
+                sb.append(layerNames[idx])
             }
             sb.append(",")
             int size = (idx == 0) ? layersOrdered.size() - 1 : idx
             for (int j = 0; j < size; j++) {
-                if (i == 0) {
-                    if (type.equals("name")) {
-                        sb.append(layersOrdered[j].getName())
-                    } else if (type.equals("displayname")) {
-                        sb.append(layersOrdered[j].getDisplayname())
-                    }
+                if (idx == 0) {
+                    sb.append(layerNames[j])
                 } else {
                     def key = (l.compareTo(layersOrdered[j]) < 0) ? l + " " + layersOrdered[j] : layersOrdered[j] + " " + l;
                     if (key != null && map.get(key) != null) {
@@ -108,8 +98,9 @@ class LayerDistancesService {
         try {
             def file = new File(path)
             if (!file.exists()) {
-                //create empty layerDistances.properties file
                 file.getParentFile().mkdirs()
+
+                //create empty layerDistances.properties file
                 FileUtils.writeStringToFile(file, "")
             }
 

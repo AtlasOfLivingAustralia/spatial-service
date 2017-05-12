@@ -22,8 +22,10 @@ import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.slave.Utils
 import au.org.ala.spatial.util.GeomMakeValid
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class LayerCreation extends SlaveProcess {
 
     void start() {
@@ -60,7 +62,7 @@ class LayerCreation extends SlaveProcess {
             try {
                 Utils.runCmd(cmd)
             } catch (Exception e) {
-                log.error("error running gdalwarp (1)", e);
+                log.error("error running gdalwarp (1)", e)
             }
             cmd = [grailsApplication.config.gdal.dir + "/gdalinfo",
                    "-hist"
@@ -68,7 +70,7 @@ class LayerCreation extends SlaveProcess {
             try {
                 Utils.runCmd(cmd)
             } catch (Exception e) {
-                log.error("error running gdalwarp (2)", e);
+                log.error("error running gdalwarp (2)", e)
             }
             // make .hdr
             cmd = [grailsApplication.config.gdal.dir + "/gdal_translate",
@@ -78,13 +80,13 @@ class LayerCreation extends SlaveProcess {
             try {
                 Utils.runCmd(cmd)
             } catch (Exception e) {
-                log.error("error running gdalwarp (3)", e);
+                log.error("error running gdalwarp (3)", e)
             }
             // delete tmp 
             new File(outPath + "_tmp.bil").delete()
 
             task.message = 'bil > diva'
-            Bil2diva.bil2diva(outPath, outPath, layer.environmentalvalueunits.toString());
+            Bil2diva.bil2diva(outPath, outPath, layer.environmentalvalueunits.toString())
 
             if ("Contextual".equalsIgnoreCase(layer.type.toString())) {
                 task.message = "process grid file to shapes"
@@ -94,16 +96,19 @@ class LayerCreation extends SlaveProcess {
 
                 //replace grd/gri with polygon grid
                 if (new File(dir + "/layer/" + layer.name + "/polygon.grd").exists()) {
-                    if (new File(dir + "/layer/" + layer.name + ".grd").exists()) new File(dir + "/layer/" + layer.name + ".grd").delete();
+                    if (new File(dir + "/layer/" + layer.name + ".grd").exists()) new File(dir + "/layer/" + layer.name + ".grd").delete()
                     FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygon.grd"), new File(dir + "/layer/" + layer.name + ".grd"))
-                    if (new File(dir + "/layer/" + layer.name + ".gri").exists()) new File(dir + "/layer/" + layer.name + ".gri").delete();
+                    if (new File(dir + "/layer/" + layer.name + ".gri").exists()) new File(dir + "/layer/" + layer.name + ".gri").delete()
                     FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygon.gri"), new File(dir + "/layer/" + layer.name + ".gri"))
                 }
                 if (new File(dir + "/layer/" + layer.name + "/polygons.sld").exists()) {
-                    if (new File(dir + "/layer/" + layer.name + ".sld").exists()) new File(dir + "/layer/" + layer.name + ".sld").delete();
+                    if (new File(dir + "/layer/" + layer.name + ".sld").exists()) new File(dir + "/layer/" + layer.name + ".sld").delete()
                     FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygons.sld"), new File(dir + "/layer/" + layer.name + ".sld"))
-                    if (new File(dir + "/layer/" + layer.name + ".prj").exists()) new File(dir + "/layer/" + layer.name + ".prj").delete();
+                    if (new File(dir + "/layer/" + layer.name + ".prj").exists()) new File(dir + "/layer/" + layer.name + ".prj").delete()
                     FileUtils.moveFile(new File(dir + "/layer/" + layer.name + "/polygons.prj"), new File(dir + "/layer/" + layer.name + ".prj"))
+
+                    //delete the now empty directory
+                    new File(dir + "/layer/" + layer.name).delete()
                 }
 
                 addOutput('layers', "/layer/" + layer.name + '.grd')
@@ -128,7 +133,7 @@ class LayerCreation extends SlaveProcess {
             try {
                 SpatialUtils.toGeotiff(grailsApplication.config.gdal.dir, outPath + ".bil")
             } catch (Exception e) {
-                log.error("error making geotiff", e);
+                log.error("error making geotiff", e)
             }
 
             addOutput('layers', "/layer/" + layer.name + '.tif')
@@ -152,7 +157,7 @@ class LayerCreation extends SlaveProcess {
                 try {
                     Utils.runCmd(cmd)
                 } catch (Exception e) {
-                    log.error("error running shp spatial index", e);
+                    log.error("error running shp spatial index", e)
                 }
 
                 addOutput('layers', newName)

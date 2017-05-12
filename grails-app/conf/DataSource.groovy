@@ -26,10 +26,19 @@ dataSource {
 //}
 //
 //// environment specific settings
+
 environments {
     development {
         dataSource {
             dbCreate = "update" //"create-drop" // one of 'create', 'create-drop', 'update', 'validate', ''
+
+            pooled = true
+            jmxExport = true
+            driverClassName = "org.postgresql.Driver"
+            username = "postgres"
+            password = "postgres"
+
+            url= "jdbc:postgresql://localhost:5432/layersdb"
         }
     }
     test {

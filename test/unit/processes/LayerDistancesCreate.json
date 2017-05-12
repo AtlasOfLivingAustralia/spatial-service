@@ -1,0 +1,24 @@
+{
+  "name": "LayerDistancesCreate",
+  "description": "Create tasks to calculate missing layer distance values",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "type": "auto"
+    },
+    "grdResolutions": {
+      "description": "Resolutions available for calculating distances",
+      "type": "auto"
+    }
+  },
+  "output": {
+    "process": {
+      "description": "Sub task requests for missing layer distances"
+    }
+  }
+}

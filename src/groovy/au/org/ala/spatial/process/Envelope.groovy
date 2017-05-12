@@ -19,8 +19,10 @@ import au.org.ala.layers.grid.GridCutter
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.slave.SpatialUtils
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class Envelope extends SlaveProcess {
 
     void start() {
@@ -37,12 +39,18 @@ class Envelope extends SlaveProcess {
         }
 
         File dir = new File(getTaskPath())
-        dir.mkdirs();
+        dir.mkdirs()
 
-        File grid = new File(dir.getPath() + File.separator + "envelope");
+        File grid = new File(dir.getPath() + File.separator + "envelope")
 
         double areaSqKm
-        if ((areaSqKm = GridCutter.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE)) >= 0) {
+        String [] types = new String[filter.length]
+        String [] fieldIds = new String[filter.length]
+        for (int i=0;i<filter.length;i++) {
+            types[i] = filter[i].contextual ? "c" : "e"
+            fieldIds[i] = filter[i].layername
+        }
+        if ((areaSqKm = GridCutter.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
 
             SpatialUtils.divaToAsc(dir.getPath() + File.separator + "envelope")
             SpatialUtils.toGeotiff(dir.getPath() + File.separator + "envelope.asc", dir.getPath() + File.separator + "envelope.tif")
@@ -53,7 +61,7 @@ class Envelope extends SlaveProcess {
             addOutput("layer", "envelope.tif")
 
             Grid g = new Grid(grid.getPath())
-            String metadata = "<html><body>Extents: " + g.xmin + "," + g.ymin + "," + g.xmax + "," + g.ymax + "<br>Area (sq km): " + areaSqKm + "</body></html>";
+            String metadata = "<html><body>Extents: " + g.xmin + "," + g.ymin + "," + g.xmax + "," + g.ymax + "<br>Area (sq km): " + areaSqKm + "</body></html>"
             FileUtils.writeStringToFile(new File(dir.getPath() + File.separator + "envelope.html"), metadata)
             addOutput("metadata", "envelope.html")
 

@@ -12,6 +12,15 @@
       "description": "biocacheServiceUrl",
       "type": "auto"
     },
+    "resolution": {
+      "description": "Grid resolution",
+      "type": "double",
+      "constraints": {
+        "min": 0.001,
+        "max": 1,
+        "default": 0.02
+      }
+    },
     "area": {
       "description": "Area to restrict the species.",
       "type": "area",

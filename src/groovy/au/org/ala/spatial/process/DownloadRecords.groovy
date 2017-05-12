@@ -17,9 +17,11 @@ package au.org.ala.spatial.process
 
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.util.RecordsSmall
+import groovy.util.logging.Commons
 
 import java.util.zip.ZipInputStream
 
+@Commons
 class DownloadRecords extends SlaveProcess {
 
     void start() {

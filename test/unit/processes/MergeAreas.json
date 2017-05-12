@@ -1,0 +1,38 @@
+{
+  "name": "MergeAreas",
+  "description": "Merge areas",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "area": {
+      "description": "Areas to merge.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 100,
+        "minArea": -1,
+        "maxArea": -1
+      }
+    },
+    "name": {
+      "description": "Area name",
+      "type": "string",
+    },
+    "description": {
+      "description": "Area description",
+      "type": "string",
+      "constraints": {
+        "mandatory": false
+      }
+    }
+  },
+  "output": {
+    "areas": {
+      "description": "Merged output area."
+    }
+  }
+}

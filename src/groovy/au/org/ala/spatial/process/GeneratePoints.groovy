@@ -18,10 +18,12 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.NameValuePair
 import org.apache.commons.httpclient.methods.PostMethod
 
+@Commons
 class GeneratePoints extends SlaveProcess {
 
     void start() {
@@ -51,10 +53,10 @@ class GeneratePoints extends SlaveProcess {
             }
         }
 
-        uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points)
+        uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points, area.name, distance)
     }
 
-    def uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points) {
+    def uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points, areaName, distance) {
         //upload
         StringBuilder sb = new StringBuilder()
         points.each {
@@ -62,16 +64,16 @@ class GeneratePoints extends SlaveProcess {
             sb.append(it[0]).append(",").append(it[1])
         }
 
-        def name = "Points in ${area.name} on ${distance} degree grid"
+        def name = "Points in ${areaName} on ${distance} degree grid"
         List nameValuePairs = [
-                new NameValuePair("csvData", points),
+                new NameValuePair("csvData", sb.toString()),
                 new NameValuePair("headers", "decimalLongitude,decimalLatitude"),
                 new NameValuePair("datasetName", name),
                 new NameValuePair("separator", ","),
                 new NameValuePair("firstLineIsData", "false"),
                 new NameValuePair("customIndexedFields", ""),
-                new NameValuePair("uiUrl", grailsApplication.config.spatialServiceUrl),
-                new NameValuePair("alaId", userId)
+                new NameValuePair("uiUrl", grailsApplication.config.spatialServiceUrl.toString()),
+                new NameValuePair("alaId", userId.toString())
         ]
 
         def post = new PostMethod(sandboxBiocacheServiceUrl + "/upload/")
@@ -80,28 +82,28 @@ class GeneratePoints extends SlaveProcess {
         def http = new HttpClient()
         http.executeMethod(post)
 
-        def dataResourceUid = JSON.parse(post.getResponseBodyAsString(50000)).uid
+        def dataResourceUid = JSON.parse(post.getResponseBodyAsString()).uid
 
         //wait
-        def statusUrl = sandboxBiocacheServiceUrl + "/upload/status/${dataResourceUid}"
+        def statusUrl = "${sandboxBiocacheServiceUrl}/upload/status/${dataResourceUid}"
         def start = System.currentTimeMillis()
         def maxTime = 60 * 60 * 1000 //2hr
         while (start + maxTime > System.currentTimeMillis()) {
             def response = Util.getUrl(statusUrl)
-            if (response.status == "COMPLETE") {
+            if (response.contains("COMPLETE")) {
                 task.message = "upload successful"
 
                 //add species layer
-                def species = [q   : "",
+                def species = [q   : "data_resource_uid:${dataResourceUid}",
                                ws  : sandboxHubUrl,
                                bs  : sandboxBiocacheServiceUrl,
                                name: name]
 
                 addOutput("species", (species as JSON).toString())
-                break;
-            } else if (response.status == "FAILED") {
+                break
+            } else if (response.contains("FAILED")) {
                 task.message = "failed upload " + statusUrl
-                break;
+                break
             }
         }
 

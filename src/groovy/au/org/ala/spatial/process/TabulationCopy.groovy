@@ -16,8 +16,10 @@
 package au.org.ala.spatial.process
 
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class TabulationCopy extends SlaveProcess {
 
     void start() {

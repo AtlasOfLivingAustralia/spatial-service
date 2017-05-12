@@ -3,18 +3,33 @@
 <head>
     <title></title>
     <meta name="layout" content="main"/>
+
+    <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
+    <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
 </head>
 
 <body>
-<ul class="breadcrumb">
-    <li><g:link controller="main" action="index">Home</g:link></li>
-    <li class="active">Layers</li>
-    <br>
-    <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
-    <li><g:link controller="manageLayers" action="uploads">Uploads</g:link></li>
-    <li><g:link controller="tasks" action="index">Tasks</g:link></li>
-    <li><g:link controller="manageLayers" action="remote">Copy Layer</g:link></li>
-</ul>
+
+<div class="col-lg-8">
+    <ul class="breadcrumb">
+        <li><g:link controller="main" action="index">Home</g:link></li>
+        <li class="active">Layers</li>
+        <br>
+    </ul>
+</div>
+
+<div class="panel panel-default col-lg-4">
+    <div class="panel-heading">
+        <h4 class="panel-title">Navigation</h4>
+    </div>
+    <div class="panel-body">
+        <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+        <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+        <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+        <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    </div>
+</div>
 
 <g:if test="${error != null}">
     <b class="error">${error}</b>
@@ -23,7 +38,7 @@
 </g:if>
 
 <div class="container-fluid">
-    <table class="table table-bordered" id="layersTable">
+    <table class="table table-condensed" id="layersTable">
         <thead>
         <tr>
             <th>Date added</th>
@@ -67,7 +82,7 @@
 <script>
     function confirmDelete(id, name) {
         if (confirm("Permanently delete layer " + name + "?")) {
-            var url = "delete/" + id
+            var url = '${createLink(action: "delete", controller:"manageLayers")}/' + id
             $(location).attr('href', url);
         }
     }

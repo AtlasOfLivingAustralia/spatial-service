@@ -22,6 +22,7 @@ class TaskController {
     def taskService
     def slaveService
     def slaveAuthService
+    def tasksService
 
     // create a new task
     def create() {
@@ -33,8 +34,8 @@ class TaskController {
 
         Task task = taskService.newTask(request.getJSON())
 
-        // TODO: validate task
-        // taskService.validateInput(task)
+        // TODO: check for failed validation
+        tasksService.validateInput(task)
 
         // start
         taskService.start(task)

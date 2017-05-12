@@ -17,8 +17,10 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.tabulation.TabulationGenerator
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class LayerDistancesCreate extends SlaveProcess {
 
     void start() {
@@ -97,7 +99,7 @@ class LayerDistancesCreate extends SlaveProcess {
                 }
             }
         }
-        List lIds = count.keySet().sort(new Comparator() {
+        List lIds = new ArrayList<>(count.keySet()).sort(true, new Comparator() {
             @Override
             int compare(Object o1, Object o2) {
                 return count.get(o2) - count.get(o1)

@@ -1,0 +1,79 @@
+{
+  "name": "Classification",
+  "description": "Classification of environmental layers in an area.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "area": {
+      "description": "Area to restrict the classification.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    "layer": {
+      "description": "Layers to use in the classification. Between 2 and 10 layers.",
+      "type": "layer",
+      "constraints": {
+        "min": 2,
+        "max": 10,
+        "contextual": false,
+        "environmental": true,
+        "analysis": true
+      }
+    },
+    "groups": {
+      "description": "The number of classification groups to define. Between 2 and 20.",
+      "type": "int",
+      "constraints": {
+        "min": 2,
+        "max": 20,
+        "default": 5
+      }
+    },
+    "resolution": {
+      "description": "The layer resolution to use.",
+      "type": "list",
+      "constraints": {
+        "default": "0.01",
+        "selection": "single",
+        "content": [
+          "0.01",
+          "0.1",
+          "0.5",
+          "1.0"
+        ]
+      }
+    },
+    "shp": {
+      "description": "Produce a shapefile.",
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
+    }
+  },
+  "output": {
+    "files": {
+      "description": "Group means."
+    },
+    "layers": {
+      "description": "Output layer."
+    },
+    "metadata": {
+      "description": "Classification metadata."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

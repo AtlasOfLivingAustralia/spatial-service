@@ -31,16 +31,6 @@ public class DensityLayers {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-//        args = new String[] {
-//            //"http://localhost:8083/biocache-service",
-//            "http://biocache.ala.org.au/ws",
-//            "e:\\records\\e_\\grid_ala2",
-//            "9",
-//            "-180,-90,180,90",
-//            //"112,-42,155,-9",
-//            "0.01",
-//            "6"
-//        };
 
         if (args.length < 3) {
             printUsage();

@@ -1,0 +1,10 @@
+"LSID","Longitude","Latitude","","",""
+"Common Name",Longitude,Latitude,,,
+"Kingdom",Longitude,Latitude,,,
+"Family",Longitude,Latitude,,,
+"Species",Longitude,Latitude,species1,species2,species3
+"131.0_-30.0",131.0,-30.0,1,0,0
+"131.0_-23.0",131.0,-23.0,0,0,1
+"131.0_-22.0",131.0,-22.0,1,0,0
+"141.0_-22.0",141.0,-22.0,1,0,0
+"121.0_-19.0",121.0,-19.0,0,1,0

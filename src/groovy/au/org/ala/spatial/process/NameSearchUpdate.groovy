@@ -15,8 +15,10 @@
 
 package au.org.ala.spatial.process
 
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class NameSearchUpdate extends SlaveProcess {
 
     void start() {

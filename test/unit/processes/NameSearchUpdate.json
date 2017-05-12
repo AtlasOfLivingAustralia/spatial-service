@@ -1,0 +1,20 @@
+{
+  "name": "NameSearchUpdate",
+  "description": "Update name search table.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "type": "auto"
+    }
+  },
+  "output": {
+    "sql": {
+      "description": "sql to update object name searching"
+    }
+  }
+}

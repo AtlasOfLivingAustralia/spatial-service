@@ -17,7 +17,9 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.tabulation.TabulationGenerator
 import grails.converters.JSON
+import groovy.util.logging.Commons
 
+@Commons
 class TabulationCreate extends SlaveProcess {
 
     void start() {

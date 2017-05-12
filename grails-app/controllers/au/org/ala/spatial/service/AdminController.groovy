@@ -15,14 +15,16 @@
 
 package au.org.ala.spatial.service
 
-import au.org.ala.web.AuthService
 import grails.converters.JSON
+import org.apache.commons.io.FileUtils
+
+import java.text.SimpleDateFormat
 
 class AdminController {
 
-    MasterService masterService
-    AuthService authService
-    ServiceAuthService serviceAuthService
+    def masterService
+    def authService
+    def serviceAuthService
 
     /**
      * get collated capabilities specs from all registered slaves
@@ -79,16 +81,15 @@ class AdminController {
         render map as JSON
     }
 
-    private def login(service) {
-        if (serviceAuthService.isValid(params['api_key'])) {
-            return
-        } else if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
-            redirect(url: grailsApplication.config.casServerLoginUrl + "?service=" +
-                    grailsApplication.config.serverName + createLink(controller: 'admin', action: service))
-        } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
+    private login(service) {
+        if (!serviceAuthService.isValid(params['api_key'])) {
+            if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
+                redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                        grailsApplication.config.serverName + createLink(controller: 'admin', action: service))
+            } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
+                Map err = [error: 'not authorised']
+                render err as JSON
+            }
         }
     }
-
 }

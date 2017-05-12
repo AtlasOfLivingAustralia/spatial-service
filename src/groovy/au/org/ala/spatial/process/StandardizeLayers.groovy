@@ -5,6 +5,7 @@ import au.org.ala.layers.util.AnalysisLayerUtil
 import au.org.ala.layers.util.Bil2diva
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.WKTReader
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataUtilities
 import org.geotools.data.DefaultTransaction
@@ -22,6 +23,7 @@ import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
 
+@Commons
 class StandardizeLayers extends SlaveProcess {
 
     void start() {

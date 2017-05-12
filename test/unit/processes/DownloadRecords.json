@@ -1,0 +1,27 @@
+{
+  "name": "DownloadRecords",
+  "description": "Download lsid,latitude,longitude from biocache.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    }
+  },
+  "output": {
+    "file": {
+      "description": "records file"
+    },
+    "delete": {
+      "description": "use the records file to update tabulation counts"
+    },
+    "process": {
+      "description": "run processes that use the new counts"
+    }
+  }
+}

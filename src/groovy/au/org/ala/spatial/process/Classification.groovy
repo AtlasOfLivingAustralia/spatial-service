@@ -18,8 +18,10 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.slave.Utils
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class Classification extends SlaveProcess {
 
     void start() {
@@ -68,7 +70,7 @@ class Classification extends SlaveProcess {
         task.message = "asc > tif"
         runCmd(cmd, false)
 
-        if (new File(getTaskPath() + task.id + "_aloc.sld").exists()) {
+        if (new File(getTaskPath() + task.id + "aloc.sld").exists()) {
             File target = new File(grailsApplication.config.data.dir + '/layer/' + task.id + "_aloc.sld")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + task.id + "_aloc.sld"), target)

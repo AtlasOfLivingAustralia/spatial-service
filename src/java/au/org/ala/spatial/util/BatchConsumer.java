@@ -32,11 +32,11 @@ public class BatchConsumer {
     static List<Thread> threads = new ArrayList<Thread>();
     static LinkedBlockingQueue<String> waitingBatchDirs;
 
-    synchronized public static void start(LayerIntersectDAO layerIntersectDao, String batchDir) {
+    synchronized public static void start(LayerIntersectDAO layerIntersectDao, String batchDir, int numThreads) {
         if (threads.size() == 0) {
             waitingBatchDirs = new LinkedBlockingQueue<String>();
 
-            int size = Integer.parseInt((new UserProperties()).getProperties().getProperty("batch_sampling_parallel_requests", "1"));
+            int size = numThreads;
             for (int i = 0; i < size; i++) {
                 Thread t = new BatchConsumerThread(waitingBatchDirs, layerIntersectDao, batchDir);
                 t.start();

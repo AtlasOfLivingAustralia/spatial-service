@@ -1,0 +1,21 @@
+{
+  "name": "TabulationCreate",
+  "description": "Create tabulation intersection tasks. This is the entry point to creating missing tabulations.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "name": "layersServiceUrl",
+      "type": "auto"
+    }
+  },
+  "output": {
+    "process": {
+      "description": "Sub task requests for tabulation intersections not produced"
+    }
+  }
+}

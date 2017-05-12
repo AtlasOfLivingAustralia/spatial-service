@@ -15,10 +15,13 @@
 
 package au.org.ala.spatial.process
 
+import groovy.util.logging.Commons
+
+@Commons
 class Thumbnails extends SlaveProcess {
 
-    final int THUMBNAIL_WIDTH = 200;
-    final int THUMBNAIL_HEIGHT = 200;
+    final int THUMBNAIL_WIDTH = 200
+    final int THUMBNAIL_HEIGHT = 200
 
     void start() {
         //only updates missing thumbnails
@@ -57,7 +60,7 @@ class Thumbnails extends SlaveProcess {
             URL url = new URL(thumburl)
 
             InputStream inputStream = new BufferedInputStream(url.openStream())
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream()
             byte[] buf = new byte[1024]
             int n
             while ((n = inputStream.read(buf)) > 0) {

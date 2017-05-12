@@ -26,7 +26,12 @@ class ChecklistController {
     ObjectDAO objectDao
 
     def index() {
-        String wkt = params.containsKey('wkt') ? params.wkt : ''
+        String wkt = params?.wkt
+        if (params?.wkt && params.wkt.toString().isNumber()) {
+            wkt = objectDao.getObjectsGeometryById(params.wkt.toString(), "wkt")
+        }
+        if (!wkt) wkt = ''
+
         Double min_depth = params.containsKey('min_depth') ? params.min_depth : -1.0
         Double max_depth = params.containsKey('max_depth') ? params.max_depth : -1.0
         String lsids = params.containsKey('lsids') ? params.lsids : ''
@@ -55,18 +60,18 @@ class ChecklistController {
     }
 
     void addImageUrl(Distribution d) {
-        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx());
+        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
     }
 
     def lsids() {
-        List distributions = distributionDao.queryDistributions(null, null, null,
+        List distributions = distributionDao.queryDistributions(null, -1, -1,
                 null, null, null, null, null, null, null, null, null,
                 null, null, Distribution.SPECIES_CHECKLIST, null, null)
 
         def lsids = [:]
 
         distributions.each { map ->
-            def c = 1;
+            def c = 1
             if (lsids.containsKey(map.lsid)) c += lsids.get(map.lsid)
             lsids.put(map.lsid, c)
         }

@@ -46,7 +46,7 @@ class ManageLayersController {
         login()
 
         Map map = [:]
-        map.put("layers", manageLayersService.getAllLayers())
+        map.put("layers", manageLayersService.getAllLayers(null))
 
         map
     }
@@ -57,20 +57,20 @@ class ManageLayersController {
         if (!params?.remoteUrl) params.remoteUrl = grailsApplication.config.spatialService.remote
 
         def remote = manageLayersService.getAllLayers(params?.remoteUrl)
-        def local = manageLayersService.getAllLayers()
+        def local = manageLayersService.getAllLayers(null)
 
         def all = [:]
         remote.each { a ->
             a.fields.each { b ->
                 def m = b.toMap()
-                m.putAt("layer", a)
+                (m["layer"] = a)
                 all.put(b.id, [remote: m, local: null])
             }
         }
         local.each { a ->
             a.fields.each { b ->
                 def m = b.toMap()
-                m.putAt("layer", a)
+                (m["layer"] = a)
                 def item = all.get(b.id) ?: [remote: null, local: m]
                 item.local = m
                 all.put(b.id, item)
@@ -99,6 +99,7 @@ class ManageLayersController {
         map.put("layersRemoteOnly", layersRemoteOnly)
         map.put("layersBoth", layersBoth)
         map.put("spatialServiceUrl", params.remoteUrl)
+        map.put("localUrl", grailsApplication.config.serverURL)
 
         map
     }
@@ -195,7 +196,7 @@ class ManageLayersController {
     def importLayer() {
         login()
 
-        JSONParser jp = new JSONParser();
+        JSONParser jp = new JSONParser()
         String str = IOUtils.toString(new URL(params.url.toString()).openStream())
         JSONObject jo = (JSONObject) jp.parse(str)
         String id = jo.get('name')
@@ -241,7 +242,7 @@ class ManageLayersController {
     def importField() {
         login()
 
-        JSONParser jp = new JSONParser();
+        JSONParser jp = new JSONParser()
         String str = IOUtils.toString(new URL(params.url.toString()).openStream())
         JSONObject jo = (JSONObject) jp.parse(str)
         jo.put('requestedId', jo.get('id'))
@@ -279,9 +280,6 @@ class ManageLayersController {
             } else {
                 map.putAll manageLayersService.createOrUpdateLayer(request.JSON as Map, layerId)
             }
-
-            //redirect to this newly created layer
-            redirect(action: 'layer', id: map.layer_id)
         }
 
         //show
@@ -335,11 +333,13 @@ class ManageLayersController {
             } else {
                 manageLayersService.deleteChecklist(id)
             }
+            redirect(action: 'layers')
         } else {
+            def layerId = fieldDao.getFieldById(id, false).spid
             manageLayersService.deleteField(id)
-        }
 
-        redirect(action: 'index')
+            redirect(action: 'layers', id: layerId)
+        }
     }
 
     /**
@@ -546,7 +546,7 @@ class ManageLayersController {
         if (serviceAuthService.isValid(params['api_key'])) {
             return
         } else if (!authService.getUserId()) {
-            redirect(url: grailsApplication.config.casServerLoginUrl + "?service=" +
+            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
                     grailsApplication.config.serverName + createLink(controller: 'manageLayers', action: 'index'))
         } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
             Map err = [error: 'not authorised']

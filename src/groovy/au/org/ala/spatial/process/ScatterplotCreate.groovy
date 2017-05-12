@@ -19,7 +19,9 @@ import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.scatterplot.ScatterplotDTO
 import au.org.ala.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
+import groovy.util.logging.Commons
 
+@Commons
 class ScatterplotCreate extends SlaveProcess {
 
     void start() {
@@ -64,34 +66,38 @@ class ScatterplotCreate extends SlaveProcess {
         desc.setLayerunits(layerUnits)
         desc.setLayernames(layerNames)
 
-        ScatterplotStyleDTO style = new ScatterplotStyleDTO();
+        ScatterplotStyleDTO style = new ScatterplotStyleDTO()
 
-        Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString());
-        scatterplot.reStyle(style, false, false, false, false, false, false, false)
+        Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString(), task.input.layersServiceUrl)
 
-        File file = new File(getTaskPath() + "data.xml")
-        scatterplot.save(file)
+        if (layers.length <= 2) {
+            scatterplot.reStyle(style, false, false, false, false, false, false, false)
 
-        species1.putAt("scatterplotId", task.id)
-        species1.putAt("scatterplotUrl", scatterplot.getImagePath().replace(getTaskPath(), layersServiceUrl + "/tasks/output/" + task.id + "/"))
+            File file = new File(getTaskPath() + "data.xml")
+            scatterplot.save(file)
 
-        //style
-        species1.putAt('red', style.red)
-        species1.putAt('green', style.green)
-        species1.putAt('blue', style.blue)
-        species1.putAt('size', style.size)
-        species1.putAt('opacity', style.opacity)
-        species1.putAt('highlightWkt', style.highlightWkt)
+            species1.putAt("scatterplotId", task.id)
+            species1.putAt("scatterplotUrl", scatterplot.getImagePath().replace(getTaskPath(), layersServiceUrl + "/tasks/output/" + task.id + "/"))
 
-        //annotation
-        species1.putAt('q', scatterplot.getScatterplotDTO().getForegroundOccurrencesQs())
-        species1.putAt('bs', scatterplot.getScatterplotDTO().getForegroundOccurrencesBs())
-        species1.putAt('name', scatterplot.getScatterplotDTO().getForegroundName())
+            //style
+            species1.putAt('red', style.red)
+            species1.putAt('green', style.green)
+            species1.putAt('blue', style.blue)
+            species1.putAt('size', style.size)
+            species1.putAt('opacity', style.opacity)
+            species1.putAt('highlightWkt', style.highlightWkt)
 
-        species1.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotDataDTO().layerExtents())
-        species1.putAt('scatterplotLayers', scatterplot.getScatterplotDTO().getLayers())
-        species1.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
+            //annotation
+            species1.putAt('q', scatterplot.getScatterplotDTO().getForegroundOccurrencesQs())
+            species1.putAt('bs', scatterplot.getScatterplotDTO().getForegroundOccurrencesBs())
+            species1.putAt('name', scatterplot.getScatterplotDTO().getForegroundName())
 
-        addOutput("species", (species1 as JSON).toString())
+            species1.putAt('scatterplotExtents', scatterplot.getScatterplotDataDTO().layerExtents())
+            species1.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotStyleDTO().getSelection())
+            species1.putAt('scatterplotLayers', scatterplot.getScatterplotDTO().getLayers())
+            species1.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
+
+            addOutput("species", (species1 as JSON).toString())
+        }
     }
 }

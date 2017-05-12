@@ -95,6 +95,4 @@ public class SpatialUtils {
     static public double convertLatToMeters(double lat) {
         return Math.log(Math.tan(((lat / 180.0 * Math.PI) + Math.PI / 2.0) / 2.0)) * 20037508.342789244 / Math.PI;
     }
-
-
 }

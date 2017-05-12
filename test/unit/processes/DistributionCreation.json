@@ -1,0 +1,26 @@
+{
+  "name": "DistributionCreation",
+  "description": "Performs import of distribution shapefile into layers db",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "data_resource_uid": {
+      "type": "string"
+    },
+    "uploadId": {
+      "type": "upload"
+    }
+  },
+  "output": {
+    "sql": {
+      "description": "layersdb.distributions update sql for distribution upload"
+    },
+    "process": {
+      "description": "additional processes"
+    }
+  }
+}

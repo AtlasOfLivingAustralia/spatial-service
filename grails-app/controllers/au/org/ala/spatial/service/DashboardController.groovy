@@ -24,7 +24,7 @@ class DashboardController {
     def all() {
         def userId = authService.getUserId()
 
-        def limit = params?.age ? " WHERE datediff(dateadd(now(), -" + params?.age.toInteger() + ", 'd'),created) > 0 " : "";
+        def limit = params?.age ? " WHERE datediff(dateadd(now(), -${params?.age?.toInteger()}, 'd'),created) > 0 " : ""
 
         def sessions = []
         def categorySummary = []
@@ -50,8 +50,8 @@ class DashboardController {
                 def s = sessionsMap.get(c.sessionId)
                 def cat = [:]
                 if (s.containsKey('categories')) cat = s.categories
-                cat.putAt(c.category1, c.count)
-                s.putAt('categories', cat)
+                cat[c.category1] = c.count
+                s['categories'] = cat
             }
 
             sessions = sessionsMap.values()
@@ -63,7 +63,7 @@ class DashboardController {
     def categoryDetailAll(id) {
         def userId = authService.getUserId()
 
-        def limit = params?.age ? " WHERE datediff(dateadd(now(), -" + params?.age.toInteger() + ", 'd'),created) > 0 " : "";
+        def limit = params?.age ? " WHERE datediff(dateadd(now(), -${params?.age?.toInteger()}, 'd'),created) > 0 " : ""
 
         def categoryDetail = []
         if (userId) {
@@ -72,7 +72,7 @@ class DashboardController {
 
             if (validCategories.contains(id)) {
                 categoryDetail = Task.executeQuery("SELECT category2, count(category2) as count " +
-                        "FROM log " + (limit ?: " WHERE ") + " AND category1 = '" + id + "';")
+                        "FROM log " + (limit ?: " WHERE ") + " AND category1 = '$id';")
             }
         }
         [categoryDetail: categoryDetail]
@@ -105,8 +105,8 @@ class DashboardController {
                 def s = sessionsMap.get(c.sessionId)
                 def cat = [:]
                 if (s.containsKey('categories')) cat = s.categories
-                cat.putAt(c.category1, c.count)
-                s.putAt('categories', cat)
+                (cat[c.category1] = c.count)
+                (s['categories'] = cat)
             }
 
             sessions = sessionsMap.values()
@@ -135,7 +135,7 @@ class DashboardController {
 
         def detail = []
         if (userId != null) {
-            detail = Task.executeQuery("SELECT * FROM task WHERE sessionId = '" + id + "' AND userId = '" + userId + "';")
+            detail = Task.executeQuery("SELECT * FROM task WHERE sessionId = '$id' AND userId = '$userId';")
         }
 
         detail

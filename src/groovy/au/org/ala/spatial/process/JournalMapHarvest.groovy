@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import groovy.util.logging.Commons
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.GetMethod
 import org.json.simple.JSONArray
@@ -22,41 +23,42 @@ import org.json.simple.JSONObject
 import org.json.simple.JSONValue
 import org.json.simple.parser.JSONParser
 
+@Commons
 class JournalMapHarvest extends SlaveProcess {
 
     void start() {
 
         try {
 
-            String journalMapUrl = grailsApplication.config.journalmap.url;
-            String journalMapKey = grailsApplication.config.journalmap.api_key;
+            String journalMapUrl = grailsApplication.config.journalmap.url
+            String journalMapKey = grailsApplication.config.journalmap.api_key
 
-            List<JSONObject> journalMapArticles = null;
+            List<JSONObject> journalMapArticles = null
 
-            int page = 1;
-            int maxpage = 0;
-            List<String> publicationsIds = new ArrayList<String>();
+            int page = 1
+            int maxpage = 0
+            List<String> publicationsIds = new ArrayList<String>()
             while (page == 1 || page <= maxpage) {
                 task.message = "fetching publications page: " + page
 
-                HttpClient client = new HttpClient();
+                HttpClient client = new HttpClient()
 
-                String url = journalMapUrl + "api/publications.json?version=1.0&key=" + journalMapKey + "&page=" + page;
-                page = page + 1;
+                String url = journalMapUrl + "api/publications.json?version=1.0&key=" + journalMapKey + "&page=" + page
+                page = page + 1
 
-                GetMethod get = new GetMethod(url);
+                GetMethod get = new GetMethod(url)
 
-                int result = client.executeMethod(get);
+                int result = client.executeMethod(get)
 
                 //update maxpage
-                maxpage = Integer.parseInt(get.getResponseHeader("X-Pages").getValue());
+                maxpage = Integer.parseInt(get.getResponseHeader("X-Pages").getValue())
 
                 //cache
-                JSONParser jp = new JSONParser();
-                JSONArray jcollection = (JSONArray) jp.parse(get.getResponseBodyAsString());
+                JSONParser jp = new JSONParser()
+                JSONArray jcollection = (JSONArray) jp.parse(get.getResponseBodyAsString())
                 for (int i = 0; i < jcollection.size(); i++) {
                     if (((JSONObject) jcollection.get(i)).containsKey("id")) {
-                        publicationsIds.add(((JSONObject) jcollection.get(i)).get("id").toString());
+                        publicationsIds.add(((JSONObject) jcollection.get(i)).get("id").toString())
                     }
                 }
             }
@@ -64,49 +66,49 @@ class JournalMapHarvest extends SlaveProcess {
             for (String publicationsId : publicationsIds) {
                 //allow for collection failure
                 try {
-                    page = 1;
-                    maxpage = 0;
+                    page = 1
+                    maxpage = 0
                     while (page == 1 || page <= maxpage) {
                         task.message = "fetching articles for putlication: " + publicationsId + " page: " + page
 
-                        HttpClient client = new HttpClient();
+                        HttpClient client = new HttpClient()
 
-                        String url = journalMapUrl + "api/articles.json?version=1.0&key=" + journalMapKey + "&page=" + page + "&publication_id=" + publicationsId;
-                        page = page + 1;
+                        String url = journalMapUrl + "api/articles.json?version=1.0&key=" + journalMapKey + "&page=" + page + "&publication_id=" + publicationsId
+                        page = page + 1
 
-                        GetMethod get = new GetMethod(url);
+                        GetMethod get = new GetMethod(url)
 
-                        int result = client.executeMethod(get);
+                        int result = client.executeMethod(get)
 
                         //update maxpage
-                        maxpage = Integer.parseInt(get.getResponseHeader("X-Pages").getValue());
+                        maxpage = Integer.parseInt(get.getResponseHeader("X-Pages").getValue())
 
                         //cache
-                        JSONParser jp = new JSONParser();
-                        JSONArray jarticles = (JSONArray) jp.parse(get.getResponseBodyAsString());
+                        JSONParser jp = new JSONParser()
+                        JSONArray jarticles = (JSONArray) jp.parse(get.getResponseBodyAsString())
                         for (int j = 0; j < jarticles.size(); j++) {
-                            JSONObject o = (JSONObject) jarticles.get(j);
+                            JSONObject o = (JSONObject) jarticles.get(j)
                             if (o.containsKey("locations")) {
-                                journalMapArticles.add(o);
+                                journalMapArticles.add(o)
                             }
                         }
                     }
                 } catch (Exception e) {
-                    log.error("journalmap - failure to get articles from publicationsId: " + publicationsId, e);
+                    log.error("journalmap - failure to get articles from publicationsId: " + publicationsId, e)
                 }
             }
 
             //save to disk cache
             def jaFile = new File(grailsApplication.config.data.dir + '/journalmap.json')
-            FileWriter fw = new FileWriter(jaFile);
-            JSONValue.writeJSONString(journalMapArticles, fw);
-            fw.flush();
-            fw.close();
+            FileWriter fw = new FileWriter(jaFile)
+            JSONValue.writeJSONString(journalMapArticles, fw)
+            fw.flush()
+            fw.close()
 
             addOutput('file', '/journalmap.json')
 
         } catch (Exception e) {
-            log.error("error initialising journalmap data", e);
+            log.error("error initialising journalmap data", e)
         }
     }
 }

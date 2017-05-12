@@ -223,12 +223,12 @@ class PublishService {
             def newAreas = []
             output.files.each { json ->
 
-                def values = json as JSON
-                def p = (file.startsWith('/') ? grailsApplication.config.data.dir + file : path + '/' + values.file)
+                def values = JSON.parse(json)
+                def p = (values.file.startsWith('/') ? grailsApplication.config.data.dir + values.file : path + '/' + values.file)
 
                 String wkt = FileUtils.readFileToString(new File(p))
 
-                String generatedPid = objectDao.createUserUploadedObject(wkt, json.name, json.description, null);
+                String generatedPid = objectDao.createUserUploadedObject(wkt, values.name, values.description, null);
 
                 newAreas.add(generatedPid)
             }
@@ -277,7 +277,7 @@ class PublishService {
             def geoserverPassword = grailsApplication.config.geoserver.password
 
             output.files.each { f ->
-                def p = (f.startsWith('/') ? grailsApplication.config.data.dir + f : path + '/' + f)
+                def p = path == null ? f : (f.startsWith('/') ? grailsApplication.config.data.dir + f : path + '/' + f)
                 def file = f
                 if (!f.endsWith('.tif') && !f.endsWith('.shp')) {
                     if (new File(p + '.tif').exists()) {

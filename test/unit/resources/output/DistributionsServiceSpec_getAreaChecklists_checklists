@@ -1,0 +1,4 @@
+SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM
+1,"species 1",,"","","",,0.0,75.0,,"1","Area 2","2.0",
+2,"species 2",,"","","",,0.0,75.0,,"2","Area 1","1.0",
+3,"species 2",,"","","",,0.0,75.0,,"2","Area 2","2.0",

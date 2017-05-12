@@ -48,13 +48,13 @@ grails.project.dependency.resolution = {
 
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes e.g.
-        test "org.grails:grails-datastore-test-support:1.0-grails-2.3"
+        //test "org.grails:grails-datastore-test-support:1.0-grails-2.5"
         runtime "commons-httpclient:commons-httpclient:3.1",
                 "org.codehaus.jackson:jackson-core-asl:1.8.6",
                 "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
         compile("au.org.ala:layers-store:1.3-SNAPSHOT") {
-            excludes "spring-context", "spring-jdbc", "spring-orm", "spring-oxm", "ands-pid-client"
+            excludes "spring-context", "spring-jdbc", "spring-orm", "spring-oxm", "ands-pid-client", "xalan"
         }
 
         runtime 'jfree:jfreechart:1.0.13'
@@ -63,6 +63,11 @@ grails.project.dependency.resolution = {
 
         runtime 'commons-io:commons-io:2.4'
 
+        //test "org.grails:grails-datastore-test-support:1.0.2-grails-2.4"
+
+        runtime "org.geotools:gt-jts-wrapper:11.1"
+
+        runtime "org.apache.httpcomponents:httpmime:4.3.3"
     }
 
     plugins {
@@ -78,34 +83,38 @@ grails.project.dependency.resolution = {
         build ":tomcat:7.0.54"
 
         // plugins for the compile step
-        compile ":scaffolding:2.0.3"
-        compile ':cache:1.1.7'
+        //compile ":scaffolding:2.1.2"
+        compile ':cache:1.1.8'
 
         // plugins needed at runtime but not for compilation
-        runtime ":hibernate:3.6.10.16" // or ":hibernate4:4.3.5.4"
+        runtime ":hibernate4:4.3.10" // or ":hibernate4:4.3.5.4"
         runtime ":database-migration:1.4.0"
         runtime ":jquery:1.11.1"
-        runtime ":resources:1.2.8"
-        runtime ":jquery-ui:1.10.4"
-        runtime ":jquery:1.10.4"
+        runtime ":resources:1.2.14"
+        runtime(":jquery-ui:1.10.4"){
+            excludes 'jquery'
+        }
+
         // Uncomment these (or add new ones) to enable additional resources capabilities
-        //runtime ":zipped-resources:1.0.1"
-        //runtime ":cached-resources:1.1"
-        //runtime ":yui-minify-resources:0.1.5"
+        //compile ":sass-asset-pipeline:1.9.0"
+        //compile ":less-asset-pipeline:1.10.0"
+        //compile ":coffee-asset-pipeline:1.8.0"
+        //compile ":handlebars-asset-pipeline:1.3.0.3"
 
-        // An alternative to the default resources plugin is the asset-pipeline plugin
-        //compile ":asset-pipeline:1.6.1"
 
-        // Uncomment these to enable additional asset-pipeline capabilities
-        //compile ":sass-asset-pipeline:1.5.5"
-        //compile ":less-asset-pipeline:1.5.3"
-        //compile ":coffee-asset-pipeliney:1.5.0"
-        //compile ":handlebars-asset-pipeline:1.3.0.1"
+        //runtime ":ala-bootstrap2:2.4.2"
 
-        //runtime ":ala-bootstrap3:1.3"
-        runtime ":ala-bootstrap2:2.4.2"
-        runtime ":ala-auth:1.3.2-SNAPSHOT"
 
         runtime "org.grails.plugins:cors:1.1.8"
+
+        runtime ":ala-admin-plugin:1.3-SNAPSHOT"
+
+        compile ":ala-auth:1.3.4"
+        compile(":ala-bootstrap3:1.6.2") {
+            excludes 'jquery'
+        }
+//        runtime(":ala-ws-plugin:1.5.1-SNAPSHOT") {
+//            excludes ":ala-auth"
+//        }
     }
 }

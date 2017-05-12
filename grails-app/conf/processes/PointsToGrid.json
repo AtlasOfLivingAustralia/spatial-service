@@ -13,7 +13,7 @@
       "type": "auto"
     },
     "area": {
-      "description": "Area to restrict the species.",
+      "description": "Area to restrict the points.",
       "type": "area",
       "constraints": {
         "min": 1,

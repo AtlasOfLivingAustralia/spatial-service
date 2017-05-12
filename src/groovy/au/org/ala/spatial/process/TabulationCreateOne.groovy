@@ -22,6 +22,7 @@ import com.vividsolutions.jts.geom.GeometryCollection
 import com.vividsolutions.jts.geom.MultiPolygon
 import com.vividsolutions.jts.geom.Polygon
 import com.vividsolutions.jts.io.WKTReader
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataStore
 import org.geotools.data.DataStoreFinder
@@ -31,6 +32,7 @@ import org.opengis.feature.simple.SimpleFeature
 
 import java.util.zip.ZipInputStream
 
+@Commons
 class TabulationCreateOne extends SlaveProcess {
 
     void start() {
@@ -130,12 +132,12 @@ class TabulationCreateOne extends SlaveProcess {
                 iterator1.close()
                 dataStore1.dispose()
 
-                def map2 = new HashMap();
-                map2.put("url", file2.toURI().toURL());
-                def dataStore2 = DataStoreFinder.getDataStore(map2);
-                def typeName2 = dataStore2.getTypeNames()[0];
-                def source2 = dataStore2.getFeatureSource(typeName2);
-                def iterator2 = source2.getFeatures().features();
+                def map2 = new HashMap()
+                map2.put("url", file2.toURI().toURL())
+                def dataStore2 = DataStoreFinder.getDataStore(map2)
+                def typeName2 = dataStore2.getTypeNames()[0]
+                def source2 = dataStore2.getFeatureSource(typeName2)
+                def iterator2 = source2.getFeatures().features()
                 while (iterator2.hasNext()) {
                     SimpleFeature feature2 = (SimpleFeature) iterator2.next()
                     p2.put(feature2.getID(), feature2.getAttribute(field2.sid.toString()).toString())
@@ -146,38 +148,38 @@ class TabulationCreateOne extends SlaveProcess {
                 HashMap<String, Pair> map = new HashMap<String, Pair>()
 
                 //iterate over shpIntersectionFile
-                ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file3)));
-                zis.getNextEntry(); //only one file in the zip
-                InputStreamReader isr = new InputStreamReader(zis);
-                BufferedReader br = new BufferedReader(isr);
-                String id1;
-                String id2;
-                String wkt;
+                ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file3)))
+                zis.getNextEntry() //only one file in the zip
+                InputStreamReader isr = new InputStreamReader(zis)
+                BufferedReader br = new BufferedReader(isr)
+                String id1
+                String id2
+                String wkt
                 while ((id1 = br.readLine()) != null) {
-                    id2 = br.readLine();
-                    wkt = br.readLine();
+                    id2 = br.readLine()
+                    wkt = br.readLine()
 
-                    String key = p1.get(id1) + "|" + p2.get(id2);
-                    Pair p = map.get(key);
+                    String key = p1.get(id1) + "|" + p2.get(id2)
+                    Pair p = map.get(key)
                     if (p == null) {
-                        p = new Pair(key);
-                        map.put(key, p);
+                        p = new Pair(key)
+                        map.put(key, p)
                     }
-                    p.area += SpatialUtil.calculateArea(wkt) / 1000000.0;
-                    p.geom.add(wkt);
+                    p.area += SpatialUtil.calculateArea(wkt) / 1000000.0
+                    p.geom.add(wkt)
                 }
 
                 //map (objectId => pid)
-                List objects1 = getObjects(fieldId1);
-                List objects2 = getObjects(fieldId2);
-                Map<String, String> pids1 = new HashMap<String, String>();
-                Map<String, String> pids2 = new HashMap<String, String>();
+                List objects1 = getObjects(fieldId1)
+                List objects2 = getObjects(fieldId2)
+                Map<String, String> pids1 = new HashMap<String, String>()
+                Map<String, String> pids2 = new HashMap<String, String>()
 
                 objects1.each { o ->
-                    pids1.put(o.id.toString(), o.pid.toString());
+                    pids1.put(o.id.toString(), o.pid.toString())
                 }
                 objects2.each { o ->
-                    pids2.put(o.id.toString(), o.pid.toString());
+                    pids2.put(o.id.toString(), o.pid.toString())
                 }
 
                 // sql statements to put pairs into tabulation
@@ -204,7 +206,7 @@ class TabulationCreateOne extends SlaveProcess {
                             }
                             wktSb.append(w.substring(14, w.length() - 1))
                         } else {
-                            WKTReader wktReader = new WKTReader();
+                            WKTReader wktReader = new WKTReader()
                             Geometry g = wktReader.read(w)
                             if (g instanceof GeometryCollection) {
                                 //extract only multipolygons, ignore everything else
@@ -240,7 +242,7 @@ class TabulationCreateOne extends SlaveProcess {
                                 p.getValue().area + "," +
                                 p.getValue().occurrences + "," +
                                 p.getValue().species.cardinality() + "," +
-                                "ST_GEOMFROMTEXT('" + wktSb.toString() + "', 4326));";
+                                "ST_GEOMFROMTEXT('" + wktSb.toString() + "', 4326));"
 
                         fname = 'import' + counter + '.sql'
                         FileUtils.writeStringToFile(new File(getTaskPath() + fname), sql)

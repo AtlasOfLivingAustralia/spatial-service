@@ -1,0 +1,8 @@
+"Number of occurrences","name0","name1","name2","Total occurrences"
+"name3",500,100,300,900.0
+"name4",,1000,400,1400.0
+"name5",,,200,200.0
+"Total occurrences",500.0,1100.0,900.0,2500.0
+
+Blanks = no intersection
+0 = no records in intersection

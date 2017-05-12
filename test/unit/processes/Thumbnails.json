@@ -1,0 +1,21 @@
+{
+  "name": "Thumbnails",
+  "description": "Create layer thumbnails using geoserver",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "name": "layersServiceUrl",
+      "type": "auto"
+    }
+  },
+  "output": {
+    "file": {
+      "description": "layer thumbnail png images"
+    }
+  }
+}

@@ -5,6 +5,10 @@
     <meta name="layout" content="main">
     <g:set var="entityName" value="${message(code: 'task.label', default: 'Task')}"/>
     <title><g:message code="default.list.label" args="[entityName]"/></title>
+
+    <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
+    <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
 </head>
 
 <body>
@@ -29,14 +33,24 @@
     }
 </script>
 
-<ul class="breadcrumb">
-    <li><g:link controller="main" action="index">Home</g:link></li>
-    <li class="active">Tasks</li>
-    <br>
-    <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
-    <li><g:link controller="manageLayers" action="uploads">Uploads</g:link></li>
-    <li><g:link controller="tasks" action="index">Tasks</g:link></li>
-</ul>
+<div class="col-lg-8">
+    <ul class="breadcrumb">
+        <li><g:link controller="main" action="index">Home</g:link></li>
+        <li class="active">Tasks</li>
+    </ul>
+</div>
+
+<div class="panel panel-default col-lg-4">
+    <div class="panel-heading">
+        <h4 class="panel-title">Navigation</h4>
+    </div>
+    <div class="panel-body">
+        <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+        <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+        <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+        <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    </div>
+</div>
 
 <form class="listSearchForm">
     <div class="input-append" id="searchLists">

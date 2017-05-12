@@ -17,17 +17,17 @@ package au.org.ala.spatial.process
 
 class Pair {
 
-    String key;
-    int occurrences;
-    BitSet species = new BitSet();
-    double area;
-    String v1, v2;
-    ArrayList geom = new ArrayList();
+    String key
+    int occurrences
+    BitSet species = new BitSet()
+    double area
+    String v1, v2
+    ArrayList geom = new ArrayList()
 
     Pair(String key) {
-        this.key = key;
-        String[] split = key.split("\\|");
-        v1 = split[0];
-        v2 = split[1];
+        this.key = key
+        String[] split = key.split("\\|")
+        v1 = split[0]
+        v2 = split[1]
     }
 }

@@ -3,7 +3,7 @@
  * All Rights Reserved.
  *
  * The contents of this file are subject to the Mozilla Public
- * License Version 1.1 (the "License"); you may not use this file
+ * License Version 1.1 (the "License") you may not use this file
  * except in compliance with the License. You may obtain a copy of
  * the License at http://www.mozilla.org/MPL/
  *
@@ -37,7 +37,7 @@ class LayerController {
             fields.each { field ->
                 if (field.spid == layer.id.toString()) {
                     if (map?.last_update) {
-                        map.put('last_update', field?.last_update?.getTime() < map?.last_update?.getTime() ? field.last_update : map.last_update)
+                        map.put('last_update', field?.last_update?.getTime() < ((Date) map?.last_update)?.getTime() ? field.last_update : map.last_update)
                     } else {
                         map.put('last_update', field.last_update)
                     }
@@ -68,12 +68,14 @@ class LayerController {
                     try {
                         os.close()
                     } catch (err) {
+                        log.trace(err.getMessage(), err)
                     }
                 }
                 if (is != null) {
                     try {
                         is.close()
                     } catch (err) {
+                        log.trace(err.getMessage(), err)
                     }
                 }
             }
@@ -81,54 +83,55 @@ class LayerController {
     }
 
     def csvlist() {
-        List layers = layerDao.getLayers();
+        List layers = layerDao.getLayers()
 
-        String header = "";
-        header += "ID,";
-        header += "Short name,";
-        header += "Name,";
-        header += "Description,";
-        header += "Data provider,";
-        header += "Provider website,";
-        header += "Provider role,";
-        header += "Metadata date,";
-        header += "Reference date,";
-        header += "Licence level,";
-        header += "Licence info,";
-        header += "Licence notes,";
-        header += "Type,";
-        header += "Classification 1,";
-        header += "Classification 2,";
-        header += "Units,";
-        header += "Notes,";
-        header += "More information,";
-        header += "Keywords,";
-        header += "Date Added";
+        String header = ""
+        header += "ID,"
+        header += "Short name,"
+        header += "Name,"
+        header += "Description,"
+        header += "Data provider,"
+        header += "Provider website,"
+        header += "Provider role,"
+        header += "Metadata date,"
+        header += "Reference date,"
+        header += "Licence level,"
+        header += "Licence info,"
+        header += "Licence notes,"
+        header += "Type,"
+        header += "Classification 1,"
+        header += "Classification 2,"
+        header += "Units,"
+        header += "Notes,"
+        header += "More information,"
+        header += "Keywords,"
+        header += "Date Added"
 
-        response.setContentType("text/csv; charset=UTF-8");
-        response.setHeader("Content-Disposition", "inline;filename=ALA_Spatial_Layers.csv");
+        response.setContentType("text/csv charset=UTF-8")
+        response.setHeader("Content-Disposition", "inlinefilename=ALA_Spatial_Layers.csv")
         CSVWriter cw = null
 
         try {
-            cw = new CSVWriter(response.getWriter());
-            cw.writeNext("Please provide feedback on the 'keywords' columns to data_management@ala.org.au".split("\n"));
-            cw.writeNext(header.split(","));
+            cw = new CSVWriter(response.getWriter())
+            cw.writeNext("Please provide feedback on the 'keywords' columns to data_management@ala.org.au".split("\n"))
+            cw.writeNext(header.split(","))
 
-            Iterator<Layer> it = layers.iterator();
-            List<String[]> mylist = new Vector<String[]>();
+            Iterator<Layer> it = layers.iterator()
+            List<String[]> mylist = new Vector<String[]>()
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd")
             while (it.hasNext()) {
-                Layer lyr = it.next();
-                mylist.add(ArrayUtils.add(lyr.toArray(), lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added())));
+                Layer lyr = ++it
+                mylist.add(ArrayUtils.add(lyr.toArray(), lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added())) as String)
             }
-            cw.writeAll(mylist);
+            cw.writeAll(mylist)
         } catch (err) {
-
+            log.trace(err.getMessage(), err)
         } finally {
             if (cw != null) {
                 try {
-                    cw.close();
+                    cw.close()
                 } catch (err) {
+                    log.trace(err.getMessage(), err)
                 }
             }
         }
@@ -256,7 +259,7 @@ class LayerController {
             sb.append("<![CDATA[" + layer.getLicence_notes() + "]]></licence>")
             sb.append("</rights>")
             sb.append("<coverage>")
-            sb.append("<spatial type=\"iso19139dcmiBox\">northlimit=" + layer.getMaxlatitude() + "; southlimit=" + layer.getMinlatitude() + "; westlimit=" + layer.getMinlongitude() + "; eastLimit=" + layer.getMaxlongitude() + "; projection=WGS84</spatial>")
+            sb.append("<spatial type=\"iso19139dcmiBox\">northlimit=" + layer.getMaxlatitude() + " southlimit=" + layer.getMinlatitude() + " westlimit=" + layer.getMinlongitude() + " eastLimit=" + layer.getMaxlongitude() + " projection=WGS84</spatial>")
             sb.append("</coverage>")
             sb.append("</collection>")
             sb.append("</registryObject>")

@@ -15,13 +15,15 @@
 
 package au.org.ala.spatial.slave
 
+import grails.compiler.GrailsCompileStatic
+
+@GrailsCompileStatic
 class Task {
 
     Long id = System.currentTimeMillis()
 
     // date/time created
     Date created = new Date(System.currentTimeMillis())
-
 
     String taskId
 

@@ -15,7 +15,6 @@
 
 package au.org.ala.spatial.service
 
-import au.org.ala.spatial.util.AreaReportPDF
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.transaction.Transactional
@@ -73,7 +72,7 @@ class TasksController {
 
         if (params.containsKey('last')) {
             def lg = status.history.findAll { k, v ->
-                if (Long.parseLong(k) > Long.parseLong(params.last)) {
+                if (Long.parseLong(k.toString()) > Long.parseLong(params?.last?.toString())) {
                     [k: v]
                 } else {
                     null
@@ -91,33 +90,43 @@ class TasksController {
         render task as JSON
     }
 
-    private def login() {
-        if (serviceAuthService.isValid(params['api_key'])) {
-            return
-        } else if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
-            redirect(url: grailsApplication.config.casServerLoginUrl + "?service=" +
-                    grailsApplication.config.serverName + createLink(controller: 'tasks', action: 'index'))
-        } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
+    private login() {
+        if (!serviceAuthService.isValid(params['api_key'])) {
+            if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
+                redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                        grailsApplication.config.serverName + createLink(controller: 'tasks', action: 'index'))
+            } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
+                Map err = [error: 'not authorised']
+                render err as JSON
+            }
         }
     }
 
+    /**
+     * @return a map of inputs to errors, or the created task
+     */
     @Transactional
-    def create() {
+    create() {
         login()
 
         JSONObject input = null
         if (params.containsKey('input')) {
-            input = (JSONObject) JSON.parse(params.input.toString())
+            input = ((JSONObject) JSON.parse(params.input.toString())).findAll { k, v -> v != null }
         }
-        Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, params.userId, params.email)
 
-        render task as JSON
+        //Validate input. It may update input
+        def errors = tasksService.validateInput(params.name, input)
+
+        if (errors) {
+            render errors as JSON
+        } else {
+            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, params.userId, params.email)
+            render task as JSON
+        }
     }
 
     @Transactional
-    def cancel(Task task) {
+    cancel(Task task) {
         login()
 
         if (task?.status < 2) tasksService.cancel(task)
@@ -143,7 +152,7 @@ class TasksController {
     }
 
     @Transactional
-    def reRun(Task task) {
+    reRun(Task task) {
         login()
 
         if (task != null) {
@@ -160,9 +169,9 @@ class TasksController {
     }
 
     def output() {
-        def file = grailsApplication.config.data.dir + '/public/' + params.p1
-        if (params.containsKey('p2')) file += '/' + params.p2
-        if (params.containsKey('p3')) file += '/' + params.p3
+        def file = "${grailsApplication.config.data.dir}/public/${params.p1}"
+        if (params.containsKey('p2')) file += "/${params.p2}"
+        if (params.containsKey('p3')) file += "/${params.p3}"
 
         def f = new File(file)
         if (f.exists()) {
@@ -177,7 +186,6 @@ class TasksController {
                 response.setContentType("text/plain")
                 ok = true
             } else if (file.endsWith('.html')) {
-                //response.setContentType("text/html")
                 render(text: IOUtil.toString(new FileInputStream(f)), contentType: "text/html", encoding: "UTF-8")
                 return
             } else if (file.endsWith('.jpg')) {
@@ -202,24 +210,6 @@ class TasksController {
                     os.close()
                 }
             }
-        }
-    }
-
-    def test() {
-        try {
-            new AreaReportPDF("http://local.ala.org.au:8079/geoserver",
-                    "http://ala-cohen.it.csiro.au/biocache-service",
-                    "*:*&wkt=" +
-                            //URLEncoder.encode("POLYGON((151.144554432 -33.8900501635,151.144554432 -33.8455629915,151.196584992 -33.8455629915,151.196584992 -33.8900501635,151.144554432 -33.8900501635))", "UTF-8"),
-                            URLEncoder.encode("POLYGON ((149.7216796875 -22.71539001933593, 149.7216796875 -21.861498734372553, 150.82031249999997 -21.861498734372553, 150.82031249999997 -22.71539001933593, 149.7216796875 -22.71539001933593))", "UTF-8"),
-                    //"685950",
-                    "686494",
-                    "test",
-                    null, null,
-                    "http://local.ala.org.au:8080/spatial-service",
-                    null, "/usr/local/bin/wkhtmltopdf");
-        } catch (Exception e) {
-            e.printStackTrace(); ;
         }
     }
 

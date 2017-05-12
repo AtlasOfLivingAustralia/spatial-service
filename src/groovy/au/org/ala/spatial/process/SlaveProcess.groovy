@@ -29,6 +29,7 @@ import au.org.ala.spatial.slave.Task
 import au.org.ala.spatial.slave.TaskService
 import au.org.ala.spatial.util.OccurrenceData
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -36,6 +37,7 @@ import org.gdal.ogr.Geometry
 import org.json.simple.JSONArray
 import org.json.simple.parser.JSONParser
 
+@Commons
 class SlaveProcess {
 
     TaskService taskService
@@ -178,10 +180,12 @@ class SlaveProcess {
         String wkt = null
 
         try {
-            String url = task.input.layersServiceUrl + '/shapes/wkt/' + objectId
-            wkt = Util.getUrl(url)
+            if (objectId != null) {
+                String url = task.input.layersServiceUrl + '/shapes/wkt/' + objectId
+                wkt = Util.getUrl(url)
+            }
         } catch (err) {
-            log.error 'failed to lookup object wkt: ' + objectId, err
+            log.error "failed to lookup object wkt: ${objectId}", err
         }
 
         wkt
@@ -204,9 +208,9 @@ class SlaveProcess {
 
         if (!task.output.containsKey(value)) task.output.put(value, [])
 
-        File file = new File(grailsApplication.config.data.dir + fstart)
+        File file = new File("${grailsApplication.config.data.dir}${fstart}")
         for (File f : file.listFiles()) {
-            if (f.getName().equals(fend) || f.getName().startsWith(fend + '.')) {
+            if (f.getName().equals(fend) || f.getName().startsWith("${fend}.")) {
                 if (layers &&
                         (f.getText().endsWith(".sld") || f.getText().endsWith(".grd") ||
                                 f.getText().endsWith(".gri") || f.getText().endsWith(".tif") ||
@@ -243,70 +247,6 @@ class SlaveProcess {
         }
     }
 
-    int runCmd(String[] cmd, boolean logToTask) {
-        int exitValue = 1
-
-        ProcessBuilder builder = new ProcessBuilder(cmd)
-        builder.environment().putAll(System.getenv())
-        builder.redirectErrorStream(false)
-
-        try {
-            java.lang.Process proc = builder.start()
-
-            // any error message?
-            StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "", logToTask ? task : null);
-
-            // any output?
-            StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "", logToTask ? task : null);
-
-            // kick them off
-            errorGobbler.start()
-            outputGobbler.start()
-
-            log.debug "Output of executing: " + cmd
-
-            int exitVal = proc.waitFor()
-
-            errorGobbler.interrupt()
-            outputGobbler.interrupt()
-
-            // any error???
-            exitValue = exitVal
-        } catch (Exception e) {
-            log.error 'failed executing: ' + cmd, e
-        }
-
-        exitValue
-    }
-
-    class StreamGobbler extends Thread {
-
-        BufferedReader br
-        String logPrefix
-        Task task
-
-        public StreamGobbler(InputStream is, String logPrefix, Task task) {
-            br = new BufferedReader(new InputStreamReader(is))
-            this.logPrefix = logPrefix
-            this.task = task
-        }
-
-        @Override
-        public void run() {
-            try {
-                String line
-                while ((line = br.readLine()) != null) {
-                    if (task != null) {
-                        task.history.put(String.valueOf(System.currentTimeMillis()), logPrefix + ": " + line)
-                    }
-                    log.debug logPrefix + ": " + line
-                }
-            } catch (Exception e) {
-                log.error 'task: ' + ', failed consuming log with prefix ' + logPrefix, e
-            }
-        }
-    }
-
     def facetCount(facet, species) {
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q
         String response = Util.getUrl(url)
@@ -331,8 +271,8 @@ class SlaveProcess {
     }
 
     def downloadSpecies(species) {
-        OccurrenceData od = new OccurrenceData();
-        String[] s = od.getSpeciesData(species.q, species.bs, null, null);
+        OccurrenceData od = new OccurrenceData()
+        String[] s = od.getSpeciesData(species.q, species.bs, null, null)
 
         def newFiles = []
 
@@ -375,143 +315,143 @@ class SlaveProcess {
      *                        extents.
      * @return directory containing the cut grid files.
      */
-    public String cutGrid(String[] layers, String resolution, SimpleRegion region, LayerFilter[] envelopes, String extentsFilename) {
+    String cutGrid(String[] layers, String resolution, SimpleRegion region, LayerFilter[] envelopes, String extentsFilename) {
         //check if resolution needs changing
         resolution = confirmResolution(layers, resolution)
 
         //get extents for all layers
-        double[][] extents = getLayerExtents(resolution, layers[0]);
+        double[][] extents = getLayerExtents(resolution, layers[0])
         for (int i = 1; i < layers.length; i++) {
-            extents = internalExtents(extents, getLayerExtents(resolution, layers[i]));
+            extents = internalExtents(extents, getLayerExtents(resolution, layers[i]))
             if (!isValidExtents(extents)) {
-                return null;
+                return null
             }
         }
         //do extents check for contextual envelopes as well
         if (envelopes != null) {
-            extents = internalExtents(extents, getLayerFilterExtents(envelopes));
+            extents = internalExtents(extents, getLayerFilterExtents(envelopes))
             if (!isValidExtents(extents)) {
-                return null;
+                return null
             }
         }
 
         //get mask and adjust extents for filter
-        byte[][] mask;
+        byte[][] mask
         int h
         int w
-        double res = Double.parseDouble(resolution);
+        double res = Double.parseDouble(resolution)
         if (region != null) {
-            extents = internalExtents(extents, region.getBoundingBox());
+            extents = internalExtents(extents, region.getBoundingBox())
 
             if (!isValidExtents(extents)) {
-                return null;
+                return null
             }
 
-            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res);
-            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res);
-            mask = getRegionMask(extents, w, h, region);
+            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
+            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res)
+            mask = getRegionMask(extents, w, h, region)
         } else if (envelopes != null) {
-            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res);
-            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res);
-            mask = getEnvelopeMaskAndUpdateExtents(resolution, res, extents, h, w, envelopes);
-            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res);
-            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res);
+            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
+            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res)
+            mask = getEnvelopeMaskAndUpdateExtents(resolution, res, extents, h, w, envelopes)
+            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
+            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res)
         } else {
-            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res);
-            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res);
-            mask = getMask(w, h);
+            h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
+            w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res)
+            mask = getMask(w, h)
         }
 
         //mkdir in index location
-        String newPath = null;
+        String newPath = null
         try {
-            newPath = getTaskPath() + "/tmp/" + System.currentTimeMillis() + File.separator;
+            newPath = getTaskPath() + "/tmp/" + System.currentTimeMillis() + File.separator
             new File(newPath).mkdirs()
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace()
         }
 
         //apply mask
         for (int i = 0; i < layers.length; i++) {
-            applyMask(newPath, resolution, extents, w, h, mask, layers[i]);
+            applyMask(newPath, resolution, extents, w, h, mask, layers[i])
         }
 
         //write extents file
-        writeExtents(extentsFilename, extents, w, h);
+        writeExtents(extentsFilename, extents, w, h)
 
-        return newPath;
+        return newPath
     }
 
     double[][] internalExtents(double[][] e1, double[][] e2) {
-        double[][] internalExtents = new double[2][2];
+        double[][] internalExtents = new double[2][2]
 
-        internalExtents[0][0] = Math.max(e1[0][0], e2[0][0]);
-        internalExtents[0][1] = Math.max(e1[0][1], e2[0][1]);
-        internalExtents[1][0] = Math.min(e1[1][0], e2[1][0]);
-        internalExtents[1][1] = Math.min(e1[1][1], e2[1][1]);
+        internalExtents[0][0] = Math.max(e1[0][0], e2[0][0])
+        internalExtents[0][1] = Math.max(e1[0][1], e2[0][1])
+        internalExtents[1][0] = Math.min(e1[1][0], e2[1][0])
+        internalExtents[1][1] = Math.min(e1[1][1], e2[1][1])
 
-        return internalExtents;
+        return internalExtents
     }
 
     boolean isValidExtents(double[][] e) {
-        return e[0][0] < e[1][0] && e[0][1] < e[1][1];
+        return e[0][0] < e[1][0] && e[0][1] < e[1][1]
     }
 
     double[][] getLayerExtents(String resolution, String layer) {
-        double[][] extents = new double[2][2];
+        double[][] extents = new double[2][2]
 
         if (getLayerPath(resolution, layer) == null
                 && layer.startsWith("cl")) {
             //use world extents here, remember to do object extents later.
-            extents[0][0] = -180;
-            extents[0][1] = -90;
-            extents[1][0] = 180;
-            extents[1][1] = 90;
+            extents[0][0] = -180
+            extents[0][1] = -90
+            extents[1][0] = 180
+            extents[1][1] = 90
 
         } else {
-            Grid g = Grid.getGrid(getLayerPath(resolution, layer));
+            Grid g = Grid.getGrid(getLayerPath(resolution, layer))
 
-            extents[0][0] = g.xmin;
-            extents[0][1] = g.ymin;
-            extents[1][0] = g.xmax;
-            extents[1][1] = g.ymax;
+            extents[0][0] = g.xmin
+            extents[0][1] = g.ymin
+            extents[1][0] = g.xmax
+            extents[1][1] = g.ymax
         }
 
-        return extents;
+        return extents
     }
 
-    public String getLayerPath(String resolution, String layer) {
+    String getLayerPath(String resolution, String layer) {
         String standardLayersDir = grailsApplication.config.data.dir + '/standard_layer/'
-        File file = new File(standardLayersDir + resolution + '/' + layer + '.grd');
+        File file = new File(standardLayersDir + resolution + '/' + layer + '.grd')
 
         //move up a resolution when the file does not exist at the target resolution
         try {
             while (!file.exists()) {
-                TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>();
+                TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>()
                 for (File dir : new File(standardLayersDir).listFiles()) {
                     if (dir.isDirectory()) {
                         try {
-                            resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName());
+                            resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName())
                         } catch (Exception e) {
                             //ignore other dirs
                         }
                     }
                 }
 
-                String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue();
+                String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue()
 
                 if (newResolution.equals(resolution)) {
-                    break;
+                    break
                 } else {
-                    resolution = newResolution;
-                    file = new File(standardLayersDir + File.separator + resolution + File.separator + layer + ".grd");
+                    resolution = newResolution
+                    file = new File(standardLayersDir + File.separator + resolution + File.separator + layer + ".grd")
                 }
             }
         } catch (Exception e) {
             //ignore
         }
 
-        String layerPath = standardLayersDir + File.separator + resolution + File.separator + layer;
+        String layerPath = standardLayersDir + File.separator + resolution + File.separator + layer
 
         if (new File(layerPath + ".grd").exists()) {
             return layerPath
@@ -529,39 +469,39 @@ class SlaveProcess {
      */
     private String confirmResolution(String[] layers, String resolution) {
         try {
-            TreeMap<Double, String> resolutions = new TreeMap<Double, String>();
+            TreeMap<Double, String> resolutions = new TreeMap<Double, String>()
             for (String layer : layers) {
-                String path = getLayerPath(resolution, layer);
-                int end, start;
+                String path = getLayerPath(resolution, layer)
+                int end, start
                 if (path != null
                         && ((end = path.lastIndexOf(File.separator)) > 0)
                         && ((start = path.lastIndexOf(File.separator, end - 1)) > 0)) {
-                    String res = path.substring(start + 1, end);
-                    Double d = Double.parseDouble(res);
+                    String res = path.substring(start + 1, end)
+                    Double d = Double.parseDouble(res)
                     if (d < 1) {
-                        resolutions.put(d, res);
+                        resolutions.put(d, res)
                     }
                 }
             }
             if (resolutions.size() > 0) {
-                resolution = resolutions.firstEntry().getValue();
+                resolution = resolutions.firstEntry().getValue()
             }
         } catch (Exception e) {
             log.error 'failed to find a al requested layers: ' + layers.join(','), e
         }
-        return resolution;
+        return resolution
     }
 
     private double[][] getLayerFilterExtents(LayerFilter[] envelopes) {
-        double[][] extents = [[-180, -90], [180, 90]];
+        double[][] extents = [[-180, -90], [180, 90]]
         for (int i = 0; i < envelopes.length; i++) {
             if (envelopes[i].getLayername().startsWith("cl")) {
-                String[] ids = envelopes[i].getIds();
+                String[] ids = envelopes[i].getIds()
                 for (int j = 0; j < ids.length; j++) {
                     try {
                         String obj = Util.getUrl(task.input.layersServiceUrl.toString() + '/object/' + ids[j])
                         double[][] bbox = SimpleShapeFile.parseWKT(obj.bbox.toString()).getBoundingBox()
-                        extents = internalExtents(extents, bbox);
+                        extents = internalExtents(extents, bbox)
                     } catch (Exception e) {
                         log.error 'failed to bbox for ' + ids[j], e
                     }
@@ -569,7 +509,7 @@ class SlaveProcess {
                 }
             }
         }
-        return extents;
+        return extents
     }
 
     /**
@@ -586,29 +526,28 @@ class SlaveProcess {
      * @return
      */
     private byte[][] getRegionMask(double[][] extents, int w, int h, SimpleRegion region) {
-        byte[][] mask = new byte[h][w];
+        byte[][] mask = new byte[h][w]
 
         //can also use region.getOverlapGridCells_EPSG900913
-        region.getOverlapGridCells(extents[0][0], extents[0][1], extents[1][0], extents[1][1], w, h, mask);
+        region.getOverlapGridCells(extents[0][0], extents[0][1], extents[1][0], extents[1][1], w, h, mask)
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                //TODO: determine with region.isWithin
                 if (mask[i][j] > 0) {
-                    mask[i][j] = 1;
+                    mask[i][j] = 1
                 }
             }
         }
-        return mask;
+        return mask
     }
 
     private byte[][] getMask(int w, int h) {
-        byte[][] mask = new byte[h][w];
+        byte[][] mask = new byte[h][w]
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                mask[i][j] = 1;
+                mask[i][j] = 1
             }
         }
-        return mask;
+        return mask
     }
 
     /**
@@ -624,18 +563,18 @@ class SlaveProcess {
      * @return mask as byte[][]
      */
     private byte[][] getEnvelopeMaskAndUpdateExtents(String resolution, double res, double[][] extents, int h, int w, LayerFilter[] envelopes) {
-        byte[][] mask = new byte[h][w];
+        byte[][] mask = new byte[h][w]
 
-        double[][] points = new double[h * w][2];
+        double[][] points = new double[h * w][2]
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                points[i + j * w][0] = (double) (extents[0][0] + (i + 0.5) * res);
-                points[i + j * w][1] = (double) (extents[0][1] + (j + 0.5) * res);
+                points[i + j * w][0] = (double) (extents[0][0] + (i + 0.5) * res)
+                points[i + j * w][1] = (double) (extents[0][1] + (j + 0.5) * res)
             }
         }
 
         for (int k = 0; k < envelopes.length; k++) {
-            LayerFilter lf = envelopes[k];
+            LayerFilter lf = envelopes[k]
 
             // if it is contextual and a grid file does not exist at the requested resolution
             // and it is not a grid processed as a shape file,
@@ -643,31 +582,31 @@ class SlaveProcess {
             if (existsLayerPath(resolution, lf.getLayername(), true) && lf.isContextual()
                     && "c".equalsIgnoreCase(getField(lf.getLayername()).type.toString())) {
 
-                String[] ids = lf.getIds();
-                SimpleRegion[] srs = new SimpleRegion[ids.length];
+                String[] ids = lf.getIds()
+                SimpleRegion[] srs = new SimpleRegion[ids.length]
 
                 for (int i = 0; i < ids.length; i++) {
                     srs[i] = SimpleShapeFile.parseWKT(
                             Util.getUrl(task.input.layersServiceUrl.toString() + "/shape/wkt/" + ids[i])
-                    );
+                    )
 
                 }
                 for (int i = 0; i < points.length; i++) {
                     for (int j = 0; j < srs.length; j++) {
                         if (srs[j].isWithin(points[i][0], points[i][1])) {
-                            mask[i / w][i % w]++;
-                            break;
+                            mask[i / w][i % w]++
+                            break
                         }
                     }
                 }
             } else {
-                Grid grid = Grid.getGrid(getLayerPath(resolution, lf.getLayername()));
+                Grid grid = Grid.getGrid(getLayerPath(resolution, lf.getLayername()))
 
-                float[] d = grid.getValues3(points, 40960);
+                float[] d = grid.getValues3(points, 40960)
 
                 for (int i = 0; i < d.length; i++) {
                     if (lf.isValid(d[i])) {
-                        mask[i / w][i % w]++;
+                        mask[i / w][i % w]++
                     }
                 }
             }
@@ -676,87 +615,87 @@ class SlaveProcess {
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
                 if (mask[j][i] == envelopes.length.byteValue()) {
-                    mask[j][i] = 1;
+                    mask[j][i] = 1
                 } else {
-                    mask[j][i] = 0;
+                    mask[j][i] = 0
                 }
             }
         }
 
         //find internal extents
-        int minx = w;
-        int maxx = -1;
-        int miny = h;
-        int maxy = -1;
+        int minx = w
+        int maxx = -1
+        int miny = h
+        int maxy = -1
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
                 if (mask[j][i] > 0) {
                     if (minx > i) {
-                        minx = i;
+                        minx = i
                     }
                     if (maxx < i) {
-                        maxx = i;
+                        maxx = i
                     }
                     if (miny > j) {
-                        miny = j;
+                        miny = j
                     }
                     if (maxy < j) {
-                        maxy = j;
+                        maxy = j
                     }
                 }
             }
         }
 
         //reduce the size of the mask
-        int nw = maxx - minx + 1;
-        int nh = maxy - miny + 1;
-        byte[][] smallerMask = new byte[nh][nw];
+        int nw = maxx - minx + 1
+        int nh = maxy - miny + 1
+        byte[][] smallerMask = new byte[nh][nw]
         for (int i = minx; i < maxx; i++) {
             for (int j = miny; j < maxy; j++) {
-                smallerMask[j - miny][i - minx] = mask[j][i];
+                smallerMask[j - miny][i - minx] = mask[j][i]
             }
         }
 
         //update extents, must never be larger than the original extents (res is not negative, minx maxx miny mazy are not negative and < w & h respectively
-        extents[0][0] = Math.max(extents[0][0] + minx * res, extents[0][0]); //min x value
-        extents[1][0] = Math.min(extents[1][0] - (w - maxx - 1) * res, extents[1][0]); //max x value
-        extents[0][1] = Math.max(extents[0][1] + miny * res, extents[0][1]); //min y value
-        extents[1][1] = Math.min(extents[1][1] - (h - maxy - 1) * res, extents[1][1]); //max y value
+        extents[0][0] = Math.max(extents[0][0] + minx * res, extents[0][0]) //min x value
+        extents[1][0] = Math.min(extents[1][0] - (w - maxx - 1) * res, extents[1][0]) //max x value
+        extents[0][1] = Math.max(extents[0][1] + miny * res, extents[0][1]) //min y value
+        extents[1][1] = Math.min(extents[1][1] - (h - maxy - 1) * res, extents[1][1]) //max y value
 
-        return smallerMask;
+        return smallerMask
     }
 
     void writeExtents(String filename, double[][] extents, int w, int h) {
         if (filename != null) {
             try {
-                FileWriter fw = new FileWriter(filename);
-                fw.append(String.valueOf(w)).append("\n");
-                fw.append(String.valueOf(h)).append("\n");
-                fw.append(String.valueOf(extents[0][0])).append("\n");
-                fw.append(String.valueOf(extents[0][1])).append("\n");
-                fw.append(String.valueOf(extents[1][0])).append("\n");
-                fw.append(String.valueOf(extents[1][1]));
-                fw.close();
+                FileWriter fw = new FileWriter(filename)
+                fw.append(String.valueOf(w)).append("\n")
+                fw.append(String.valueOf(h)).append("\n")
+                fw.append(String.valueOf(extents[0][0])).append("\n")
+                fw.append(String.valueOf(extents[0][1])).append("\n")
+                fw.append(String.valueOf(extents[1][0])).append("\n")
+                fw.append(String.valueOf(extents[1][1]))
+                fw.close()
             } catch (Exception e) {
-                e.printStackTrace();
+                e.printStackTrace()
             }
         }
     }
 
     void applyMask(String dir, String resolution, double[][] extents, int w, int h, byte[][] mask, String layer) {
         //layer output container
-        double[] dfiltered = new double[w * h];
+        double[] dfiltered = new double[w * h]
 
         //open grid and get all data
         def path = getLayerPath(resolution, layer)
-        Grid grid = Grid.getGrid(path);
+        Grid grid = Grid.getGrid(path)
 
         //set all as missing values
         for (int i = 0; i < dfiltered.length; i++) {
-            dfiltered[i] = Double.NaN;
+            dfiltered[i] = Double.NaN
         }
 
-        double res = Double.parseDouble(resolution);
+        double res = Double.parseDouble(resolution)
 
         if (new File(path + '.grd').length() < 100 * 1024 * 1024) {
             grid.getGrid()
@@ -765,10 +704,10 @@ class SlaveProcess {
         for (int i = 0; i < mask.length; i++) {
             for (int j = 0; j < mask[0].length; j++) {
                 if (mask[i][j] > 0) {
-                    def ds = new double[1][2];
+                    def ds = new double[1][2]
                     ds[0][0] = j * res + extents[0][0]
                     ds[0][1] = i * res + extents[0][1]
-                    dfiltered[j + (h - i - 1) * w] = grid.getValues3(ds, 1024 * 1024)[0];
+                    dfiltered[j + (h - i - 1) * w] = grid.getValues3(ds, 1024 * 1024)[0]
                 }
             }
         }
@@ -778,41 +717,41 @@ class SlaveProcess {
                 extents[0][1],
                 extents[1][0],
                 extents[1][1],
-                res, res, h, w);
+                res, res, h, w)
     }
 
     boolean existsLayerPath(String resolution, String field, boolean do_not_lower_resolution) {
 
-        File file = new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd");
+        File file = new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
 
         //move up a resolution when the file does not exist at the target resolution
         try {
             while (!file.exists() && !do_not_lower_resolution) {
-                TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>();
+                TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>()
                 for (File dir : new File(grailsApplication.config.data.dir.toString() + '/standard_layer/').listFiles()) {
                     if (dir.isDirectory()) {
                         try {
-                            resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName());
+                            resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName())
                         } catch (Exception e) {
                             //ignore
                         }
                     }
                 }
 
-                String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue();
+                String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue()
 
                 if (newResolution.equals(resolution)) {
-                    break;
+                    break
                 } else {
-                    resolution = newResolution;
-                    file = new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd");
+                    resolution = newResolution
+                    file = new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
                 }
             }
         } catch (err) {
             log.error 'failed to find path for: ' + field + ' : ' + resolution, err
         }
 
-        String layerPath = grailsApplication.config.data.dir + '/standard_layer/' + File.separator + resolution + File.separator + field;
+        String layerPath = grailsApplication.config.data.dir + '/standard_layer/' + File.separator + resolution + File.separator + field
 
         return new File(layerPath + ".grd").exists()
     }
@@ -821,72 +760,72 @@ class SlaveProcess {
         try {
             task.message = "asc > grd"
             //read asc
-            BufferedReader br = new BufferedReader(new FileReader(asc));
-            String s;
+            BufferedReader br = new BufferedReader(new FileReader(asc))
+            String s
 
             //maxent output grid is:
-            s = br.readLine();
-            int ncols = Integer.parseInt(s.replace("ncols", "").trim());
+            s = br.readLine()
+            int ncols = Integer.parseInt(s.replace("ncols", "").trim())
 
-            s = br.readLine();
-            int nrows = Integer.parseInt(s.replace("nrows", "").trim());
+            s = br.readLine()
+            int nrows = Integer.parseInt(s.replace("nrows", "").trim())
 
-            s = br.readLine();
-            double lng1 = Double.parseDouble(s.replace("xllcorner", "").trim());
+            s = br.readLine()
+            double lng1 = Double.parseDouble(s.replace("xllcorner", "").trim())
 
-            s = br.readLine();
-            double lat1 = Double.parseDouble(s.replace("yllcorner", "").trim());
+            s = br.readLine()
+            double lat1 = Double.parseDouble(s.replace("yllcorner", "").trim())
 
-            s = br.readLine();
-            double div = Double.parseDouble(s.replace("cellsize", "").trim());
+            s = br.readLine()
+            double div = Double.parseDouble(s.replace("cellsize", "").trim())
 
-            s = br.readLine();
-            double nodata = Double.parseDouble(s.replace("NODATA_value", "").trim());
+            s = br.readLine()
+            double nodata = Double.parseDouble(s.replace("NODATA_value", "").trim())
 
-            double[] data = new double[ncols * nrows];
+            double[] data = new double[ncols * nrows]
             for (int i = 0; i < ncols * nrows; i++) {
-                data[i] = Double.NaN;
+                data[i] = Double.NaN
             }
-            int r = 0;
+            int r = 0
             while ((s = br.readLine()) != null) {
-                String[] row = s.split(" ");
+                String[] row = s.split(" ")
                 for (int i = 0; i < row.length && i < ncols; i++) {
-                    double v = Double.parseDouble(row[i]);
+                    double v = Double.parseDouble(row[i])
                     if (v != nodata) {
-                        data[r * ncols + i] = v;
+                        data[r * ncols + i] = v
                     }
                 }
-                r++;
+                r++
                 if (r == nrows) {
-                    break;
+                    break
                 }
             }
-            br.close();
+            br.close()
 
-            Grid g = new Grid(null);
-            g.writeGrid(grd, data, lng1, lat1, lng1 + ncols * div, lat1 + nrows * div, div, div, nrows, ncols);
+            Grid g = new Grid(null)
+            g.writeGrid(grd, data, lng1, lat1, lng1 + ncols * div, lat1 + nrows * div, div, div, nrows, ncols)
 
             if (!saveImage) {
                 GridLegend.generateGridLegend(grd, grd + '.sld', 1, false)
             } else {
                 try {
                     g = new Grid(grd)
-                    float[] d = g.getGrid();
-                    java.util.Arrays.sort(d);
+                    float[] d = g.getGrid()
+                    java.util.Arrays.sort(d)
 
-                    Legend legend = new LegendEqualArea();
-                    legend.generate(d);
-                    legend.determineGroupSizes(d);
-                    legend.evaluateStdDevArea(d);
+                    Legend legend = new LegendEqualArea()
+                    legend.generate(d)
+                    legend.determineGroupSizes(d)
+                    legend.evaluateStdDevArea(d)
 
                     //must 'unsort' d
-                    d = null;
-                    g = null;
-                    System.gc();
-                    g = new Grid(grd);
-                    d = g.getGrid();
-                    legend.exportSLD(g, grd + ".sld", "", false, true);
-                    legend.exportImage(d, g.ncols, grd + ".png", 1, true);
+                    d = null
+                    g = null
+                    System.gc()
+                    g = new Grid(grd)
+                    d = g.getGrid()
+                    legend.exportSLD(g, grd + ".sld", "", false, true)
+                    legend.exportImage(d, g.ncols, grd + ".png", 1, true)
                     legend.generateLegend(grd + "_legend.png")
                 } catch (Exception e) {
                     GridLegend.generateGridLegend(grd, grd + '.sld', 1, false)
@@ -901,16 +840,16 @@ class SlaveProcess {
             runCmd(cmd.toArray(new String[cmd.size()]), false)
 
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace()
         }
     }
 
-    List getSpeciesList(species, area) {
-        List speciesList = null
+    String getSpeciesList(species) {
+        String speciesList = null
 
         try {
             String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=true&count=true&q=" + species.q
-            speciesList = JSON.parse(Util.getUrl(url)) as List
+            speciesList = Util.getUrl(url)
         } catch (err) {
             log.error 'failed to get species list', err
         }
@@ -950,6 +889,10 @@ class SlaveProcess {
     }
 
     def getSpeciesArea(species, area) {
+        if (!species.q) {
+            return species
+        }
+
         if (species.q.startsWith('qid:') && species.q.substring(4).isLong()) {
             def qid = Util.getQid(species.bs, species.q.substring(4))
             species.putAll(qid)
@@ -993,6 +936,10 @@ class SlaveProcess {
         species.wkt = null
 
         species
+    }
+
+    def runCmd(String[] cmd, boolean logToTask) {
+        Util.runCmd(cmd, logToTask, task)
     }
 
 }

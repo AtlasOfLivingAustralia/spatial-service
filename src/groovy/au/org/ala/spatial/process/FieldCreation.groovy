@@ -22,6 +22,7 @@ import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.geom.MultiPolygon
 import com.vividsolutions.jts.geom.Polygon
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
@@ -29,6 +30,7 @@ import org.geotools.geometry.jts.JTSFactoryFinder
 
 import java.text.MessageFormat
 
+@Commons
 class FieldCreation extends SlaveProcess {
 
     void start() {
@@ -290,7 +292,7 @@ class FieldCreation extends SlaveProcess {
                     defaultType = f.getDefaultGeometry()
                 }
 
-                //validate sid, sname, sdesc
+                //validateInput sid, sname, sdesc
                 if (confirmedSid == null) {
                     f.getProperties().each { p ->
                         if (p.getName().toString().equalsIgnoreCase(sid)) {

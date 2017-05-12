@@ -17,6 +17,7 @@ package au.org.ala.spatial.service
 
 import org.apache.maven.artifact.ant.shaded.IOUtil
 
+import java.nio.file.Files
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -25,151 +26,132 @@ class FileService {
 
     def grailsApplication
 
-    // put resources (area WKT and layer files) as zip to a stream
-    // an area: 'cache/ENVELOPE(...', requires the associated layer files to produce the envelope
-    // an area: 'cache/object pid', will provide a .wkt, getting the layer from a layers-service
-    // an existing resource: 'path'
-    def write(OutputStream outputStream, String name) {
-
-        def files = []
-        def stringName = null
-        def string = null
-
-        if (name.contains("/")) {
-            //look for an internal file
-
-        }
-
-        if (name.startsWith('cache/ENVELOPE')) {
-            //parse layer names
-            name.replace('cache/ENVELOPE(', '').replace(')', '').split(',').each { layerName ->
-                files.addAll(getLayerStandardisedFiles(split[0], null))
-            }
-        } else if (name.startsWith('cache/pid')) { //TODO: use correct pid identification
-            //parse pid
-            def pid = name
-            def url = grailsApplication.config.layersService.url + '/object/wkt/' + pid
-            stringName = name + '.wkt'
-            string = new URL(url).text
-        } else {
-            def list = getFilesFromBase(name)
-            if (list != null) {
-                files.addAll(list)
-            }
-        }
-
-        if (files.size() > 0) {
-            //open zip for writing
-            ZipOutputStream zos = new ZipOutputStream(outputStream)
-            zos.setLevel(0)
-
-            files.each { file ->
-                //add to zip
-                ZipEntry ze = new ZipEntry(file.getPath().replace(grailsApplication.config.data.dir, ''))
-                zos.putNextEntry(ze)
-
-                //open and stream
-                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))
-                byte[] bytes = new byte[1024]
-                int size
-                while ((size = bis.read(bytes)) > 0) {
-                    zos.write(bytes, 0, size)
-                }
-
-                zos.flush()
-
-                //close file and entry
-                zos.closeEntry()
-
-                bis.close()
-            }
-
-            // add a zip entry containing 'string'
-            /*if (stringName != null) {
-                ZipEntry ze = new ZipEntry(URLEncoder.encode(stringName, 'UTF-8'))
-                zos.putNextEntry(ze)
-                zos.write(string.bytes)
-                zos.closeEntry()
-            }*/
-
-            //close
-            zos.flush()
-            zos.close()
-        } else {
-            log.error "cannot find file: " + name
-        }
+    /**
+     * Write all files matching 'path' and 'path.ext' to a zip file
+     *
+     * Files must not have full file system path.
+     *
+     * taskDir prefix is added to file names that do not begin with '/'
+     * data.dir prefix is added to files names that do begin with '/' as long as they do not already exist in the data.dir
+     *
+     * When the file is a directory, contents are added recursively.
+     *
+     * @param outputStream
+     * @param path file name reference. Must not be a full file path
+     * @param taskDir prefix to use when path does not start with '/'
+     * @param exact only look for an exact match
+     * @return
+     */
+    def write(OutputStream outputStream, String path, String taskDir = null) {
+        zip(outputStream, getFilesFromBase(path, taskDir), taskDir, false)
 
         outputStream.close()
     }
 
     def info(String name) {
-        def map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]]
+        def map = [[path: '', exists: false, lastModified: System.currentTimeMillis(), size: 0]]
 
-        def list = getFilesFromBase(name)
+        List<File> list = getFilesFromBase(name)
         if (list != null && list.size() > 0) {
             map = []
             list.each { file ->
-                map.add([path  : file.getPath().replace(grailsApplication.config.data.dir, ''),
-                         exists: file.exists(), lastModified: file.lastModified()])
+                if (file.isDirectory()) {
+                    String relativePath = file.getPath().substring(grailsApplication.config.data.dir.toString().length(), file.getPath().length())
+                    map.addAll(info(relativePath))
+                } else {
+                    map.add([path  : file.getPath().replace(grailsApplication.config.data.dir.toString(), ''),
+                             exists: file.exists(), lastModified: file.lastModified(), size: file.length()])
+                }
             }
         }
 
         map
     }
 
-    // get the shapefile from the layers_dir/analysis
-    def getLayerStandardisedFiles(name, resolution) {
-        //
+    /**
+     * List files matching a file name.
+     *
+     * Files must not have full file system path.
+     *
+     * taskDir prefix is added to file names that do not begin with '/'
+     * data.dir prefix is added to files names that do begin with '/' as long as they do not already exist in the data.dir
+     *
+     * When the file is a directory, contents are added recursively.
+     *
+     * @param name file name reference. Must not be a full file path
+     * @param taskDir prefix to use when name does not start with '/'
+     * @param exact only look for an exact match
+     * @return
+     */
+    def getFilesFromBase(name, targetDir = null, exact = false) {
+        boolean dataDir = name.startsWith('/')
+        def e = dataDir ? grailsApplication.config.data.dir + name : "$targetDir/${name}"
 
-        return []
-    }
-
-    def getFilesFromBase(name) {
-        def path = grailsApplication.config.data.dir
-        def file = new File(path + '/' + name)
+        //only include path once
+        def file = new File(e)
 
         def files = []
 
-        if (file.exists() && file.isDirectory()) {
-            //get everything from this dir
-            files = file.listFiles()
-        } else if (file.exists()) {
+        if (file.exists() && !file.isDirectory()) {
             //get this named file
             files.add(file)
         } else {
-            //add * and return everything that matches
+            //Return everything that starts with 'file.' if file already ends with '.' the extra '.' is not included
             def search = file.getName()
+            def subfiles = []
             files = file.getParentFile().listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String filename) {
-                    return filename.equals(search) || filename.startsWith(search + '.')
+                boolean accept(File dir, String filename) {
+
+                    boolean valid = filename == search ||
+                            (!exact && filename.startsWith(search + (search.endsWith('.') ? '' : '.')))
+
+                    File f = new File(dir.getPath() + File.separator + filename)
+                    if (f.isDirectory() && valid) {
+                        if (!Files.isSymbolicLink(f.toPath())) {
+                            f.listFiles().each { sf ->
+                                //look for exact subdir matches to avoid duplication
+                                subfiles.addAll(getFilesFromBase(name + File.separator + sf.getName(), targetDir, exact))
+                            }
+                        }
+                        return false
+                    }
+
+                    return valid
                 }
-            });
+            })
+            if (files == null) files = []
+            else files = files.toList()
+            files.addAll(subfiles)
         }
 
         files
     }
 
-    def unzip(zip, path, boolean upload) {
+    /**
+     * Unzip all files using the zip entry name to determine location to save.
+     *
+     * taskDir prefix is added to names that do not begin with '/'
+     * data.dir prefix is added to names that do begin with '/' as long as they do not already exist in the data.dir
+     *
+     * @param zip filename
+     * @param path prefix to use when zip entry name does not start with '/'
+     * @param upload force use of path prefix for unzip destination
+     * @return
+     */
+    def unzip(String zip, String path, boolean upload = false) {
         def zf = new ZipInputStream(new FileInputStream(zip))
-
-        byte[] buffer = new byte[1024]
 
         def entry
         while ((entry = zf.getNextEntry()) != null) {
             def e = !upload && entry.getName().startsWith('/') ?
-                    grailsApplication.config.data.dir + entry.getName() :
-                    path + '/' + entry.getName()
+                    grailsApplication.config.data.dir + entry.getName() : "$path/${entry.getName()}"
             if (e.endsWith('/')) {
                 new File(e).mkdirs()
             } else {
                 new File(e).getParentFile().mkdirs()
 
-                def bos = new BufferedOutputStream(new FileOutputStream(e))
-
-                int len
-                while ((len = zf.read(buffer)) >= 0) {
-                    bos.write(buffer, 0, len)
-                }
+                def bos = new BufferedOutputStream(new FileOutputStream(e.toString()))
+                IOUtil.copy(zf, bos)
                 bos.flush()
                 bos.close()
             }
@@ -179,42 +161,114 @@ class FileService {
         zf.close()
     }
 
-    def zip(outFilename, taskDir, files) {
-        ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outFilename)))
+    /**
+     * Add specific files to a new zip file.
+     *
+     * Files must not have full file system path.
+     *
+     * taskDir prefix is added to file names that do not begin with '/'
+     * data.dir prefix is added to files names that do begin with '/'
+     *
+     * When the file is a directory, contents are added recursively.
+     *
+     * @param outFilename
+     * @param taskDir
+     * @param filenames
+     * @return
+     */
+    def zip(String outFilename, String taskDir, filenames) {
+        OutputStream os = new BufferedOutputStream(new FileOutputStream(outFilename))
+
+        def listOfFiles = []
+        filenames.each { f ->
+            listOfFiles.addAll(getFilesFromBase(f, taskDir))
+        }
+        zip(os, listOfFiles, taskDir, true)
+
+        os.flush()
+        os.close()
+    }
+
+    /**
+     * Add specific files to a new zip file.
+     *
+     * Files must have full file system path.
+     *
+     * @param outFilename
+     * @param taskDir
+     * @param files list of strings or Files
+     * @param compress true || false
+     * @return
+     */
+    def zip(OutputStream outputStream, files, String prefix, compress) {
+        ZipOutputStream zos = new ZipOutputStream(outputStream)
+        if (!compress) {
+            zos.setLevel(0)
+        }
         try {
             files.each { file ->
-                def e = file.startsWith('/') ?
-                        grailsApplication.config.data.dir + file :
-                        taskDir + '/' + file
-                def f = new File(e)
-
-                if (f.isDirectory()) {
-                    for (File fs : f.listFiles()) {
-                        ZipEntry ze = new ZipEntry(f.getName() + File.separator + fs.getName())
-                        zos.putNextEntry(ze)
-                        def is = new BufferedInputStream(new FileInputStream(fs))
-                        IOUtil.copy(is, zos)
-                        is.close()
-                        zos.closeEntry()
-                    }
-                } else {
-                    ZipEntry ze = new ZipEntry(f.getName())
+                File f = file
+                if(f.exists() && !f.isDirectory()) {
+                    //prefix is always the location of the relative dir
+                    String name = zipEntryName(f.getPath(), prefix)
+                    ZipEntry ze = new ZipEntry(name)
                     zos.putNextEntry(ze)
                     def is = new BufferedInputStream(new FileInputStream(f))
                     IOUtil.copy(is, zos)
                     is.close()
                     zos.closeEntry()
+                } else {
+                    log.warn("cannot find file to add: ${file.getPath()}")
                 }
             }
         } catch (err) {
-            log.error 'failed to zip download for : ' + taskDir, err
+            log.error "failed to zip download", err
         } finally {
             try {
                 zos.flush()
                 zos.close()
             } catch (err) {
-                log.error 'failed to close download zip for : ' + taskDir, err
+                log.error "failed to close download zip", err
             }
         }
+    }
+
+    def addZipEntriesFromDir(ZipOutputStream zos, File dir, String prefix) {
+        for (File fs : dir.listFiles()) {
+            if (fs.isDirectory()) {
+                if (!Files.isSymbolicLink(fs.toPath())) {
+                    addZipEntriesFromDir(zos, fs, prefix)
+                } else {
+                    log.warn("not including files in symbolic link: ${fs.getPath()}")
+                }
+            } else {
+                //use relative file name
+                String name = zipEntryName(fs.getPath(), prefix)
+                ZipEntry ze = new ZipEntry(name)
+                zos.putNextEntry(ze)
+                def is = new BufferedInputStream(new FileInputStream(fs))
+                IOUtil.copy(is, zos)
+                is.close()
+                zos.closeEntry()
+            }
+        }
+    }
+
+    def zipEntryName(String path, String prefix) {
+        //default to data.dir location
+        int length = grailsApplication.config.data.dir.toString().length()
+
+        if (path.startsWith(prefix)) {
+            //location is in prefix dir
+            length = grailsApplication.config.data.dir.toString().length()
+
+            //prefix may or nay not be supplied with '/'
+            if (!prefix.endsWith('/')) {
+                length++
+            }
+        }
+
+        return path.substring(length)
+
     }
 }

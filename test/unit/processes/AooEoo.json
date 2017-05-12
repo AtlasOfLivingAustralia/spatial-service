@@ -1,0 +1,57 @@
+{
+  "name": "AooEoo",
+  "description": "Area and Extent of Occupancy.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "resolution": {
+      "description": "Grid resolution",
+      "type": "double",
+      "constraints": {
+        "min": 0.001,
+        "max": 1,
+        "default": 0.02
+      }
+    },
+    "area": {
+      "description": "Area to restrict the species.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1,
+        "minArea": -1,
+        "maxArea": -1
+      }
+    },
+    "species": {
+      "description": "Occurrences to use in the prediction.",
+      "type": "species",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  "output": {
+    "areas": {
+      "description": "Output areas."
+    },
+    "files": {
+      "description": "Output files."
+    },
+    "metadata": {
+      "description": "Prediction metadata."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

@@ -11,7 +11,6 @@
     <li class="active">Home</li>
 </ul>
 
-<span>Pages</span>
 <br/>
 <g:link controller="tabulation" action="index">Tabulations</g:link>
 <br/>

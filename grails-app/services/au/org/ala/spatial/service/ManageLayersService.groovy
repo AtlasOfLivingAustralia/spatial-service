@@ -47,7 +47,7 @@ class ManageLayersService {
     def tasksService
     def slaveService
 
-    private getPublishService() {
+    def getPublishService() {
         grailsApplication.mainContext.publishService
     }
 
@@ -159,18 +159,18 @@ class ManageLayersService {
             try {
                 Layer layer = layerDao.getLayerById(Integer.parseInt(uploadId));
                 if (layer != null) {
-                    upload.put("raw_id", uploadId);
-                    upload.put("layer_id", uploadId);
-                    upload.put("filename", "");
+                    upload.put("raw_id", uploadId)
+                    upload.put("layer_id", uploadId)
+                    upload.put("filename", "")
 
-                    List<Field> fieldList = fieldDao.getFields();
+                    List<Field> fieldList = fieldDao.getFields()
                     for (Field fs : fieldList) {
                         if (fs.getSpid().equals(uploadId)) {
-                            fields.add(fs);
+                            fields.add(fs)
                         }
                     }
 
-                    upload.put("fields", fields);
+                    upload.put("fields", fields)
                 }
             } catch (Exception e) {
 
@@ -226,7 +226,6 @@ class ManageLayersService {
                 bil = n + '.hdr'
                 name = grd.getName().substring(0, grd.getName().length() - 4)
                 count = count + 1
-
             }
 
             //rename the file
@@ -245,62 +244,35 @@ class ManageLayersService {
 
             shp = new File(pth.getPath() + "/" + newName + ".shp")
             bil = new File(pth.getPath() + "/" + newName + ".bil")
-
-            def result = uploadFileToGeoserver(shp.exists() ? shp : bil, newName)
+            def tif = new File(pth.getPath() + "/" + newName + ".tif")
+            if (!shp.exists() && bil.exists() && !tif.exists())
+                bilToGTif(bil, tif)
 
             def map = [:]
-            if (!"201".equals(result[0])) {
-                map.put("error", "failed to upload to geoserver")
-            } else {
-                map.put("raw_id", name)
-                map.put("columns", columns)
-                map.put("test_url",
-                        grailsApplication.config.geoserver.url +
-                                "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + newName +
-                                "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
 
-                FileUtils.writeStringToFile(new File(pth.getPath() + "/upload.json"), JSONValue.toJSONString(map))
+            if (!shp.exists() && !tif.exists()) {
+                map.put("error", "no layer files")
+            } else {
+                def errors = publishService.layerToGeoserver([shp.exists() ? shp : bil], null)
+
+                if (errors) {
+                    map.put("error", "failed to upload to geoserver")
+                } else {
+                    map.put("raw_id", name)
+                    map.put("columns", columns)
+                    map.put("test_url",
+                            grailsApplication.config.geoserver.url.toString() +
+                                    "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + newName +
+                                    "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
+
+                    FileUtils.writeStringToFile(new File(pth.getPath() + "/upload.json"), JSONValue.toJSONString(map))
+                }
             }
 
             return map
         }
 
         return null
-    }
-
-    //attempt geoserver load
-    //TODO: allow remote geoserver
-    //TODO: allow separate geoserver for uploads and published layers
-    def uploadFileToGeoserver(file, name) {
-        def geoserverUrl = grailsApplication.config.geoserver.url
-        def geoserverUsername = grailsApplication.config.geoserver.username
-        def geoserverPassword = grailsApplication.config.geoserver.password
-        def result = []
-
-        def url = geoserverUrl + "/rest/workspaces/ALA/datastores/" + name + "/external.shp"
-        def filePath = "file://" + file.getPath()
-        if (file.getName().toLowerCase().endsWith('.shp')) {
-            result = httpCall("PUT",
-                    url,
-                    geoserverUsername, geoserverPassword,
-                    null,
-                    filePath,
-                    "text/plain")
-        } else {
-            def geotiff = new File(file.getPath().replace('.bil', '.tif'))
-
-            //convert to geotiff
-            bilToGTif(file, geotiff)
-
-            result = httpCall("PUT",
-                    geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff",
-                    geoserverUsername, geoserverPassword,
-                    null,
-                    "file://" + geotiff.getPath(),
-                    "text/plain")
-        }
-
-        result
     }
 
     /**
@@ -374,7 +346,7 @@ class ManageLayersService {
 
     def bilToGTif(bil, geotiff) {
         //bil 2 geotiff (?)
-        String[] cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff",
+        String[] cmd = [grailsApplication.config.gdal.dir.toString() + "/gdal_translate", "-of", "GTiff",
                         "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                         bil.getPath(), geotiff.getPath()]
 
@@ -408,13 +380,13 @@ class ManageLayersService {
         def layers
         def fields
         if (!url) {
-            layers = layerDao.getLayers()
+            layers = layerDao.getLayersForAdmin()
             fields = fieldDao.getFields()
         } else {
             try {
                 layers = []
-                JSON.parse(Util.getUrl(url + '/layers')).each {
-                    def layer = new ObjectMapper().readValue(it.toString(), Layer.class);
+                JSON.parse(Util.getUrl("$url/layers")).each {
+                    def layer = new ObjectMapper().readValue(it.toString(), Map.class);
                     layers.push(layer)
                 }
             } catch (err) {
@@ -422,7 +394,7 @@ class ManageLayersService {
             }
             try {
                 fields = []
-                JSON.parse(Util.getUrl(url + '/fields')).each {
+                JSON.parse(Util.getUrl("$url/fields")).each {
                     def field = new ObjectMapper().readValue(it.toString(), Field.class);
                     fields.push(field)
                 }
@@ -433,12 +405,12 @@ class ManageLayersService {
 
         def list = []
         layers.each { l ->
-            def m = l.toMap()
+            def m = l instanceof Map ? l : l.toMap()
 
             //get fields
             def fs = []
             fields.each { f ->
-                if (f.getSpid().equals(String.valueOf(l.getId()))) {
+                if (f.getSpid().equals(String.valueOf(m.get('id')))) {
                     fs.add(f)
                 }
             }
@@ -532,7 +504,7 @@ class ManageLayersService {
 
         //get list of available classifications
         Set<String> classifications = new HashSet<String>();
-        List<Layer> layers = layerDao.getLayers();
+        List<Layer> layers = layerDao.getLayersForAdmin();
         for (Layer l : layers) {
             classifications.add(l.getClassification1() + " > " + l.getClassification2());
         }
@@ -828,7 +800,7 @@ class ManageLayersService {
     }
 
     def fieldMap(fieldId) {
-        def layer = layerDao.getLayerById(Integer.parseInt(fieldDao.getFieldById(fieldId, true).spid), false)
+        def layer = layerDao.getLayerById(Integer.parseInt(fieldDao.getFieldById(fieldId, false).spid), false)
 
         def map = fieldMapDefault(String.valueOf(layer.id))
 
@@ -858,6 +830,8 @@ class ManageLayersService {
     def createOrUpdateLayer(Map layer, String id, boolean createTask = true) {
         Map retMap = [:]
 
+        retMap.put('layer_id', id)
+
         if (layer.name == null || layer.name.isEmpty()) {
             retMap.put("error", "name parameter missing")
             retMap.putAll(layerMap(String.valueOf(id)))
@@ -874,7 +848,7 @@ class ManageLayersService {
                 }
                 intId = Integer.parseInt(layer.id.toString())
             } catch (err) {
-                log.error 'unable to read uploads layer.id for ' + id, err
+                log.debug 'unable to read uploads layer.id for ' + id
             }
             def originalLayer = intId == null ? null : layerDao.getLayerById(intId, false)
             if (originalLayer != null) {
@@ -909,111 +883,118 @@ class ManageLayersService {
                     retMap.put('message', 'Layer updated')
                 } catch (err) {
                     log.error 'error updating layer: ' + id, err
+                    retMap.put('error', 'error updating layer: ' + err.getMessage())
                 }
-
             } else {
-                //defaults, in case of missing values
-                def defaultLayer = layerMap(id)
-                if (!layer.containsKey('name')) layer.put('name', defaultLayer.name)
-                if (!layer.containsKey('environmentalvaluemin')) layer.put('environmentalvaluemin', defaultLayer.environmentalvaluemin)
-                if (!layer.containsKey('environmentalvaluemax')) layer.put('environmentalvaluemax', defaultLayer.environmentalvaluemax)
-                if (!layer.containsKey('extent')) layer.put('extent', defaultLayer.extent)
-                if (!layer.containsKey('domain')) layer.put('domain', defaultLayer.domain)
-                if (!layer.containsKey('maxlatitude')) layer.put('maxlatitude', String.valueOf(defaultLayer.maxlatitude))
-                if (!layer.containsKey('minlatitude')) layer.put('minlatitude', String.valueOf(defaultLayer.minlatitude))
-                if (!layer.containsKey('maxlongitude')) layer.put('maxlongitude', String.valueOf(defaultLayer.maxlongitude))
-                if (!layer.containsKey('minlongitude')) layer.put('minlongitude', String.valueOf(defaultLayer.minlongitude))
-                if (!layer.containsKey('displayname')) layer.put('displayname', defaultLayer.displayname)
-                if (!layer.containsKey('enabled')) layer.put('enabled', 'on')
-                else if (layer.enabled != null && String.valueOf(layer.enabled).equalsIgnoreCase('true')) layer.put('enabled', 'on')
-                if (!layer.containsKey('environmentalvalueunits')) layer.put('environmentalvalueunits', defaultLayer.environmentalvalueunits)
-                if (!layer.containsKey('type')) layer.put('type', defaultLayer.type)
+                try {
+                    //defaults, in case of missing values
+                    def defaultLayer = layerMap(id)
+                    if (!layer.containsKey('name')) layer.put('name', defaultLayer.name)
+                    if (!layer.containsKey('environmentalvaluemin')) layer.put('environmentalvaluemin', defaultLayer.environmentalvaluemin)
+                    if (!layer.containsKey('environmentalvaluemax')) layer.put('environmentalvaluemax', defaultLayer.environmentalvaluemax)
+                    if (!layer.containsKey('extent')) layer.put('extent', defaultLayer.extent)
+                    if (!layer.containsKey('domain')) layer.put('domain', defaultLayer.domain)
+                    if (!layer.containsKey('maxlatitude')) layer.put('maxlatitude', String.valueOf(defaultLayer.maxlatitude))
+                    if (!layer.containsKey('minlatitude')) layer.put('minlatitude', String.valueOf(defaultLayer.minlatitude))
+                    if (!layer.containsKey('maxlongitude')) layer.put('maxlongitude', String.valueOf(defaultLayer.maxlongitude))
+                    if (!layer.containsKey('minlongitude')) layer.put('minlongitude', String.valueOf(defaultLayer.minlongitude))
+                    if (!layer.containsKey('displayname')) layer.put('displayname', defaultLayer.displayname)
+                    if (!layer.containsKey('enabled')) layer.put('enabled', 'on')
+                    else if (layer.enabled != null && String.valueOf(layer.enabled).equalsIgnoreCase('true')) layer.put('enabled', 'on')
+                    if (!layer.containsKey('environmentalvalueunits')) layer.put('environmentalvalueunits', defaultLayer.environmentalvalueunits)
+                    if (!layer.containsKey('type')) layer.put('type', defaultLayer.type)
 
-                //CREATE
-                layer.remove('id')
+                    //CREATE
+                    layer.remove('id')
 
-                if (layerDao.getLayerByName(layer.name.toString(), false) != null) {
-                    retMap.put("error", "name: " + layer.name + " is not unique")
-                    retMap.putAll(layerMap(String.valueOf(id)))
-                    retMap.putAll(layer)
-                }
-
-                //default values from the name
-                layer.displayPath = grailsApplication.config.geoserver.url +
-                        "/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" +
-                        layer.name + "&format=image/png&styles="
-
-                def newLayer = new Layer()
-                if (layer.displayPath != null) newLayer.setDisplaypath(layer.displayPath.toString())
-                if (layer.environmentalvaluemin != null) newLayer.setEnvironmentalvaluemin(layer.environmentalvaluemin.toString())
-                if (layer.environmentalvaluemax != null) newLayer.setEnvironmentalvaluemax(layer.environmentalvaluemax.toString())
-                if (layer.extent != null) newLayer.setExtent(layer.extent.toString())
-                if (layer.maxlatitude != null) newLayer.setMaxlatitude(Double.parseDouble(String.valueOf(layer.maxlatitude)))
-                if (layer.minlatitude != null) newLayer.setMinlatitude(Double.parseDouble(String.valueOf(layer.minlatitude)))
-                if (layer.maxlongitude != null) newLayer.setMaxlongitude(Double.parseDouble(String.valueOf(layer.maxlongitude)))
-                if (layer.minlongitude != null) newLayer.setMinlongitude(Double.parseDouble(String.valueOf(layer.minlongitude)))
-                if (layer.name != null) newLayer.setName(layer.name.toString())
-                if (layer.classification1 != null) newLayer.setClassification1(layer.classification1.toString())
-                if (layer.classification2 != null) newLayer.setClassification2(layer.classification2.toString())
-                if (layer.citation_date != null) newLayer.setCitation_date(layer.citation_date.toString())
-                if (layer.datalang != null) newLayer.setDatalang(layer.datalang.toString())
-                if (layer.description != null) newLayer.setDescription(layer.description.toString())
-                if (layer.displayname != null) newLayer.setDisplayname(layer.displayname.toString())
-                if (layer.domain != null) newLayer.setDomain(layer.domain.toString())
-                newLayer.setEnabled('on'.equals(layer.enabled))
-                if (layer.environmentalvalueunits != null) newLayer.setEnvironmentalvalueunits(layer.environmentalvalueunits.toString())
-                if (layer.keywords != null) newLayer.setKeywords(layer.keywords.toString())
-                if (layer.licence_level != null) newLayer.setLicence_level(layer.licence_level.toString())
-                if (layer.licence_link != null) newLayer.setLicence_link(layer.licence_link.toString())
-                if (layer.licence_notes != null) newLayer.setLicence_notes(layer.licence_notes.toString())
-                if (layer.mddatest != null) newLayer.setMddatest(layer.mddatest.toString())
-                if (layer.mdhrlv != null) newLayer.setMdhrlv(layer.mdhrlv.toString())
-                if (layer.metadatapath != null) newLayer.setMetadatapath(layer.metadatapath.toString())
-                if (layer.notes != null) newLayer.setNotes(layer.notes.toString())
-                if (layer.respparty_role != null) newLayer.setRespparty_role(layer.respparty_role.toString())
-                if (layer.source != null) newLayer.setSource_link(layer.source_link.toString())
-                if (layer.source != null) newLayer.setSource(layer.source.toString())
-                if (layer.type != null) newLayer.setType(layer.type.toString())
-                if (layer?.path_orig) {
-                    newLayer.setPath_orig(layer.path_orig.toString())
-                } else {
-                    if ("environmental".equalsIgnoreCase(layer.type.toString())) {
-                        newLayer.setPath_orig('layer/' + layer.name)
-                    } else if (new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/" + id + ".shp").exists()) {
-                        newLayer.setPath_orig('layer/' + layer.name)
-                    } else {
-                        newLayer.setPath_orig('layer/' + layer.name)
+                    if (layerDao.getLayerByName(layer.name.toString(), false) != null) {
+                        retMap.put("error", "name: " + layer.name + " is not unique")
+                        retMap.putAll(layerMap(String.valueOf(id)))
+                        retMap.putAll(layer)
                     }
+
+                    //default values from the name
+                    layer.displayPath = grailsApplication.config.geoserver.url +
+                            "/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" +
+                            layer.name + "&format=image/png&styles="
+
+                    def newLayer = new Layer()
+                    if (layer.displayPath != null) newLayer.setDisplaypath(layer.displayPath.toString())
+                    if (layer.environmentalvaluemin != null) newLayer.setEnvironmentalvaluemin(layer.environmentalvaluemin.toString())
+                    if (layer.environmentalvaluemax != null) newLayer.setEnvironmentalvaluemax(layer.environmentalvaluemax.toString())
+                    if (layer.extent != null) newLayer.setExtent(layer.extent.toString())
+                    if (layer.maxlatitude != null) newLayer.setMaxlatitude(Double.parseDouble(String.valueOf(layer.maxlatitude)))
+                    if (layer.minlatitude != null) newLayer.setMinlatitude(Double.parseDouble(String.valueOf(layer.minlatitude)))
+                    if (layer.maxlongitude != null) newLayer.setMaxlongitude(Double.parseDouble(String.valueOf(layer.maxlongitude)))
+                    if (layer.minlongitude != null) newLayer.setMinlongitude(Double.parseDouble(String.valueOf(layer.minlongitude)))
+                    if (layer.name != null) newLayer.setName(layer.name.toString())
+                    if (layer.classification1 != null) newLayer.setClassification1(layer.classification1.toString())
+                    if (layer.classification2 != null) newLayer.setClassification2(layer.classification2.toString())
+                    if (layer.citation_date != null) newLayer.setCitation_date(layer.citation_date.toString())
+                    if (layer.datalang != null) newLayer.setDatalang(layer.datalang.toString())
+                    if (layer.description != null) newLayer.setDescription(layer.description.toString())
+                    if (layer.displayname != null) newLayer.setDisplayname(layer.displayname.toString())
+                    if (layer.domain != null) newLayer.setDomain(layer.domain.toString())
+                    newLayer.setEnabled('on'.equals(layer.enabled))
+                    if (layer.environmentalvalueunits != null) newLayer.setEnvironmentalvalueunits(layer.environmentalvalueunits.toString())
+                    if (layer.keywords != null) newLayer.setKeywords(layer.keywords.toString())
+                    if (layer.licence_level != null) newLayer.setLicence_level(layer.licence_level.toString())
+                    if (layer.licence_link != null) newLayer.setLicence_link(layer.licence_link.toString())
+                    if (layer.licence_notes != null) newLayer.setLicence_notes(layer.licence_notes.toString())
+                    if (layer.mddatest != null) newLayer.setMddatest(layer.mddatest.toString())
+                    if (layer.mdhrlv != null) newLayer.setMdhrlv(layer.mdhrlv.toString())
+                    if (layer.metadatapath != null) newLayer.setMetadatapath(layer.metadatapath.toString())
+                    if (layer.notes != null) newLayer.setNotes(layer.notes.toString())
+                    if (layer.respparty_role != null) newLayer.setRespparty_role(layer.respparty_role.toString())
+                    if (layer.source != null) newLayer.setSource_link(layer.source_link.toString())
+                    if (layer.source != null) newLayer.setSource(layer.source.toString())
+                    if (layer.type != null) newLayer.setType(layer.type.toString())
+                    if (layer?.path_orig) {
+                        newLayer.setPath_orig(layer.path_orig.toString())
+                    } else {
+                        if ("environmental".equalsIgnoreCase(layer.type.toString())) {
+                            newLayer.setPath_orig('layer/' + layer.name)
+                        } else if (new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/" + id + ".shp").exists()) {
+                            newLayer.setPath_orig('layer/' + layer.name)
+                        } else {
+                            newLayer.setPath_orig('layer/' + layer.name)
+                        }
+                    }
+
+                    newLayer.setDt_added(new Date())
+
+                    //attempt to set layer id
+                    if (layer.containsKey('requestedId') && layer.requestedId.length() > 0) {
+                        newLayer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
+                    } else {
+                        newLayer.setId(0)
+                    }
+
+                    //create default layers table entry, this updates layer.id
+                    Task.withNewTransaction {
+                        layerDao.addLayer(newLayer)
+                    }
+
+                    //record layer.id
+                    FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
+
+                    if (createTask) {
+                        tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)], null, null, null)
+                    }
+
+                    retMap.put('layer_id', newLayer.id)
+                    retMap.put('message', 'Layer creation task started')
+                } catch (err) {
+                    log.error 'error creating layer: ' + id, err
+                    retMap.put('error', 'error creating layer: ' + err.getMessage())
                 }
-
-                //attempt to set layer id
-                if (layer.containsKey('requestedId') && layer.requestedId.length() > 0) {
-                    newLayer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
-                } else {
-                    newLayer.setId(0)
-                }
-
-                //create default layers table entry, this updates layer.id
-                Task.withNewTransaction {
-                    layerDao.addLayer(newLayer)
-                }
-
-                //record layer.id
-                FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
-
-                if (createTask) {
-                    tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)], null, null, null)
-                }
-
-                retMap.put('layer_id', newLayer.id)
-                retMap.put('message', 'Layer creation started')
             }
         }
 
         retMap
     }
 
-    private getShapeFileColumns(File shp) {
+    def getShapeFileColumns(File shp) {
         def columns = []
 
         try {

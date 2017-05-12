@@ -130,7 +130,8 @@ class MasterService {
     def ping(slave) {
         try {
             def url = slave.url + "/slave/ping" + "?api_key=" + slave.key
-            def response = grails.converters.JSON.parse(Util.getUrl(url))
+            def txt = Util.getUrl(url)
+            def response = grails.converters.JSON.parse(txt)
             if ("alive".equalsIgnoreCase(response.status)) {
                 return true
             }

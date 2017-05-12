@@ -3,7 +3,7 @@
  * All Rights Reserved.
  *
  * The contents of this file are subject to the Mozilla Public
- * License Version 1.1 (the "License"); you may not use this file
+ * License Version 1.1 (the "License") you may not use this file
  * except in compliance with the License. You may obtain a copy of
  * the License at http://www.mozilla.org/MPL/
  *
@@ -74,10 +74,10 @@ class ObjectController {
             if (wkt.startsWith("ENVELOPE(")) {
 
                 //get results of each filter term
-                def filters = LayerFilter.parseLayerFilters(wkt)
+                def filters = LayerFilter.parseLayerFilters(wkt.toString())
                 def all = []
                 filters.each {
-                    all.add(objectDao.getObjectsByIdAndIntersection(id, limit, it));
+                    all.add(objectDao.getObjectsByIdAndIntersection(id, limit, it))
                 }
 
                 //merge common entries only
@@ -105,12 +105,12 @@ class ObjectController {
             } else if (wkt.startsWith("OBJECT(")) {
 
                 def pid = wkt.substring("OBJECT(".length(), wkt.length() - 1)
-                def objects = objectDao.getObjectsByIdAndIntersection(id, limit, pid)
+                def objects = objectDao.getObjectsByIdAndIntersection(id, limit, pid.toString())
 
                 render objects as JSON
 
             } else if (wkt.startsWith("GEOMETRYCOLLECTION")) {
-                def collectionParts = SpatialConversionUtils.getGeometryCollectionParts(wkt)
+                def collectionParts = SpatialConversionUtils.getGeometryCollectionParts(wkt.toString())
 
                 def objectsSet = [] as Set
 
@@ -120,7 +120,7 @@ class ObjectController {
 
                 render objectsSet as JSON
             } else {
-                render objectDao.getObjectsByIdAndArea(id, limit, wkt) as JSON
+                render objectDao.getObjectsByIdAndArea(id, limit, wkt.toString()) as JSON
             }
         }
     }
@@ -134,15 +134,15 @@ class ObjectController {
 
     def fieldObjectsCsv(String id) {
         try {
-            response.setContentType("text/csv");
-            response.setHeader("Content-Disposition", "attachment; filename=\"objects-" + id + ".csv.gz\"");
-            GZIPOutputStream gzipped = new GZIPOutputStream(response.getOutputStream());
-            objectDao.writeObjectsToCSV(gzipped, id);
-            gzipped.flush();
-            gzipped.close();
+            response.setContentType("text/csv")
+            response.setHeader("Content-Disposition", "attachment filename=\"objects-" + id + ".csv.gz\"")
+            GZIPOutputStream gzipped = new GZIPOutputStream(response.getOutputStream())
+            objectDao.writeObjectsToCSV(gzipped, id)
+            gzipped.flush()
+            gzipped.close()
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            response.sendError(500, "Problem performing download");
+            log.error(e.getMessage(), e)
+            response.sendError(500, "Problem performing download")
         }
     }
 
@@ -159,48 +159,48 @@ class ObjectController {
     def objectsInArea(String id) {
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
 
-        String wkt = params.wkt ?: 'OBJECT(' + params.pid + ')';
+        String wkt = params.wkt ?: "OBJECT(${params.pid})"
 
         if (wkt.startsWith("ENVELOPE(")) {
             //get results of each filter
-            LayerFilter[] filters = LayerFilter.parseLayerFilters(wkt);
-            List<List<Objects>> all = new ArrayList<List<Objects>>();
+            LayerFilter[] filters = LayerFilter.parseLayerFilters(wkt)
+            List<List<Objects>> all = new ArrayList<List<Objects>>()
             for (int i = 0; i < filters.length; i++) {
-                all.add(objectDao.getObjectsByIdAndIntersection(id, limit, filters[i]));
+                all.add(objectDao.getObjectsByIdAndIntersection(id, limit, filters[i]))
             }
             //merge common entries only
-            HashMap<String, Integer> objectCounts = new HashMap<String, Integer>();
-            List<Objects> list = all.get(0);
+            HashMap<String, Integer> objectCounts = new HashMap<String, Integer>()
+            List<Objects> list = all.get(0)
             for (int j = 0; j < list.size(); j++) {
-                objectCounts.put(list.get(j).getPid(), 1);
+                objectCounts.put(list.get(j).getPid(), 1)
             }
             for (int i = 1; i < all.size(); i++) {
-                List<Objects> t = all.get(i);
+                List<Objects> t = all.get(i)
                 for (int j = 0; j < t.size(); j++) {
-                    Integer v = objectCounts.get(t.get(j).getPid());
+                    Integer v = objectCounts.get(t.get(j).getPid())
                     if (v != null) {
-                        objectCounts.put(t.get(j).getPid(), v + 1);
+                        objectCounts.put(t.get(j).getPid(), v + 1)
                     }
                 }
             }
-            List<Objects> inAllGroups = new ArrayList<Objects>(list.size());
+            List<Objects> inAllGroups = new ArrayList<Objects>(list.size())
             for (int j = 0; j < list.size(); j++) {
                 if (objectCounts.get(list.get(j).getPid()) == all.size()) {
-                    inAllGroups.add(list.get(j));
+                    inAllGroups.add(list.get(j))
                 }
             }
 
             render inAllGroups as JSON
         } else if (wkt.startsWith("OBJECT(")) {
-            String pid = wkt.substring("OBJECT(".length(), wkt.length() - 1);
+            String pid = wkt.substring("OBJECT(".length(), wkt.length() - 1)
             render objectDao.getObjectsByIdAndIntersection(id, limit, pid) as JSON
         } else if (wkt.startsWith("GEOMETRYCOLLECTION")) {
-            List<String> collectionParts = SpatialConversionUtils.getGeometryCollectionParts(wkt);
+            List<String> collectionParts = SpatialConversionUtils.getGeometryCollectionParts(wkt)
 
-            Set<Objects> objectsSet = new HashSet<Objects>();
+            Set<Objects> objectsSet = new HashSet<Objects>()
 
             for (String part : collectionParts) {
-                objectsSet.addAll(objectDao.getObjectsByIdAndArea(id, limit, part));
+                objectsSet.addAll(objectDao.getObjectsByIdAndArea(id, limit, part))
             }
 
             render new ArrayList<Objects>(objectsSet) as JSON

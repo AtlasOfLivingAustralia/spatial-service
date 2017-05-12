@@ -19,11 +19,18 @@ import au.org.ala.layers.util.SpatialUtil
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+import java.awt.geom.Point2D
+
+@Commons
 class AooEoo extends SlaveProcess {
 
     void start() {
+
+        //grid size
+        def gridSize = task.input.resolution.toDouble()
 
         //area to restrict
         def area = JSON.parse(task.input.area.toString())
@@ -33,34 +40,46 @@ class AooEoo extends SlaveProcess {
 
         def speciesArea = getSpeciesArea(species, area[0])
 
-        new File(getTaskPath()).mkdirs()
+        new File(getTaskPath().toString()).mkdirs()
 
-        def pointCount = facetCount("point-0.02", speciesArea)
-        // aoo = 2km * 2km * number of 2km by 2km grid cells with an occurrence
-        double aoo = 2.0 * 2.0 * pointCount
+        // eoo
+        def points = facet("lat_long", speciesArea)
+        StringBuilder eWkt = new StringBuilder()
+        processPoints(points, eWkt)
 
-        def occurrenceCount = occurrenceCount(species)
+        // aoo
+        Set<Point2D> aooPoints = aooProcess(points, gridSize)
+        double aoo = gridSize * gridSize * aooPoints.size() * 10000
+        String aooWkt = aooWkt(aooPoints, gridSize)
 
-        // eoo, use actual points
-        def points = facet("lat_long", species)
-        StringBuilder sb = new StringBuilder();
-        processPoints(points, sb);
+        def occurrenceCount = occurrenceCount(speciesArea)
 
-        double eoo = 0;
-        WKTReader reader = new WKTReader();
-        String metadata = null;
+        double eoo
+        WKTReader reader = new WKTReader()
+        String metadata
         try {
-            Geometry g = reader.read(sb.toString());
-            Geometry convexHull = g.convexHull();
-            String wkt = convexHull.toText().replace(" (", "(").replace(", ", ",");
+            Geometry g = reader.read(eWkt.toString())
+            Geometry convexHull = g.convexHull()
+            String wkt = convexHull.toText().replace(" (", "(").replace(", ", ",")
 
-            eoo = SpatialUtil.calculateArea(wkt);
+            eoo = SpatialUtil.calculateArea(wkt)
+
+            //aoo area
+            Geometry a = reader.read(aooWkt)
+            Geometry aUnion = a.union()
+            String aWkt = aUnion.toText().replace(" (", "(").replace(", ", ",")
 
             if (eoo > 0) {
 
-                FileUtils.writeStringToFile(new File(getTaskPath() + "Area of Occupancy.wkt"), wkt)
-                def values = [file: "Area of Occupancy.wkt", name: "Area of Occupancy", description: "Created by AOO and EOO Tool"]
-                addOutput("areas", values.toString(), true)
+                FileUtils.writeStringToFile(new File(getTaskPath() + "Extent of occurrence.wkt"), wkt)
+                def values = [file: "Extent of occurrence.wkt", name: "Extent of occurrence (area): " + species.name,
+                              description: "Created by AOO and EOO Tool"]
+                addOutput("areas", (values as JSON).toString(), true)
+
+                FileUtils.writeStringToFile(new File(getTaskPath() + "Area of occupancy.wkt"), aWkt)
+                values = [file: "Area of occupancy.wkt", name: "Area of occupancy (area): " + species.name,
+                          description: "Created by AOO and EOO Tool"]
+                addOutput("areas", (values as JSON).toString(), true)
 
                 metadata = "<html><body>" +
                         "<div class='aooeoo'>" +
@@ -72,14 +91,14 @@ class AooEoo extends SlaveProcess {
                         "<tr><td>Species</td><td>" + species.name + "</td></tr>" +
                         "<tr><td>Area of Occupancy (AOO: 0.02 degree grid)</td><td>" + String.format("%.0f", aoo) + " sq km</td></tr>" +
                         "<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>" + (String.format("%.2f", eoo / 1000.0 / 1000.0)) + " sq km</td></tr></table></body></html>" +
-                        "</div>";
+                        "</div>"
 
                 FileUtils.writeStringToFile(new File(getTaskPath() + "Calculated AOO and EOO.html"), metadata)
 
+                def tp = getTaskPath()
                 addOutput("metadata", "Calculated AOO and EOO.html", true)
             } else {
-                //trigger eoo unavailable message
-                //pointCount = 2;
+                log.error 'Extent of occurrences is 0.'
             }
 
         } catch (err) {
@@ -87,25 +106,71 @@ class AooEoo extends SlaveProcess {
         }
     }
 
-    private int processPoints(points, StringBuilder sb) {
-        int pointCount = 0;
-        sb.append("GEOMETRYCOLLECTION(");
+    int processPoints(points, StringBuilder sb) {
+        int pointCount = 0
+        sb.append("GEOMETRYCOLLECTION(")
         points.each { point ->
             try {
                 //point=latitude,longitude
-                String[] ll = point.replace("\"", "").split(",");
-                String s = "POINT(" + Double.parseDouble(ll[1]) + " " + Double.parseDouble(ll[0]) + ")";
+                String[] ll = point.replace("\"", "").split(",")
+                String s = "POINT(" + Double.parseDouble(ll[1]) + " " + Double.parseDouble(ll[0]) + ")"
                 if (pointCount > 0) {
-                    sb.append(",");
+                    sb.append(",")
                 }
-                sb.append(s);
-                pointCount++;
+                sb.append(s)
+                pointCount++
             } catch (err) {
             }
         }
-        sb.append(")");
+        sb.append(")")
 
-        return pointCount;
+        return pointCount
+    }
+
+    private Set<Point2D> aooProcess(points, double gridSize) {
+        Set<Point2D> set = new HashSet<Point2D>()
+        points.each { point ->
+            try {
+                //key=latitude,longitude
+                String [] ll = point.replace("\"", "").split(",")
+                Point2D pt = new Point2D.Float(round(Double.parseDouble(ll[1]), gridSize),
+                        round(Double.parseDouble(ll[0]), gridSize))
+                set.add(pt)
+            } catch (Exception e) {
+            }
+        }
+
+        set
+    }
+
+    float round(double d, double by) {
+        long l = (long) (d / by)
+        return (float) (l * by + (l < 0 ? -by : 0))
+    }
+
+    String aooWkt(pointSet, gridsize) {
+        int pointCount = 0
+        StringBuilder sb = new StringBuilder()
+        sb.append("MULTIPOLYGON(")
+        pointSet.each { point ->
+            //key=latitude,longitude
+            float x = point.x
+            float y = point.y
+
+            String s = "((" + x + " " + y + "," +
+                    x + " " + (y + gridsize) + "," +
+                    (x + gridsize) + " " + (y + gridsize) + "," +
+                    (x + gridsize) + " " + y + "," +
+                    x + " " + y + "))"
+            if (pointCount > 0) {
+                sb.append(",")
+            }
+            sb.append(s)
+            pointCount++
+        }
+        sb.append(")")
+
+        return sb.toString()
     }
 
 }

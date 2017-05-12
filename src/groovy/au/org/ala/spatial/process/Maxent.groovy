@@ -18,9 +18,11 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.grid.GridCutter
 import au.org.ala.spatial.slave.Utils
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 
+@Commons
 class Maxent extends SlaveProcess {
 
     void start() {
@@ -59,7 +61,7 @@ class Maxent extends SlaveProcess {
 
         new File(getTaskPath()).mkdirs()
 
-        def cutDataPath = cutGrid((layers as List).toArray(new String[layers.size()]), resolution.toString(), region, envelope, null);
+        def cutDataPath = cutGrid((layers as List).toArray(new String[layers.size()]), resolution.toString(), region, envelope, null)
         def speciesPath = downloadSpecies(speciesArea)
 
         if (speciesPath.size() == 0) {
@@ -89,7 +91,7 @@ class Maxent extends SlaveProcess {
         //format output
 
         // check if there is an error
-        String maxentError = getMaxentError(new File(getTaskPath() + "maxent.log"), 2);
+        String maxentError = getMaxentError(new File(getTaskPath() + "maxent.log"), 2)
         if (maxentError != null) {
             //TODO: error
         } else {
@@ -97,7 +99,7 @@ class Maxent extends SlaveProcess {
 
             replaceMap.put("Maxent model for species", "Maxent model for " + speciesArea.name)
 
-            String paramlist = "Model reference number: " + task.id + "<br>Species: " + speciesArea.name + "<br>Layers: <ul>";
+            String paramlist = "Model reference number: " + task.id + "<br>Species: " + speciesArea.name + "<br>Layers: <ul>"
 
             layers.each {
                 def field = getField(it)
@@ -114,56 +116,56 @@ class Maxent extends SlaveProcess {
 
                 replaceMap.put("<td>" + it + "</td>", "<td>" + getLayer(field.spid).displayname + "</td>")
 
-                readReplaceAfter(getTaskPath() + "species.html", "(all continuous)", it, displayname);
+                readReplaceAfter(getTaskPath() + "species.html", "(all continuous)", it, displayname)
             }
 
-            replaceMap.put("end of this page.<br>", "end of this page.<br><p>" + paramlist + "</p>");
-            replaceMap.put("This page contains some analysis of the Maxent model for", "This <a href='http://www.cs.princeton.edu/~schapire/maxent/'>Maxent</a> v3.3.3e predictive model for");
-            replaceMap.put(", created", " was created");
-            replaceMap.put(" using Maxent version 3.3.3e.", ".");
-            replaceMap.put("If you would like to do further analyses, the raw data used here is linked to at the end of this page", "Links at the bottom of this page to the raw data may be used for further analysis");
-            replaceMap.put(getTaskPath(), "");
+            replaceMap.put("end of this page.<br>", "end of this page.<br><p>" + paramlist + "</p>")
+            replaceMap.put("This page contains some analysis of the Maxent model for", "This <a href='http://www.cs.princeton.edu/~schapire/maxent/'>Maxent</a> v3.3.3e predictive model for")
+            replaceMap.put(", created", " was created")
+            replaceMap.put(" using Maxent version 3.3.3e.", ".")
+            replaceMap.put("If you would like to do further analyses, the raw data used here is linked to at the end of this page", "Links at the bottom of this page to the raw data may be used for further analysis")
+            replaceMap.put(getTaskPath(), "")
 
-            paramlist += "</ul>";
+            paramlist += "</ul>"
 
-            readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "");
-            readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "");
+            readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "")
+            readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "")
 
             if (responseCurves) {
-                StringBuffer sbTable = new StringBuffer();
+                StringBuffer sbTable = new StringBuffer()
 
                 contextualLayers.each { ctx ->
-                    sbTable.append("<pre>");
+                    sbTable.append("<pre>")
                     if (!ctx.endsWith("_aloc")) {
-                        sbTable.append("<span style='font-weight: bold; text-decoration: underline'>" + ctx + " legend</span><br />");
-                        sbTable.append(IOUtils.toString(new FileInputStream(GridCutter.getLayerPath(resolution.toString(), ctx) + ".txt")));
-                        sbTable.append("<br /><br />");
-                        sbTable.append("</pre>");
+                        sbTable.append("<span style='font-weight: bold; text-decoration: underline'>" + ctx + " legend</span><br />")
+                        sbTable.append(IOUtils.toString(new FileInputStream(GridCutter.getLayerPath(resolution.toString(), ctx, "c", ctx) + ".txt")))
+                        sbTable.append("<br /><br />")
+                        sbTable.append("</pre>")
                     }
-                    replaceMap.put("<br><HR><H2>Analysis of variable contributions</H2><br>", sbTable.toString() + "<br><HR><H2>Analysis of variable contributions</H2><br>");
+                    replaceMap.put("<br><HR><H2>Analysis of variable contributions</H2><br>", sbTable.toString() + "<br><HR><H2>Analysis of variable contributions</H2><br>")
                 }
             }
 
-            readReplaceBetween(getTaskPath() + "species.html", "<br>Click <a href=species_explain.bat", "memory.<br>", "");
-            readReplaceBetween(getTaskPath() + "species.html", "(A link to the Explain", "additive models.)", "");
+            readReplaceBetween(getTaskPath() + "species.html", "<br>Click <a href=species_explain.bat", "memory.<br>", "")
+            readReplaceBetween(getTaskPath() + "species.html", "(A link to the Explain", "additive models.)", "")
 
-            StringBuffer removedSpecies = new StringBuffer();
+            StringBuffer removedSpecies = new StringBuffer()
             try {
                 if (speciesPath.size() == 2) {
-                    BufferedReader br = new BufferedReader(new FileReader(speciesPath.get(1)));
+                    BufferedReader br = new BufferedReader(new FileReader(speciesPath.get(1)))
                     String ss
                     while ((ss = br.readLine()) != null) {
                         removedSpecies.append(ss)
                     }
                     br.close()
 
-                    String header = "'Sensitive species' have been masked out of the model. See: http://www.ala.org.au/about/program-of-projects/sds/\r\n\r\nLSID,Species scientific name,Taxon rank";
+                    String header = "'Sensitive species' have been masked out of the model. See: http://www.ala.org.au/about/program-of-projects/sds/\r\n\r\nLSID,Species scientific name,Taxon rank"
                     FileUtils.writeStringToFile(header + removedSpecies.toString(),
-                            getTaskPath() + File.separator + "Prediction_maskedOutSensitiveSpecies.csv");
+                            getTaskPath() + File.separator + "Prediction_maskedOutSensitiveSpecies.csv")
 
-                    String insertBefore = "<a href = \"species.asc\">The";
-                    String insertText = "<b><a href = \"Prediction_maskedOutSensitiveSpecies.csv\">'Sensitive species' masked out of the model</a></br></b>";
-                    replaceMap.put(insertBefore, insertText + insertBefore);
+                    String insertBefore = "<a href = \"species.asc\">The"
+                    String insertText = "<b><a href = \"Prediction_maskedOutSensitiveSpecies.csv\">'Sensitive species' masked out of the model</a></br></b>"
+                    replaceMap.put(insertBefore, insertText + insertBefore)
                 }
             } catch (err) {
             }
@@ -173,7 +175,7 @@ class Maxent extends SlaveProcess {
             //writeProjectionFile(getTaskPath());
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "species.asc", getTaskPath() + task.id + "_species");
+            convertAsc(getTaskPath() + "species.asc", getTaskPath() + task.id + "_species")
 
         }
         writeMaxentsld(grailsApplication.config.data.dir + "/layer/" + task.id + "_species.sld")
@@ -247,117 +249,117 @@ class Maxent extends SlaveProcess {
     }
 
     static public void readReplaceAfter(String fname, String start, String oldPattern, String replPattern) {
-        String line;
-        StringBuffer sb = new StringBuffer();
+        String line
+        StringBuffer sb = new StringBuffer()
         try {
-            FileInputStream fis = new FileInputStream(fname);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
-            int afterPos = -1;
+            FileInputStream fis = new FileInputStream(fname)
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
+            int afterPos = -1
             while ((line = reader.readLine()) != null) {
                 if (afterPos < 0 && (afterPos = line.indexOf(start)) >= 0) {
-                    line = line.substring(0, afterPos + start.length()) + line.substring(afterPos + start.length()).replaceAll(oldPattern, replPattern);
+                    line = line.substring(0, afterPos + start.length()) + line.substring(afterPos + start.length()).replaceAll(oldPattern, replPattern)
                 } else if (afterPos > 0) {
-                    line = line.replaceAll(oldPattern, replPattern);
+                    line = line.replaceAll(oldPattern, replPattern)
                 }
-                sb.append(line + "\n");
+                sb.append(line + "\n")
             }
-            reader.close();
-            BufferedWriter out = new BufferedWriter(new FileWriter(fname));
-            out.write(sb.toString());
-            out.close();
+            reader.close()
+            BufferedWriter out = new BufferedWriter(new FileWriter(fname))
+            out.write(sb.toString())
+            out.close()
         } catch (Throwable e) {
-            e.printStackTrace(System.out);
+            e.printStackTrace(System.out)
         }
     }
 
     public void readReplaceBetween(String fname, String startOldText, String endOldText, String replText) {
-        String line;
-        StringBuffer sb = new StringBuffer();
+        String line
+        StringBuffer sb = new StringBuffer()
         try {
-            FileInputStream fis = new FileInputStream(fname);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+            FileInputStream fis = new FileInputStream(fname)
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
             while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
+                sb.append(line + "\n")
             }
-            int start, end;
-            start = sb.indexOf(startOldText);
+            int start, end
+            start = sb.indexOf(startOldText)
             if (start >= 0) {
-                end = sb.indexOf(endOldText, start + 1);
-                sb.replace(start, end + endOldText.length(), replText);
+                end = sb.indexOf(endOldText, start + 1)
+                sb.replace(start, end + endOldText.length(), replText)
             }
-            reader.close();
-            BufferedWriter out = new BufferedWriter(new FileWriter(fname));
-            out.write(sb.toString());
-            out.close();
+            reader.close()
+            BufferedWriter out = new BufferedWriter(new FileWriter(fname))
+            out.write(sb.toString())
+            out.close()
         } catch (Throwable e) {
-            System.err.println("*** exception ***");
-            e.printStackTrace(System.out);
+            System.err.println("*** exception ***")
+            e.printStackTrace(System.out)
         }
     }
 
     private void writeProjectionFile(String outputpath) {
         try {
-            File fDir = new File(outputpath);
-            fDir.mkdir();
+            File fDir = new File(outputpath)
+            fDir.mkdir()
 
-            PrintWriter spWriter = new PrintWriter(new BufferedWriter(new FileWriter(outputpath + "species.prj")));
+            PrintWriter spWriter = new PrintWriter(new BufferedWriter(new FileWriter(outputpath + "species.prj")))
 
-            StringBuffer sbProjection = new StringBuffer();
-            sbProjection.append("GEOGCS[\"WGS 84\", ").append("\n");
-            sbProjection.append("    DATUM[\"WGS_1984\", ").append("\n");
-            sbProjection.append("        SPHEROID[\"WGS 84\",6378137,298.257223563, ").append("\n");
-            sbProjection.append("            AUTHORITY[\"EPSG\",\"7030\"]], ").append("\n");
-            sbProjection.append("        AUTHORITY[\"EPSG\",\"6326\"]], ").append("\n");
-            sbProjection.append("    PRIMEM[\"Greenwich\",0, ").append("\n");
-            sbProjection.append("        AUTHORITY[\"EPSG\",\"8901\"]], ").append("\n");
-            sbProjection.append("    UNIT[\"degree\",0.01745329251994328, ").append("\n");
-            sbProjection.append("        AUTHORITY[\"EPSG\",\"9122\"]], ").append("\n");
-            sbProjection.append("    AUTHORITY[\"EPSG\",\"4326\"]] ").append("\n");
+            StringBuffer sbProjection = new StringBuffer()
+            sbProjection.append("GEOGCS[\"WGS 84\", ").append("\n")
+            sbProjection.append("    DATUM[\"WGS_1984\", ").append("\n")
+            sbProjection.append("        SPHEROID[\"WGS 84\",6378137,298.257223563, ").append("\n")
+            sbProjection.append("            AUTHORITY[\"EPSG\",\"7030\"]], ").append("\n")
+            sbProjection.append("        AUTHORITY[\"EPSG\",\"6326\"]], ").append("\n")
+            sbProjection.append("    PRIMEM[\"Greenwich\",0, ").append("\n")
+            sbProjection.append("        AUTHORITY[\"EPSG\",\"8901\"]], ").append("\n")
+            sbProjection.append("    UNIT[\"degree\",0.01745329251994328, ").append("\n")
+            sbProjection.append("        AUTHORITY[\"EPSG\",\"9122\"]], ").append("\n")
+            sbProjection.append("    AUTHORITY[\"EPSG\",\"4326\"]] ").append("\n")
 
-            spWriter.write(sbProjection.toString());
-            spWriter.close();
+            spWriter.write(sbProjection.toString())
+            spWriter.close()
 
         } catch (IOException ex) {
-            ex.printStackTrace(System.out);
+            ex.printStackTrace(System.out)
         }
     }
 
     private String getMaxentError(File file, int count) {
         try {
-            RandomAccessFile rf = new RandomAccessFile(file, "r");
+            RandomAccessFile rf = new RandomAccessFile(file, "r")
 
             // first check if maxent threw a 'No species selected' error
-            String nosp = rf.readLine(); // first line: date/time
-            nosp = rf.readLine(); // second line: maxent version
-            nosp = rf.readLine(); // third line: "No species selected"
+            String nosp = rf.readLine() // first line: date/time
+            nosp = rf.readLine() // second line: maxent version
+            nosp = rf.readLine() // third line: "No species selected"
             if (nosp.equals("No species selected")) {
-                return "No species selected";
+                return "No species selected"
             }
 
-            long flen = file.length() - 1;
-            int nlcnt = -1;
-            StringBuilder lines = new StringBuilder();
+            long flen = file.length() - 1
+            int nlcnt = -1
+            StringBuilder lines = new StringBuilder()
             while (nlcnt != count) {
-                rf.seek(flen--);
-                char c = (char) rf.read();
-                lines.append(c);
+                rf.seek(flen--)
+                char c = (char) rf.read()
+                lines.append(c)
                 if (c == '\n') {
-                    nlcnt++;
+                    nlcnt++
                 }
 
             }
-            String line = lines.reverse().toString();
+            String line = lines.reverse().toString()
             if (line.contains("Warning: Skipping species because it has 0 test samples")) {
-                return "Warning: Skipping species because it has 0 test samples";
+                return "Warning: Skipping species because it has 0 test samples"
             }
 
-            rf.close();
+            rf.close()
         } catch (Exception e) {
-            System.out.println("Unable to read lines");
-            e.printStackTrace(System.out);
+            System.out.println("Unable to read lines")
+            e.printStackTrace(System.out)
         }
 
         // return false anyways
-        return null;
+        return null
     }
 }

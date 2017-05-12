@@ -18,15 +18,15 @@ package au.org.ala.spatial.process
 import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
-import org.json.simple.parser.JSONParser
+import groovy.util.logging.Commons
 
+@Commons
 class ScatterplotDraw extends SlaveProcess {
 
     void start() {
-
-        //area to restrict (only interested in area.q part)
-        JSONParser jp = new JSONParser()
-        String wkt = jp.parse(task.input.wkt.toString())
+        //optional area to restrict
+        def area = JSON.parse(task.input?.wkt ?: '[]')
+        def wkt = area.size() > 0 ? getWkt(area[0].pid) : null
 
         def layersServiceUrl = task.input.layersServiceUrl
 
@@ -58,7 +58,9 @@ class ScatterplotDraw extends SlaveProcess {
         newStyle.setBlue(blue)
         newStyle.setHighlightWkt(wkt)
 
-        scatterplot.annotatePixelBox(selection[0].toInteger(), selection[1].toInteger(), selection[2].toInteger(), selection[3].toInteger())
+        try {
+            scatterplot.annotatePixelBox(selection[0].toInteger(), selection[1].toInteger(), selection[2].toInteger(), selection[3].toInteger())
+        } catch (Exception e) {}
 
         scatterplot.getScatterplotDTO().setId('' + System.currentTimeMillis())
         scatterplot.reStyle(newStyle,
@@ -90,7 +92,8 @@ class ScatterplotDraw extends SlaveProcess {
         image.putAt('bs', scatterplot.getScatterplotDTO().getForegroundOccurrencesBs())
         image.putAt('name', scatterplot.getScatterplotDTO().getForegroundName())
 
-        image.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotDataDTO().layerExtents())
+        image.putAt('scatterplotExtents', scatterplot.getScatterplotDataDTO().layerExtents())
+        image.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotStyleDTO().getSelection())
         image.putAt('scatterplotLayers', scatterplot.getScatterplotDTO().getLayers())
         image.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
 

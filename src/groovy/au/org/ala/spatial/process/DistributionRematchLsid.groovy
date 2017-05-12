@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import groovy.util.logging.Commons
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.GetMethod
 import org.apache.commons.io.FileUtils
@@ -22,6 +23,7 @@ import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 
+@Commons
 class DistributionRematchLsid extends SlaveProcess {
 
     void start() {
@@ -43,11 +45,11 @@ class DistributionRematchLsid extends SlaveProcess {
             String newGenusLsid = (updateAll || !hasGenusLsid) && d.containsKey('genus_name') && d.genus_name != null && d.genus_name.length() > 0 ? lookupGenusLsid(d.genus_name) : null
             String newLsid = (updateAll || !hasLsid) && d.containsKey('scientific') && d.scientific != null && d.scientific.length() > 0 ? lookupSpeciesOrFamilyLsid(d.scientific) : null
 
-            String sqlf = "UPDATE distributions SET family_lsid = '" + newFamilyLsid + "' WHERE spcode='" + spcode + "';";
-            String sqlg = "UPDATE distributions SET genus_lsid = '" + newGenusLsid + "' WHERE spcode='" + spcode + "';";
-            String sqll = "UPDATE distributions SET lsid = '" + newLsid + "' WHERE spcode='" + spcode + "';";
+            String sqlf = "UPDATE distributions SET family_lsid = '" + newFamilyLsid + "' WHERE spcode='" + spcode + "';"
+            String sqlg = "UPDATE distributions SET genus_lsid = '" + newGenusLsid + "' WHERE spcode='" + spcode + "';"
+            String sqll = "UPDATE distributions SET lsid = '" + newLsid + "' WHERE spcode='" + spcode + "';"
 
-            String sql = '';
+            String sql = ''
             if (newFamilyLsid != null && (!hasFamilyLsid || !newFamilyLsid.equals(d.family_lsid))) {
                 sql += sqlf
             }
@@ -75,26 +77,26 @@ class DistributionRematchLsid extends SlaveProcess {
         String lsid = null
         GetMethod get = null
         try {
-            HttpClient client = new HttpClient();
+            HttpClient client = new HttpClient()
 
-            URL wsUrl = new URL(task.input.bieUrl.toString() + "/ws/guid/" + id);
-            URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef());
+            URL wsUrl = new URL(task.input.bieUrl.toString() + "/ws/guid/" + id)
+            URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef())
 
-            get = new GetMethod(uri.toURL().toString());
-            int response = client.executeMethod(get);
+            get = new GetMethod(uri.toURL().toString())
+            int response = client.executeMethod(get)
             if (response != 200) {
                 log.error("Fetching of species or family LSID failed :" + response + ", " + id)
-                return null;
+                return null
             }
 
-            String responseContent = get.getResponseBodyAsString();
+            String responseContent = get.getResponseBodyAsString()
 
 
-            JSONArray jsonArr = (JSONArray) new JSONParser().parse(responseContent);
+            JSONArray jsonArr = (JSONArray) new JSONParser().parse(responseContent)
             if (jsonArr.size() > 0) {
-                JSONObject jsonObj = (JSONObject) jsonArr.get(0);
+                JSONObject jsonObj = (JSONObject) jsonArr.get(0)
 
-                lsid = (String) jsonObj.get("acceptedIdentifier");
+                lsid = (String) jsonObj.get("acceptedIdentifier")
             }
         } catch (e) {
             log.error 'failed to search lsid', e
@@ -114,28 +116,28 @@ class DistributionRematchLsid extends SlaveProcess {
         try {
             HttpClient client = new HttpClient()
 
-            URL wsUrl = new URL(task.input.bieUrl.toString() + "/search.json?fq=rank:genus&q=" + id);
-            URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef());
+            URL wsUrl = new URL(task.input.bieUrl.toString() + "/search.json?fq=rank:genus&q=" + id)
+            URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef())
 
-            GetMethod get = new GetMethod(uri.toURL().toString());
-            int response = client.executeMethod(get);
+            GetMethod get = new GetMethod(uri.toURL().toString())
+            int response = client.executeMethod(get)
             if (response != 200) {
-                throw new IllegalStateException("Fetching of species or family LSID failed");
+                throw new IllegalStateException("Fetching of species or family LSID failed")
             }
 
-            String responseContent = get.getResponseBodyAsString();
+            String responseContent = get.getResponseBodyAsString()
             get.releaseConnection()
 
-            JSONObject jsonObj = (JSONObject) new JSONParser().parse(responseContent);
+            JSONObject jsonObj = (JSONObject) new JSONParser().parse(responseContent)
 
             if (jsonObj.containsKey("searchResults")) {
-                JSONObject searchResultsObj = (JSONObject) jsonObj.get("searchResults");
+                JSONObject searchResultsObj = (JSONObject) jsonObj.get("searchResults")
                 if (searchResultsObj.containsKey("results")) {
-                    JSONArray resultsArray = (JSONArray) searchResultsObj.get("results");
+                    JSONArray resultsArray = (JSONArray) searchResultsObj.get("results")
                     if (resultsArray.size() > 0) {
-                        JSONObject firstResult = (JSONObject) resultsArray.get(0);
+                        JSONObject firstResult = (JSONObject) resultsArray.get(0)
                         if (firstResult.containsKey("guid")) {
-                            genusLsid = (String) firstResult.get("guid");
+                            genusLsid = (String) firstResult.get("guid")
                         }
                     }
                 }

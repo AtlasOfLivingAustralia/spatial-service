@@ -1,0 +1,81 @@
+{
+  "name": "ScatterplotCreate",
+  "description": "List of scatterplots.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "area": {
+      "description": "Area to restrict the scatterplot.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    "species1": {
+      "description": "Foreground species.",
+      "type": "species",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    "species2": {
+      "description": "Background species.",
+      "type": "species",
+      "constraints": {
+        "optional": true,
+        "min": 0,
+        "max": 1
+      }
+    },
+    "layer": {
+      "description": "2 layers to use in the scatterplot.",
+      "type": "layer",
+      "constraints": {
+        "min": 2,
+        "max": 2,
+        "contextual": false,
+        "environmental": true,
+        "analysis": true
+      }
+    },
+    "grid": {
+      "description": "Output environmental domain grid.",
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
+    },
+    "resolution": {
+      "description": "The layer resolution to use.",
+      "type": "list",
+      "constraints": {
+        "selection": "single",
+        "default": 0.01,
+        "content": [
+          "0.01",
+          "0.1",
+          "0.5",
+          "1.0"
+        ]
+      }
+    }
+  },
+  "output": {
+    "species": {
+      "description": "Scatterplot species with style, scatterplot image url and task id for input to ScatterplotDraw."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

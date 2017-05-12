@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2016 Atlas of Living Australia
+ * All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public
+ * License Version 1.1 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS
+ * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
+ */
+
+package au.org.ala.spatial.service
+
+import au.org.ala.spatial.Util
+import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
+import spock.lang.Specification
+
+/**
+ * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
+ */
+@TestFor(ServiceAuthService)
+@TestMixin(GrailsUnitTestMixin)
+class ServiceAuthServiceSpec extends Specification {
+
+    def setup() {
+        ExpandoMetaClass.enableGlobally()
+        grailsApplication.config.serviceKey = 'localKey'
+        grailsApplication.config.apiKeyCheckUrlTemplate = "{0}"
+        Util.metaClass.static.getUrl = { String url ->
+            if (url.contains('test valid key')) return '"valid":true'
+            return 'is not valid'
+        }
+    }
+
+    def cleanup() {
+    }
+
+    void "valididate key"() {
+        when:
+        def result = service.isValid(key)
+
+        then:
+        result == isValid
+
+        where:
+        key || isValid
+        'localKey' || true
+        'not valid' || false
+        'test valid key' || true
+    }
+}

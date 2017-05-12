@@ -34,8 +34,18 @@ class DistributionController {
     DistributionDAO distributionDao
     ObjectDAO objectDao
 
+    def mapCache() {
+        return MapCache.getMapCache(grailsApplication.config.distributions.cache.dir,
+                grailsApplication.config.geoserver.url + grailsApplication.config.distributions.geoserver.image.url)
+    }
+
     def index() {
-        String wkt = params.get('wkt', '')
+        String wkt = params?.wkt
+        if (params?.wkt && params.wkt.toString().isNumber()) {
+            wkt = objectDao.getObjectsGeometryById(params.wkt.toString(), "wkt")
+        }
+        if (!wkt) wkt = ''
+
         Double min_depth = params.double('min_depth', -1)
         Double max_depth = params.double('max_depth', -1)
         String lsids = params.get('lsids', '')
@@ -61,7 +71,7 @@ class DistributionController {
         Boolean endemic = params.boolean('endemic', null)
 
         if (StringUtils.isEmpty(wkt) && fid != null && objectName != null) {
-            List objects = objectDao.getObjectByFidAndName(fid, objectName);
+            List objects = objectDao.getObjectByFidAndName(fid, objectName)
 
             wkt = objects.get(0).getGeometry()
             if (wkt == null) {
@@ -89,7 +99,7 @@ class DistributionController {
 
             render distributions.collect { map ->
                 map.toMap().findAll {
-                    i -> i.value != null && !"class".equals(i.key)
+                    i -> i.value != null && "class" != i.key
                 }
             } as JSON
         } else {
@@ -104,14 +114,14 @@ class DistributionController {
     }
 
     def listLsids() {
-        List distributions = distributionDao.queryDistributions(null, null, null,
+        List distributions = distributionDao.queryDistributions(null, -1, -1,
                 null, null, null, null, null, null, null, null, null,
                 null, null, Distribution.EXPERT_DISTRIBUTION, null, null)
 
         def lsids = [:]
 
         distributions.each { map ->
-            def c = 1;
+            def c = 1
             if (lsids.containsKey(map.lsid)) c += lsids.get(map.lsid)
             lsids.put(map.lsid, c)
         }
@@ -124,7 +134,12 @@ class DistributionController {
      * @return
      */
     def count() {
-        String wkt = params.get('wkt', '')
+        String wkt = params?.wkt
+        if (params?.wkt && params.wkt.toString().isNumber()) {
+            wkt = objectDao.getObjectsGeometryById(params.wkt.toString(), "wkt")
+        }
+        if (!wkt) wkt = ''
+
         Double min_depth = params.double('min_depth', -1)
         Double max_depth = params.double('max_depth', -1)
         String lsids = params.get('lsids', '')
@@ -145,10 +160,8 @@ class DistributionController {
         Boolean endemic = params.boolean('endemic', false)
 
         if (StringUtils.isEmpty(wkt) && fid != null && objectName != null) {
-            List objects = objectDao.getObjectByFidAndName(fid, objectName);
+            List objects = objectDao.getObjectByFidAndName(fid, objectName)
 
-            // TODO this might be better served with a stored proc
-            // so that the polygon isnt passed from DB to java
             wkt = objects.get(0).getGeometry()
             if (wkt == null) {
                 log.info('Unmatched geometry for name: ' + objectName + ' and layer ' + fid)
@@ -245,7 +258,7 @@ class DistributionController {
         } else {
             addImageUrl(distribution)
             def ds = distribution.toMap().findAll {
-                i -> i.value != null && !"class".equals(i.key)
+                i -> i.value != null && "class" != i.key
             }
             render ds as JSON
         }
@@ -257,7 +270,7 @@ class DistributionController {
             Distribution d = distributions.get(0)
             addImageUrl(d)
             render d.toMap().findAll {
-                i -> i.value != null && !"class".equals(i.key)
+                i -> i.value != null && "class" != i.key
             } as JSON
         } else {
             render(status: 404, text: 'no records for this lsid')
@@ -271,7 +284,7 @@ class DistributionController {
             addImageUrls(distributions)
             render distributions.collect {
                 it.toMap().findAll {
-                    i -> i.value != null && !"class".equals(i.key)
+                    i -> i.value != null && "class" != i.key
                 }
             } as JSON
         } else {
@@ -281,17 +294,17 @@ class DistributionController {
 
     def lsids(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt : false
-        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt);
+        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
         if (distributions != null && !distributions.isEmpty()) {
             addImageUrls(distributions)
             render distributions.collect {
                 it.toMap().findAll {
-                    i -> i.value != null && !"class".equals(i.key)
+                    i -> i.value != null && "class" != i.key
                 }
             } as JSON
         } else {
-            response.sendError(404);
-            return null;
+            response.sendError(404)
+            return null
         }
     }
 
@@ -358,13 +371,13 @@ class DistributionController {
     def cacheMaps() {
         new Thread() {
             @Override
-            public void run() {
+            void run() {
                 List distributions = distributionDao.queryDistributions(null, -1, -1, null, null, null,
                         null, null, null, null, null, null, null, null,
                         Distribution.EXPERT_DISTRIBUTION, null, null)
 
                 distributions.each { Distribution d ->
-                    MapCache.getMapCache().cacheMap(d.getGeom_idx().toString())
+                    mapCache().cacheMap(d.getGeom_idx().toString())
                 }
             }
         }.start()
@@ -374,7 +387,7 @@ class DistributionController {
 
 
     def map(String geomIdx) {
-        InputStream input = MapCache.getMapCache().getCachedMap(geomIdx)
+        InputStream input = mapCache().getCachedMap(geomIdx)
 
         render file: input, contentType: 'image/png'
     }
@@ -413,21 +426,21 @@ class DistributionController {
             } catch (IllegalArgumentException ex) {
                 log.error 'failed to get outliers', ex
                 render(status: 400, text: 'No expert distribution for species associated with supplied lsid')
-                return null;
+                return null
             }
         } catch (ParseException ex) {
             log.error 'failed to get outliers', ex
             render(status: 400, text: 'Invalid JSON for point information')
-            return null;
+            return null
         } catch (ClassCastException ex) {
             log.error 'failed to get outliers', ex
             render(status: 400, text: 'Invalid format for point information')
-            return null;
+            return null
         }
     }
 
     def overviewMapPng(String geomIdx) {
-        InputStream input = MapCache.getMapCache().getCachedMap(geomIdx)
+        InputStream input = mapCache().getCachedMap(geomIdx)
         OutputStream out = response.getOutputStream()
         byte[] buff = new byte[1024]
         int read
@@ -440,34 +453,34 @@ class DistributionController {
     }
 
     def overviewMapPngLsid(String lsid) {
-        image(response, lsid, null, null);
+        image(response, lsid, null, null)
     }
 
     def overviewMapPngSpcode(Long spcode) {
-        image(response, null, spcode, null);
+        image(response, null, spcode, null)
     }
 
     def overviewMapPngName(String name) {
-        image(response, null, null, name);
+        image(response, null, null, name)
     }
 
     def overviewMapSeed() {
         Thread t = new Thread() {
             @Override
-            public void run() {
+            void run() {
                 try {
                     List<Distribution> distributions = distributionDao.queryDistributions(null, -1, -1, null, null, null, null, null, null, null, null, null, null, null,
-                            Distribution.EXPERT_DISTRIBUTION, null, null);
+                            Distribution.EXPERT_DISTRIBUTION, null, null)
 
                     for (Distribution d : distributions) {
-                        MapCache.getMapCache().cacheMap(d.getGeom_idx().toString());
+                        mapCache().cacheMap(d.getGeom_idx().toString())
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    e.printStackTrace()
                 }
             }
-        };
-        t.start();
+        }
+        t.start()
     }
 
     /**
@@ -481,44 +494,44 @@ class DistributionController {
      * @throws Exception
      */
     def image(response, String lsid, Long spcode, String scientificName) {
-        Long geomIdx = null;
+        Long geomIdx = null
 
         try {
             if (spcode != null) {
-                geomIdx = distributionDao.getDistributionBySpcode(spcode, Distribution.EXPERT_DISTRIBUTION, true).getGeom_idx();
+                geomIdx = distributionDao.getDistributionBySpcode(spcode, Distribution.EXPERT_DISTRIBUTION, true).getGeom_idx()
             } else if (lsid != null) {
-                geomIdx = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true).get(0).getGeom_idx();
+                geomIdx = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true).get(0).getGeom_idx()
             } else if (scientificName != null) {
-                geomIdx = distributionDao.findDistributionByLSIDOrName(scientificName, Distribution.EXPERT_DISTRIBUTION).getGeom_idx();
+                geomIdx = distributionDao.findDistributionByLSIDOrName(scientificName, Distribution.EXPERT_DISTRIBUTION).getGeom_idx()
             }
         } catch (err) {
             log.error 'no distribution found:' + lsid + ',' + spcode + ',' + scientificName, err
         }
 
         if (geomIdx != null) {
-            InputStream input = MapCache.getMapCache().getCachedMap(String.valueOf(geomIdx));
+            InputStream input = mapCache().getCachedMap(String.valueOf(geomIdx))
 
-            OutputStream out = response.getOutputStream();
-            byte[] buff = new byte[1024];
-            int read;
+            OutputStream out = response.getOutputStream()
+            byte[] buff = new byte[1024]
+            int read
             while ((read = input.read(buff)) > 0) {
-                out.write(buff, 0, read);
+                out.write(buff, 0, read)
             }
-            out.flush();
-            out.close();
-            input.close();
+            out.flush()
+            out.close()
+            input.close()
         } else {
-            response.sendError(404);
+            response.sendError(404)
         }
     }
 
     void addImageUrls(List<Distribution> list) {
         for (Distribution d : list) {
-            addImageUrl(d);
+            addImageUrl(d)
         }
     }
 
     void addImageUrl(Distribution d) {
-        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx());
+        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
     }
 }

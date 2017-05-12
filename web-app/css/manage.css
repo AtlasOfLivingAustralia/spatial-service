@@ -1,0 +1,17 @@
+
+input[readonly] {
+    background-color: lightgrey;
+}
+
+input {
+    width: 100%;
+}
+
+#main {
+    padding: 0px;
+}
+
+.alert {
+    text-align: center;
+    display: block;
+}

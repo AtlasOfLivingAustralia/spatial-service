@@ -1,7 +1,7 @@
 package au.org.ala.spatial.util;
 
 import au.com.bytecode.opencsv.CSVReader;
-import au.org.ala.layers.util.SpatialUtil;
+import au.org.ala.layers.dto.Distribution;
 import au.org.ala.spatial.Util;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -17,9 +17,8 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -34,19 +33,16 @@ public class AreaReportPDF {
             , "Birds", "Bryophytes", "Chromista", "Crustaceans", "Dicots", "FernsAndAllies", "Fish", "Fungi"
             , "Gymnosperms", "Insects", "Mammals", "Molluscs", "Monocots", "Plants", "Protozoa", "Reptiles"};
 
-    private String wkt;
     private String area_km;
-    //private MapLayer mlArea;
-    private String areaPid;
+
     private String areaName;
     private Map<String, String> counts;
     private Map<String, String> csvs;
     private Map<String, String> speciesLinks;
-    //private BiocacheQuery query;
     private String[] checklists;
     private String[] distributions;
     List<JSONObject> documents;
-    //private RemoteMap remoteMap;
+
     private Map tabulation;
     private int fileNumber;
 
@@ -198,7 +194,7 @@ public class AreaReportPDF {
                 sb.append("<li><a href=\"javascript:changePage('report." + i + ".html')\">" + title + "</a></li>");
             }
             //last page
-            sb.append("<li><a href=\"javascript:changePage('http://local.ala.org.au:8080/spatial-service/area-report/furtherLinks.html')\">Further Links</a></li>");
+            sb.append("<li><a href=\"javascript:changePage('" + serverUrl + "/area-report/furtherLinks.html')\">Further Links</a></li>");
 
             sb.append("</ul></td><td><iframe id=\"contents\" src=\"report.1.html\" style=\"width:100%;height:100%;border:0px\" ></td></tr></table></body></html>");
 
@@ -320,16 +316,6 @@ public class AreaReportPDF {
                 fw.write("</body></html>");
                 fw.close();
             }
-//            fw = startHtmlOut(fileNumber, filename);
-//            figureNumber++;
-//            mapPage(fw, "Integrated Marine and Coastal Regionalisation of Australia (IMCRA)", figureNumber, "imcra4_pb.png",
-//                    "<br /><br />The Integrated Marine and Coastal Regionalisation of Australia (IMCRA v4.0) is a spatial framework for classifying Australia's marine environment into bioregions that make sense ecologically and are at a scale useful for regional planning. These bioregions are the basis for the development of a National Representative System of Marine Protected Areas (NRSMPA). [Ref3]\n" +
-//                            "<br /><br />IMCRA: <a href='http://www.environment.gov.au/node/18075'>http://www.environment.gov.au/node/18075</a>" +
-//                            "<br /><br />IMCRA Regions layer: Classification: Biodiversity - Region; Type: Contextual (polygonal); Metadata contact organisation: Environmental Resources Information Network (ERIN).  <a href='http://spatial.ala.org.au/ws/layers/view/more/imcra4_pb'>http://spatial.ala.org.au/ws/layers/view/more/imcra4_pb</a>" +
-//                            "<br /><br />Goals and Principles for the Establishment of the NRSMPA: <a href='http://www.environment.gov.au/resource/goals-and-principles-establishment-national-representative-system-marine-protected-areas'>http://www.environment.gov.au/resource/goals-and-principles-establishment-national-representative-system-marine-protected-areas</a>",
-//                    tabulations.getJSONObject(CommonData.getLayerFacetName("imcra4_pb")));
-//            fw.write("</body></html>");fw.close();
-//            fileNumber++;
 
             fileNumber++;
             fw = startHtmlOut(fileNumber, filename);
@@ -608,12 +594,6 @@ public class AreaReportPDF {
             if (isSpecies) {
                 columnOrder = new int[]{8, 1, 10, 11};
                 fw.write("<tr><td>Family</td><td id='scientificName' >Scientific Name</td><td>Common Name</td><td>No. Occurrences</td>");
-                //TODO: additional columns
-//                for (int i = 0; i < CommonData.getSpeciesListAdditionalColumnsHeader().size(); i++) {
-//                    columnOrder = Arrays.copyOf(columnOrder, columnOrder.length + 1);
-//                    columnOrder[columnOrder.length - 1] = 11 + 1 + i;
-//                    fw.write("<td>" + CommonData.getSpeciesListAdditionalColumnsHeader().get(i) + "</td>");
-//                }
                 fw.write("</tr>");
             } else if ("JournalMap Articles".equals(title)) {
                 //authors (last_name, first_name), publish_year, title, publication.name, doi, JournalMap URL
@@ -790,15 +770,6 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                initCountChecklistAreasAndSpecies();
-
-                return null;
-            }
-        });
-
-        callables.add(new Callable() {
-            @Override
-            public Object call() throws Exception {
                 initCountDistributionAreas();
 
                 return null;
@@ -808,7 +779,7 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                initDistributionsCsv("checklists");
+                initDistributionsCsv(Distribution.SPECIES_CHECKLIST);
 
                 return null;
             }
@@ -817,7 +788,7 @@ public class AreaReportPDF {
         callables.add(new Callable() {
             @Override
             public Object call() throws Exception {
-                initDistributionsCsv("distributions");
+                initDistributionsCsv(Distribution.EXPERT_DISTRIBUTION);
 
                 return null;
             }
@@ -870,9 +841,9 @@ public class AreaReportPDF {
             public Object call() throws Exception {
                 try {
                     JSONParser jp = new JSONParser();
-                    tabulation.put(fid, jp.parse(Util.getUrl(serverUrl + "/tabulation/" + fid + "/" + areaPid + ".json")));
+                    tabulation.put(fid, jp.parse(Util.getUrl(serverUrl + "/tabulation/" + fid + "/" + pid + ".json")));
                 } catch (Exception e) {
-                    LOGGER.error("failed tabulation: fid=" + fid + ", areaPid=" + areaPid);
+                    LOGGER.error("failed tabulation: fid=" + fid + ", pid=" + pid);
                 }
 
                 return null;
@@ -902,22 +873,43 @@ public class AreaReportPDF {
         setProgress("Getting information: " + type, 0);
         if (isCancelled()) return;
         StringBuilder sb = new StringBuilder();
-        String[] list = null;// = Util.getDistributionsOrChecklists(type, wkt, null, null);
+        String[] list = new String[0];
+
+        JSONArray checklistsData = null;
+        try {
+            checklistsData = Util.getDistributionsOrChecklistsData("checklists", pid, null, null, serverUrl);
+            list = Util.getDistributionsOrChecklists(checklistsData);
+        } catch (Exception e) {
+            LOGGER.error("failed to get checklists", e);
+        }
+
         for (String line : list) {
             if (sb.length() > 0) {
                 sb.append("\n");
             }
             sb.append(line);
         }
-        if ("checklists".equals(type)) {
+        if (type.equals(Distribution.SPECIES_CHECKLIST)) {
             checklists = list;
             if (checklists.length <= 0) {
                 counts.put("Checklist Areas", "0");
                 counts.put("Checklist Species", "0");
             } else {
-                String[] areaChecklistText = Util.getAreaChecklists(checklists);
+                String[] areaChecklistText = Util.getAreaChecklists(checklists, checklistsData);
                 counts.put("Checklist Areas", String.valueOf(areaChecklistText.length - 1));
-                counts.put("Checklist Species", String.valueOf(checklists.length - 1));
+
+                Set<String> set = new HashSet<>();
+                for (int i=0;i<checklistsData.size();i++) {
+                    String species = (String) ((JSONObject) checklistsData.get(i)).get("lsid");
+                    if (StringUtils.isEmpty(species)) {
+                        species = (String) ((JSONObject) checklistsData.get(i)).get("scientific");
+                    }
+                    if (StringUtils.isNotEmpty(species)) {
+                        set.add(species);
+                    }
+                }
+
+                counts.put("Checklist Species", String.valueOf(set.size()));
             }
         } else {
             distributions = list;
@@ -937,7 +929,7 @@ public class AreaReportPDF {
         setProgress("Getting information: Journalmap", 0);
         if (isCancelled()) return;
         StringBuilder sb = new StringBuilder();
-        List<JSONObject> list = (JSONArray) jp.parse(Util.getUrl(wkt));
+        List<JSONObject> list = (JSONArray) jp.parse(Util.getUrl(serverUrl + "/journalMap/search?pid=" + pid));
         //empty header
         sb.append("\n");
 
@@ -1065,10 +1057,24 @@ public class AreaReportPDF {
         speciesLinks.put("Occurrences", biocacheServiceUrl + "/occurrences/search?q=" + query);
     }
 
+    private Integer getEndemicSpeciesCount() {
+        JSONParser jp = new JSONParser();
+        JSONArray ja = null;
+        try {
+            ja = (JSONArray) jp.parse(Util.getUrl(biocacheServiceUrl + "/explore/endemic/species/" + query.replace("qid:","") + "?facets=names_and_lsid"));
+
+            return ja.size();
+        } catch (Exception e) {
+            LOGGER.error("failed to parse endemic species for " + query, e);
+        }
+
+        return 0;
+    }
+
     private void initCountEndemicSpecies() {
         setProgress("Getting information: endemic species count", 0);
         if (isCancelled()) return;
-        //counts.put("Endemic Species", String.valueOf(getEndemicSpeciesCount(query)));
+        counts.put("Endemic Species", String.valueOf(getEndemicSpeciesCount()));
     }
 
     private void initCountThreatenedSpecies() {
@@ -1078,23 +1084,17 @@ public class AreaReportPDF {
         counts.put("Endangered Species", String.valueOf(getSpeciesCount(q)));
     }
 
-    private void initCountChecklistAreasAndSpecies() {
-        setProgress("Getting information: checklist areas", 0);
-        //checklists = Util.getDistributionsOrChecklists("checklists", wkt, null, null);
-
-        if (checklists.length <= 0) {
-            counts.put("Checklist Areas", "0");
-            counts.put("Checklist Species", "0");
-        } else {
-            String[] areaChecklistText = Util.getAreaChecklists(checklists);
-            counts.put("Checklist Areas", String.valueOf(areaChecklistText.length - 1));
-            counts.put("Checklist Species", String.valueOf(checklists.length - 1));
-        }
-    }
-
     private void initCountDistributionAreas() {
         setProgress("Getting information: distribution areas", 0);
-        //String[] distributions = Util.getDistributionsOrChecklists("distributions", wkt, null, null);
+        String[] distributions = new String[0];
+
+        JSONArray distributionsData;
+        try {
+            distributionsData = Util.getDistributionsOrChecklistsData("distributions", pid, null, null, serverUrl);
+            distributions = Util.getDistributionsOrChecklists(distributionsData);
+        } catch (Exception e) {
+            LOGGER.error("failed to get distributions", e);
+        }
 
         if (checklists.length <= 0) {
             counts.put("Distribution Areas", "0");
@@ -1105,9 +1105,7 @@ public class AreaReportPDF {
 
     private void initCountArea() {
         DecimalFormat df = new DecimalFormat("###,###.##");
-        String area;
-        if (wkt != null) area = df.format(SpatialUtil.calculateArea(wkt) / 1000.0 / 1000.0);
-        else area = df.format(Double.parseDouble(area_km));
+        String area = df.format(Double.parseDouble(area_km));
 
         counts.put("Area (sq km)", area);
     }

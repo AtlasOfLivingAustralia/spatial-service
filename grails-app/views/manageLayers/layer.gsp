@@ -8,52 +8,47 @@
     <script src="/spatial-service/js/leaflet.js"></script>
     <script src="/spatial-service/js/BetterWMS.js"></script>
 
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'manage.css')}" type="text/css">
+
+    <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
+    <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+
 </head>
 
 <body>
+
+<div class="col-lg-8">
 <ul class="breadcrumb">
     <li><g:link controller="main" action="index">Home</g:link></li>
     <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
     <li class="active">${has_layer ? "Edit Layer" : "Create Layer"}</li>
-    <br>
-    <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
-    <li><g:link controller="manageLayers" action="uploads">Uploads</g:link></li>
-    <li><g:link controller="tasks" action="index">Tasks</g:link></li>
-    <li><g:link controller="manageLayers" action="remote">Copy Layer</g:link></li>
 </ul>
+</div>
 
-<g:if test="${error != null}">
-    <b class="error">${error}</b>
-    <br/>
-    <br/>
-</g:if>
-<g:if test="${message != null}">
-    <b class="message">${message}</b>
-    <br/>
-    <br/>
-</g:if>
-<style>
-input[readonly] {
-    background-color: lightgrey;
-}
+<div class="panel panel-default col-lg-4">
+    <div class="panel-heading">
+        <h4 class="panel-title">Navigation</h4>
+    </div>
+    <div class="panel-body">
+        <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+        <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+        <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+        <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    </div>
+</div>
 
-input {
-    width: 100%;
-}
+<div class="col-lg-12">
+    <g:if test="${error != null}">
+        <b class="alert alert-danger">${error}</b>
+    </g:if>
+    <g:if test="${message != null}">
+        <b class="alert alert-success">${message}</b>
+    </g:if>
 
-.error {
-    color: red;
-    font-size: 14px;
-}
-
-.message {
-    color: green;
-    font-size: 14px;
-}
-</style>
-
-<g:if test="${layer_creation != null && !has_layer}"><h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
-    <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
+    <g:if test="${layer_creation != null && !has_layer}"><h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
+        <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
+</div>
 
 <div class="row-fluid">
     <div role="tabpanel">
@@ -76,7 +71,7 @@ input {
 
             <g:if test="${has_layer}">
                 <div role="tabpanel" class="tab-pane" id="existingFields">
-                    <table class="table table-bordered">
+                    <table class="table table-condensed">
                         <tr>
                             <td>Id</td>
                             <td>name</td>
@@ -110,6 +105,13 @@ input {
                 Click on map to get values/columns.
                 <div id="map"></div>
                 <script>
+                    function confirmDelete(id, name) {
+                        if (confirm("Permanently delete field " + name + "?")) {
+                            var url = '${createLink(action: "delete", controller:"manageLayers")}/' + id
+                            $(location).attr('href', url);
+                        }
+                    }
+
                     var map = L.map('map').setView([-22, 122], 4);
 
                     L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -133,7 +135,7 @@ input {
 
                 <form method="POST">
 
-                    <table class="table table-bordered">
+                    <table class="table table-condensed">
 
                         <tr><td class="col-md-2">
                             <label for="name"
@@ -372,7 +374,7 @@ input {
             </div>
 
             <div role="tabpanel" class="tab-pane" id="backgroundProcesses">
-                <table class="table table-bordered">
+                <table class="table table-condensed">
                     <tr>
                         <td>Task ID</td>
                         <td>Task</td>

@@ -17,6 +17,7 @@ package au.org.ala.spatial.service
 
 import grails.converters.JSON
 import grails.transaction.Transactional
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
 import org.codehaus.groovy.grails.web.json.JSONObject
 
 @Transactional(readOnly = true)
@@ -55,7 +56,7 @@ class MasterController {
      */
 
     @Transactional(readOnly = false)
-    def publish() {
+    publish() {
         if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
             Map err = [error: 'not authorised']
             render err as JSON
@@ -69,7 +70,7 @@ class MasterController {
 
         String pth = grailsApplication.config.data.dir + "/" + (isPublic ? 'public' : 'private') + "/" + params.id + "/"
 
-        String file = pth + params.id + ".zip"
+        String file = "${pth}${params.id}.zip"
         File f = new File(file)
         f.getParentFile().mkdirs()
 
@@ -77,8 +78,10 @@ class MasterController {
             // save steam as a zip
             def out
             try {
-                out = request.getFile('file')
+                if (request instanceof MultipartRequestEntity)
+                    out = request.getFile('file')
             } catch (e) {
+                log.error(e.getMessage(), e)
                 //ignore, may not exist when slave is local to master service
             }
 
@@ -96,7 +99,7 @@ class MasterController {
                 if (!f.exists()) {
                     //May need to swap public/private if slave is local to master service
                     pth = grailsApplication.config.data.dir + "/" + (!isPublic ? 'public' : 'private') + "/" + params.id + "/"
-                    file = pth + params.id + ".zip"
+                    file = "${pth}${params.id}.zip"
                     f = new File(file)
                 }
 
@@ -118,8 +121,6 @@ class MasterController {
 
     /**
      * to deliver resources (area WKT and layer files) to slaves in a zip
-     * an area: 'ENVELOPE(...', requires the associated layer files to produce the envelope
-     * an area: 'object pid', will provide a .wkt, getting the layer from a layers-service
      * a layer: 'cl...', 'el...', will provide the sample-able files (original extents) - shape files or diva grids
      * a layer: 'cl..._res', 'el..._res', will provide the standardized files at the requested resolution
      *          (or next detailed) - shape files or diva grids
@@ -137,16 +138,17 @@ class MasterController {
             outputStream = response.outputStream as OutputStream
             //write resource
             response.setContentType("application/octet-stream")
-            response.setHeader("Content-disposition", "attachment;filename=" + params.resource + '.zip')
+            response.setHeader("Content-disposition", "attachment;filename=${params.resource}.zip")
             fileService.write(outputStream, params.resource as String)
             outputStream.flush()
         } catch (err) {
-
+            log.error(err.getMessage(), err)
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close()
                 } catch (err) {
+                    log.error(err.getMessage(), err)
                 }
             }
         }
@@ -172,7 +174,7 @@ class MasterController {
      * @return
      */
     @Transactional
-    def register() {
+    register() {
         if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
             Map err = [error: 'not authorised']
             render err as JSON
@@ -224,7 +226,7 @@ class MasterController {
      * @return
      */
     @Transactional
-    def task(Long id) {
+    task(Long id) {
         if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
             Map err = [error: 'not authorised']
             render err as JSON

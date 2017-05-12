@@ -18,8 +18,10 @@ package au.org.ala.spatial.process
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class MergeAreas extends SlaveProcess {
 
     void start() {
@@ -31,12 +33,12 @@ class MergeAreas extends SlaveProcess {
 
         new File(getTaskPath()).mkdirs()
 
-        WKTReader reader = new WKTReader();
+        WKTReader reader = new WKTReader()
         Geometry geometry = null
 
         areas.each { area ->
             try {
-                Geometry g = reader.read(getAreaWkt(area));
+                Geometry g = reader.read(getAreaWkt(area))
                 if (geometry == null) {
                     geometry = g
                 } else {
@@ -53,7 +55,7 @@ class MergeAreas extends SlaveProcess {
             FileUtils.writeStringToFile(new File(getTaskPath() + "area.wkt"), wkt)
 
             def values = [file: "area.wkt", name: "Merged area", description: "Created by Merge Areas Tool"]
-            addOutput("areas", values.toString(), true)
+            addOutput("areas", (values as JSON).toString(), true)
         }
     }
 

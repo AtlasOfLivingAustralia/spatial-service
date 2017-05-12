@@ -91,7 +91,7 @@
         </tr>
         <tr>
             <td>View in spatial portal</td>
-            <td><a href="http://spatial.ala.org.au/?layers=${layer.name}">Click to view this layer</a></td>
+            <td><a href="${grailsApplication.config.spatialHubUrl}?layers=${layer.name}">Click to view this layer</a></td>
         </tr>
     </table>
 </div>

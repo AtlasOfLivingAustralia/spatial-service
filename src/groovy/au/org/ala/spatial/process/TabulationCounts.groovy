@@ -18,10 +18,12 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.util.RecordsSmall
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
 import java.nio.ByteBuffer
 
+@Commons
 class TabulationCounts extends SlaveProcess {
 
     void start() {
@@ -85,7 +87,7 @@ class TabulationCounts extends SlaveProcess {
                     addOutput('sql', pth)
 
                     // compare
-                    List sqlUpdates = compare(records, pidx, (short[]) o1[0], (short[]) o2[0], (String[]) o1[1], (String[]) o2[1], field1.id.toString(), field2.id.toString());
+                    List sqlUpdates = compare(records, pidx, (short[]) o1[0], (short[]) o2[0], (String[]) o1[1], (String[]) o2[1], field1.id.toString(), field2.id.toString())
 
                     FileWriter fw = new FileWriter(sqlFile)
                     sqlUpdates.each { sql ->
@@ -102,69 +104,69 @@ class TabulationCounts extends SlaveProcess {
     }
 
     ArrayList<String> compare(RecordsSmall records, int[] pOrder, short[] v1, short[] v2, String[] s1, String[] s2, String fid1, String fid2) {
-        ArrayList<String> sqlUpdates = new ArrayList<String>();
-        BitSet bitset;
-        Integer count;
-        String key;
-        HashMap<String, BitSet> species = new HashMap<String, BitSet>();
-        HashMap<String, Integer> occurrences = new HashMap<String, Integer>();
-        Map<String, BitSet> speciesTotals = new HashMap<String, BitSet>();
+        ArrayList<String> sqlUpdates = new ArrayList<String>()
+        BitSet bitset
+        Integer count
+        String key
+        HashMap<String, BitSet> species = new HashMap<String, BitSet>()
+        HashMap<String, Integer> occurrences = new HashMap<String, Integer>()
+        Map<String, BitSet> speciesTotals = new HashMap<String, BitSet>()
 
-        int countNa = 0;
+        int countNa = 0
         String row
         String col
         for (int i = 0; i < pOrder.length; i++) {
-            row = v1[pOrder[i]] < 0 ? null : s1[v1[pOrder[i]]];
-            col = v2[pOrder[i]] < 0 ? null : s2[v2[pOrder[i]]];
-            key = row + ' ' + col;
+            row = v1[pOrder[i]] < 0 ? null : s1[v1[pOrder[i]]]
+            col = v2[pOrder[i]] < 0 ? null : s2[v2[pOrder[i]]]
+            key = row + ' ' + col
 
             //row and column totals
             if (row != null && col != null) {
-                bitset = speciesTotals.get(col);
-                if (bitset == null) bitset = new BitSet();
-                bitset.set(records.getSpeciesNumber(i));
-                speciesTotals.put(col, bitset);
+                bitset = speciesTotals.get(col)
+                if (bitset == null) bitset = new BitSet()
+                bitset.set(records.getSpeciesNumber(i))
+                speciesTotals.put(col, bitset)
 
-                bitset = speciesTotals.get(row);
-                if (bitset == null) bitset = new BitSet();
-                bitset.set(records.getSpeciesNumber(i));
-                speciesTotals.put(row, bitset);
+                bitset = speciesTotals.get(row)
+                if (bitset == null) bitset = new BitSet()
+                bitset.set(records.getSpeciesNumber(i))
+                speciesTotals.put(row, bitset)
 
-                countNa++;
+                countNa++
             }
 
-            bitset = species.get(key);
-            if (bitset == null) bitset = new BitSet();
-            bitset.set(records.getSpeciesNumber(i));
-            species.put(key, bitset);
+            bitset = species.get(key)
+            if (bitset == null) bitset = new BitSet()
+            bitset.set(records.getSpeciesNumber(i))
+            species.put(key, bitset)
 
-            count = occurrences.get(key);
+            count = occurrences.get(key)
             if (count == null) {
-                count = 0;
+                count = 0
             }
-            count = count + 1;
-            occurrences.put(key, count);
+            count = count + 1
+            occurrences.put(key, count)
         }
 
         // produce sql update statements
         for (String k : species.keySet()) {
-            String[] pids = k.split(" ");
+            String[] pids = k.split(" ")
             sqlUpdates.add("UPDATE tabulation SET " + "species = " + species.get(k).cardinality() + ", " + "occurrences = " + occurrences.get(k) + " WHERE (pid1='" + pids[0] + "' AND pid2='"
-                    + pids[1] + "') " + "OR (pid1='" + pids[1] + "' AND pid2='" + pids[0] + "');");
+                    + pids[1] + "') " + "OR (pid1='" + pids[1] + "' AND pid2='" + pids[0] + "');")
         }
 
         // produce sql update statements
         for (String k : speciesTotals.keySet()) {
-            String pid = k;
+            String pid = k
             sqlUpdates.add("UPDATE tabulation SET " + "speciest1 = " + speciesTotals.get(k).cardinality()
                     + " WHERE (pid1='" + pid + "' AND fid1='" + fid1 + "' AND fid2='" + fid2 + "') OR "
-                    + " (pid2='" + pid + "' AND fid2='" + fid1 + "' AND fid1='" + fid2 + "');");
+                    + " (pid2='" + pid + "' AND fid2='" + fid1 + "' AND fid1='" + fid2 + "');")
             sqlUpdates.add("UPDATE tabulation SET " + "speciest2 = " + speciesTotals.get(k).cardinality()
                     + " WHERE (pid2='" + pid + "' AND fid1='" + fid1 + "' AND fid2='" + fid2 + "') OR "
-                    + " (pid1='" + pid + "' AND fid2='" + fid1 + "' AND fid1='" + fid2 + "');");
+                    + " (pid1='" + pid + "' AND fid2='" + fid1 + "' AND fid1='" + fid2 + "');")
         }
 
-        return sqlUpdates;
+        return sqlUpdates
     }
 
     def Object[] loadFile(File file, int size) {
@@ -181,11 +183,11 @@ class TabulationCounts extends SlaveProcess {
             br.close()
 
             byte[] e = FileUtils.readFileToByteArray(file)
-            ByteBuffer bb = ByteBuffer.wrap(e);
+            ByteBuffer bb = ByteBuffer.wrap(e)
 
             pids = new short[size]
             for (i = 0; i < size && bb.hasRemaining(); i++) {
-                pids[i] = bb.getShort();
+                pids[i] = bb.getShort()
             }
         } catch (Exception e) {
             log.error 'failed to load file: ' + file, e
@@ -245,7 +247,7 @@ class TabulationCounts extends SlaveProcess {
                     FileWriter catPid = null
                     try {
                         fw = new DataOutputStream(
-                                new BufferedOutputStream(new FileOutputStream(file)));
+                                new BufferedOutputStream(new FileOutputStream(file)))
                         if (values != null) {
                             for (int i = 0; i < values.length; i++) {
                                 fw.writeShort(values[i])
@@ -256,7 +258,7 @@ class TabulationCounts extends SlaveProcess {
 
                         if (catToPid != null) {
                             for (int i = 0; i < catToPid.length; i++) {
-                                if (i > 0) catPid.write("\n");
+                                if (i > 0) catPid.write("\n")
                                 catPid.write(fieldObjects.get(catToPid[i]).pid.toString())
                             }
                         }

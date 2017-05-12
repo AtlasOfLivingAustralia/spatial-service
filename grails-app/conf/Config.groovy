@@ -170,6 +170,8 @@ aloc.threads = 4
 maxent.mx = "1G"
 maxent.threads = 4
 
+sampling.threads = 4
+
 slaveKey = ""
 serviceKey = ""
 
@@ -184,25 +186,24 @@ retryTime = 30000
  *  NOTE: Some of these will be ignored if default_config exists
  \******************************************************************************/
 security.cas.casServerName = 'https://auth.ala.org.au'
-security.cas.authenticateOnlyIfLoggedInFilterPattern = '/manageLayers, /manageLayers/.*'
-//security.cas.uriExclusionFilterPattern = '/images.*,/css.*,/js.*'
 security.cas.loginUrl = 'https://auth.ala.org.au/cas/login'
-security.cas.contextPath = '/spatial-service'
-security.cas.serverName = 'http://local.ala.org.au:8080'
 security.cas.logoutUrl = 'https://auth.ala.org.au/cas/logout'
 security.cas.casServerUrlPrefix = 'https://auth.ala.org.au/cas'
 security.cas.bypass = false // set to true for non-ALA deployment
-security.cas.appServerName = 'http://local.ala.org.au:8080'
+security.cas.gateway = false
 security.cas.casServerUrlPrefix = 'https://auth.ala.org.au/cas'
-security.cas.casProperties = 'casServerLoginUrl,serverName,centralServer,casServerName,uriFilterPattern,uriExclusionFilter,authenticateOnlyIfLoggedInFilterPattern,casServerLoginUrlPrefix,gateway,casServerUrlPrefix,contextPath'
-auth.admin_role = "ROLE_ADMIN"
+security.cas.uriExclusionFilterPattern='/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
+security.cas.uriFilterPattern='/manageLayers,/manageLayers/.*,/admin,/admin/.*'
+security.cas.authenticateOnlyIfLoggedInFilterPattern='/master,/master/.*,/tasks,/tasks/.*'
+security.cas.disableCAS=false
 
+auth.admin_role = "ROLE_ADMIN"
+app.http.header.userId = "X-ALA-userId"
 
 headerAndFooter.baseURL = 'http://www2.ala.org.au/commonui-bs3'
 ala.baseURL = 'http://www.ala.org.au'
 bie.baseURL = 'http://bie.ala.org.au'
 bie.searchPath = '/search'
-
 
 records.url = 'http://biocache.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
@@ -211,7 +212,10 @@ layersService.url = 'http://spatial-test.ala.org.au/spatial-service'
 lists.url = 'http://lists.ala.org.au'
 collections.url = 'http://collections.ala.org.au'
 sandboxHubUrl = 'http://sandbox.ala.org.au/ala-hub'
-sandboxBiocacheServiceUrl = 'http://sandbox.ala.org.au/biocache-service'
+sandboxBiocacheServiceUrl = 'http://sandbox.ala.org.au/ws'
+phyloServiceUrl = 'http://phylolink.ala.org.au'
+
+spatialHubUrl = 'http://spatial.ala.org.au'
 
 gazField = 'cl915'
 userObjectsField = 'cl1082'
@@ -222,5 +226,68 @@ wkhtmltopdf.path = "/usr/local/bin/wkhtmltopdf"
 
 spatialService.remote = "http://spatial-test.ala.org.au/spatial-service"
 
-journalmap.api_key = 'CgzJpD6MhDtYzUrX5xTu'
+journalmap.api_key = ''
 journalmap.url = 'https://www.journalmap.org/'
+
+//For side by side installation with layers-service, analysis-service
+legacy.workingdir='/data/ala/data/alaspatial/'
+
+legacy.enabled=true
+
+//legacy compatability type
+//"link" = link legacy files into new locations
+//"copy" = copy legacy files into new locations
+//"move" = move legacy files into new locations
+//legacy.type="link"
+
+legacy.ANALYSIS_LAYER_FILES_PATH='/data/ala/data/layers/analysis/'
+legacy.LAYER_FILES_PATH='/data/ala/data/layers/ready'
+legacy.ALASPATIAL_OUTPUT_PATH='/data/ala/runtime/output'
+
+grails.plugin.elfinder.rootDir = '/data/spatial-service'
+
+i18n.override.dir='/data/spatial-service/config/i81n/'
+
+
+//layers-store config
+
+//Threads created for each batch intersection and each individual shape file
+layers_store.BATCH_THREAD_COUNT=3
+
+//Set LAYER_INDEX_URL to use REMOVE layer intersections.
+//layers_store.LAYER_INDEX_URL=http://spatial.ala.org.au/layers-service
+
+//Use local layer files for sampling or the /intersect/batch service provided by LAYER_INDEX_URL
+//layers_store.LOCAL_SAMPLING=false
+layers_store.LOCAL_SAMPLING=true
+
+//# Set intersect config reload time in ms
+layers_store.CONFIG_RELOAD_WAIT=12000000
+
+//Comma separated shape file fields to preload, or 'all'
+//layers_store.PRELOADED_SHAPE_FILES=all
+//layers_store.PRELOADED_SHAPE_FILES=cl22,cl20
+
+// Grid intersection buffer size in bytes.  Must be multiple of 64.
+// Only applies to grids > 80MB.
+// layers_store.GRID_BUFFER_SIZE=4096
+layers_store.GRID_BUFFER_SIZE=40960
+
+//Number of GridCacheReader objects to open.
+layers_store.GRID_CACHE_READER_COUNT=5
+
+// layers_store ingestion
+layers_store.CAN_INGEST_LAYERS=false
+layers_store.CAN_UPDATE_LAYER_DISTANCES=false
+layers_store.CAN_UPDATE_GRID_CACHE=false
+layers_store.CAN_GENERATE_ANALYSIS_FILES=false
+layers_store.CAN_INTERSECT_LAYERS=false
+layers_store.CAN_GENRATE_THUMBNAILS=false
+
+//geoserver styles with the name <fieldId>_style exist. e.g. cl21_style
+layers_store.FIELD_STYLES=true
+
+layers_store.GEONETWORK_URL='http://spatial.ala.org.au/geonetwork'
+
+distributions.cache.dir = "/data/layers-service/mapCache/"
+distributions.geoserver.image.url = "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&sld=http://fish.ala.org.au/data/dist.sld&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"

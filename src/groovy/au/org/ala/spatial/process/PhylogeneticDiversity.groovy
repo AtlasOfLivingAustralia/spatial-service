@@ -15,13 +15,15 @@
 
 package au.org.ala.spatial.process
 
+import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.httpclient.NameValuePair
 import org.apache.commons.io.FileUtils
 import org.json.simple.JSONArray
-import org.json.simple.JSONObject
 
+@Commons
 class PhylogeneticDiversity extends SlaveProcess {
 
     void start() {
@@ -38,107 +40,123 @@ class PhylogeneticDiversity extends SlaveProcess {
         def areaPds = []
         def areaSpeciesMatches = []
 
+        def selectedTrees = []
+
         int count = 1
         areas.each { area ->
-            task.message = "Processing " + area.name + " (" + count + " of " + area.size() + ")"
+            task.message = "Processing " + area.name + " (" + count + " of " + areas.size() + ")"
 
             //species list
-            def speciesList = getSpeciesList(species, area)
+            def speciesArea = getSpeciesArea(species, area)
+            def speciesList = getSpeciesList(speciesArea)
+
+            CSVReader r = new CSVReader(new StringReader(speciesList))
+
+            JSONArray ja = new JSONArray()
+            for (String[] s : r.readAll()) {
+                ja.add(s[1])
+            }
 
             //get PD
-            String url = phyloServiceUrl + "/phylo/getPD";
-            NameValuePair[] params = new NameValuePair[2];
-            params[0] = new NameValuePair("noTreeText", "true");
-            params[1] = new NameValuePair("speciesList", speciesList);
+            String url = phyloServiceUrl + "/phylo/getPD"
+            NameValuePair[] params = new NameValuePair[2]
+            params[0] = new NameValuePair("noTreeText", "true")
+            params[1] = new NameValuePair("speciesList", ja.toString())
 
-            def pds = JSON.parse(Util.postUrl(url, params));
+            def pds = JSON.parse(Util.postUrl(url, params))
 
-            Map<String, String> pdrow = new HashMap<String, String>();
-            Map<String, JSONArray> speciesRow = new HashMap<String, JSONArray>();
-
-            for (int j = 0; j < pds.size(); j++) {
-                String tree = "" + ((JSONObject) pds.get(j)).get("studyId");
-                pdrow.put(tree, ((JSONObject) pds.get(j)).get("pd").toString());
-                speciesRow.put(tree, (JSONArray) ((JSONObject) pds.get(j)).get("taxaRecognised"));
-
-                //maxPD retrieval
-                String maxPd = ((JSONObject) pds.get(j)).get("maxPd").toString();
-                for (int k = 0; k < trees.size(); k++) {
-                    if (((Map<String, String>) trees.get(k)).get("studyId").equals(tree)) {
-                        ((Map<String, String>) trees.get(k)).put("maxPd", maxPd);
+            //tree info
+            url = phyloServiceUrl + "/phylo/getExpertTrees"
+            def allTrees = JSON.parse(Util.getUrl(url))
+            allTrees.each { t ->
+                trees.each { i ->
+                    if (t.studyId == i) {
+                        selectedTrees.push(t)
                     }
                 }
             }
 
-            areaPds.add(pdrow);
-            areaSpeciesMatches.add(speciesRow);
+            Map<String, String> pdrow = new HashMap<String, String>()
+            Map<String, List> speciesRow = new HashMap<String, List>()
+
+            for (int j = 0; j < pds.size(); j++) {
+                String tree = "" + pds.get(j).get("studyId")
+                pdrow.put(tree, pds.get(j).get("pd").toString())
+                speciesRow.put(tree, pds.get(j).get("taxaRecognised"))
+
+                //maxPD retrieval
+                String maxPd = pds.get(j).get("maxPd").toString()
+                for (int k = 0; k < selectedTrees.size(); k++) {
+                    if (selectedTrees.get(k).get("studyId").equals(pds.get(j).get("studyId"))) {
+                        selectedTrees.get(k).put("maxPd", maxPd)
+                    }
+                }
+            }
+
+            areaPds.add(pdrow)
+            areaSpeciesMatches.add(speciesRow)
         }
 
-        makeCSV(trees, areas, areaPds, areaSpeciesMatches);
+        makeCSV(selectedTrees, areas, areaPds, areaSpeciesMatches)
     }
 
     def makeCSV(selectedTrees, selectedAreas, areaPds, areaSpeciesMatches) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder()
 
         //header
-        sb.append("Area Name,Area (sq km),PD,Proportional PD (PD / Tree PD),");
-        sb.append("Species,Proportional Species (Species / Tree Species),Tree Name,Tree ID,DOI,Study Name,Notes,Tree PD");
+        sb.append("Area Name,Area (sq km),PD,Proportional PD (PD / Tree PD),")
+        sb.append("Species,Proportional Species (Species / Tree Species),Tree Name,Tree ID,DOI,Study Name,Notes,Tree PD")
 
         //rows
         for (int j = 0; j < selectedTrees.size(); j++) {
-            Map<String, String> map = (Map<String, String>) selectedTrees.get(j);
+            Map<String, String> map = (Map<String, String>) selectedTrees.get(j)
 
             for (int i = 0; i < selectedAreas.size(); i++) {
-                sb.append("\n");
+                sb.append("\n")
 
                 //numbers
-                double pd = 0;
-                double maxpd = 0;
-                int speciesFound = 0;
-                int studySpecieCount = 1;
+                double pd = 0
+                double maxpd = 0
+                int speciesFound = 0
+                int studySpecieCount = 1
+                String studyId = map.get("studyId").toString()
                 try {
                     //area pd
-                    pd = Double.parseDouble(areaPds.get(i).get(map.get("studyId")));
+                    pd = Double.parseDouble(areaPds.get(i).get(studyId))
                     //tree pd
-                    maxpd = Double.parseDouble(map.get("maxPd"));
+                    maxpd = Double.parseDouble(map.get("maxPd"))
                     //species found in tree
-                    speciesFound = areaSpeciesMatches.get(i).get(map.get("studyId")).size();
+                    speciesFound = areaSpeciesMatches.get(i).get(studyId).size()
                     //tree species count
-                    studySpecieCount = Integer.parseInt(map.get("numberOfLeaves"));
+                    studySpecieCount = Integer.parseInt(map.get("numberOfLeaves"))
                 } catch (Exception e) {
                 }
 
-                //'current extent' does not have a map layer
-                if (selectedAreas.get(i).getMapLayer() == null) {
-                    sb.append(toCSVString("Current extent")).append(",");
-                    sb.append(selectedAreas.get(i).getKm2Area()).append(",");
-                } else {
-                    sb.append(toCSVString(selectedAreas.get(i).getMapLayer().getDisplayName())).append(",");
-                    sb.append(toCSVString(selectedAreas.get(i).getKm2Area())).append(",");
-                }
+                sb.append(toCSVString(selectedAreas.get(i).name)).append(",")
+                sb.append(selectedAreas.get(i).area_km).append(",")
 
-                String s = areaPds.get(i).get(map.get("studyId"));
+                String s = areaPds.get(i).get(studyId)
                 if (s == null) {
-                    s = "";
+                    s = ""
                 }
-                sb.append(s).append(",");
-                sb.append(String.format("%.4f,", pd / maxpd));
+                sb.append(s).append(",")
+                sb.append(String.format("%.4f,", pd / maxpd))
 
-                sb.append("" + speciesFound).append(",");
-                sb.append(String.format("%.4f,", speciesFound / (double) studySpecieCount));
+                sb.append("" + speciesFound).append(",")
+                sb.append(String.format("%.4f,", speciesFound / (double) studySpecieCount))
 
                 //tree name
-                sb.append(toCSVString(map.get("authors"))).append(",");
+                sb.append(toCSVString(map.get("authors"))).append(",")
                 //tree id
-                sb.append(toCSVString(map.get("studyId"))).append(",");
+                sb.append(toCSVString(studyId)).append(",")
                 //doi
-                sb.append(toCSVString(map.get("doi"))).append(",");
+                sb.append(toCSVString(map.get("doi"))).append(",")
                 //study name
-                sb.append(toCSVString(map.get("studyName"))).append(",");
+                sb.append(toCSVString(map.get("studyName"))).append(",")
                 //notes
-                sb.append(toCSVString(map.get("notes"))).append(",");
+                sb.append(toCSVString(map.get("notes"))).append(",")
                 //tree pd
-                sb.append(toCSVString(map.get("maxPd")));
+                sb.append(toCSVString(map.get("maxPd")))
             }
         }
 
@@ -147,11 +165,11 @@ class PhylogeneticDiversity extends SlaveProcess {
         addOutput("csv", "phylogeneticDiversity.csv", true)
     }
 
-    private String toCSVString(String string) {
-        if (string == null) {
-            return "";
+    private String toCSVString(Object obj) {
+        if (obj == null) {
+            return ""
         } else {
-            return "\"" + string.replace("\"", "\"\"").replace("\\", "\\\\") + "\"";
+            return "\"" + obj.toString().replace("\"", "\"\"").replace("\\", "\\\\") + "\""
         }
     }
 }

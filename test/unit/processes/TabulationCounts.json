@@ -1,0 +1,28 @@
+{
+  "name": "TabulationCounts",
+  "description": "Resample every layer against shapefiles and create sql for updating species counts in layersdb.tabulations table",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "name": "layersServiceUrl",
+      "type": "auto"
+    },
+    "missingOnly": {
+      "name": "missingOnly",
+      "type": "boolean",
+      "constraints": {
+        "default": true
+      }
+    }
+  },
+  "output": {
+    "sql": {
+      "description": "sql that updates tabulations table with counts"
+    }
+  }
+}

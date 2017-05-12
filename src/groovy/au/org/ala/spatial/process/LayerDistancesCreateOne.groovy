@@ -17,14 +17,16 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.tabulation.TabulationGenerator
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class LayerDistancesCreateOne extends SlaveProcess {
 
     void start() {
         List fieldIds = []
         for (int i = 0; task.input.containsKey('fieldId' + (i + 1)); i++) {
-            fieldIds.add(task.input["fieldId" + (i + 1)]);
+            fieldIds.add(task.input["fieldId" + (i + 1)])
         }
 
         String[] grdResolutions = task.input.grdResolutions
@@ -72,7 +74,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
             String f1 = grailsApplication.config.data.dir + files[i].getPath()
             f1 = f1.substring(0, f1.length() - 4)
 
-            Grid g1 = Grid.getGrid(f1);
+            Grid g1 = Grid.getGrid(f1)
             grids.add(g1)
 
             ranges[i] = g1.maxval - g1.minval
@@ -111,7 +113,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
                                 task.message = 'calculating distance for ' + fieldIds[i] + ' and ' + fieldIds[j]
 
                                 double distance = calculateDistanceBatch(points, v1, v2, values[i], values[j],
-                                        grids[i], grids[j], ranges[i], ranges[j]);
+                                        grids[i], grids[j], ranges[i], ranges[j])
 
                                 //append distance
                                 if (!Double.isNaN(distance)) {
@@ -137,8 +139,8 @@ class LayerDistancesCreateOne extends SlaveProcess {
     private double calculateDistanceBatch(double[][] points, float[] v1, float[] v2, float[] d1, float[] d2,
                                           Grid g1, Grid g2, double range1, double range2) {
 
-        int count = 0;
-        double sum = 0;
+        int count = 0
+        double sum = 0
 
         int batchSize = points.length
         for (int i = 0; i < points.length; i++) {
@@ -148,18 +150,18 @@ class LayerDistancesCreateOne extends SlaveProcess {
 
         int size = 0
 
-        double minx = Math.max(g1.xmin, g2.xmin);
-        double maxx = Math.min(g1.xmax, g2.xmax);
-        double miny = Math.max(g1.ymin, g2.ymin);
-        double maxy = Math.min(g1.ymax, g2.ymax);
+        double minx = Math.max(g1.xmin, g2.xmin)
+        double maxx = Math.min(g1.xmax, g2.xmax)
+        double miny = Math.max(g1.ymin, g2.ymin)
+        double maxy = Math.min(g1.ymax, g2.ymax)
 
         Grid g = g1.xres < g2.xres ? g1 : g2
 
         for (double y = maxy; y >= miny; y -= g.yres) {
             for (double x = minx; x < maxx; x += g.xres) {
                 if (size < batchSize) {
-                    v1[size] = d1 != null ? d1[(int) g1.getcellnumber(x, y)] : 0.0f;
-                    v2[size] = d2 != null ? d2[(int) g2.getcellnumber(x, y)] : 0.0f;
+                    v1[size] = d1 != null ? d1[(int) g1.getcellnumber(x, y)] : 0.0f
+                    v2[size] = d2 != null ? d2[(int) g2.getcellnumber(x, y)] : 0.0f
                     if (d1 == null || d2 == null) {
                         points[size][0] = x
                         points[size][1] = y
@@ -173,11 +175,11 @@ class LayerDistancesCreateOne extends SlaveProcess {
 
                     for (int i = 0; i < size; i++) {
                         if (!Double.isNaN(v1[i]) && !Double.isNaN(v2[i])) {
-                            count++;
+                            count++
 
                             float s1 = (v1[i] - g1.minval) / range1
                             float s2 = (v2[i] - g2.minval) / range2
-                            sum += Math.abs(s1 - s2);
+                            sum += Math.abs(s1 - s2)
                         }
                     }
                     size = 0
@@ -194,14 +196,14 @@ class LayerDistancesCreateOne extends SlaveProcess {
                     if (!Double.isNaN(v1[i]) && !Double.isNaN(v2[i])) {
                         float s1 = (v1[i] - g1.minval) / range1
                         float s2 = (v2[i] - g2.minval) / range2
-                        sum += Math.abs(s1 - s2);
+                        sum += Math.abs(s1 - s2)
 
-                        count++;
+                        count++
                     }
                 }
             }
         }
 
-        return sum / count;
+        return sum / count
     }
 }

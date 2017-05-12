@@ -15,15 +15,21 @@
 
 package au.org.ala.spatial.service
 
+import grails.transaction.Transactional
+import org.apache.log4j.Logger
+
 class LogController {
 
+    final Logger logger = Logger.getLogger(LogController.class)
+
+    @Transactional
     def index() {
         def log = new Log(params)
         log.data = request.JSON.toString()
 
         if (!log.save()) {
             log.errors.each {
-                log.log it
+                logger.error(it)
             }
         }
 

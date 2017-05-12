@@ -15,16 +15,14 @@
 
 package au.org.ala.layers
 
-import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.TabulationDAO
 import au.org.ala.layers.dto.Tabulation
 
 class TabulationService {
 
-    FieldDAO fieldDao
     TabulationDAO tabulationDao
 
-    def String[][] tabulationGridGenerator(List<Tabulation> tabulations, String func) throws IOException {
+    String[][] tabulationGridGenerator(List<Tabulation> tabulations, String func) throws IOException {
         //determine x & y field names
         TreeMap<String, String> origObjects1 = new TreeMap<String, String>();
         TreeMap<String, String> origObjects2 = new TreeMap<String, String>();
@@ -88,7 +86,7 @@ class TabulationService {
         return grid;
     }
 
-    def double[] tabulationSumOfColumnsGenerator(String[][] grid, String func) throws IOException {
+    double[] tabulationSumOfColumnsGenerator(String[][] grid, String func) throws IOException {
 
         //define row totals
         double[] sumofcolumns = new double[grid.length - 1];
@@ -109,7 +107,7 @@ class TabulationService {
         return sumofcolumns;
     }
 
-    def double[] tabulationSumOfRowsGenerator(String[][] grid, String func) throws IOException {
+    double[] tabulationSumOfRowsGenerator(String[][] grid, String func) throws IOException {
         //define column totals
         double[] sumofrows = new double[grid[0].length - 1];
         for (int j = 1; j < grid[0].length; j++) {
@@ -129,12 +127,12 @@ class TabulationService {
     }
 
 
-    def String generateTabulationCSVHTML(String fid1, String fid2, String wkt, String func, String type) throws IOException {
-        List<Tabulation> tabulations = tabulationDao.getTabulation(fid1, fid2, wkt);
+    String generateTabulationCSVHTML(String fid1, String fid2, String wkt, String func, String type) throws IOException {
+        List<Tabulation> tabulations = tabulationDao.getTabulation(fid1, fid2, wkt)
 
         String[][] grid = tabulationGridGenerator(tabulations, func);
-        double[] sumOfColumns = func.equals("species") ? speciesTotals(tabulations, true) : tabulationSumOfColumnsGenerator(grid, func);
-        double[] sumOfRows = func.equals("species") ? speciesTotals(tabulations, false) : tabulationSumOfRowsGenerator(grid, func);
+        double[] sumOfColumns = func == "species" ? speciesTotals(tabulations, true) : tabulationSumOfColumnsGenerator(grid, func);
+        double[] sumOfRows = func == "species" ? speciesTotals(tabulations, false) : tabulationSumOfRowsGenerator(grid, func);
 
         double Total = 0.0;
         for (int j = 1; j < grid[0].length; j++) {

@@ -10,15 +10,25 @@
 <body>
 <a href="#edit-task" class="skip" tabindex="-1"><g:message code="default.link.skip.label"
                                                            default="Skip to content&hellip;"/></a>
-
-<div class="nav" role="navigation">
-    <ul>
-        <li><a class="home" href="${createLink(uri: '/')}"><g:message code="default.home.label"/></a></li>
-        <li><g:link class="list" action="index"><g:message code="default.list.label" args="[entityName]"/></g:link></li>
-        <li><g:link class="create" action="create"><g:message code="default.new.label"
-                                                              args="[entityName]"/></g:link></li>
+<div class="col-lg-8">
+    <ul class="breadcrumb">
+        <li><g:link controller="main" action="index">Home</g:link></li>
+        <li class="active">Edit Task</li>
     </ul>
 </div>
+
+<div class="panel panel-default col-lg-4">
+    <div class="panel-heading">
+        <h4 class="panel-title">Navigation</h4>
+    </div>
+    <div class="panel-body">
+        <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+        <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+        <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+        <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    </div>
+</div>
+
 
 <div id="edit-task" class="content scaffold-edit" role="main">
     <h1><g:message code="default.edit.label" args="[entityName]"/></h1>

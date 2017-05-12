@@ -38,10 +38,10 @@
       }
     },
     "layer": {
-      "description": "Layers to use in the scatterplot. Between 2 and 10 layers.",
+      "description": "Layers to use in the scatterplot. Between 3 and 10 layers.",
       "type": "layer",
       "constraints": {
-        "min": 2,
+        "min": 3,
         "max": 10,
         "contextual": false,
         "environmental": true,
@@ -53,6 +53,7 @@
       "type": "list",
       "constraints": {
         "selection": "single",
+        "default" : 0.01,
         "content": [
           "0.01",
           "0.1",

@@ -18,6 +18,9 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.AreaReportPDF
 import grails.converters.JSON
+import groovy.util.logging.Commons
+
+@Commons
 
 class AreaReport extends SlaveProcess {
 
@@ -43,7 +46,7 @@ class AreaReport extends SlaveProcess {
                 grailsApplication.config.layersService.url.toString(),
                 null, grailsApplication.config.wkhtmltopdf.path.toString(),
                 getTaskPath(),
-                grailsApplication.config.journalmap.url);
+                grailsApplication.config.journalmap.url.toString())
 
         File dir = new File(getTaskPath())
 

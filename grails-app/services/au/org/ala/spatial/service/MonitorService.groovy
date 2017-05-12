@@ -65,45 +65,47 @@ class MonitorService {
     }
 
     def checkTasks() {
-        def list = Task.findAllByStatus(1)
-        list.each { task ->
+        Task.withNewTransaction {
+            def list = Task.findAllByStatus(1)
+            list.each { task ->
 
-            log.error "checking task " + task.id
-            def up = false
+                log.error "checking task " + task.id
+                def up = false
 
-            // query status
-            try {
-                def t = Task.get(task.id)
-                up = masterService.checkStatus(t)
-                log.error "is up " + up
-            } catch (StaleObjectStateException err) {
-                up = true
-            } catch (err) {
-                log.error 'failed to query task status', err
-            }
-
-            if (!up) {
-                log.error "not up " + task.id
-                //TODO: handle slow or tmp unavailable server. Task errors will report as up and will not get here.
-
-                //make this task available for another slave
+                // query status
                 try {
-                    log.error "making available to another slave" + task.id
-                    def newValues = [status: 0, url: null, slave: null]
-                    tasksService.update(task.id, newValues)
+                    def t = Task.get(task.id)
+                    up = masterService.checkStatus(t)
+                    log.error "is up " + up
                 } catch (StaleObjectStateException err) {
-                    //ignore
-                    log.error 'ignoring stale exception'
+                    up = true
                 } catch (err) {
-                    log.error "failed to make available to another slave " + task.id
-                    log.warn 'failed to reset task ' + task.id
+                    log.error 'failed to query task status', err
+                }
+
+                if (!up) {
+                    log.error "not up " + task.id
+                    //TODO: handle slow or tmp unavailable server. Task errors will report as up and will not get here.
+
+                    //make this task available for another slave
+                    try {
+                        log.error "making available to another slave" + task.id
+                        def newValues = [status: 0, url: null, slave: null]
+                        tasksService.update(task.id, newValues)
+                    } catch (StaleObjectStateException err) {
+                        //ignore
+                        log.error 'ignoring stale exception'
+                    } catch (err) {
+                        log.error "failed to make available to another slave " + task.id
+                        log.warn 'failed to reset task ' + task.id
+                    }
                 }
             }
         }
     }
 
     def checkSlaves() {
-        //log.error "chekcing slaves"
+        //log.error "checking slaves"
         try {
             //update slave task lists (remove items that are no longer running)
             def taskList = Task.createCriteria().list() {
@@ -142,7 +144,7 @@ class MonitorService {
                     }
 
                     //sort
-                    nextTasks.sort(new Comparator<Task>() {
+                    nextTasks.toSorted(new Comparator<Task>() {
                         @Override
                         int compare(Task o1, Task o2) {
                             return slave.getPriority(o1) - slave.getPriority(o2)
@@ -155,7 +157,11 @@ class MonitorService {
 
                             log.error "starting: " + nextTask.id
 
-                            def input = InputParameter.findAllByTask(nextTask)
+                            def input = []
+                            Task.withNewTransaction {
+                                input = InputParameter.findAllByTask(nextTask)
+                            }
+
                             //insert default inputs
 
                             //format inputs
@@ -178,6 +184,7 @@ class MonitorService {
                             i.put('layersServiceUrl', grailsApplication.config.grails.serverURL)
                             i.put('bieUrl', grailsApplication.config.bie.baseURL)
                             i.put('biocacheServiceUrl', grailsApplication.config.biocacheServiceUrl)
+                            i.put('phyloServiceUrl', grailsApplication.config.phyloServiceUrl)
                             i.put('shpResolutions', grailsApplication.config.shpResolutions)
                             i.put('grdResolutions', grailsApplication.config.grdResolutions)
                             i.put('sandboxHubUrl', grailsApplication.config.sandboxHubUrl)

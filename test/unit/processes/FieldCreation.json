@@ -1,0 +1,38 @@
+{
+  "name": "FieldCreation",
+  "description": "Performs field creation tasks; layersdb.objects entries, start sub processes (on publish)",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "layersServiceUrl": {
+      "type": "auto"
+    },
+    "fieldId": {
+      "type": "string"
+    },
+    "uploadId": {
+      "type": "upload"
+    },
+    "ignoreNullObjects": {
+      "type": "boolean"
+    }
+  },
+  "output": {
+    "layers": {
+      "description": "new layer files, shp, diva grid, sld, geotiff"
+    },
+    "sql": {
+      "description": "layersdb.tabulations update sql for species counts column"
+    },
+    "sld": {
+      "description": "sld that may be created for the field."
+    },
+    "process": {
+      "description": "additional processes"
+    }
+  }
+}

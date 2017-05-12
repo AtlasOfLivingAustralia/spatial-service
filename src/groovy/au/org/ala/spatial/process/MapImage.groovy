@@ -17,8 +17,10 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.PrintMapComposer
 import grails.converters.JSON
+import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
+@Commons
 class MapImage extends SlaveProcess {
 
     void start() {

@@ -16,10 +16,17 @@
 package au.org.ala.spatial.slave
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 
+/**
+ * When a file can or is to be updated, lock the file to prevent more than one process from changing or creating the file
+ * at the same time.
+ *
+ * TODO: add 'readOnly' in addition to the current 'editing' locking.
+ */
 class FileLockService {
     Map filesList = new ConcurrentHashMap()
-    Map locks = new ConcurrentHashMap()
+    Map<CountDownLatch, Map> locks = new ConcurrentHashMap()
 
     final Object lock = new Object()
 
@@ -27,8 +34,8 @@ class FileLockService {
     // returns null to go continue, release(files) still needs to be called to release the locks
     // returns object that will be notified when the locked files are available, 
     //          e.g. synchronized (object) { object.wait() }
-    Object lock(List files, Task task) {
-        Object filesLock = null
+    CountDownLatch lock(List files, Task task) {
+        CountDownLatch filesLock = null
         synchronized (lock) {
             //identify files in use
             int countLocked = 0
@@ -41,7 +48,7 @@ class FileLockService {
 
             if (countLocked > 0) {
                 //create an object for locking
-                filesLock = new Object()
+                filesLock = new CountDownLatch(1)
                 locks.put(filesLock, [task: task, files: files])
                 log.debug 'task: ' + task.id + ' waiting for files to be released'
             } else {
@@ -77,16 +84,15 @@ class FileLockService {
                 }
 
                 if (countLocked == 0) {
-                    //create a lock on these files
+                    //create a lock on these files with the next task
                     nextFiles.each { f ->
                         filesList.putAt(f, nextTask)
                     }
 
-                    synchronized (k) {
-                        log.debug 'releasing file lock on task:' + nextTask.id
-                        k.notify()
-                        unlocked.add(k)
-                    }
+                    unlocked.add(k)
+                    k.countDown()
+
+                    log.debug 'releasing file lock on task:' + nextTask.id
                 }
             }
             unlocked.each {

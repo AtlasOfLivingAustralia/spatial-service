@@ -1,8 +1,6 @@
 package au.org.ala.scatterplot;
 
 import au.com.bytecode.opencsv.CSVReader;
-import au.org.ala.layers.client.Client;
-import au.org.ala.layers.dto.IntersectionFile;
 import au.org.ala.layers.grid.GridCutter;
 import au.org.ala.layers.intersect.Grid;
 import au.org.ala.layers.intersect.SimpleRegion;
@@ -12,11 +10,13 @@ import au.org.ala.layers.legend.LegendObject;
 import au.org.ala.layers.util.LayerFilter;
 import au.org.ala.layers.util.Occurrences;
 import au.org.ala.layers.util.SpatialUtil;
+import au.org.ala.spatial.util.SamplingUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jfree.chart.ChartFactory;
@@ -93,9 +93,11 @@ public class Scatterplot {
 
     private String htmlURL;
     String resolution;
+    String spatialServiceUrl;
 
-    public Scatterplot(ScatterplotDTO scatterplotDTO, ScatterplotStyleDTO scatterplotStyleDTO, ScatterplotDataDTO scatterplotDataDTO, String dir, String resolution) {
+    public Scatterplot(ScatterplotDTO scatterplotDTO, ScatterplotStyleDTO scatterplotStyleDTO, ScatterplotDataDTO scatterplotDataDTO, String dir, String resolution, String spatialServiceUrl) {
         this.scatterplotDTO = scatterplotDTO;
+        this.spatialServiceUrl = spatialServiceUrl;
 
         this.dir = dir;
         this.resolution = resolution;
@@ -133,11 +135,6 @@ public class Scatterplot {
             }
 
             makeHtml();
-
-//            makeZip();
-
-//            htmlURL = dir + "scatterplot.html";
-//            downloadURL = dir + "scatterplot.zip";
         } else {
             //build just this one
             // this can be added into ScatterplotStore
@@ -176,24 +173,12 @@ public class Scatterplot {
         return facetName;
     }
 
-//    private void makeZip() {
-//        String uid = scatterplotDTO.getId();
-//        String tmpFile = dir + "scatterplot.zip";
-//        Zipper.zipDirectory(dir, tmpFile);
-//        try {
-//            FileUtils.moveFileToDirectory(new File(tmpFile),
-//                    new File(dir), false);
-//        } catch (IOException e) {
-//            logger.error("failed to zip scatterplot list", e);
-//        }
-//    }
-
     void buildScatterplot() {
 
         resample(true);
         createDataset(true);
 
-        if (scatterplotDTO.getBackgroundOccurrencesBs() != null) {
+        if (scatterplotDTO.getBackgroundOccurrencesBs() != null && scatterplotDTO.getBackgroundOccurrencesBs().length() > 0) {
             resample(false);
             createDataset(false);
         }
@@ -455,7 +440,11 @@ public class Scatterplot {
         String[] layers = scatterplotDTO.getLayers();
 
         if (cutDataPath == null) {  //only need to cut once if rebuilding
-            cutDataPath = GridCutter.cut2(layers, resolution, region, envelope, null);
+            String [] types = new String[layers.length];
+            for (int i=0;i<layers.length;i++) {
+                types[i] = "e";
+            }
+            cutDataPath = GridCutter.cut2(layers, resolution, region, envelope, null, types, scatterplotDTO.getLayers());
         }
 
         Grid g = new Grid(cutDataPath + File.separator + layers[col1]);
@@ -833,9 +822,9 @@ public class Scatterplot {
         //append all layers
         int[] layerColIdxs = new int[scatterplotDTO.getLayers().length];
         for (int i = 0; i < scatterplotDTO.getLayers().length; i++) {
-            IntersectionFile f = Client.getLayerIntersectDao().getConfig().getIntersectionFile(scatterplotDTO.getLayers()[i]);
-            if (f != null) {
-                fields += "," + f.getFieldId();
+            String fieldId = scatterplotDTO.getLayers()[i];
+            if (!fieldId.matches("cl[0-9]*|el[0-9]*")) {
+                fields += "," + fieldId;
             }
         }
 
@@ -898,11 +887,11 @@ public class Scatterplot {
                     }
                 }
                 for (int i = 0; i < scatterplotDTO.getLayers().length; i++) {
-                    IntersectionFile f = Client.getLayerIntersectDao().getConfig().getIntersectionFile(scatterplotDTO.getLayers()[i]);
-                    if (f == null) {
+                    String fieldId = scatterplotDTO.getLayers()[i];
+                    if (!fieldId.matches("cl[0-9]*|el[0-9]*")) {
                         layerColIdxs[i] = -1;
                     } else {
-                        layerColIdxs[i] = findInArray(f.getFieldId(), csv.get(0));
+                        layerColIdxs[i] = findInArray(fieldId, csv.get(0));
                     }
                     if (layerColIdxs[i] == -1) {
                         layersNotInBiocache.add(scatterplotDTO.getLayers()[i]);
@@ -1020,7 +1009,7 @@ public class Scatterplot {
                             break;
                         }
                     }
-                    if (!found && Client.getLayerIntersectDao().getConfig().getIntersectionFile(scatterplotStyleDTO.getColourMode()) != null) {
+                    if (!found && StringUtils.isNotEmpty(scatterplotStyleDTO.getColourMode())) {
                         //valid for intersections
                         series = sampleSeries(p, scatterplotStyleDTO.getColourMode());
                     }
@@ -1136,7 +1125,7 @@ public class Scatterplot {
         String[] layers = new String[layersToSample.size()];
         layersToSample.toArray(layers);
 
-        java.util.List<String> sample = Client.getLayerIntersectDao().sampling(layers, p);
+        java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p);
 
         double[][] d = new double[p.length][layers.length];
 
@@ -1163,7 +1152,7 @@ public class Scatterplot {
     private String[] sampleSeries(double[][] p, String seriesName) {
 
         String[] layers = {seriesName};
-        java.util.List<String> sample = Client.getLayerIntersectDao().sampling(layers, p);
+        java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p);
 
         String[] series = new String[p.length];
 
@@ -1475,6 +1464,7 @@ public class Scatterplot {
         List list = new ArrayList();
         list.add(dir);
         list.add(resolution);
+        list.add(spatialServiceUrl);
 
         try {
             //transform data for JSON
@@ -1518,7 +1508,7 @@ public class Scatterplot {
                     data.data[i][1] = Double.NaN;
             }
 
-            Scatterplot scatterplot = new Scatterplot(dto, style, data, jo.get(0).toString(), jo.get(1).toString());
+            Scatterplot scatterplot = new Scatterplot(dto, style, data, jo.get(0).toString(), jo.get(1).toString(), jo.get(2).toString());
 
             return scatterplot;
 

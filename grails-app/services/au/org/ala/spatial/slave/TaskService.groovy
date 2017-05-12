@@ -17,7 +17,6 @@ package au.org.ala.spatial.slave
 
 import au.org.ala.spatial.process.SlaveProcess
 import grails.converters.JSON
-import groovy.json.JsonOutput
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
 
@@ -29,6 +28,7 @@ class TaskService {
 
     GrailsApplication grailsApplication
     FileLockService fileLockService
+    def tasksService
 
     private getSlaveService() {
         grailsApplication.mainContext.slaveService
@@ -41,7 +41,6 @@ class TaskService {
     Map running = [:]
 
     void start(Task req) {
-
         try {
 
             Task request = req
@@ -52,44 +51,25 @@ class TaskService {
             running.put(request.id, [request: request, thread: t])
         } catch (err) {
             log.error "failed to start thread for task: " + req.id, err
-            req.err.put(System.currentTimeMillis(), "unknown error")
+            req.output.put(System.currentTimeMillis(), "unknown error")
             req.setFinished(true)
-        }
-    }
-
-    //TODO: some validation is in task create
-    def validateInput(task) {
-        Map input = task.input
-        input.each { k, v ->
-            switch (k) {
-                case 'area':
-                    break;
-                case 'layer':
-                    break;
-                case 'double':
-                    break;
-                case 'integer':
-                    break;
-                case 'process':
-                    break;
-            }
         }
     }
 
     List getAllSpec() {
         List list = []
 
-        def resource = this.class.getResource("/processes/")
+        def resource = TaskService.class.getResource("/processes/")
         def dir = new File(resource.getPath())
 
         for (File f : dir.listFiles()) {
             if (f.getName().endsWith(".json")) {
                 String name = "au.org.ala.spatial.process." + f.getName().substring(0, f.getName().length() - 5)
                 try {
-                    Class clazz = Class.forName(name);
+                    Class clazz = Class.forName(name)
                     list.add(((SlaveProcess) clazz.newInstance()).spec())
                 } catch (err) {
-                    log.error("unable to instantiate " + name)
+                    log.error("unable to instantiate $name. ${err.getMessage()}")
                 }
             }
         }
@@ -98,7 +78,7 @@ class TaskService {
     }
 
     def getZip(task) {
-        String zipFile = getBasePath(task) + task.id + ".zip"
+        String zipFile = "${getBasePath(task)}${task.id}.zip"
 
         //open zip for writing
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))
@@ -108,7 +88,7 @@ class TaskService {
                 //skip zipping when this is the master service and the file does not need to be moved
                 if (!grailsApplication.config.service.enable) {
                     //it is a task dir file if it does not start with '/'
-                    def inputFile = file.startsWith('/') ? grailsApplication.config.data.dir + file : getBasePath(task) + file
+                    def inputFile = file.startsWith('/') ? grailsApplication.config.data.dir + file : "${getBasePath(task)}${file}"
                     def flist = [:]
                     if (new File(inputFile).exists()) {
                         flist.put(inputFile, file)
@@ -125,11 +105,11 @@ class TaskService {
                     }
                     flist.each { k, v ->
                         //add to zip
-                        ZipEntry ze = new ZipEntry(v)
+                        ZipEntry ze = new ZipEntry(v.toString())
                         zos.putNextEntry(ze)
 
                         //open and stream
-                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(k))
+                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(k.toString()))
                         byte[] bytes = new byte[1024]
                         int size
                         while ((size = bis.read(bytes)) > 0) {
@@ -148,7 +128,6 @@ class TaskService {
         // add a zip entry containing the spec.json
         ZipEntry ze = new ZipEntry('spec.json')
         zos.putNextEntry(ze)
-        JsonOutput jsonOutput = new JsonOutput()
         def map = task.spec
 
         //remove private parameters
@@ -157,7 +136,7 @@ class TaskService {
         }
 
         //insert final log
-        map.putAt('history', task.history)
+        map['history'] = task.history
 
         //insert output files into spec.output
         if (map.containsKey('output')) {
@@ -182,20 +161,20 @@ class TaskService {
         def dir = grailsApplication.config.data.dir
 
         // look in cache dir and return this file name if it is missing
-        if ('area'.equalsIgnoreCase(inputSpec.type)) {
+        if ('area'.equalsIgnoreCase(inputSpec.type.toString())) {
             //format value as a filename
-            return dir + '/cache/' + URLEncoder.encode(value, "UTF-8")
-        } else if ('layer'.equalsIgnoreCase(inputSpec.type)) {
+            return dir + '/cache/' + URLEncoder.encode(value.toString(), "UTF-8")
+        } else if ('layer'.equalsIgnoreCase(inputSpec.type.toString())) {
             //format value as a filename
-            if (!value.contains(':')) {
-                return dir + '/layer/' + URLEncoder.encode(value, "UTF-8")
+            if (!value.toString().contains(':')) {
+                return dir + '/layer/' + URLEncoder.encode(value.toString(), "UTF-8")
             } else {
                 //extract resolution value
-                def split = value.split(':')
-                return dir + '/standard_layer/' + split[1] + '/' + URLEncoder.encode(split[0], "UTF-8")
+                def split = value.toString().split(':')
+                return dir + '/standard_layer/' + split[1] + '/' + URLEncoder.encode(split[0].toString(), "UTF-8")
             }
         } else {
-            return dir + '/' + inputSpec.type + '/' + URLEncoder.encode(value, "UTF-8")
+            return dir + '/' + inputSpec.type + '/' + URLEncoder.encode(value.toString(), "UTF-8")
         }
     }
 
@@ -211,6 +190,7 @@ class TaskService {
         map
     }
 
+    //TODO: implement
     def cancel(task) {
         //tasks.remove(task.id)
 
@@ -220,15 +200,11 @@ class TaskService {
     def newTask(params) {
         def task
         synchronized (createTaskLock) {
-            log.debug 'creating task: ' + params.taskId
+            log.debug "creating task: ${params.taskId}"
 
-            task = new Task()
-            task.taskId = params.taskId
-            task.input = params.input
-            task.name = params.name
+            task = new Task(taskId: params.taskId, input: params.input, name: params.name, id: Long.parseLong(params.taskId.toString()))
 
             // don't add if already running
-            task.id = Long.parseLong(task.taskId)
             if (!tasks.containsKey(task.taskId)) {
                 tasks.put(task.id, task)
             }
@@ -241,39 +217,39 @@ class TaskService {
         def taskService
         def request
 
-        public TaskThread(taskService, request) {
+        TaskThread(taskService, request) {
             this.taskService = taskService
             this.request = request
         }
 
-        public void run() {
+        void run() {
             try {
-                log.error 'task:' + request.id + ' starting'
+                log.debug "task:${request.id} starting"
                 request.message = 'initialising'
 
                 //create dir
                 new File(getBasePath(request)).mkdirs()
 
-                log.error 'task:' + request.id + ' find operator'
+                log.debug "task:${request.id} find operator"
 
                 //find operator
                 def operator
                 taskService.getAllSpec().each { spec ->
                     if (spec.name.equalsIgnoreCase(request.name)) {
                         request.spec = spec
-                        operator = Class.forName(spec.private.classname).newInstance()
+                        operator = Class.forName(spec.private.classname.toString()).newInstance()
                     }
                 }
 
                 if (operator == null) {
-                    log.error 'missing process for task: ' + request.name
+                    log.error "missing process for task: ${request.name}"
                 }
 
                 request.message = 'getting resources'
-                log.error 'task:' + request.id + ' getting resources'
+                log.debug "task:${request.id} getting resources"
                 taskService.slaveService.getResources(request)
 
-                validateInput(request)
+                tasksService.validateInput(request)
 
                 //init
                 operator.task = request
@@ -284,16 +260,16 @@ class TaskService {
 
                 //start
                 request.message = 'running'
-                log.error 'task:' + request.id + ' running'
+                log.debug "task:${request.id} running"
                 operator.start()
 
                 request.message = 'publishing'
-                log.error 'task:' + request.id + ' publishing'
+                log.debug "task:${request.id} publishing"
                 taskService.slaveService.publishResults(request)
 
                 request.finished = true
                 request.message = 'finished'
-                log.error 'task:' + request.id + ' finished'
+                log.debug "task:${request.id} finished"
 
                 taskService.slaveService.signalMasterImmediately(request)
 
@@ -301,7 +277,7 @@ class TaskService {
 
                 //taskService.tasks.remove(request.id)
             } catch (err) {
-                log.error "error running request: " + request.id, err
+                log.error "error running request: ${request.id}", err
 
                 request.finished = true
                 request.message = 'finished'
@@ -319,7 +295,7 @@ class TaskService {
 
             //delete from public dir if master service is remote
             if (!grailsApplication.config.service.enable) {
-                FileUtils.deleteDirectory(new File(grailsApplication.config.data.dir.toString() + '/public/' + request.id))
+                FileUtils.deleteDirectory(new File("${grailsApplication.config.data.dir.toString()}/public/${request.id}"))
             }
         }
     }
