@@ -1,5 +1,3 @@
-
-
 grails.project.groupId = "au.org.ala" // change this to alter the default package name and Maven publishing destination
 appName = "spatial-service"
 
@@ -15,8 +13,6 @@ if (new File(default_config).exists()) {
 } else {
     println "[${appName}] No external configuration file defined."
 }
-
-grails.project.groupId = appName // change this to alter the default package name and Maven publishing destination
 
 // The ACCEPT header will not be used for content negotiation for user agents containing the following strings (defaults to the 4 major rendering engines)
 grails.mime.disable.accept.header.userAgents = ['Gecko', 'WebKit', 'Presto', 'Trident']
@@ -289,5 +285,5 @@ layers_store.FIELD_STYLES=true
 
 layers_store.GEONETWORK_URL='http://spatial.ala.org.au/geonetwork'
 
-distributions.cache.dir = "/data/layers-service/mapCache/"
+distributions.cache.dir = "/data/${appName}/mapCache/"
 distributions.geoserver.image.url = "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&sld=http://fish.ala.org.au/data/dist.sld&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"
