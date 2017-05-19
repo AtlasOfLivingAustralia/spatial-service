@@ -15,9 +15,8 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import groovy.util.logging.Commons
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.methods.GetMethod
 import org.apache.commons.io.FileUtils
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -75,24 +74,19 @@ class DistributionRematchLsid extends SlaveProcess {
 
     String lookupSpeciesOrFamilyLsid(id) {
         String lsid = null
-        GetMethod get = null
-        try {
-            HttpClient client = new HttpClient()
 
+        try {
             URL wsUrl = new URL(task.input.bieUrl.toString() + "/ws/guid/" + id)
             URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef())
 
-            get = new GetMethod(uri.toURL().toString())
-            int response = client.executeMethod(get)
-            if (response != 200) {
+            def response = Util.urlResponse("GET", uri.toURL().toString())
+
+            if (!response || !response?.text || response?.statusCode != 200) {
                 log.error("Fetching of species or family LSID failed :" + response + ", " + id)
                 return null
             }
 
-            String responseContent = get.getResponseBodyAsString()
-
-
-            JSONArray jsonArr = (JSONArray) new JSONParser().parse(responseContent)
+            JSONArray jsonArr = (JSONArray) new JSONParser().parse(response.text)
             if (jsonArr.size() > 0) {
                 JSONObject jsonObj = (JSONObject) jsonArr.get(0)
 
@@ -114,19 +108,16 @@ class DistributionRematchLsid extends SlaveProcess {
         String genusLsid = null
 
         try {
-            HttpClient client = new HttpClient()
-
             URL wsUrl = new URL(task.input.bieUrl.toString() + "/search.json?fq=rank:genus&q=" + id)
             URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef())
 
-            GetMethod get = new GetMethod(uri.toURL().toString())
-            int response = client.executeMethod(get)
-            if (response != 200) {
+            def response = Util.urlResponse("GET", uri.toURL().toString())
+
+            if (!response || response?.statusCode != 200) {
                 throw new IllegalStateException("Fetching of species or family LSID failed")
             }
 
-            String responseContent = get.getResponseBodyAsString()
-            get.releaseConnection()
+            String responseContent = response.text
 
             JSONObject jsonObj = (JSONObject) new JSONParser().parse(responseContent)
 

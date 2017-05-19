@@ -20,7 +20,6 @@ import au.org.ala.layers.legend.GridLegend
 import au.org.ala.layers.util.Bil2diva
 import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.slave.SpatialUtils
-import au.org.ala.spatial.slave.Utils
 import au.org.ala.spatial.util.GeomMakeValid
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
@@ -60,7 +59,7 @@ class LayerCreation extends SlaveProcess {
                     , outPath + "_tmp.bil"]
             task.message = 'reprojecting shp'
             try {
-                Utils.runCmd(cmd)
+                runCmd(cmd, true)
             } catch (Exception e) {
                 log.error("error running gdalwarp (1)", e)
             }
@@ -68,7 +67,7 @@ class LayerCreation extends SlaveProcess {
                    "-hist"
                    , outPath + "_tmp.bil"]
             try {
-                Utils.runCmd(cmd)
+                runCmd(cmd, true)
             } catch (Exception e) {
                 log.error("error running gdalwarp (2)", e)
             }
@@ -78,7 +77,7 @@ class LayerCreation extends SlaveProcess {
                    , outPath + "_tmp.bil"
                    , outPath + ".bil"]
             try {
-                Utils.runCmd(cmd)
+                runCmd(cmd, true)
             } catch (Exception e) {
                 log.error("error running gdalwarp (3)", e)
             }
@@ -155,7 +154,7 @@ class LayerCreation extends SlaveProcess {
                                 dst.getPath() + ".shp", "-sql", "CREATE SPATIAL INDEX ON " + layer.name]
                 task.message = 'shp spatial index'
                 try {
-                    Utils.runCmd(cmd)
+                    runCmd(cmd, true)
                 } catch (Exception e) {
                     log.error("error running shp spatial index", e)
                 }

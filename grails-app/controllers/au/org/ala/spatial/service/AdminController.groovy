@@ -16,9 +16,6 @@
 package au.org.ala.spatial.service
 
 import grails.converters.JSON
-import org.apache.commons.io.FileUtils
-
-import java.text.SimpleDateFormat
 
 class AdminController {
 

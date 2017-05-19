@@ -18,12 +18,11 @@ package au.org.ala.spatial.slave
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.json.JsonOutput
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.methods.GetMethod
-import org.apache.commons.httpclient.methods.PostMethod
+import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.methods.multipart.FilePart
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
 import org.apache.commons.httpclient.methods.multipart.Part
+import org.codehaus.plexus.util.FileUtils
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipInputStream
@@ -88,29 +87,26 @@ class SlaveService {
     def registerWithMaster() {
         def error = ''
         try {
-            def url = grailsApplication.config.spatialService.url + "/master/register?api_key=" + grailsApplication.config.serviceKey
-            def post = new PostMethod(url)
-            def http = new HttpClient()
-            http.setConnectionTimeout(10000)
-            http.setTimeout(60000)
+            String url = grailsApplication.config.spatialService.url + "/master/register?api_key=" + grailsApplication.config.serviceKey
+
             JsonOutput jsonOutput = new JsonOutput()
-            def json = jsonOutput.toJson([url         : grailsApplication.config.grails.serverURL,
+            String json = jsonOutput.toJson([url         : grailsApplication.config.grails.serverURL,
                                           capabilities: taskService.getAllSpec(),
                                           limits      : getLimits(),
                                           key         : grailsApplication.config.slaveKey])
-            post.addRequestHeader("Content-Type", "application/json; charset=UTF-8")
-            log.debug 'sending to: ' + url + ' > ' + json
-            post.setRequestBody(json)
-            http.executeMethod(post)
+
+            def response = Util.urlResponse("POST", url, null,
+                    ["Content-Type": "application/json; charset=UTF-8"],
+                    new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
 
             log.debug('master register url: ' + url + ', json: ' + json)
 
-            def response = JSON.parse(post.getResponseBodyAsString())
-            post.releaseConnection()
-            if (response != null) {
-                return true
+            if (response && response?.text) {
+                if (JSON.parse(response.text) != null) {
+                    return true
+                }
             } else {
-                error = "invalid master response, statusCode: " + post.statusCode
+                error = "invalid master response, statusCode: " + response?.statusCode
             }
         } catch (err) {
             error = err.message
@@ -139,23 +135,21 @@ class SlaveService {
         def error = ''
 
         try {
-            def url = grailsApplication.config.spatialService.url + '/master/task?id=' + task.taskId + "&api_key=" + grailsApplication.config.serviceKey
-            def post = new PostMethod(url)
-            def http = new HttpClient()
-            http.setConnectionTimeout(10000)
-            http.setTimeout(60000)
-            JsonOutput jsonOutput = new JsonOutput()
-            def json = jsonOutput.toJson([task: task])
-            post.addRequestHeader("Content-Type", "application/json; charset=UTF-8")
-            post.setRequestBody(json)
-            http.executeMethod(post)
+            String url = grailsApplication.config.spatialService.url + '/master/task?id=' + task.taskId + "&api_key=" + grailsApplication.config.serviceKey
 
-            def response = JSON.parse(post.getResponseBodyAsString())
-            post.releaseConnection()
-            if (response != null) {
-                return true
+            JsonOutput jsonOutput = new JsonOutput()
+            String json = jsonOutput.toJson([task: task])
+
+            def response = Util.urlResponse("POST", url, null,
+                    ["Content-Type": "application/json; charset=UTF-8"],
+                    new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
+
+            if (response) {
+                if (JSON.parse(response?.text) != null) {
+                    return true
+                }
             } else {
-                error = "invalid master response, statusCode: " + post.statusCode
+                error = "invalid master response, statusCode: " + response?.statusCode
             }
 
         } catch (err) {
@@ -246,39 +240,40 @@ class SlaveService {
                         "&api_key=" + grailsApplication.config.serviceKey
 
                 def os = new BufferedOutputStream(new FileOutputStream(tmpFile))
-                def is = getStream(url)
-                os << is
-                os.flush()
-                os.close()
-                is.close()
+                def streamObj = Util.getStream(url)
+                try {
+                    if (streamObj?.call) {
+                        os << streamObj?.call?.getResponseBodyAsStream()
+                    }
+                    os.flush()
+                    os.close()
+                } catch (Exception e) {
+                    log.error e.getMessage(), e
+                }
+                Util.closeStream(streamObj)
 
                 def zf = new ZipInputStream(new FileInputStream(tmpFile))
-                byte[] buffer = new byte[1024]
+                try {
+                    def entry
+                    while ((entry = zf.getNextEntry()) != null) {
+                        def filepath = grailsApplication.config.data.dir + entry.getName()
+                        def f = new File(filepath)
+                        f.getParentFile().mkdirs()
+                        FileUtils.copyStreamToFile(zf, f)
+                        zf.closeEntry()
 
-                def entry
-                while ((entry = zf.getNextEntry()) != null) {
-                    def filepath = grailsApplication.config.data.dir + entry.getName()
-                    def f = new File(filepath)
-                    f.getParentFile().mkdirs()
-                    def bos = new BufferedOutputStream(new FileOutputStream(filepath))
-                    int len
-                    while ((len = zf.read(buffer)) >= 0) {
-                        bos.write(buffer, 0, len)
-                    }
-                    bos.flush()
-                    bos.close()
-
-                    //update lastmodified time
-                    remote.each { file ->
-                        if (entry.name.equals(file.path)) {
-                            f.setLastModified(file.lastModified)
+                        //update lastmodified time
+                        remote.each { file ->
+                            if (entry.name.equals(file.path)) {
+                                f.setLastModified(file.lastModified)
+                            }
                         }
                     }
+                } finally {
+                    try {
+                        zf.close()
+                    } catch (err) {}
                 }
-
-                zf.closeEntry()
-                zf.close()
-
             } catch (err) {
                 log.error "failed to get: " + path
             }
@@ -316,38 +311,33 @@ class SlaveService {
         }
 
         try {
-            def url = grailsApplication.config.spatialService.url + '/master/publish?id=' + task.taskId + '&public=' +
+            String url = grailsApplication.config.spatialService.url + '/master/publish?id=' + task.taskId + '&public=' +
                     (task.spec?.public ? task.spec.public : 'false') + "&api_key=" + grailsApplication.config.serviceKey
-
-            PostMethod post = new PostMethod(url)
 
             def file = taskService.getZip(task)
 
             // POST the analysis bundle to spatial-service
             //do not post if master service is local
+            MultipartRequestEntity requestEntity = null
             if (!grailsApplication.config.service.enable) {
                 def f = new File(file)
 
                 Part[] parts = [new FilePart('file', f)]
-                MultipartRequestEntity requestEntity = new MultipartRequestEntity(parts, post.getParams())
-                post.setRequestEntity(requestEntity)
+                requestEntity = new MultipartRequestEntity(parts, null)
             }
 
-            HttpClient client = new HttpClient()
-            client.setConnectionTimeout(10000)
-            client.setTimeout(600000)
-            client.executeMethod(post)
+            def response = Util.urlResponse("POST", url, null, [:], requestEntity)
 
-            def response = JSON.parse(post.getResponseBodyAsString())
-            post.releaseConnection()
-            if (response != null && 'successful'.equalsIgnoreCase(response.status)) {
-                return true
-            } else {
-                response.each { k, v ->
-                    task.history.put(k as String, v as String)
+            if (response) {
+                def j = JSON.parse(response.text)
+                if (j != null && 'successful'.equalsIgnoreCase(j.status)) {
+                    return true
+                } else if (j) {
+                    j.each { k, v ->
+                        task.history.put(k as String, v as String)
+                    }
                 }
             }
-
         } catch (err) {
             log.error "", err
         }
@@ -393,16 +383,5 @@ class SlaveService {
 
     def getLimits() {
         grails.converters.JSON.parse(this.class.getResource("/processes/limits.json").text)
-    }
-
-
-    def getStream(url) {
-        HttpClient client = new HttpClient()
-        client.setConnectionTimeout(10000)
-        client.setTimeout(600000)
-        def get = new GetMethod(url)
-        client.executeMethod(get)
-        get.getResponseBodyAsStream()
-
     }
 }

@@ -16,6 +16,8 @@
 package au.org.ala.spatial.process
 
 import groovy.util.logging.Commons
+import org.codehaus.groovy.grails.web.util.StreamCharBufferMetaUtils
+import org.springframework.util.StreamUtils
 
 @Commons
 class Thumbnails extends SlaveProcess {
@@ -61,13 +63,12 @@ class Thumbnails extends SlaveProcess {
 
             InputStream inputStream = new BufferedInputStream(url.openStream())
             ByteArrayOutputStream out = new ByteArrayOutputStream()
-            byte[] buf = new byte[1024]
-            int n
-            while ((n = inputStream.read(buf)) > 0) {
-                out.write(buf, 0, n)
+            try {
+                StreamUtils.copy(inputStream, out)
+                out.close()
+            } finally {
+                inputStream.close()
             }
-            out.close()
-            inputStream.close()
 
             String filename = thumbnailDir + layer.name + '.jpg'
             File f = new File(filename)

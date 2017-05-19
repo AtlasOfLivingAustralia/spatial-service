@@ -72,7 +72,6 @@ grails.project.dependency.resolution = {
 
     plugins {
         compile ":quartz:1.0.2"
-        compile ':cache-ehcache:1.0.0'
 
         compile ":jsonp:0.2"
         compile ":build-info:1.2.8"
@@ -95,16 +94,6 @@ grails.project.dependency.resolution = {
             excludes 'jquery'
         }
 
-        // Uncomment these (or add new ones) to enable additional resources capabilities
-        //compile ":sass-asset-pipeline:1.9.0"
-        //compile ":less-asset-pipeline:1.10.0"
-        //compile ":coffee-asset-pipeline:1.8.0"
-        //compile ":handlebars-asset-pipeline:1.3.0.3"
-
-
-        //runtime ":ala-bootstrap2:2.4.2"
-
-
         runtime "org.grails.plugins:cors:1.1.8"
 
         runtime ":ala-admin-plugin:1.3-SNAPSHOT"
@@ -113,8 +102,5 @@ grails.project.dependency.resolution = {
         compile(":ala-bootstrap3:1.6.2") {
             excludes 'jquery'
         }
-//        runtime(":ala-ws-plugin:1.5.1-SNAPSHOT") {
-//            excludes ":ala-auth"
-//        }
     }
 }

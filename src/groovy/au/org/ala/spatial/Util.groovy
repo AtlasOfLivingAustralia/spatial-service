@@ -18,15 +18,11 @@ package au.org.ala.spatial
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.slave.Task
 import grails.converters.JSON
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.NameValuePair
-import org.apache.commons.httpclient.methods.PostMethod
-import org.apache.commons.io.IOUtils
-import org.apache.http.HttpResponse
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.DefaultHttpClient
-import org.apache.http.params.HttpConnectionParams
-import org.apache.http.params.HttpParams
+import org.apache.commons.httpclient.*
+import org.apache.commons.httpclient.auth.AuthScope
+import org.apache.commons.httpclient.methods.*
+import org.apache.commons.httpclient.params.HttpClientParams
+import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -37,62 +33,141 @@ class Util {
     static final Logger log = Logger.getLogger(Util.toString())
 
     static String getUrl(String url) {
-        DefaultHttpClient client = new DefaultHttpClient()
-
-        HttpParams params = client.getParams()
-        HttpConnectionParams.setConnectionTimeout(params, 10000)
-        HttpConnectionParams.setSoTimeout(params, 600000)
-
-        HttpGet get = new HttpGet(url)
-        HttpResponse response = client.execute(get)
-        String out = IOUtils.toString(response.getEntity().getContent())
-        get.releaseConnection()
-
-        out
+        urlResponse("GET", url)?.text
     }
 
-    static String postUrl(String url, NameValuePair[] params) throws Exception {
+    static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null) {
+        urlResponse("POST", url, nameValues, headers)?.text
+    }
 
-        HttpClient client = new HttpClient()
-        PostMethod post = new PostMethod(url)
+    static Map<String, Object> getStream(url) {
+        HttpClient client = null
+        HttpMethodBase call = null
+        try {
+            client = new HttpClient()
 
-        post.setRequestBody(params)
+            HttpClientParams httpParams = client.getParams()
+            httpParams.setSoTimeout(60000)
+            httpParams.setConnectionManagerTimeout(10000)
 
-        int result = client.executeMethod(post)
+            try {
+                call = new GetMethod(url)
 
-        // Get the response
-        if (result == 200) {
-            return post.getResponseBodyAsString()
+                client.executeMethod(call)
+            } catch (Exception e) {
+                log.error url, e
+            }
+        } catch (Exception e) {
+            log.error url, e
+        }
+
+        return [client: client, call: call]
+    }
+
+    static void closeStream(streamObj) {
+        try {
+            if (streamObj?.call) {
+                streamObj.call.releaseConnection()
+            }
+        } catch (Exception e) {
+            log.error e.getMessage(), e
+        }
+        try {
+            if (streamObj?.client &&
+                    ((SimpleHttpConnectionManager) streamObj?.client.getHttpConnectionManager()) instanceof SimpleHttpConnectionManager) {
+                ((SimpleHttpConnectionManager) streamObj?.client.getHttpConnectionManager()).shutdown()
+            }
+        } catch (Exception e) {
+            log.error e.getMessage(), e
+        }
+    }
+
+    static Map<String, Object> urlResponse(String type, String url, NameValuePair[] nameValues = null,
+                           Map<String, String> headers = null, RequestEntity entity = null,
+                           Boolean doAuthentication = null, String username = null, String password = null) {
+        HttpClient client
+        try {
+            client = new HttpClient()
+
+            HttpClientParams httpParams = client.getParams()
+            httpParams.setSoTimeout(60000)
+            httpParams.setConnectionManagerTimeout(10000)
+
+            if (username != null && password != null) {
+                client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
+            }
+
+            HttpMethodBase call = null
+
+            try {
+                if (type == "GET") {
+                    call = new GetMethod(url)
+                } else {
+                    if (type == "PUT") {
+                        call = new PutMethod(url)
+                    } else if (type == "POST") {
+                        call = new PostMethod(url)
+                    }
+                    if (entity != null) {
+                        ((EntityEnclosingMethod) call).setRequestEntity(entity)
+                    }
+                }
+
+                if (doAuthentication != null) {
+                    call.setDoAuthentication(doAuthentication)
+                }
+
+                if (headers) {
+                    headers.each { k, v ->
+                        call.addRequestHeader(k, v)
+                    }
+                }
+
+                client.executeMethod(call)
+
+                return [statusCode: call.statusCode, text: call.responseBodyAsString, headers: call.responseHeaders]
+            } catch (Exception e) {
+                log.error url, e
+            } finally {
+                if (call) {
+                    call.releaseConnection()
+                }
+            }
+        } catch (Exception e) {
+            log.error url, e
+        } finally {
+            if (client) {
+                ((SimpleHttpConnectionManager) client.getHttpConnectionManager()).shutdown()
+            }
         }
 
         return null
     }
 
     static makeQid(query) {
-        PostMethod post = new PostMethod("${query.bs}/webportal/params")
+        List<NameValuePair> params = new ArrayList<>()
 
         if (query.q instanceof List) {
-            post.addParameter('q', ((List)query.q)[0].toString())
-            if (query.q.size() > 1) query.q.subList(1, query.q.size()).each { post.addParameter('fq', it.toString()) }
+            params.add(new NameValuePair('q', ((List)query.q)[0].toString()))
+            if (query.q.size() > 1) query.q.subList(1, query.q.size()).each {
+                params.add(new NameValuePair('fq', it.toString()))
+            }
         } else {
-            post.addParameter('q', query.q.toString())
+            params.add(new NameValuePair('q', query.q.toString()))
             if (query.fq) query.fq.each {
-                if (it instanceof String)
-                    post.addParameter('fq', it)
+                if (it instanceof String) {
+                    params.add(new NameValuePair('fq', it))
+                }
             }
         }
 
-        if (query.wkt) post.addParameter('wkt', query.wkt.toString())
+        if (query.wkt) {
+            params.add(new NameValuePair('wkt', query.wkt.toString()))
+        }
 
-        post.addParameter('bbox', 'true')
+        params.add(new NameValuePair('bbox', 'true'))
 
-        HttpClient client = new HttpClient()
-        client.getHttpConnectionManager().getParams().setConnectionTimeout(10000)
-        client.getHttpConnectionManager().getParams().setSoTimeout(600000)
-
-        client.executeMethod(post)
-
-        post.getResponseBodyAsString()
+        return postUrl("${query.bs}/webportal/params", (NameValuePair[]) params.toArray(new NameValuePair[0]))
     }
 
     static getQid(bs, qid) {
@@ -137,24 +212,24 @@ class Util {
         StringBuilder sbProcessUrl = new StringBuilder()
         sbProcessUrl.append("/").append(type)
 
-        HttpClient client = new HttpClient()
-        PostMethod post = new PostMethod(layersUrl + sbProcessUrl.toString())
+        List<NameValuePair> params = new ArrayList<>()
 
         if (wkt != null) {
-            post.addParameter("wkt", wkt)
+            params.add(new NameValuePair('wkt', wkt))
         }
         if (lsids != null) {
-            post.addParameter("lsids", lsids)
+            params.add(new NameValuePair('lsids', lsids))
         }
         if (geomIdx != null) {
-            post.addParameter("geom_idx", geomIdx)
+            params.add(new NameValuePair('geom_idx', geomIdx))
         }
-        post.addRequestHeader("Accept", "application/json, text/javascript, */*")
-        int result = client.executeMethod(post)
-        if (result == 200) {
-            String txt = post.getResponseBodyAsString()
+
+        String response = postUrl(layersUrl + sbProcessUrl.toString(), (NameValuePair[]) params.toArray(new NameValuePair[0]),
+                [Accept: "application/json, text/javascript, */*"])
+
+        if (response) {
             JSONParser jp = new JSONParser()
-            JSONArray ja = (JSONArray) jp.parse(txt)
+            JSONArray ja = (JSONArray) jp.parse(response)
             return ja
         }
 
@@ -165,15 +240,20 @@ class Util {
         return "\"" + s.replace("\"", "\"\"").replace("\\", "\\\\") + "\""
     }
 
-    static int runCmd(String[] cmd, boolean logToTask, Task task) {
+    static int runCmd(String[] cmd) {
+        return runCmd(cmd, false, null)
+    }
+
+    static int runCmd(String[] cmd, Boolean logToTask, Task task) {
         int exitValue = 1
 
         ProcessBuilder builder = new ProcessBuilder(cmd)
         builder.environment().putAll(System.getenv())
         builder.redirectErrorStream(false)
 
+        Process proc
         try {
-            Process proc = builder.start()
+            proc = builder.start()
 
             // any error message?
             StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "", logToTask ? task : null)
@@ -194,6 +274,22 @@ class Util {
             exitValue = exitVal
         } catch (Exception e) {
             log.debug(e.getMessage())
+        } finally {
+            if (proc) {
+                try {
+                    proc.getInputStream().close()
+                } catch (err) {
+                }
+                try {
+                    proc.getOutputStream().close()
+                } catch (err) {
+                }
+                try {
+                    proc.getErrorStream().close()
+                } catch (err) {
+
+                }
+            }
         }
 
         exitValue
@@ -321,5 +417,13 @@ class Util {
             lines = null
         }
         return lines
+    }
+
+    static void replaceTextInFile(String path, Map map) {
+        def s = FileUtils.readFileToString(new File(path))
+        map.each { String k, String v ->
+            s = s.replaceAll(k, v)
+        }
+        FileUtils.writeStringToFile(new File(path), s)
     }
 }

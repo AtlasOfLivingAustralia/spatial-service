@@ -20,6 +20,7 @@ import grails.converters.JSON
 import groovy.json.JsonOutput
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.PostMethod
+import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
@@ -39,25 +40,22 @@ class MasterService {
     // start the task on the slave. return status url
     def start(slave, task, input) {
         try {
-            def url = slave.url + "/task/create" + "?api_key=" + slave.key
-            def post = new PostMethod(url)
-            def http = new HttpClient()
-            http.setConnectionTimeout(10000)
-            http.setTimeout(60000)
+            String url = slave.url + "/task/create" + "?api_key=" + slave.key
+
             JsonOutput jsonOutput = new JsonOutput()
-
             def json = jsonOutput.toJson([taskId: task.id, name: task.name, input: input])
-            post.addRequestHeader("Content-Type", "application/json; charset=UTF-8")
-            post.setRequestBody(json)
-            http.executeMethod(post)
+            StringRequestEntity entity = new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8")
 
-            def response = JSON.parse(post.getResponseBodyAsString())
-            post.releaseConnection()
-            if (response != null && response.status != null) {
-                return response
-            } else {
-                log.error "failed to start task: " + task.id + " on slave: " + slave.url
+            String text = Util.urlResponse("POST", url, null,
+                    ["Content-Type" : "application/json; charset=UTF-8"], entity)?.text
+
+            if (text) {
+                def response = JSON.parse(text)
+                if (response != null && response.status != null) {
+                    return response
+                }
             }
+            log.error "failed to start task: " + task.id + " on slave: " + slave.url
         } catch (err) {
             log.error "failed to start task: " + task.id + " on slave: " + slave.url, err
         }
@@ -139,21 +137,6 @@ class MasterService {
             log.error "failed to ping slave: " + slave.url
         }
         return false
-    }
-
-    String getUrl(String url) {
-        DefaultHttpClient client = new DefaultHttpClient();
-
-        HttpParams params = client.getParams();
-        HttpConnectionParams.setConnectionTimeout(params, 10000)
-        HttpConnectionParams.setSoTimeout(params, 600000)
-
-        HttpGet get = new HttpGet(url)
-        HttpResponse response = client.execute(get)
-        String out = IOUtils.toString(response.getEntity().getContent())
-        get.releaseConnection()
-
-        out
     }
 
     // do any task cleanup

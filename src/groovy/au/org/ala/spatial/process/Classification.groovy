@@ -15,8 +15,8 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.SpatialUtils
-import au.org.ala.spatial.slave.Utils
 import grails.converters.JSON
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
@@ -68,7 +68,7 @@ class Classification extends SlaveProcess {
                "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                getTaskPath() + "aloc.asc", getTaskPath() + task.id + "_aloc.tif"]
         task.message = "asc > tif"
-        runCmd(cmd, false)
+        runCmd(cmd, true)
 
         if (new File(getTaskPath() + task.id + "aloc.sld").exists()) {
             File target = new File(grailsApplication.config.data.dir + '/layer/' + task.id + "_aloc.sld")
@@ -106,7 +106,7 @@ class Classification extends SlaveProcess {
         if (new File(getTaskPath() + "extents.txt").exists()) addOutput("files", "extents.txt")
         if (new File(getTaskPath() + "classification_means.csv").exists()) {
             //translate fieldId to layerName
-            Utils.replaceTextInFile(getTaskPath() + "classification_means.csv", replaceMap)
+            Util.replaceTextInFile(getTaskPath() + "classification_means.csv", replaceMap)
             addOutput("files", "classification_means.csv", true)
         }
 
@@ -115,7 +115,7 @@ class Classification extends SlaveProcess {
 
         if (new File(getTaskPath() + "classification.html").exists()) {
             //translate fieldId to layerName
-            Utils.replaceTextInFile(getTaskPath() + "classification.html", replaceMap)
+            Util.replaceTextInFile(getTaskPath() + "classification.html", replaceMap)
             addOutput("metadata", "classification.html", true)
         }
 

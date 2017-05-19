@@ -18,6 +18,7 @@ package au.org.ala.spatial.slave
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.layers.grid.Grid2Shape
 import au.org.ala.layers.intersect.Grid
+import au.org.ala.spatial.Util
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.geom.GeometryCollection
 import com.vividsolutions.jts.geom.GeometryFactory
@@ -163,7 +164,7 @@ class SpatialUtils {
     static def toGeotiff(gdalPath, inputFile) throws Exception {
         def outputFile = inputFile.substring(0, inputFile.lastIndexOf('.')) + ".tif"
 
-        def cmd = [gdalPath + '/gdal_translate',
+        String[] cmd = [gdalPath + '/gdal_translate',
                    "-of", "GTiff",
                    "-co", "COMPRESS=DEFLATE",
                    "-co", "TILED=YES",
@@ -172,14 +173,14 @@ class SpatialUtils {
                    , outputFile]
 
 
-        Utils.runCmd(cmd as String[])
+        Util.runCmd(cmd)
 
         cmd = [gdalPath + '/gdaladdo',
                "-r", "cubic"
                , outputFile
                , "2", "4", "8", "16", "32", "64"]
 
-        Utils.runCmd(cmd as String[])
+        Util.runCmd(cmd)
     }
 
     static def save4326prj(path) {

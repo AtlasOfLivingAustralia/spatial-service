@@ -28,140 +28,140 @@ class UserDataService {
     def userDataDao
 
     //256x256 transparent image
-    static Object blankImageObject = new Object();
-    static byte[] blankImageBytes = null;
-    final static int HIGHLIGHT_RADIUS = 3;
+    static Object blankImageObject = new Object()
+    static byte[] blankImageBytes = null
+    final static int HIGHLIGHT_RADIUS = 3
 
     boolean importCSV(String name, String ud_header_id, String csv) {
         try {
-            CSVReader reader = new CSVReader(new StringReader(csv));
+            CSVReader reader = new CSVReader(new StringReader(csv))
 
-            List userPoints = reader.readAll();
+            List userPoints = reader.readAll()
 
             //if only one column treat it as a list of LSID's
             if (userPoints.size() == 0) {
-                throw (new RuntimeException("no data in csv"));
+                throw (new RuntimeException("no data in csv"))
             }
 
-            boolean hasHeader = false;
+            boolean hasHeader = false
 
             // check if it has a header
-            String[] upHeader = (String[]) userPoints.get(0);
+            String[] upHeader = (String[]) userPoints.get(0)
             try {
                 if (upHeader.length == 2)
-                    Double d0 = new Double(upHeader[0]);
-                Double d1 = new Double(upHeader[1]);
+                    Double d0 = new Double(upHeader[0])
+                Double d1 = new Double(upHeader[1])
                 if (upHeader.length > 2)
-                    Double d2 = new Double(upHeader[2]);
+                    Double d2 = new Double(upHeader[2])
             } catch (Exception e) {
-                hasHeader = true;
+                hasHeader = true
             }
 
-            logger.debug("hasHeader: " + hasHeader);
+            logger.debug("hasHeader: " + hasHeader)
 
             // check if the count of points goes over the threshold.
-            int sizeToCheck = (hasHeader) ? userPoints.size() - 1 : userPoints.size();
+            int sizeToCheck = (hasHeader) ? userPoints.size() - 1 : userPoints.size()
 
-            ArrayList<QueryField> fields = new ArrayList<QueryField>();
+            ArrayList<QueryField> fields = new ArrayList<QueryField>()
             if (upHeader.length == 2) {
                 //only points upload, add 'id' column at the start
-                fields.add(new QueryField("id"));
-                fields.get(0).ensureCapacity(sizeToCheck);
+                fields.add(new QueryField("id"))
+                fields.get(0).ensureCapacity(sizeToCheck)
             }
             String[] defaultHeader = ["id", "longitude", "latitude"]
             for (int i = 0; i < upHeader.length; i++) {
-                String header = upHeader[i];
+                String header = upHeader[i]
                 if (upHeader.length == 2 && i < 2) {
-                    header = defaultHeader[i + 1];
+                    header = defaultHeader[i + 1]
                 } else if (upHeader.length > 2 && i < 3) {
-                    header = defaultHeader[i];
+                    header = defaultHeader[i]
                 }
-                fields.add(new QueryField("__f" + String.valueOf(i), header, QueryField.FieldType.AUTO));
-                fields.get(fields.size() - 1).ensureCapacity(sizeToCheck);
+                fields.add(new QueryField("__f" + String.valueOf(i), header, QueryField.FieldType.AUTO))
+                fields.get(fields.size() - 1).ensureCapacity(sizeToCheck)
             }
 
-            double[] points = new double[sizeToCheck * 2];
-            int counter = 1;
-            int hSize = hasHeader ? 1 : 0;
-            double minx = 1000;
-            double maxx = -1000;
-            double miny = 1000;
-            double maxy = -1000;
+            double[] points = new double[sizeToCheck * 2]
+            int counter = 1
+            int hSize = hasHeader ? 1 : 0
+            double minx = 1000
+            double maxx = -1000
+            double miny = 1000
+            double maxy = -1000
             for (int i = 0; i < userPoints.size() - hSize; i++) {
-                String[] up = (String[]) userPoints.get(i + hSize);
+                String[] up = (String[]) userPoints.get(i + hSize)
                 if (up.length > 2) {
                     for (int j = 0; j < up.length && j < fields.size(); j++) {
                         //replace anything that may interfere with facet parsing
-                        String s = up[j].replace("\"", "'").replace(" AND ", " and ").replace(" OR ", " or ");
+                        String s = up[j].replace("\"", "'").replace(" AND ", " and ").replace(" OR ", " or ")
                         if (s.length() > 0 && s.charAt(0) == '*') {
-                            s = "_" + s;
+                            s = "_" + s
                         }
-                        fields.get(j).add(s);
+                        fields.get(j).add(s)
                     }
                     try {
-                        points[i * 2] = Double.parseDouble(up[1]);
-                        points[i * 2 + 1] = Double.parseDouble(up[2]);
+                        points[i * 2] = Double.parseDouble(up[1])
+                        points[i * 2 + 1] = Double.parseDouble(up[2])
                     } catch (Exception e) {
                     }
                 } else if (up.length > 1) {
-                    fields.get(0).add(ud_header_id + "-" + counter);
+                    fields.get(0).add(ud_header_id + "-" + counter)
                     for (int j = 0; j < up.length && j < fields.size(); j++) {
-                        fields.get(j + 1).add(up[j]);
+                        fields.get(j + 1).add(up[j])
                     }
                     try {
-                        points[i * 2] = Double.parseDouble(up[0]);
-                        points[i * 2 + 1] = Double.parseDouble(up[1]);
+                        points[i * 2] = Double.parseDouble(up[0])
+                        points[i * 2 + 1] = Double.parseDouble(up[1])
                     } catch (Exception e) {
                     }
-                    counter++;
+                    counter++
                 }
                 if (!Double.isNaN(points[i * 2])) {
                     if (points[i * 2] < minx) {
-                        minx = points[i * 2];
+                        minx = points[i * 2]
                     }
                     if (points[i * 2] > maxx) {
-                        maxx = points[i * 2];
+                        maxx = points[i * 2]
                     }
                 }
                 if (!Double.isNaN(points[i * 2 + 1])) {
                     if (points[i * 2 + 1] < miny) {
-                        miny = points[i * 2 + 1];
+                        miny = points[i * 2 + 1]
                     }
                     if (points[i * 2 + 1] > maxy) {
-                        maxy = points[i * 2 + 1];
+                        maxy = points[i * 2 + 1]
                     }
                 }
             }
 
             //store data
-            userDataDao.setDoubleArray(ud_header_id, "points", points);
+            userDataDao.setDoubleArray(ud_header_id, "points", points)
 
-            HashMap<String, LegendObject> field_details = new HashMap<String, LegendObject>();
+            HashMap<String, LegendObject> field_details = new HashMap<String, LegendObject>()
             for (int i = 0; i < fields.size(); i++) {
-                fields.get(i).store();  //finalize qf
-                userDataDao.setQueryField(ud_header_id, fields.get(i).getName(), fields.get(i));
-                field_details.put(fields.get(i).getName() + "\r\n" + fields.get(i).getDisplayName(), fields.get(i).getLegend());
+                fields.get(i).store()  //finalize qf
+                userDataDao.setQueryField(ud_header_id, fields.get(i).getName(), fields.get(i))
+                field_details.put(fields.get(i).getName() + "\r\n" + fields.get(i).getDisplayName(), fields.get(i).getLegend())
             }
 
-            HashMap<String, Object> metadata = new HashMap<String, Object>();
-            metadata.put("title", "User uploaded points");
-            metadata.put("name", name);
-            metadata.put("date", System.currentTimeMillis());
-            metadata.put("number_of_records", points.length / 2);
-            metadata.put("bbox", minx + "," + miny + "," + maxx + "," + maxy);
+            HashMap<String, Object> metadata = new HashMap<String, Object>()
+            metadata.put("title", "User uploaded points")
+            metadata.put("name", name)
+            metadata.put("date", System.currentTimeMillis())
+            metadata.put("number_of_records", points.length / 2)
+            metadata.put("bbox", minx + "," + miny + "," + maxx + "," + maxy)
             //metadata.put("user_fields",field_details);
 
-            userDataDao.setMetadata(Long.parseLong(ud_header_id), metadata);
+            userDataDao.setMetadata(Long.parseLong(ud_header_id), metadata)
 
             // close the reader and data streams
-            reader.close();
+            reader.close()
 
-            return true;
+            return true
         } catch (Exception e) {
-            logger.error("failed to import user csv", e);
+            logger.error("failed to import user csv", e)
         }
 
-        return false;
+        return false
     }
 
     //TODO: implement getWmsImageStream

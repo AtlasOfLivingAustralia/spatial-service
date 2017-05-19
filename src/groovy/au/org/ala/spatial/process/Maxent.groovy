@@ -16,7 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.layers.grid.GridCutter
-import au.org.ala.spatial.slave.Utils
+import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
@@ -170,7 +170,7 @@ class Maxent extends SlaveProcess {
             } catch (err) {
             }
 
-            Utils.replaceTextInFile(getTaskPath() + "species.html", replaceMap)
+            Util.replaceTextInFile(getTaskPath() + "species.html", replaceMap)
 
             //writeProjectionFile(getTaskPath());
 

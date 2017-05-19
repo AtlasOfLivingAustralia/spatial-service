@@ -1,6 +1,7 @@
 package au.org.ala.spatial.util;
 
 import au.com.bytecode.opencsv.CSVReader;
+import au.org.ala.spatial.Util;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -61,7 +62,6 @@ public class SamplingUtil {
                 }
             }
 
-
             JSONObject jo = JSONObject.fromObject(IOUtils.toString(c.getInputStream()));
 
             String checkUrl = jo.getString("statusUrl");
@@ -73,7 +73,7 @@ public class SamplingUtil {
                 //wait 5s before querying status
                 Thread.sleep(5000);
 
-                jo = JSONObject.fromObject(IOUtils.toString(new URI(checkUrl).toURL().openStream()));
+                jo = JSONObject.fromObject(Util.getUrl(checkUrl));
 
                 if (jo.containsKey("error")) {
                     notFinished = false;

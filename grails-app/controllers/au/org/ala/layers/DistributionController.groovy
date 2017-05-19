@@ -388,8 +388,18 @@ class DistributionController {
 
     def map(String geomIdx) {
         InputStream input = mapCache().getCachedMap(geomIdx)
-
-        render file: input, contentType: 'image/png'
+        try {
+            response.contentType = 'image/png'
+            response.outputStream << input
+            response.outputStream.flush()
+        } finally {
+            try {
+                input.close()
+            } catch (err) {}
+            try {
+                response.outputStream.close()
+            } catch (err) {}
+        }
     }
 
     /**
@@ -440,16 +450,7 @@ class DistributionController {
     }
 
     def overviewMapPng(String geomIdx) {
-        InputStream input = mapCache().getCachedMap(geomIdx)
-        OutputStream out = response.getOutputStream()
-        byte[] buff = new byte[1024]
-        int read
-        while ((read = input.read(buff)) > 0) {
-            out.write(buff, 0, read)
-        }
-        out.flush()
-        out.close()
-        input.close()
+        map(geomIdx)
     }
 
     def overviewMapPngLsid(String lsid) {
@@ -509,17 +510,7 @@ class DistributionController {
         }
 
         if (geomIdx != null) {
-            InputStream input = mapCache().getCachedMap(String.valueOf(geomIdx))
-
-            OutputStream out = response.getOutputStream()
-            byte[] buff = new byte[1024]
-            int read
-            while ((read = input.read(buff)) > 0) {
-                out.write(buff, 0, read)
-            }
-            out.flush()
-            out.close()
-            input.close()
+            map(String.valueOf(geomIdx))
         } else {
             response.sendError(404)
         }

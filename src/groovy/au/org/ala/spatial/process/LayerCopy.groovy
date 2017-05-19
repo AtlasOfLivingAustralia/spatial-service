@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Commons
 import org.json.simple.JSONObject
@@ -53,7 +54,7 @@ class LayerCopy extends SlaveProcess {
 
         //get layerdistances
         slaveService.getFile('/public/layerDistances.properties')
-        JSONObject dists = JSON.parse(au.org.ala.layers.util.Util.readUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json"))
+        JSONObject dists = JSON.parse(Util.getUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json"))
         def distString = ''
         for (def f : getFields()) {
             if ("e".equalsIgnoreCase(f.type) && !f.id.equals(field.id)) {

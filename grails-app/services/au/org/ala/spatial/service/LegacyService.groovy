@@ -136,7 +136,7 @@ class LegacyService {
                                                 "-a_srs", "EPSG:4326", "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES",
                                                 "-co", "BIGTIFF=IF_SAFER", af.getPath(),
                                                 grailsApplication.config.data.dir + '/layer/' + af.getName().replaceAll("\\..*", ".tif")]
-                                Util.runCmd(cmd, false)
+                                Util.runCmd(cmd)
 
                                 //copy sld
                                 File sld = new File(taskDir.getPath() + '/' + af.getName().replace('.asc', '.sld'))

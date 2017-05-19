@@ -385,20 +385,6 @@ div.navbar-header > a:nth-child(1) > img {
     -moz-background-size: cover;
     -o-background-size: cover;
     -webkit-background-size: cover;
-    background: url(../img/jtron-bg-01-jan-770px.jpg) no-repeat center top; /*JAN*/
-    /*background:url(../img/jtron-bg-02-feb-770px.jpg) no-repeat center top;*/ /*FEB*/
-    /*background:url(../img/jtron-bg-03-mar-770px.jpg) no-repeat center top;*/ /*MAR*/
-    /*background:url(../img/jtron-bg-04-apr-770px.jpg) no-repeat center top;*/ /*APR*/
-    /*background:url(../img/jtron-bg-05-may-770px.jpg) no-repeat center top;*/ /*MAY*/
-    /*background:url(../img/jtron-bg-06-jun-770px.jpg) no-repeat center top;*/ /*JUN*/
-    /*background:url(../img/jtron-bg-07-jul-770px.jpg) no-repeat center top;*/ /*JULY*/
-    /*background:url(../img/jtron-bg-08-aug-770px.jpg) no-repeat center top;*/ /*AUG*/
-    /*background:url(../img/jtron-bg-09-sep-770px.jpg) no-repeat center top;*/ /*SEPT*/
-    /*background:url(../img/jtron-bg-10-oct-770px.jpg) no-repeat center top;*/ /*OCT*/
-    /*background:url(../img/jtron-bg-11-nov-770px.jpg) no-repeat center top;*/ /*NOV*/
-    /*background:url(../img/jtron-bg-12-dec-770px.jpg) no-repeat center top;*/ /*DEC*/
-    background-attachment: relative;
-    background-position: center center;
     background-size: cover;
     margin-top: -100px;
     min-height: 165px;
@@ -1862,48 +1848,12 @@ li .login-soc-bell:hover {
         height: 7.5em;
     }
 
-    .panel-body .front-grain-aust-species {
-        background: url(../img/species-octopus-maorum-313.jpg) no-repeat center top;
-    }
-
-    .panel-body .front-grain-species-location {
-        background: url(../img/species-by-location-phyllopteryx-taeniolatus-313.jpg) no-repeat center top;
-    }
-
-    .panel-body .front-grain-collections {
-        background: url(../img/natural-history-collection-ANIC-insect4-313.jpg) no-repeat center top;
-    }
-
-    .panel-body .front-grain-mapping {
-        background: url(../img/mapping-82172860-313.jpg) no-repeat center top;
-    }
-
-    .panel-body .front-grain-datasets {
-        background: url(../img/data-sets-bembicium-auratum-313.jpg) no-repeat center top;
-    }
-
-    .panel-body .front-grain-community {
-        background: url(../img/partner-profiles-taylora-tasmanica-313.jpg) no-repeat center top;
-    }
 
     /* larger jumbotron images for wider browsers */
     .ala-header {
         -moz-background-size: cover;
         -o-background-size: cover;
         -webkit-background-size: cover;
-        background: url(../img/no-1-january-15327752868_cf0d213ee1_k-by-kevin-thiele.jpg) no-repeat center top; /*JAN*/
-        /*background:url(../img/no-2-february-9054085713_5ee06a6eaa_o-by-kevin-thiele.jpg) no-repeat center top;*/ /*FEB*/
-        /*background:url(../img/no-3-march-7597027908_c68bc8e96a_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*MAR*/
-        /*background:url(../img/no-4-april-15327776918_b784aec9f2_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*APR*/
-        /*background:url(../img/no-5-may-15435539292_b7f198eb87_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*MAY*/
-        /*background:url(../img/no-6-june-15249304618_f48a005929_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*JUN*/
-        /*background:url(../img/no-7-july-15249201710_2dd82be2b9_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*JULY*/
-        /*background:url(../img/no-8-august-8692968950_3fee9585f2_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*AUG*/
-        /*background:url(../img/no-9-september-8696047692_95b7ea6e58_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*SEPT*/
-        /*background:url(../img/no-10-october-15432315301_968650168d_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*OCT*/
-        /*background:url(../img/no-11-november-15412430736_12b00bf6d2_k-by-kevin-thiele.jpg) no-repeat center top;*/ /*NOV*/
-        /*background:url(../img/no-12-december-15432195951_01e3467b7d_h-by-kevin-thiele.jpg) no-repeat center top;*/ /*DEC*/
-        background-attachment: relative;
         background-position: center center;
         background-size: cover;
         margin-top: -100px;
@@ -2414,9 +2364,9 @@ li .login-soc-bell:hover {
         content: "";
     }
 
-$a:after > img {
-     content: "";
- }
+    a:after > img {
+         content: "";
+    }
 
     a:not(:local-link):after {
         content: " <" attr(href) "> ";

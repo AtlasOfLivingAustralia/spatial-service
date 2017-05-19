@@ -81,7 +81,7 @@ class GDMStep1 extends SlaveProcess {
         String params = generateStep1Paramfile(envnameslist, cutDataPath, speciesFile, getTaskPath())
 
         // 6. run GDM
-        runCmd([grailsApplication.config.gdm.dir, " -g", "1", params])
+        runCmd([grailsApplication.config.gdm.dir.toString(), " -g", "1", params] as String[], true)
 
         Scanner sc = new Scanner(new File(getTaskPath() + "Cutpoint.csv"))
         def cutpoints = []

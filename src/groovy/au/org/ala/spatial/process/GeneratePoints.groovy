@@ -19,9 +19,7 @@ import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Commons
-import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.NameValuePair
-import org.apache.commons.httpclient.methods.PostMethod
 
 @Commons
 class GeneratePoints extends SlaveProcess {
@@ -76,36 +74,34 @@ class GeneratePoints extends SlaveProcess {
                 new NameValuePair("alaId", userId.toString())
         ]
 
-        def post = new PostMethod(sandboxBiocacheServiceUrl + "/upload/")
-        post.setRequestBody(nameValuePairs.toArray(new NameValuePair[0]))
+        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
+                nameValuePairs.toArray(new NameValuePair[0]))
 
-        def http = new HttpClient()
-        http.executeMethod(post)
+        if (response) {
+            def dataResourceUid = JSON.parse(response.text).uid
 
-        def dataResourceUid = JSON.parse(post.getResponseBodyAsString()).uid
+            //wait
+            def statusUrl = "${sandboxBiocacheServiceUrl}/upload/status/${dataResourceUid}"
+            def start = System.currentTimeMillis()
+            def maxTime = 60 * 60 * 1000 //2hr
+            while (start + maxTime > System.currentTimeMillis()) {
+                def txt = Util.getUrl(statusUrl)
+                if (txt.contains("COMPLETE")) {
+                    task.message = "upload successful"
 
-        //wait
-        def statusUrl = "${sandboxBiocacheServiceUrl}/upload/status/${dataResourceUid}"
-        def start = System.currentTimeMillis()
-        def maxTime = 60 * 60 * 1000 //2hr
-        while (start + maxTime > System.currentTimeMillis()) {
-            def response = Util.getUrl(statusUrl)
-            if (response.contains("COMPLETE")) {
-                task.message = "upload successful"
+                    //add species layer
+                    def species = [q   : "data_resource_uid:${dataResourceUid}",
+                                   ws  : sandboxHubUrl,
+                                   bs  : sandboxBiocacheServiceUrl,
+                                   name: name]
 
-                //add species layer
-                def species = [q   : "data_resource_uid:${dataResourceUid}",
-                               ws  : sandboxHubUrl,
-                               bs  : sandboxBiocacheServiceUrl,
-                               name: name]
-
-                addOutput("species", (species as JSON).toString())
-                break
-            } else if (response.contains("FAILED")) {
-                task.message = "failed upload " + statusUrl
-                break
+                    addOutput("species", (species as JSON).toString())
+                    break
+                } else if (txt.contains("FAILED")) {
+                    task.message = "failed upload " + statusUrl
+                    break
+                }
             }
         }
-
     }
 }

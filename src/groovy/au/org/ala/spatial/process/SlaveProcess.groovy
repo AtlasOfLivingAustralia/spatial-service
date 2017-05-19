@@ -938,7 +938,7 @@ class SlaveProcess {
         species
     }
 
-    def runCmd(String[] cmd, boolean logToTask) {
+    def runCmd(String[] cmd, Boolean logToTask) {
         Util.runCmd(cmd, logToTask, task)
     }
 

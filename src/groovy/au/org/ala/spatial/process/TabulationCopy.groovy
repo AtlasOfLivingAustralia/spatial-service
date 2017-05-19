@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
@@ -27,7 +28,7 @@ class TabulationCopy extends SlaveProcess {
         def sourceUrl = task.input.sourceUrl
 
         //get tabulations
-        def tabulations = JSON.parse(au.org.ala.layers.util.Util.readUrl(sourceUrl + "/tabulations.json"))
+        def tabulations = JSON.parse(Util.getUrl(sourceUrl + "/tabulations.json"))
         File fname = new File(getTaskPath() + 'tabulationImport.sql')
         addOutput('sql', 'tabulationImport.sql')
 
@@ -35,7 +36,7 @@ class TabulationCopy extends SlaveProcess {
 
         for (def tab : tabulations) {
             if (getField(tab.fid2) && getField(tab.fid1)) {
-                def data = JSON.parse(au.org.ala.layers.util.Util.readUrl(sourceUrl + "/tabulation/data/${tab.fid1}/${tab.fid2}/tabulation.json"))
+                def data = JSON.parse(Util.getUrl("${sourceUrl}/tabulation/data/${tab.fid1}/${tab.fid2}/tabulation.json"))
 
                 def ids1 = [:]
                 for (def obj : getObjects(tab.fid1)) {

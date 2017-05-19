@@ -17,6 +17,7 @@ package au.org.ala.layers
 
 import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.layers.util.SpatialConversionUtils
+import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import com.vividsolutions.jts.geom.Geometry
@@ -24,8 +25,7 @@ import com.vividsolutions.jts.io.ParseException
 import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
 import org.apache.commons.fileupload.servlet.ServletFileUpload
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.methods.GetMethod
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.tuple.Pair
@@ -284,7 +284,7 @@ class ShapesController {
                 }
 
                 // Use shape file url from json body
-                IOUtils.copy(new URL(shpFileUrl).openStream(), new FileOutputStream(tmpZipFile))
+                FileUtils.copyURLToFile(new URL(shpFileUrl), tmpZipFile)
                 retMap.putAll(handleZippedShapeFile(tmpZipFile))
             } else {
                 retMap.put("error", StringUtils.join(reqBodyParser.getErrorMessages(), ","))
@@ -506,20 +506,18 @@ class ShapesController {
         }
 
         try {
-            HttpClient httpClient = new HttpClient()
-            GetMethod get = new GetMethod(MessageFormat.format(IntersectConfig.getApiKeyCheckUrlTemplate(), apiKey))
+            def response = Util.urlResponse("GET", MessageFormat.format(IntersectConfig.getApiKeyCheckUrlTemplate(), apiKey))
 
-            int returnCode = httpClient.executeMethod(get)
-            if (returnCode != 200) {
-                throw new RuntimeException("Error occurred checking api key")
+            if (response) {
+                if (response.statusCode != 200) {
+                    throw new RuntimeException("Error occurred checking api key")
+                }
+
+                ObjectMapper mapper = new ObjectMapper()
+                Map parsedJSON = mapper.readValue(response.text, Map.class)
+
+                return (Boolean) parsedJSON.get("valid")
             }
-
-            String responseText = get.getResponseBodyAsString()
-
-            ObjectMapper mapper = new ObjectMapper()
-            Map parsedJSON = mapper.readValue(responseText, Map.class)
-
-            return (Boolean) parsedJSON.get("valid")
         } catch (Exception ex) {
             log.trace(ex.getMessage(), ex)
             throw new RuntimeException("Error checking API key")

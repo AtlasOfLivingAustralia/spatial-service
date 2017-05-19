@@ -22,6 +22,7 @@ import grails.converters.XML
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.h2.mvstore.StreamStore
 import org.hibernate.criterion.CriteriaSpecification
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -197,7 +198,14 @@ class ManageLayersController {
         login()
 
         JSONParser jp = new JSONParser()
-        String str = IOUtils.toString(new URL(params.url.toString()).openStream())
+        InputStream is = new URL(params.url.toString()).openStream()
+        String str = ""
+        try {
+            str = IOUtils.toString(is)
+        } finally {
+            is.close()
+        }
+
         JSONObject jo = (JSONObject) jp.parse(str)
         String id = jo.get('name')
         jo.put('raw_id', id)
@@ -243,7 +251,14 @@ class ManageLayersController {
         login()
 
         JSONParser jp = new JSONParser()
-        String str = IOUtils.toString(new URL(params.url.toString()).openStream())
+        InputStream is = new URL(params.url.toString()).openStream()
+        String str = ""
+        try {
+            str = IOUtils.toString(is)
+        } finally {
+            is.close()
+        }
+
         JSONObject jo = (JSONObject) jp.parse(str)
         jo.put('requestedId', jo.get('id'))
         if (jo.containsKey('sname')) jo.put('sid', jo.get('sname'))

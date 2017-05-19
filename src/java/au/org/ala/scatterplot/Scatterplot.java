@@ -10,6 +10,7 @@ import au.org.ala.layers.legend.LegendObject;
 import au.org.ala.layers.util.LayerFilter;
 import au.org.ala.layers.util.Occurrences;
 import au.org.ala.layers.util.SpatialUtil;
+import au.org.ala.spatial.Util;
 import au.org.ala.spatial.util.SamplingUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -1337,7 +1338,6 @@ public class Scatterplot {
         if (legends.get(colourmode) != null) {
             return legends.get(colourmode);
         } else {
-            HttpClient client = new HttpClient();
             String facetToColourBy = colourmode.equals("occurrence_year_decade") ? "occurrence_year" : translateFieldForSolr(colourmode);
 
             try {
@@ -1346,16 +1346,21 @@ public class Scatterplot {
                         + "&q=" + scatterplotDTO.getForegroundOccurrencesQs()
                         + "&cm=" + URLEncoder.encode(facetToColourBy, "UTF-8");
                 logger.debug(url);
-                GetMethod get = new GetMethod(url);
-                //NQ: Set the header type to JSON so that we can parse JSON instead of CSV (CSV has issue with quoted field where a quote is the escape character)
-                get.addRequestHeader("Accept", "application/json");
 
-                int result = client.executeMethod(get);
-                String s = get.getResponseBodyAsString();
-                //in the first line do field name replacement
-                String t = translateFieldForSolr(colourmode);
-                if (!colourmode.equals(t)) {
-                    s = s.replaceFirst(t, colourmode);
+                //NQ: Set the header type to JSON so that we can parse JSON instead of CSV (CSV has issue with quoted field where a quote is the escape character)
+                Map<String, String> headers = new HashMap();
+                headers.put("Accept", "application/json");
+
+                Map<String, Object> result = Util.urlResponse("GET", url, null, headers);
+
+                String s = "";
+                if (result != null) {
+                    s = result.get("text").toString();
+                    //in the first line do field name replacement
+                    String t = translateFieldForSolr(colourmode);
+                    if (!colourmode.equals(t)) {
+                        s = s.replaceFirst(t, colourmode);
+                    }
                 }
 
                 LegendObject lo = new BiocacheLegendObject(colourmode, s);

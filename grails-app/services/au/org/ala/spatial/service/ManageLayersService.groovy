@@ -21,10 +21,8 @@ import au.org.ala.layers.util.Bil2diva
 import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.Util
 import grails.converters.JSON
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.UsernamePasswordCredentials
-import org.apache.commons.httpclient.auth.AuthScope
-import org.apache.commons.httpclient.methods.*
+import org.apache.commons.httpclient.methods.FileRequestEntity
+import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
 import org.codehaus.jackson.map.ObjectMapper
 import org.geotools.data.shapefile.ShapefileDataStore
@@ -157,7 +155,7 @@ class ManageLayersService {
         //no upload dir, look in existing layers, at layer.id 
         if (!upload.containsKey("raw_id")) {
             try {
-                Layer layer = layerDao.getLayerById(Integer.parseInt(uploadId));
+                Layer layer = layerDao.getLayerById(Integer.parseInt(uploadId))
                 if (layer != null) {
                     upload.put("raw_id", uploadId)
                     upload.put("layer_id", uploadId)
@@ -177,7 +175,7 @@ class ManageLayersService {
             }
         }
 
-        return upload;
+        return upload
     }
 
     //files manually added to layersDir/upload/ need processing
@@ -290,15 +288,8 @@ class ManageLayersService {
      * @return server response status code as String or empty String if
      * unsuccessful
      */
-    def httpCall(type, url, username, password, resourcepath, resourcestr, contenttype) {
+    def httpCall(String type, String url, String username, String password, String resourcepath, String resourcestr, String contenttype) {
         def output = ["", ""]
-
-        def client = new HttpClient()
-        client.setConnectionTimeout(10000)
-        client.setTimeout(60000)
-        if (username != null && password != null) {
-            client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
-        }
 
         def entity = null
         if (resourcepath != null) {
@@ -308,37 +299,20 @@ class ManageLayersService {
             try {
                 entity = new StringRequestEntity(resourcestr, contenttype, "UTF-8")
             } catch (UnsupportedEncodingException e) {
-                log.error 'failed to encode contenttype: ' + contenttype
+                log.error 'failed to encode contenttype: ' + contenttype, e
             }
         }
 
-        def call
-
-        if ("PUT".equalsIgnoreCase(type)) {
-            call = new PutMethod(url)
-            call.setDoAuthentication(true)
-            if (entity != null) {
-                call.setRequestEntity(entity)
-            }
-        } else if ("POST".equalsIgnoreCase(type)) {
-            call = new PostMethod(url)
-            if (entity != null) {
-                call.setRequestEntity(entity)
-            }
-        } else {
-            call = new GetMethod(url)
-        }
+        def response = Util.urlResponse(type, url, null, [:], entity, type == "PUT" ? true : null, username, password)
 
         // Execute the request
-        try {
-            def result = client.executeMethod(call)
-
-            output[0] = "" + result
-            output[1] = call.getResponseBodyAsString()
-        } catch (Exception e) {
-            log.error "request failed: " + url, e
-        } finally {
-            call.releaseConnection()
+        if (response) {
+            if (response.statusCode) {
+                output[0] = String.valueOf(response.statusCode)
+            }
+            if (response.text) {
+                output[1] = response.text
+            }
         }
 
         return output
@@ -385,8 +359,8 @@ class ManageLayersService {
         } else {
             try {
                 layers = []
-                JSON.parse(Util.getUrl("$url/layers")).each {
-                    def layer = new ObjectMapper().readValue(it.toString(), Map.class);
+                JSON.parse(Util.getUrl("${url}/layers")).each {
+                    def layer = new ObjectMapper().readValue(it.toString(), Map.class)
                     layers.push(layer)
                 }
             } catch (err) {
@@ -394,8 +368,8 @@ class ManageLayersService {
             }
             try {
                 fields = []
-                JSON.parse(Util.getUrl("$url/fields")).each {
-                    def field = new ObjectMapper().readValue(it.toString(), Field.class);
+                JSON.parse(Util.getUrl("${url}/fields")).each {
+                    def field = new ObjectMapper().readValue(it.toString(), Field.class)
                     fields.push(field)
                 }
             } catch (err) {
@@ -428,103 +402,103 @@ class ManageLayersService {
         //fetch info
         def map = [:]
 
-        Map upload = getUpload(layerId);
+        Map upload = getUpload(layerId)
 
-        map.putAll(upload);
+        map.putAll(upload)
 
         try {
-            JSONParser jp = new JSONParser();
-            JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(new File(layersDir + "/uploads/" + layerId + "/upload.json")));
-            map.putAll(jo);
+            JSONParser jp = new JSONParser()
+            JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(new File(layersDir + "/uploads/" + layerId + "/upload.json")))
+            map.putAll(jo)
         } catch (Exception e) {
             try {
-                Layer l = layerDao.getLayerById(Integer.parseInt(layerId.replaceAll("[ec]l", "")), false);
+                Layer l = layerDao.getLayerById(Integer.parseInt(layerId.replaceAll("[ec]l", "")), false)
                 if (upload.size() == 0) map.putAll(l.toMap())
                 //try to get from layer info
-                map.put("raw_id", l.getId());
+                map.put("raw_id", l.getId())
                 //TODO: stop this failing when the table is not yet created
                 //map.put("columns", layerDao.getLayerColumns(l.getId()));
                 map.put("test_url",
                         grailsApplication.config.geoserver.url +
                                 "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
 
-                                "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers");
+                                "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
             } catch (Exception e2) {
                 //log.error("failed to find layer for rawId: " + layerId, e2);
             }
 
         }
 
-        map.put("has_layer", map.containsKey("layer_id"));
+        map.put("has_layer", map.containsKey("layer_id"))
         if (map.containsKey("layer_id")) {
             Layer layer = layerDao.getLayerById(Integer.parseInt(map.layer_id), false)
 
-            map.putAll(layer.toMap());
+            map.putAll(layer.toMap())
 
-            List<Field> fieldList = fieldDao.getFields();
+            List<Field> fieldList = fieldDao.getFields()
             def fields = []
             for (Field fs : fieldList) {
                 if (fs.getSpid().equals(map.get('layer_id'))) {
-                    fields.add(fs);
+                    fields.add(fs)
                 }
             }
 
-            map.put("fields", fields);
+            map.put("fields", fields)
 
         } else {
             //fetch defaults
 
             //extents
-            double[] extents = getExtents(layerId);
+            double[] extents = getExtents(layerId)
             if (extents == null) {
                 extents = [-180, -90, 180, 90]
             }
-            map.put("minlongitude", extents[0]);
-            map.put("minlatitude", extents[1]);
-            map.put("maxlongitude", extents[2]);
-            map.put("maxlatitude", extents[3]);
+            map.put("minlongitude", extents[0])
+            map.put("minlatitude", extents[1])
+            map.put("maxlongitude", extents[2])
+            map.put("maxlatitude", extents[3])
 
-            File shp = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".shp");
-            File bil = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".bil");
+            File shp = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".shp")
+            File bil = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".bil")
             if (shp.exists()) {
-                List columns = getShapeFileColumns(shp);
+                List columns = getShapeFileColumns(shp)
 
-                map.put("columns", columns);
-                map.put("type", "Contextual");
+                map.put("columns", columns)
+                map.put("type", "Contextual")
             } else if (bil.exists()) {
-                double[] minmax = getMinMax(bil);
-                map.put("environmentalvaluemin", minmax[0]);
-                map.put("environmentalvaluemax", minmax[1]);
+                double[] minmax = getMinMax(bil)
+                map.put("environmentalvaluemin", minmax[0])
+                map.put("environmentalvaluemax", minmax[1])
 
-                map.put("type", "Environmental");
+                map.put("type", "Environmental")
             }
 
-            map.put("enabled", true);
+            map.put("enabled", true)
         }
 
         //get list of available classifications
-        Set<String> classifications = new HashSet<String>();
-        List<Layer> layers = layerDao.getLayersForAdmin();
+        Set<String> classifications = new HashSet<String>()
+        List<Layer> layers = layerDao.getLayersForAdmin()
         for (Layer l : layers) {
-            classifications.add(l.getClassification1() + " > " + l.getClassification2());
+            classifications.add(l.getClassification1() + " > " + l.getClassification2())
         }
-        List<String> classes = new ArrayList<String>(classifications);
-        Collections.sort(classes);
-        map.put("classifications", classes);
+        List<String> classes = new ArrayList<String>(classifications)
+        Collections.sort(classes)
+        map.put("classifications", classes)
 
-        return map;
+        return map
     }
 
     def deleteLayer(String id) {
 
         String layersDir = grailsApplication.config.data.dir
-        String geoserverUrl = grailsApplication.config.geoserver.url;
-        String geoserverUsername = grailsApplication.config.geoserver.username;
-        String geoserverPassword = grailsApplication.config.geoserver.password;
+        String geoserverUrl = grailsApplication.config.geoserver.url
+        String geoserverUsername = grailsApplication.config.geoserver.username
+        String geoserverPassword = grailsApplication.config.geoserver.password
 
-        Map map = null;
+        Map map = null
         try {
-            map = layerMap(id);
+            map = layerMap(id)
         } catch (err) {
             log.error 'failed to get layer map for layer to delete: ' + id, err
         }
@@ -533,26 +507,26 @@ class ManageLayersService {
         if (map != null && map.containsKey("fields")) {
             List fields = (List) map.get("fields"); for (Object o : fields) {
                 if (o != null) {
-                    Field field = (Field) o;
+                    Field field = (Field) o
 
-                    fieldDao.delete(field.getId());
+                    fieldDao.delete(field.getId())
 
                     // analysis files
                     String[] dirs = ["/standard_layer/"]
                     for (String d : dirs) {
-                        File df = new File(layersDir + d);
+                        File df = new File(layersDir + d)
                         if (df.exists()) {
-                            File[] files = df.listFiles();
+                            File[] files = df.listFiles()
                             for (File f : files) {
                                 if (f.isDirectory()) {
-                                    File[] files2 = f.listFiles();
+                                    File[] files2 = f.listFiles()
                                     for (File f2 : files2) {
                                         if (f2.getName().startsWith(field.getId() + ".")) {
-                                            FileUtils.deleteQuietly(f2);
+                                            FileUtils.deleteQuietly(f2)
                                         }
                                     }
                                 } else if (f.getName().startsWith(field.getId() + ".")) {
-                                    FileUtils.deleteQuietly(f);
+                                    FileUtils.deleteQuietly(f)
                                 }
                             }
                         }
@@ -569,31 +543,31 @@ class ManageLayersService {
 
         //layer
         if (map != null && map.containsKey("layer_id")) {
-            String layerId = (String) map.get("layer_id");
-            String name = (String) map.get("name");
+            String layerId = (String) map.get("layer_id")
+            String name = (String) map.get("name")
 
             httpCall("DELETE",
                     geoserverUrl + "/rest/workspaces/ALA/datastores/" + name + "?recurse=true", ///external.shp",
                     geoserverUsername, geoserverPassword,
                     null, null,
-                    "text/plain");
+                    "text/plain")
             httpCall("DELETE",
                     geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + name + "?recurse=true", //"/external.geotiff",
                     geoserverUsername, geoserverPassword,
                     null, null,
-                    "text/plain");
+                    "text/plain")
 
             // layers table
-            layerDao.delete(layerId);
+            layerDao.delete(layerId)
 
             // layer files
             String[] dirs = ["/layer/"]
             for (String d : dirs) {
-                File dir = new File(layersDir + d);
+                File dir = new File(layersDir + d)
                 if (dir.exists()) {
                     for (File f : dir.listFiles()) {
                         if (f.getName().startsWith(name + ".")) {
-                            FileUtils.deleteQuietly(f);
+                            FileUtils.deleteQuietly(f)
                         }
                     }
                 }
@@ -632,24 +606,24 @@ class ManageLayersService {
     }
 
     def deleteField(String fieldId) {
-        String layersDir = layerIntersectDao.getConfig().getLayerFilesPath();
+        String layersDir = layerIntersectDao.getConfig().getLayerFilesPath()
 
         //fields
-        Field field = fieldDao.getFieldById(fieldId);
+        Field field = fieldDao.getFieldById(fieldId)
         if (field != null) {
 
-            fieldDao.delete(fieldId);
+            fieldDao.delete(fieldId)
 
             // analysis files
             String[] dirs = ["/analysis/"]
             for (String d : dirs) {
-                File[] files = new File(layersDir + d).listFiles();
+                File[] files = new File(layersDir + d).listFiles()
                 for (int i = 0; files != null && i < files.length; i++) {
-                    File f = files[i];
+                    File f = files[i]
                     if (f.isDirectory()) {
-                        File[] files2 = f.listFiles();
+                        File[] files2 = f.listFiles()
                         for (int j = 0; files2 != null && j < files.length; j++) {
-                            File f2 = files2[j];
+                            File f2 = files2[j]
                             if (f2.getName().startsWith(field.getId() + ".")) {
                                 //FileUtils.deleteQuietly(f2);
                             }
@@ -671,77 +645,77 @@ class ManageLayersService {
 
         String layersDir = grailsApplication.config.data.dir
 
-        Map fieldMap = new HashMap();
-        fieldMap.putAll(layerMap);
+        Map fieldMap = new HashMap()
+        fieldMap.putAll(layerMap)
 
         //fix default layer name
         if (layerMap.containsKey("displayname")) {
-            fieldMap.put("name", layerMap.get("displayname"));
+            fieldMap.put("name", layerMap.get("displayname"))
         }
         //fix default layer description
         if (layerMap.containsKey("description")) {
-            fieldMap.put("desc", layerMap.get("displayname"));
+            fieldMap.put("desc", layerMap.get("displayname"))
         }
 
-        fieldMap.remove("id");
+        fieldMap.remove("id")
 
-        fieldMap.put("raw_id", layerId);
+        fieldMap.put("raw_id", layerId)
 
-        int countInDB = 0;
+        int countInDB = 0
         for (Field f : fieldDao.getFieldsByDB()) {
             if (f.getSpid().equals(String.valueOf(fieldMap.get("id")))) {
-                countInDB++;
+                countInDB++
             }
         }
-        boolean isContextual = "Contextual".equalsIgnoreCase(String.valueOf(layerMap.get("type")));
-        fieldMap.put("indb", countInDB == 0);
-        fieldMap.put("intersect", false); //countInDB == 0 && isContextual);
-        fieldMap.put("analysis", countInDB == 0);
-        fieldMap.put("addtomap", countInDB == 0);
-        fieldMap.put("enabled", true);
+        boolean isContextual = "Contextual".equalsIgnoreCase(String.valueOf(layerMap.get("type")))
+        fieldMap.put("indb", countInDB == 0)
+        fieldMap.put("intersect", false) //countInDB == 0 && isContextual);
+        fieldMap.put("analysis", countInDB == 0)
+        fieldMap.put("addtomap", countInDB == 0)
+        fieldMap.put("enabled", true)
 
         fieldMap.put("requestedId", (isContextual ? "cl" : "el") + layerId)
 
         if (isContextual && layerMap.containsKey("columns") && layerMap.get("columns") != null) {
-            fieldMap.put("sid", ((List) layerMap.get("columns")).get(0));
-            fieldMap.put("sname", ((List) layerMap.get("columns")).get(0));
+            fieldMap.put("sid", ((List) layerMap.get("columns")).get(0))
+            fieldMap.put("sname", ((List) layerMap.get("columns")).get(0))
             //"sdesc" is optional
         }
 
         //type
         //Contextual and shapefile = c, Environmental = e, Contextual and grid file = a & b
         if (isContextual) {
-            fieldMap.put("type", "c");
+            fieldMap.put("type", "c")
         } else if (isContextual) {
-            fieldMap.put("type", "a");
+            fieldMap.put("type", "a")
         } else {
-            fieldMap.put("type", "e");
+            fieldMap.put("type", "e")
         }
 
-        File shp = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".shp");
-        File bil = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".bil");
-        File loadedShp = new File(layersDir + "/layer/" + layerMap.get('name') + ".shp");
+        File shp = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".shp")
+        File bil = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".bil")
+        File loadedShp = new File(layersDir + "/layer/" + layerMap.get('name') + ".shp")
 
         //TODO: do not set defaults
-        fieldMap.put("filetype", "bil");
-        fieldMap.put("columns", [:]);
+        fieldMap.put("filetype", "bil")
+        fieldMap.put("columns", [:])
 
         if (loadedShp.exists()) {
-            fieldMap.put("filetype", "shp");
+            fieldMap.put("filetype", "shp")
 
-            List columns = getShapeFileColumns(loadedShp);
-            fieldMap.put("columns", columns);
+            List columns = getShapeFileColumns(loadedShp)
+            fieldMap.put("columns", columns)
         } else if (shp.exists()) {
-            fieldMap.put("filetype", "shp");
+            fieldMap.put("filetype", "shp")
 
-            List columns = getShapeFileColumns(shp);
-            fieldMap.put("columns", columns);
+            List columns = getShapeFileColumns(shp)
+            fieldMap.put("columns", columns)
         } else if (bil.exists()) {
 //            fieldMap.put("filetype", "bil");
 //            fieldMap.put("columns", [:]);
         }
 
-        return fieldMap;
+        return fieldMap
     }
 
     double[] getExtents(String rawId) {
@@ -757,12 +731,12 @@ class ManageLayersService {
                     geoserverUsername, geoserverPassword,
                     null,
                     null,
-                    "text/plain");
+                    "text/plain")
 
-            JSONParser jp = new JSONParser();
-            JSONObject jo = (JSONObject) jp.parse(out[1]);
+            JSONParser jp = new JSONParser()
+            JSONObject jo = (JSONObject) jp.parse(out[1])
 
-            JSONObject bbox = (JSONObject) ((JSONObject) jo.get("featureType")).get("nativeBoundingBox");
+            JSONObject bbox = (JSONObject) ((JSONObject) jo.get("featureType")).get("nativeBoundingBox")
 
             extents = new double[4]
 
@@ -778,11 +752,11 @@ class ManageLayersService {
                     geoserverUsername, geoserverPassword,
                     null,
                     null,
-                    "text/plain");
+                    "text/plain")
 
-            JSONParser jp = new JSONParser();
+            JSONParser jp = new JSONParser()
             try {
-                JSONObject jo = (JSONObject) jp.parse(out[1]);
+                JSONObject jo = (JSONObject) jp.parse(out[1])
                 JSONObject bbox = (JSONObject) ((JSONObject) jo.get("coverage")).get("nativeBoundingBox")
 
                 extents = new double[4]
@@ -1197,11 +1171,11 @@ class ManageLayersService {
 //    }
 
     def getMinMax(File bil) {
-        double[] minmax = new double[2];
+        double[] minmax = new double[2]
 
         //does .grd exist?
-        File grd = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".grd");
-        File hdr = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".hdr");
+        File grd = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".grd")
+        File hdr = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".hdr")
 
         if (!grd.exists() && hdr.exists()) {
             String n = bil.getPath().substring(0, bil.getPath().length() - 4)
@@ -1209,19 +1183,19 @@ class ManageLayersService {
         }
 
         try {
-            String info = FileUtils.readFileToString(grd);
+            String info = FileUtils.readFileToString(grd)
             for (String line : info.split("\n")) {
                 if (line.startsWith("MinValue")) {
-                    minmax[0] = Double.parseDouble(line.substring("MinValue=".length()).trim());
+                    minmax[0] = Double.parseDouble(line.substring("MinValue=".length()).trim())
                 }
                 if (line.startsWith("MaxValue")) {
-                    minmax[1] = Double.parseDouble(line.substring("MaxValue=".length()).trim());
+                    minmax[1] = Double.parseDouble(line.substring("MaxValue=".length()).trim())
                 }
             }
         } catch (IOException e) {
-            log.error("failed to get min max values in bil file: " + bil.getPath(), e);
+            log.error("failed to get min max values in bil file: " + bil.getPath(), e)
         }
-        return minmax;
+        return minmax
     }
 
     def distributionMap(String uploadId) {
@@ -1230,26 +1204,26 @@ class ManageLayersService {
         //fetch info
         Map map = [:]
 
-        Map upload = getUpload(uploadId);
+        Map upload = getUpload(uploadId)
 
         if (upload.size() > 0) {
-            map.putAll(upload);
+            map.putAll(upload)
 
             try {
-                JSONParser jp = new JSONParser();
+                JSONParser jp = new JSONParser()
                 File f = new File(dir + "/uploads/" + uploadId + "/upload.json")
                 if (f.exists()) {
-                    JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(f));
-                    map.putAll(jo);
+                    JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(f))
+                    map.putAll(jo)
                 }
             } catch (err) {
                 log.error 'failed to get distribution info for uploadId: ' + uploadId, err
             }
 
-            map.put("has_layer", map.containsKey("data_resource_uid"));
+            map.put("has_layer", map.containsKey("data_resource_uid"))
         }
 
-        return map;
+        return map
     }
 
     def checklistMap(String uploadId) {
@@ -1258,26 +1232,26 @@ class ManageLayersService {
         //fetch info
         Map map = [:]
 
-        Map upload = getUpload(uploadId);
+        Map upload = getUpload(uploadId)
 
         if (upload.size() > 0) {
-            map.putAll(upload);
+            map.putAll(upload)
 
             try {
-                JSONParser jp = new JSONParser();
+                JSONParser jp = new JSONParser()
                 File f = new File(dir + "/uploads/" + uploadId + "/upload.json")
                 if (f.exists()) {
-                    JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(f));
-                    map.putAll(jo);
+                    JSONObject jo = (JSONObject) jp.parse(FileUtils.readFileToString(f))
+                    map.putAll(jo)
                 }
             } catch (err) {
                 log.error 'failed to get distribution info for uploadId: ' + uploadId, err
             }
 
-            map.put("has_layer", map.containsKey("checklist"));
+            map.put("has_layer", map.containsKey("checklist"))
         }
 
-        return map;
+        return map
     }
 
     def createDistribution(Map data, String uploadId) {
@@ -1341,7 +1315,7 @@ class ManageLayersService {
         try {
             if (m.containsKey('data_resource_uid')) {
                 layerDao.getConnection().createStatement().execute(
-                        'DELETE FROM distributions WHERE data_resource_uid = \'' + m.data_resource_uid + '\';');
+                        'DELETE FROM distributions WHERE data_resource_uid = \'' + m.data_resource_uid + '\';')
             }
         } catch (err) {
             log.error 'failed to delete data resource uid records for uploadId: ' + id, err
@@ -1364,7 +1338,7 @@ class ManageLayersService {
         try {
             if (m.containsKey('checklist')) {
                 layerDao.getConnection().createStatement().execute(
-                        'DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\';');
+                        'DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\';')
             }
         } catch (err) {
             log.error 'failed to delete data resource uid records for uploadId: ' + id, err

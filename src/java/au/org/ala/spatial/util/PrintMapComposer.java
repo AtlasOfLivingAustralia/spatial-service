@@ -1,8 +1,9 @@
 package au.org.ala.spatial.util;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+import au.org.ala.spatial.Util;
+import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.log4j.Logger;
 
 import javax.imageio.ImageIO;
@@ -238,15 +239,12 @@ public class PrintMapComposer {
                 File file = new File(cacheFilename);
 
                 if (!file.exists()) {
+                    String u = url.replace(":", "%3A").replace("[", "%5B").replace("]", "%5D").replace("http%3A", "http:");
+                    Map<String, Object> response = Util.getStream(u);
                     try {
-                        HttpClient client = new HttpClient();
-                        GetMethod get = new GetMethod(url.replace(":", "%3A").replace("[", "%5B").replace("]", "%5D").replace("http%3A", "http:"));
-
-                        client.executeMethod(get);
-
-                        //construct cache filename\
+                        //construct cache filename
                         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFilename));
-                        BufferedInputStream bis = new BufferedInputStream(get.getResponseBodyAsStream());
+                        BufferedInputStream bis = new BufferedInputStream((((HttpMethodBase) response.get("call")).getResponseBodyAsStream()));
                         byte[] bytes = new byte[1024];
                         int n;
                         while ((n = bis.read(bytes)) > 0) {
@@ -257,6 +255,7 @@ public class PrintMapComposer {
                     } catch (Exception e) {
                         LOGGER.error("failed to get image at url: " + url + ", or write to file failed for: " + getCacheFilename(url), e);
                     }
+                    Util.closeStream(response);
                 }
 
                 return null;

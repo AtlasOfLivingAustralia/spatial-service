@@ -74,7 +74,7 @@ class LayerDistancesService {
                 if (idx == 0) {
                     sb.append(layerNames[j])
                 } else {
-                    def key = (l.compareTo(layersOrdered[j]) < 0) ? l + " " + layersOrdered[j] : layersOrdered[j] + " " + l;
+                    def key = (l.compareTo(layersOrdered[j]) < 0) ? l + " " + layersOrdered[j] : layersOrdered[j] + " " + l
                     if (key != null && map.get(key) != null) {
                         sb.append(map.get(key))
                     }
@@ -123,7 +123,7 @@ class LayerDistancesService {
         } finally {
             if (br != null) {
                 try {
-                    br.close();
+                    br.close()
                 } catch (err) {
                     log.error 'failed closing layerDistances.properties'
                 }
@@ -131,7 +131,7 @@ class LayerDistancesService {
 
         }
 
-        return map;
+        return map
     }
 
 }

@@ -1,9 +1,11 @@
 package au.org.ala.spatial.util;
 
 import au.com.bytecode.opencsv.CSVReader;
+import au.org.ala.spatial.Util;
 import au.org.ala.spatial.analysis.layers.Records;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.log4j.Logger;
 
 import java.io.StringReader;
 import java.net.URLEncoder;
@@ -12,6 +14,8 @@ import java.util.HashSet;
 import java.util.List;
 
 public class OccurrenceData {
+
+    private static final Logger logger = Logger.getLogger(OccurrenceData.class);
 
     static final String SPECIES_LIST_SERVICE_CSV = "/occurrences/facets/download?facets=species_guid&lookup=true&count=true";
 
@@ -73,21 +77,13 @@ public class OccurrenceData {
     }
 
 
-    public String getSpecies(String q, String bs) {
-        HttpClient client = new HttpClient();
-        String url = bs
-                + SPECIES_LIST_SERVICE_CSV
-                + "&q=" + q;
-
-        System.out.println("getting species list: " + url);
-
-        GetMethod get = new GetMethod(url);
+    private String getSpecies(String q, String bs) {
+        String url = bs + SPECIES_LIST_SERVICE_CSV + "&q=" + q;
 
         try {
-            int result = client.executeMethod(get);
-            return get.getResponseBodyAsString();
+            return Util.getUrl(url);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(url, e);
         }
 
         return null;

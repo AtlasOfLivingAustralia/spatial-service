@@ -69,7 +69,7 @@ class GDMStep2 extends SlaveProcess {
         String params = updateParamfile(cutpoint, distance, weighting, subsample, sitePairsSize, getTaskPath())
 
         // 6. run GDM
-        runCmd([grailsApplication.config.gdm.dir, "-g", "1", params])
+        runCmd([grailsApplication.config.gdm.dir, "-g", "1", params] as String[], true)
 
         // 7. process params file
 

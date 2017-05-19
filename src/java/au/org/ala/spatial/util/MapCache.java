@@ -43,13 +43,10 @@ public class MapCache {
         map.createNewFile();
         //download map and write to file
         InputStream mapInput = (new URL(baseUrl + geomIdx)).openStream();
-        FileOutputStream out = new FileOutputStream(map);
-        int read = 0;
-        byte[] buff = new byte[1024];
-        while ((read = mapInput.read(buff)) > 0) {
-            out.write(buff, 0, read);
+        try {
+            FileUtils.copyInputStreamToFile(mapInput, map);
+        } finally {
+            mapInput.close();
         }
-        out.flush();
-        mapInput.close();
     }
 }
