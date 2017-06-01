@@ -69,8 +69,8 @@ class TabulationService {
         for (Tabulation t : tabulations) {
             String value = null
             if (func.equals("area")) {
-                //convert sqm to sqkm
-                value = String.valueOf(t.getArea() / 1000000.0)
+                //sq km
+                value = String.format("%.2f", t.getArea())
             } else if (func.equals("occurrences")) {
                 value = String.valueOf(t.getOccurrences())
             } else if (func.equals("species")) {
@@ -232,10 +232,11 @@ class TabulationService {
         } else if (type.equals("json")) {
             sb.append("{")
             for (int i = 1; i < grid.length; i++) {
-                sb.append("\"").append(grid[i][0].replace("\"", "\"\"")).append("\":")
+                if (grid[i][0])
+                    sb.append("\"").append(grid[i][0].replace("\"", "\"\"")).append("\":")
                 sb.append("{")
                 for (int j = 1; j < grid[i].length; j++) {
-                    if (grid[i][j] != null) {
+                    if (grid[i][j]) {
                         sb.append("\"").append(grid[0][j].replace("\"", "\"\"")).append("\":")
                         sb.append(grid[i][j])
                         sb.append(",")

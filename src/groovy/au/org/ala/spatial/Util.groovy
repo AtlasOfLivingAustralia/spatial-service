@@ -108,8 +108,11 @@ class Util {
                     } else if (type == "POST") {
                         call = new PostMethod(url)
                     }
-                    if (entity != null) {
+                    if (entity) {
                         ((EntityEnclosingMethod) call).setRequestEntity(entity)
+                    }
+                    if (nameValues) {
+                        ((EntityEnclosingMethod) call).setRequestBody(nameValues)
                     }
                 }
 

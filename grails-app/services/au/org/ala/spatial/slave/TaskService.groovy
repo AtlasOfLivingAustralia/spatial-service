@@ -63,7 +63,7 @@ class TaskService {
         def dir = new File(resource.getPath())
 
         for (File f : dir.listFiles()) {
-            if (f.getName().endsWith(".json")) {
+            if (f.getName().endsWith(".json") && !f.getName().equals("limits.json")) {
                 String name = "au.org.ala.spatial.process." + f.getName().substring(0, f.getName().length() - 5)
                 try {
                     Class clazz = Class.forName(name)

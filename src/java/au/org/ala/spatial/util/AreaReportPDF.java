@@ -29,8 +29,9 @@ public class AreaReportPDF {
 
     private static final int PROGRESS_COUNT = 92;
 
-    private static final String[] SPECIES_GROUPS = new String[]{"Algae", "Amphibians", "Angiosperms", "Animals", "Arthropods", "Bacteria"
-            , "Birds", "Bryophytes", "Chromista", "Crustaceans", "Dicots", "FernsAndAllies", "Fish", "Fungi"
+    private static final String[] SPECIES_GROUPS = new String[]{"Algae", "Amphibians", "Angiosperms", "Animals",
+            "Arthropods", "Bacteria"
+            , "Birds", "Bryophytes", "Chromista", "Crustaceans", "Dicots", "FernsAndAllies", "Fishes", "Fungi"
             , "Gymnosperms", "Insects", "Mammals", "Molluscs", "Monocots", "Plants", "Protozoa", "Reptiles"};
 
     private String area_km;

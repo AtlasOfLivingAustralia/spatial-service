@@ -15,9 +15,6 @@
 
 package au.org.ala.spatial.slave
 
-import grails.compiler.GrailsCompileStatic
-
-@GrailsCompileStatic
 class Task {
 
     Long id = System.currentTimeMillis()

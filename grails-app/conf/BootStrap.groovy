@@ -2,8 +2,8 @@ import au.org.ala.layers.dto.*
 import au.org.ala.layers.grid.GridCutter
 import au.org.ala.layers.intersect.IntersectConfig
 import grails.converters.JSON
-import grails.util.GrailsUtil
 import org.apache.naming.ContextAccessController
+import grails.util.Environment
 
 import javax.naming.InitialContext
 
@@ -88,13 +88,13 @@ class BootStrap {
         IntersectConfig.getAlaspatialOutputPath()
 
         //correct for au.org.ala.layers.client.Client in au.org.ala.layers.grid.GridCutter
-        GridCutter.setLayersUrl(grailsApplication.config.grails.serverURL)
+        GridCutter.setLayersUrl((String) grailsApplication.config.grails.serverURL)
     }
 
     def casConfig = {
-        if (GrailsUtil.environment != "test") {
+        if (Environment.getCurrent() != "test") {
             //set CAS values that are determined from other config
-            def url = new URL(grailsApplication.config.grails.serverURL)
+            def url = new URL((String) grailsApplication.config.grails.serverURL)
             grailsApplication.config.security.cas.appServerName =
                     url.getProtocol() + "://" + url.getHost() + (url.port > 0 ? ':' + url.port : '')
             grailsApplication.config.security.cas.serverName = grailsApplication.config.security.cas.appServerName
@@ -119,7 +119,7 @@ class BootStrap {
                 java.lang.reflect.Field readOnlyContextsField = ContextAccessController.class.getDeclaredField("readOnlyContexts")
                 readOnlyContextsField.setAccessible(true)
                 Hashtable hashtable = (Hashtable) readOnlyContextsField.get(null)
-                Hashtable backup = hashtable.clone()
+                Hashtable backup = (Hashtable) hashtable.clone()
                 hashtable.clear()
 
                 try {

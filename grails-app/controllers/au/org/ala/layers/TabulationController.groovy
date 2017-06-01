@@ -45,6 +45,9 @@ class TabulationController {
             fid = pid
             pid = params.containsKey('wkt') ? params.wkt : ''
         }
+        if (!params.wkt && pid) {
+            pid = objectDao.getObjectsGeometryById(pid, 'wkt')
+        }
         render tabulationDao.getTabulationSingle(fid, pid) as JSON
     }
 

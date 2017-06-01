@@ -73,7 +73,6 @@ class TasksService {
         Task.withTransaction {
             Task t = Task.get(id)
             if (t != null) {
-                def m = [:]
                 newValues.each { k, v ->
                     if ('status'.equals(k)) t.status = v
                     else if ('message'.equals(k)) t.message = v
