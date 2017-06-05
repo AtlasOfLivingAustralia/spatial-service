@@ -18,8 +18,8 @@ package au.org.ala.spatial.service
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.transaction.Transactional
+import org.apache.commons.io.IOUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
-import org.codehaus.plexus.util.IOUtil
 
 @Transactional(readOnly = true)
 class TasksController {
@@ -186,7 +186,7 @@ class TasksController {
                 response.setContentType("text/plain")
                 ok = true
             } else if (file.endsWith('.html')) {
-                render(text: IOUtil.toString(new FileInputStream(f)), contentType: "text/html", encoding: "UTF-8")
+                render(text: IOUtils.toString(new FileInputStream(f)), contentType: "text/html", encoding: "UTF-8")
                 return
             } else if (file.endsWith('.jpg')) {
                 response.setContentType("image/jpeg")
