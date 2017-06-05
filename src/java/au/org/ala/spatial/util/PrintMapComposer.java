@@ -55,14 +55,18 @@ public class PrintMapComposer {
     //private LayerUtilities layerUtilities;
     String geoserverUrl;
     String wkhtmltopdfpath;
+    String dataDir;
 
     //uses MapComposer information
-    public PrintMapComposer(String geoserverUrl, String wkhtmltopdfpath, String baseMap, List<String> mapLayers, double[] bb, double[] extents, int[] windowSize, String comment, String outputType, int resolution) {
+    public PrintMapComposer(String geoserverUrl, String wkhtmltopdfpath, String baseMap, List<String> mapLayers,
+                            double[] bb, double[] extents, int[] windowSize, String comment, String outputType, int resolution,
+                            String dataDir) {
         //layerUtilities = new LayerUtilitiesImpl();
         this.wkhtmltopdfpath = wkhtmltopdfpath;
         this.geoserverUrl = geoserverUrl;
         this.mapLayers = new ArrayList(mapLayers);
         this.baseMap = baseMap;
+        this.dataDir = dataDir;
 
         this.extents = new double[]{
                 SpatialUtils.convertLngToMeters(bb[0])
@@ -134,11 +138,13 @@ public class PrintMapComposer {
     }
 
     //extents are in 4326
-    public PrintMapComposer(double[] bbox, String baseMap, String[] mapLayers, double aspectRatio, String comment, String type, int resolution) {
+    public PrintMapComposer(double[] bbox, String baseMap, String[] mapLayers, double aspectRatio, String comment,
+                            String type, int resolution, String dataDir) {
         //this.layerUtilities = new LayerUtilitiesImpl();
         this.mapLayers = Arrays.asList(mapLayers);
         this.baseMap = baseMap;
         this.aspectRatio = aspectRatio;
+        this.dataDir = dataDir;
 
         this.extents = new double[]{
                 SpatialUtils.convertLngToMeters(bbox[0])
@@ -289,7 +295,10 @@ public class PrintMapComposer {
         } catch (NoSuchAlgorithmException e) {
             LOGGER.error("failed to use MD5 as filename");
         }
-        return "/data/webportal/cache/" + hash;
+        File dir = new File(dataDir + "/cache/" + hash);
+        if (!dir.getParentFile().exists()) dir.getParentFile().mkdirs();
+
+        return dir.getPath();
     }
 
 

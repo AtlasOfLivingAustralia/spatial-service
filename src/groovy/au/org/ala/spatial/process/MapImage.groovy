@@ -60,7 +60,8 @@ class MapImage extends SlaveProcess {
                 windowSize,
                 comment,
                 outputType,
-                resolution).get()
+                resolution,
+                grailsApplication.config.data.dir).get()
 
         FileUtils.writeByteArrayToFile(new File(getTaskPath() + task.id + "." + outputType), imageBytes)
 
