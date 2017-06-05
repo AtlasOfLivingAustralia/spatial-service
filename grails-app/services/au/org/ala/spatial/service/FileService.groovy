@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial.service
 
-import org.apache.maven.artifact.ant.shaded.IOUtil
+import org.apache.commons.io.IOUtils
 
 import java.nio.file.Files
 import java.util.zip.ZipEntry
@@ -151,7 +151,7 @@ class FileService {
                 new File(e).getParentFile().mkdirs()
 
                 def bos = new BufferedOutputStream(new FileOutputStream(e.toString()))
-                IOUtil.copy(zf, bos)
+                IOUtils.copy(zf, bos)
                 bos.flush()
                 bos.close()
             }
@@ -214,7 +214,7 @@ class FileService {
                     ZipEntry ze = new ZipEntry(name)
                     zos.putNextEntry(ze)
                     def is = new BufferedInputStream(new FileInputStream(f))
-                    IOUtil.copy(is, zos)
+                    IOUtils.copy(is, zos)
                     is.close()
                     zos.closeEntry()
                 } else {
@@ -247,7 +247,7 @@ class FileService {
                 ZipEntry ze = new ZipEntry(name)
                 zos.putNextEntry(ze)
                 def is = new BufferedInputStream(new FileInputStream(fs))
-                IOUtil.copy(is, zos)
+                IOUtils.copy(is, zos)
                 is.close()
                 zos.closeEntry()
             }
