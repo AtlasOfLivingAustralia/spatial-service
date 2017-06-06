@@ -102,17 +102,29 @@ class Util {
             try {
                 if (type == "GET") {
                     call = new GetMethod(url)
+                } else if (type == "DELETE") {
+                    call = new DeleteMethod(url)
                 } else {
                     if (type == "PUT") {
                         call = new PutMethod(url)
                     } else if (type == "POST") {
                         call = new PostMethod(url)
+
+                        if (nameValues) {
+                            nameValues.each { k, v ->
+                                if (v instanceof List) {
+                                    v.each { i ->
+                                        ((PostMethod) call).addParameter(String.valueOf(k), String.valueOf(i))
+                                    }
+                                } else {
+                                    ((PostMethod) call).addParameter(String.valueOf(k), String.valueOf(v))
+                                }
+
+                            }
+                        }
                     }
                     if (entity) {
                         ((EntityEnclosingMethod) call).setRequestEntity(entity)
-                    }
-                    if (nameValues) {
-                        ((EntityEnclosingMethod) call).setRequestBody(nameValues)
                     }
                 }
 
@@ -139,7 +151,7 @@ class Util {
         } catch (Exception e) {
             log.error url, e
         } finally {
-            if (client) {
+            if (client && client instanceof SimpleHttpConnectionManager && client.getHttpConnectionManager()) {
                 ((SimpleHttpConnectionManager) client.getHttpConnectionManager()).shutdown()
             }
         }
