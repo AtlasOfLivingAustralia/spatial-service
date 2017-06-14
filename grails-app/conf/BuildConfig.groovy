@@ -94,7 +94,7 @@ grails.project.dependency.resolution = {
             excludes 'jquery'
         }
 
-        runtime "org.grails.plugins:cors:1.1.8"
+        runtime ":cors:1.3.0"
 
         runtime ":ala-admin-plugin:1.3-SNAPSHOT"
 
@@ -102,5 +102,8 @@ grails.project.dependency.resolution = {
         compile(":ala-bootstrap3:1.6.2") {
             excludes 'jquery'
         }
+
+        compile ':rendering:1.0.0'
+        compile ":mail:1.0.7"
     }
 }

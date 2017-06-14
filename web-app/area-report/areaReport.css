@@ -1,4 +1,40 @@
+@page {
+    size: 210mm 297mm;
+
+    @bottom-center {
+        vertical-align: bottom;
+        content: element(footer);
+        padding-bottom: 10px;
+    }
+
+    margin-top: 1cm;
+    margin-left: 0cm;
+    margin-right: 0cm;
+    margin-bottom: 2cm;
+}
+
+div.footer {
+    font-size: 11px;
+    border-top: solid 1px;
+    display: block;
+    position: running(footer);
+    margin-left: 0px;
+}
+
+#pagenumber:before {
+    content: counter(page);
+}
+
+#pagecount:before {
+    content: counter(pages);
+}
+
+ol.toc a::after {
+    content: leader('.') target-counter(attr(href), page);
+}
+
 html * {
+    font-family: Helvetica, Dialog;
     margin: 0px;
 }
 
@@ -27,11 +63,8 @@ tr {
 
 img {
     width: 600px;
-    border: 2px solid black;
-    padding: 15px;
+    border: solid 2px #666666;
     display: block;
-    margin-left: auto;
-    margin-right: auto;
     margin-top: 15px;
 }
 
@@ -42,7 +75,7 @@ img {
 
 #legend {
     width: 150px;
-    border: 2px solid black;
+    border: solid 2px black;
     padding: 0px;
     display: block;
     margin-top: 15px;
@@ -57,7 +90,7 @@ img {
 }
 
 #table tr:nth-child(even) {
-    background-color: #CCFFCC;
+    background-color: #dddddd;
     font-size: 8px;
     text-align: center;
     color: black;
@@ -65,8 +98,7 @@ img {
 
 #table {
     margin-top: 15px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 15%;
     width: 70%;
 }
 
@@ -84,19 +116,23 @@ img {
     text-align: left;
 }
 
+#table tr td {
+    text-align: center;
+}
+
 #table tr:first-child td {
     font-weight: bold;
-    font-size: 8px;
+    font-size: 9px;
     text-align: center;
     color: black;
-    border-top: 2px solid darkgreen;
-    border-bottom: 2px solid darkgreen;
+    border-top: solid 2px;
+    border-bottom: solid 2px;
 }
 
 #tablesmall {
     margin-top: 0px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 15%;
+    margin-right: 15%;
     width: 70%;
 }
 
@@ -110,14 +146,10 @@ img {
     color: black;
 }
 
-#tablesmall tr td:first-child {
-    text-align: left;
-}
-
 #dashboard {
-    margin-left: auto;
-    margin-right: auto;
-    width: 500px;
+    width: 600px;
+    margin-left: 80px;
+    margin-top: 60px;
 }
 
 #dashboard tr td {
@@ -132,9 +164,8 @@ img {
     padding: 20px;
 }
 
-#title {
-    color: blue;
-    font-size: 9px;
+.title {
+    color: #999999;
     font-weight: bold;
     text-decoration: underline;
 }
@@ -152,10 +183,67 @@ img {
     font-style: italic;
 }
 
+.content {
+    margin: 30px;
+}
+
 div {
-    page-break-inside: avoid;
+    /*page-break-inside: avoid;*/
 }
 
 p {
     font-size: 11px;
+}
+
+h1 {
+    page-break-before: always;
+}
+
+.odd {
+    background: #dddddd;
+}
+
+#species table {
+    margin-left: 110px;
+}
+
+#species img {
+    margin-left: 70px;
+}
+
+#mapPage img {
+    margin-left: 70px;
+}
+
+#mapPage #imgWithLegend {
+    margin-left: 0px;
+}
+
+#mapPage #legend {
+    margin-left: 0px;
+}
+
+#tableOfContents {
+    width: 500px;
+    margin-left: 100px;
+    font-size: 14px;
+}
+
+#tableOfContents h1 {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+#tableOfContents span {
+    float: right;
+}
+
+#tableOfContents li {
+    list-style: none;
+}
+
+#tableOfContents a {
+    text-decoration: none;
+    color: black;
 }

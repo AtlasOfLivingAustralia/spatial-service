@@ -111,13 +111,13 @@ class Util {
                         call = new PostMethod(url)
 
                         if (nameValues) {
-                            nameValues.each { k, v ->
-                                if (v instanceof List) {
-                                    v.each { i ->
-                                        ((PostMethod) call).addParameter(String.valueOf(k), String.valueOf(i))
+                            nameValues.each { nv ->
+                                if (nv.value instanceof List) {
+                                    nv.value.each { i ->
+                                        ((PostMethod) call).addParameter(String.valueOf(nv.name), String.valueOf(i))
                                     }
                                 } else {
-                                    ((PostMethod) call).addParameter(String.valueOf(k), String.valueOf(v))
+                                    ((PostMethod) call).addParameter(String.valueOf(nv.name), String.valueOf(nv.value))
                                 }
 
                             }

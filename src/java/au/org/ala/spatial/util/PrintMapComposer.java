@@ -2,8 +2,6 @@ package au.org.ala.spatial.util;
 
 import au.org.ala.spatial.Util;
 import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.io.FileUtils;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.log4j.Logger;
 
 import javax.imageio.ImageIO;
@@ -54,15 +52,12 @@ public class PrintMapComposer {
     private List<String> mapLayers;
     //private LayerUtilities layerUtilities;
     String geoserverUrl;
-    String wkhtmltopdfpath;
     String dataDir;
 
     //uses MapComposer information
-    public PrintMapComposer(String geoserverUrl, String wkhtmltopdfpath, String baseMap, List<String> mapLayers,
+    public PrintMapComposer(String geoserverUrl, String baseMap, List<String> mapLayers,
                             double[] bb, double[] extents, int[] windowSize, String comment, String outputType, int resolution,
                             String dataDir) {
-        //layerUtilities = new LayerUtilitiesImpl();
-        this.wkhtmltopdfpath = wkhtmltopdfpath;
         this.geoserverUrl = geoserverUrl;
         this.mapLayers = new ArrayList(mapLayers);
         this.baseMap = baseMap;
@@ -342,10 +337,6 @@ public class PrintMapComposer {
                 ImageIO.write(mapFlat, "jpg", bos);
             } else if ("pdf".equalsIgnoreCase(outputType)) {
                 ImageIO.write(mapFlat, "jpg", bos);
-                bos.flush();
-
-                //return makePdfFromJpg(bos.toByteArray());
-                return makePdf(bos.toByteArray());
             }
             bos.flush();
         } catch (IOException e) {
@@ -353,58 +344,6 @@ public class PrintMapComposer {
         }
 
         return bos.toByteArray();
-    }
-
-    private byte[] makePdf(byte[] bytes) throws IOException {
-
-        File tmpJpg = File.createTempFile("makePdfFromJpg", ".jpg");
-        FileUtils.writeByteArrayToFile(tmpJpg, bytes);
-        File tmpHtml = File.createTempFile("makePdfFromJpg", ".html");
-        File tmpPdf = File.createTempFile("makePdfFromJpg", ".pdf");
-
-        int fontSize = 30;
-        String[] lines = comment.split("\n");
-        int commentHeight = comment.length() > 0 ? (int) (fontSize * lines.length * 1.5) : 0;
-
-        //html
-        FileUtils.writeStringToFile(tmpHtml, "<html><body><img " +
-                "style='height:" + (height + commentHeight) + ";width:" + width + ";' " +
-                "src='" + tmpJpg.getPath() + "' />");
-
-        //generate pdf
-        String[] cmd = new String[]{
-                wkhtmltopdfpath,
-            /* page margins (mm) */
-                "-B", "10", "-L", "10", "-T", "10", "-R", "10",
-            /* page size */
-                "--page-width", "" + (width / 4 + 40), "--page-height", "" + ((height + commentHeight) / 4 + 40),
-            /* input */
-                tmpHtml.getPath(),
-            /* output */
-                tmpPdf.getPath()
-
-        };
-
-        ProcessBuilder builder = new ProcessBuilder(cmd);
-        builder.environment().putAll(System.getenv());
-        builder.redirectErrorStream(true);
-        Process proc = null;
-
-        try {
-            proc = builder.start();
-
-            proc.waitFor();
-        } catch (Exception e) {
-            LOGGER.error("error running wkhtmltopdf", e);
-        }
-
-        byte[] pdf = FileUtils.readFileToByteArray(tmpPdf);
-
-        FileUtils.deleteQuietly(tmpJpg);
-        FileUtils.deleteQuietly(tmpHtml);
-        FileUtils.deleteQuietly(tmpPdf);
-
-        return pdf;
     }
 
     private List drawOSM(Graphics2D g, boolean drawTiles) {

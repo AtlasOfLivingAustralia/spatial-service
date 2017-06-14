@@ -4,6 +4,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.layers.dto.Distribution;
 import au.org.ala.spatial.Util;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -54,6 +55,7 @@ public class AreaReportPDF {
     private String bbox;
     String geoserverUrl;
     String biocacheServiceUrl;
+    String biocacheHubUrl;
 
     String speciesListThreatened;
     String speciesListInvasive;
@@ -68,31 +70,32 @@ public class AreaReportPDF {
                     "National Dynamic Land Cover",
                     "http://spatial.ala.org.au/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=9&LAYER=dlcmv1",
                     "N",
-                    "<br /><br />The Dynamic Land Cover Dataset is the first nationally consistent and thematically comprehensive land cover reference for Australia. It provides a base-line for reporting on change and trends in vegetation cover and extent. Information about land cover dynamics is essential to understanding and addressing a range of national challenges such as drought, salinity, water availability and ecosystem health. The data is a synopsis of land cover information for every 250m by 250m area of the country from April 2000 to April 2008. The classification scheme used to describe land cover categories in the Dataset conforms to the 2007 International Standards Organisation (ISO) land cover standard (19144-2). The Dataset shows Australian land covers clustered into 34 ISO classes. These reflect the structural character of vegetation, ranging from cultivated and managed land covers (crops and pastures) to natural land covers such as closed forest and open grasslands. [Ref1]<br /><br />Australia's Dynamic Land Cover: <a href='http://www.ga.gov.au/earth-observation/landcover.html'>http://www.ga.gov.au/earth-observation/landcover.html</a><br /><br />National Dynamic Land Cover layer: Classification: Vegetation; Type: Contextual (polygonal); Metadata contact organisation: Geoscience Australia (GA). <a href='http://spatial.ala.org.au/ws/layers/view/more/dlcmv1'>http://spatial.ala.org.au/ws/layers/view/more/dlcmv1</a>"
+                    "<br></br>The Dynamic Land Cover Dataset is the first nationally consistent and thematically comprehensive land cover reference for Australia. It provides a base-line for reporting on change and trends in vegetation cover and extent. Information about land cover dynamics is essential to understanding and addressing a range of national challenges such as drought, salinity, water availability and ecosystem health. The data is a synopsis of land cover information for every 250m by 250m area of the country from April 2000 to April 2008. The classification scheme used to describe land cover categories in the Dataset conforms to the 2007 International Standards Organisation (ISO) land cover standard (19144-2). The Dataset shows Australian land covers clustered into 34 ISO classes. These reflect the structural character of vegetation, ranging from cultivated and managed land covers (crops and pastures) to natural land covers such as closed forest and open grasslands. [Ref1]<br></br>Australia's Dynamic Land Cover: <a href='http://www.ga.gov.au/earth-observation/landcover.html'>http://www.ga.gov.au/earth-observation/landcover.html</a><br></br>National Dynamic Land Cover layer: Classification: Vegetation; Type: Contextual (polygonal); Metadata contact organisation: Geoscience Australia (GA). <a href='http://spatial.ala.org.au/ws/layers/view/more/dlcmv1'>http://spatial.ala.org.au/ws/layers/view/more/dlcmv1</a>"
             },
             {
                     "cl1053",
                     "Global Context Ecoregions",
                     "",
                     "Y",
-                    "<br /><br />Terrestrial Ecoregions of the World (TEOW)<br /><br />Terrestrial Ecoregions of the World (TEOW) is a biogeographic regionalisation of the Earth's terrestrial biodiversity. Our biogeographic units are ecoregions, which are defined as relatively large units of land or water containing a distinct assemblage of natural communities sharing a large majority of species, dynamics, and environmental conditions. There are 867 terrestrial ecoregions, classified into 14 different biomes such as forests, grasslands, or deserts. Ecoregions represent the original distribution of distinct assemblages of species and communities. [Ref2]<br /><br />TEOW: <a href='http://worldwildlife.org/biome-categories/terrestrial-ecoregions'>http://worldwildlife.org/biome-categories/terrestrial-ecoregions</a><br /><br />Terrestrial Ecoregional Boundaries layer: Classification: Biodiversity - Region; Type: Contextual (polygonal); Metadata contact organisation: The Nature Conservancy (TNC).  <a href='http://spatial.ala.org.au/ws/layers/view/more/1053'>http://spatial.ala.org.au/ws/layers/view/more/1053</a>"
+                    "<br></br>Terrestrial Ecoregions of the World (TEOW)<br></br>Terrestrial Ecoregions of the World (TEOW) is a biogeographic regionalisation of the Earth's terrestrial biodiversity. Our biogeographic units are ecoregions, which are defined as relatively large units of land or water containing a distinct assemblage of natural communities sharing a large majority of species, dynamics, and environmental conditions. There are 867 terrestrial ecoregions, classified into 14 different biomes such as forests, grasslands, or deserts. Ecoregions represent the original distribution of distinct assemblages of species and communities. [Ref2]<br></br>TEOW: <a href='http://worldwildlife.org/biome-categories/terrestrial-ecoregions'>http://worldwildlife.org/biome-categories/terrestrial-ecoregions</a><br></br>Terrestrial Ecoregional Boundaries layer: Classification: Biodiversity - Region; Type: Contextual (polygonal); Metadata contact organisation: The Nature Conservancy (TNC).  <a href='http://spatial.ala.org.au/ws/layers/view/more/1053'>http://spatial.ala.org.au/ws/layers/view/more/1053</a>"
             },
             {
                     "cl1052",
                     "Freshwater Ecoregions of the World (FEOW)",
                     "",
                     "Y",
-                    "<br /><br />Freshwater Ecoregions of the World (FEOW) is a collaborative project providing the first global biogeographic regionalization of the Earth's freshwater biodiversity, and synthesizing biodiversity and threat data for the resulting ecoregions. We define a freshwater ecoregion as a large area encompassing one or more freshwater systems that contains a distinct assemblage of natural freshwater communities and species. The freshwater species, dynamics, and environmental conditions within a given ecoregion are more similar to each other than to those of surrounding ecoregions and together form a conservation unit. [Ref5]<br /><br />FEOW: <a href='http://worldwildlife.org/biome-categories/freshwater-ecoregions'>http://worldwildlife.org/biome-categories/freshwater-ecoregions</a><br /><br />Freshwater Ecoregions of the World layer: Classification: Biodiversity - Region; Type: Contextual (polygonal); Metadata contact organisation: TNC. <a href='http://spatial.ala.org.au/ws/layers/view/more/1052'>http://spatial.ala.org.au/ws/layers/view/more/1052</a>"
+                    "<br></br>Freshwater Ecoregions of the World (FEOW) is a collaborative project providing the first global biogeographic regionalization of the Earth's freshwater biodiversity, and synthesizing biodiversity and threat data for the resulting ecoregions. We define a freshwater ecoregion as a large area encompassing one or more freshwater systems that contains a distinct assemblage of natural freshwater communities and species. The freshwater species, dynamics, and environmental conditions within a given ecoregion are more similar to each other than to those of surrounding ecoregions and together form a conservation unit. [Ref5]<br></br>FEOW: <a href='http://worldwildlife.org/biome-categories/freshwater-ecoregions'>http://worldwildlife.org/biome-categories/freshwater-ecoregions</a><br></br>Freshwater Ecoregions of the World layer: Classification: Biodiversity - Region; Type: Contextual (polygonal); Metadata contact organisation: TNC. <a href='http://spatial.ala.org.au/ws/layers/view/more/1052'>http://spatial.ala.org.au/ws/layers/view/more/1052</a>"
             }
     };
 
     String pid;
     String dataDir;
 
-    public AreaReportPDF(String geoserverUrl, String biocacheServiceUrl, String q, String pid, String areaName,
+    public AreaReportPDF(String geoserverUrl, String biocacheServiceUrl, String biocacheHubUrl, String q, String pid,
+                         String areaName,
                          String area_km,
                          List<String> facets, Map progress, String serverUrl,
-                         String[][] reportLayers, String wkhtmltopdfPath, String outputPath,
+                         String[][] reportLayers, String outputPath,
                          String journalMapUrl, String dataDir) {
         this.dataDir = dataDir;
 
@@ -109,10 +112,10 @@ public class AreaReportPDF {
         this.serverUrl = serverUrl;
         this.geoserverUrl = geoserverUrl;
         this.biocacheServiceUrl = biocacheServiceUrl;
+        this.biocacheHubUrl = biocacheHubUrl;
 
         this.pid = pid;
         this.query = q;
-        this.wkhtmltopdfPath = wkhtmltopdfPath;
 
         this.area_km = area_km;
 
@@ -136,10 +139,6 @@ public class AreaReportPDF {
         //transform data into html
         setProgress("Formatting", 0);
         if (!isCancelled()) makeHTML();
-
-        //transform html into pdf
-        setProgress("Producing PDF", 0);
-        if (!isCancelled()) savePDF();
 
         setProgress("Finished", 1);
     }
@@ -168,58 +167,6 @@ public class AreaReportPDF {
         }
     }
 
-    public byte[] getPDF() {
-        try {
-            return FileUtils.readFileToByteArray(new File(filePath + "/output.pdf"));
-        } catch (Exception e) {
-            LOGGER.error("failed to get PDF from: " + filePath + "/output.pdf", e);
-        }
-
-        return null;
-    }
-
-    private void savePDF() {
-        try {
-            String[] inputHtmls = new String[fileNumber - 2];
-            StringBuilder sb = new StringBuilder();
-            sb.append("<html><head><link rel='stylesheet' type='text/css' href='" + serverUrl + "/area-report/areaReport.css'></link></head><body><script>function changePage(page) {contents.src = page;}</script><table style=\"width:100%;height:100%\"><tr><td style=\"width:300px;vertical-align:top\"><div><h2>Index</h2><ul>");
-            for (int i = 1; i < fileNumber; i++) {
-                if (i >= 2) inputHtmls[i - 2] = filePath + "/report." + i + ".html";
-
-                //get title
-                String s = FileUtils.readFileToString(new File(filePath + "/report." + i + ".html"));
-                String title = "Part " + i;
-                if (i == 1) title = "Cover";
-                try {
-                    title = s.substring(s.indexOf("<h1>") + 4, s.indexOf("</h1>"));
-                } catch (Exception e) {
-                }
-                sb.append("<li><a href=\"javascript:changePage('report." + i + ".html')\">" + title + "</a></li>");
-            }
-            //last page
-            sb.append("<li><a href=\"javascript:changePage('" + serverUrl + "/area-report/furtherLinks.html')\">Further Links</a></li>");
-
-            sb.append("</ul></td><td><iframe id=\"contents\" src=\"report.1.html\" style=\"width:100%;height:100%;border:0px\" ></td></tr></table></body></html>");
-
-            FileUtils.writeStringToFile(new File(filePath + "/index.html"), sb.toString());
-
-            //5min timeout
-            makePDF(filePath + "/report.1.html", inputHtmls, filePath + "/output.pdf", 5 * 60 * 1000);
-
-            //make paths relative
-            for (int i = 1; i < fileNumber; i++) {
-                File f = new File(filePath + "/report." + i + ".html");
-                String s = FileUtils.readFileToString(f);
-                s = s.replace(filePath + "/", "");
-                f.delete();
-                FileUtils.writeStringToFile(f, s);
-            }
-
-        } catch (Exception e) {
-            LOGGER.error("failed to produce PDF", e);
-        }
-    }
-
     private void makeHTML() {
         //make report
         fileNumber = 1;
@@ -236,7 +183,7 @@ public class AreaReportPDF {
             FileWriter fw = startHtmlOut(fileNumber, filename);
 
             //box summary
-            fw.write("<img  id='imgHeader' src='" + serverUrl + "/image/header.jpg' width='100%' />");
+            fw.write("<img  id='imgHeader' src='" + serverUrl + "/image/header.jpg' width='100%' ></img>");
             //fw.write("<div>AREA REPORT</div>");
             fw.write("<table id='dashboard' >");
             fw.write("<tr>");
@@ -439,14 +386,14 @@ public class AreaReportPDF {
             //expert distributions
             count = Integer.parseInt(counts.get("Distribution Areas").toString());
             speciesPage(false, fw, "My Area", "Expert Distributions", notes, tableNumber,
-                    count, -1, figureNumber, null, csvs.get("distributions").toString());
+                    count, -1, figureNumber, null, csvs.get("e").toString());
             fw.write("</body></html>");
             fw.close();
             fileNumber++;
             fw = startHtmlOut(fileNumber, filename);
             count = Integer.parseInt(counts.get("Checklist Areas").toString());
             speciesPage(false, fw, "My Area", "Checklist Areas", notes, tableNumber,
-                    count, -1, figureNumber, null, csvs.get("checklists").toString());
+                    count, -1, figureNumber, null, csvs.get("c").toString());
             fw.write("</body></html>");
             fw.close();
             fileNumber++;
@@ -469,72 +416,6 @@ public class AreaReportPDF {
         }
     }
 
-    private void makePDF(String headerHtml, String[] inputHtmls, String outputPdf, long maxRunTime) {
-        //generate pdf
-        String[] cmdStart = new String[]{
-                wkhtmltopdfPath,
-            /* page margins (mm) */
-                "-B", "10", "-L", "10", "-T", "10", "-R", "10",
-            /* encoding */
-                "--encoding", "UTF-8",
-            /* footer settings */
-                "--footer-font-size", "9",
-                "--footer-line",
-                "--footer-left", "    www.ala.org.au",
-                "--footer-right", "Page [page] of [toPage]     "
-        };
-
-        String[] cmd = new String[cmdStart.length + 4 + inputHtmls.length + 2];
-        System.arraycopy(cmdStart, 0, cmd, 0, cmdStart.length);
-        cmd[cmdStart.length] = headerHtml;
-
-        /* table of contents */
-        cmd[cmdStart.length + 1] = "toc";
-        cmd[cmdStart.length + 2] = "--xsl-style-sheet";
-        cmd[cmdStart.length + 3] = filePath + "/toc.xsl";
-
-        System.arraycopy(inputHtmls, 0, cmd, cmdStart.length + 4, inputHtmls.length);
-        cmd[cmd.length - 2] = serverUrl + "/area-report/furtherLinks.html";
-
-        cmd[cmd.length - 1] = outputPdf;
-
-        System.out.println(StringUtils.join(cmd, " "));
-
-        ProcessBuilder builder = new ProcessBuilder(cmd);
-        builder.environment().putAll(System.getenv());
-        builder.redirectErrorStream(true);
-        Process proc = null;
-
-        long start = System.currentTimeMillis();
-
-        try {
-
-            proc = builder.start();
-
-            while (maxRunTime + start > System.currentTimeMillis()) {
-                Thread.sleep(500);
-                try {
-                    proc.exitValue();
-
-                    //finished
-                    break;
-
-                } catch (IllegalThreadStateException e) {
-                    //still running
-                }
-            }
-
-            if (maxRunTime + start < System.currentTimeMillis()) {
-                LOGGER.error("wkhtmltopdf took longer than " + maxRunTime + "ms and was cancelled");
-                proc.destroy();
-            } else {
-                proc.waitFor();
-            }
-        } catch (Exception e) {
-            LOGGER.error("error running wkhtmltopdf", e);
-        }
-    }
-
     private FileWriter startHtmlOut(int fileNumber, String filename) throws Exception {
         FileWriter fw = new FileWriter(filename.replace(".", "." + fileNumber + "."));
         fw.write("<html>");
@@ -545,37 +426,35 @@ public class AreaReportPDF {
 
     private void speciesPage(boolean isSpecies, FileWriter fw, String areaName, String title, String notes, int tableNumber, int count, int countKosher, int figureNumber, String imageUrl, String csv) throws Exception {
         String imageUrlActual = imageUrl;
-        if (imageUrlActual != null) {
-            imageUrlActual = filePath + "/" + imageUrlActual;
-        }
+
         fw.write("<table id='species'>");
         fw.write("<tr>");
-        fw.write("<td id='title'><h1>");
-        fw.write(title);
+        fw.write("<td><h1 class='title' id='" + StringEscapeUtils.escapeHtml(title) + "'>");
+        fw.write(StringEscapeUtils.escapeHtml(title));
         fw.write("</h1></td>");
         fw.write("</tr><tr>");
         fw.write("<td>");
-        fw.write("<br />Number of " + title.toLowerCase() + ": <b>" + count + "</b>");
+        fw.write("<br></br>Number of " + StringEscapeUtils.escapeHtml(title.toLowerCase()) + ": <b>" + count + "</b>");
         fw.write("</td>");
         fw.write("</tr><tr>");
-        fw.write("<td><br />");
-        fw.write(notes);
+        fw.write("<td><br></br>");
+        fw.write(StringEscapeUtils.escapeHtml(notes));
         fw.write("</td>");
         fw.write("</tr><tr>");
         if (countKosher >= 0) {
             fw.write("<td>");
-            fw.write("<br />Number of " + title.toLowerCase() + " (spatially valid only): <b>" + countKosher + "</b>");
+            fw.write("<br></br>Number of " + StringEscapeUtils.escapeHtml(title.toLowerCase()) + " (spatially valid only): <b>" + countKosher + "</b>");
             fw.write("</td>");
             fw.write("</tr><tr>");
         }
 
         if ((count > 0 || countKosher > 0) && imageUrlActual != null) {
             fw.write("<td>");
-            fw.write("<br /><img src='" + imageUrlActual + "' />");
+            fw.write("<br></br><img src='" + StringEscapeUtils.escapeHtml(imageUrlActual) + "'></img>");
             fw.write("</td>");
             fw.write("</tr><tr>");
             fw.write("<td id='figure'>");
-            fw.write("<b>Figure " + figureNumber + ":</b> Map of " + title + " in " + areaName);
+            fw.write("<b>Figure " + figureNumber + ":</b> Map of " + StringEscapeUtils.escapeHtml(title) + " in " + StringEscapeUtils.escapeHtml(areaName));
             fw.write("</td>");
             fw.write("</tr><tr>");
         }
@@ -584,9 +463,9 @@ public class AreaReportPDF {
         if ((count > 0 || countKosher > 0) && csv != null) {
             CSVReader r = new CSVReader(new StringReader(csv));
 
-            fw.write("<td id='tableNumber'><br /><b>Table " + tableNumber + ":</b> " + title);
+            fw.write("<td id='tableNumber'><br></br><b>Table " + tableNumber + ":</b> " + StringEscapeUtils.escapeHtml(title));
             if (speciesLinks.get(title.replace("lifeform - ", "")) != null) {
-                fw.write("<a href='" + speciesLinks.get(title.replace("lifeform - ", "")) + "'>(Link to full list)</a>");
+                fw.write("<a href='" + StringEscapeUtils.escapeHtml(speciesLinks.get(title.replace("lifeform - ", "")).replace(biocacheServiceUrl, biocacheHubUrl)) + "'>(Link to full list)</a>");
             }
             fw.write("</td></tr><tr><td>");
 
@@ -612,9 +491,13 @@ public class AreaReportPDF {
             String[] line;
             int row = 0;
             while ((line = r.readNext()) != null) {
-                fw.write("<tr>");
+                if (row % 2 == 0) {
+                    fw.write("<tr class='odd'>");
+                } else {
+                    fw.write("<tr class='even'>");
+                }
                 for (int i = 0; i < columnOrder.length && columnOrder[i] < line.length; i++) {
-                    fw.write("<td><div>" + line[columnOrder[i]] + "</div></td>");
+                    fw.write("<td><div>" + StringEscapeUtils.escapeHtml(line[columnOrder[i]]) + "</div></td>");
                 }
                 fw.write("</tr>");
 
@@ -622,7 +505,7 @@ public class AreaReportPDF {
             }
 
             fw.write("</table>");
-            fw.write("<td>");
+            fw.write("</td>");
         }
 
         fw.write("</tr>");
@@ -631,31 +514,29 @@ public class AreaReportPDF {
 
     private void mapPage(FileWriter fw, String areaName, int figureNumber, int tableNumber, String imageUrl, String notes, JSONObject tabulation, String legendUrl) throws Exception {
         String imageUrlActual = imageUrl;
-        if (imageUrlActual != null) {
-            imageUrlActual = filePath + "/" + imageUrlActual;
-        }
+
         fw.write("<table id='mapPage'>");
         fw.write("<tr>");
-        fw.write("<td id='title'><h1>");
+        fw.write("<td><h1 class='title' id='" + areaName + "'>");
         fw.write(areaName);
         fw.write("</h1></td>");
         fw.write("</tr><tr>");
-        fw.write("<td><br />");
+        fw.write("<td><br></br>");
         fw.write(notes);
         fw.write("</td>");
         fw.write("</tr><tr>");
         fw.write("<td>");
         if (imageUrlActual.endsWith("base_area.png")) {
-            fw.write("<br /><img src='" + filePath + "/base_area_zoomed_out.png' />");
+            fw.write("<br></br><img src='base_area_zoomed_out.png'></img>");
         }
-        fw.write("<br /><img " + (legendUrl != null ? "id='imgWithLegend' " : "") + " src='" + imageUrlActual + "' />");
+        fw.write("<br></br><img " + (legendUrl != null ? "id='imgWithLegend' " : "") + " src='" + imageUrlActual + "'></img>");
         if (legendUrl != null) {
-            fw.write("<img id='legend' src='" + legendUrl + "'/>");
+            fw.write("<img id='legend' src='" + StringEscapeUtils.escapeHtml(legendUrl) + "'></img>");
         }
         fw.write("</td>");
         fw.write("</tr><tr>");
         fw.write("<td id='figure'>");
-        fw.write("<b>Figure " + figureNumber + ":</b> Map of " + areaName);
+        fw.write("<b>Figure " + figureNumber + ":</b> Map of " + StringEscapeUtils.escapeHtml(areaName));
         fw.write("</td>");
         fw.write("</tr><tr>");
 
@@ -669,19 +550,26 @@ public class AreaReportPDF {
 
             if (totalArea > 0) {
                 fw.write("<td id='tableNumber'>");
-                fw.write("<br /><b>Table " + tableNumber + ":</b> " + areaName);
+                fw.write("<br></br><b>Table " + tableNumber + ":</b> " + StringEscapeUtils.escapeHtml(areaName));
                 fw.write("</td></tr><tr><td>");
-                fw.write("<br /><table id='table'><tr><td>Class/Region</td><td>Area (sq km)</td><td>% of total area</td></tr>");
+                fw.write("<br></br><table id='table'><tr><td>Class/Region</td><td>Area (sq km)</td><td>% of total area</td></tr>");
 
+                int row = 0;
                 for (Object o : (JSONArray) tabulation.get("tabulationList")) {
                     JSONObject jo = (JSONObject) o;
-                    fw.write("<tr><td>");
-                    fw.write(jo.get("name1").toString());
+                    if (row % 2 == 0) {
+                        fw.write("<tr class='odd'>");
+                    } else {
+                        fw.write("<tr class='odd'>");
+                    }
+                    fw.write("<td>");
+                    fw.write(StringEscapeUtils.escapeHtml(jo.get("name1").toString()));
                     fw.write("</td><td>");
                     fw.write(String.format("%.2f", Double.parseDouble(jo.get("area").toString()) / 1000000.0));
                     fw.write("</td><td>");
                     fw.write(String.format("%.2f", Double.parseDouble(jo.get("area").toString()) / 1000000.0 / totalArea * 100));
                     fw.write("</td></tr>");
+                    row++;
                 }
 
                 fw.write("</table>");
@@ -932,7 +820,7 @@ public class AreaReportPDF {
         setProgress("Getting information: Journalmap", 0);
         if (isCancelled()) return;
         StringBuilder sb = new StringBuilder();
-        List<JSONObject> list = (JSONArray) jp.parse(Util.getUrl(serverUrl + "/journalMap/search?pid=" + pid));
+        List<JSONObject> list = (JSONArray) ((JSONObject) jp.parse(Util.getUrl(serverUrl + "/journalMap/search?pid=" + pid))).get("article");
         //empty header
         sb.append("\n");
 
@@ -979,7 +867,7 @@ public class AreaReportPDF {
             if (jo.containsKey("id")) {
                 String journalmapUrl = journalMapUrl;
                 String articleUrl = journalmapUrl + "articles/" + jo.get("id").toString();
-                sb.append("<a href='" + articleUrl + "'>" + articleUrl + "</a>");
+                sb.append("<a href='" + StringEscapeUtils.escapeHtml(articleUrl) + "'>" + StringEscapeUtils.escapeHtml(articleUrl) + "</a>");
             }
         }
 

@@ -1,0 +1,27 @@
+{
+  "name": "TrackHarvest",
+  "description": "Harvest tracks",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": false
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "type": "auto"
+    },
+    "dataProviders": {
+      "description": "comma delimited list of data provider ids",
+      "type": "string",
+      "constraints": {
+        "default": "dp4720"
+      }
+    }
+  },
+  "output": {
+    "sql": {
+      "description": "SQL to replace existing tracks."
+    }
+  }
+}

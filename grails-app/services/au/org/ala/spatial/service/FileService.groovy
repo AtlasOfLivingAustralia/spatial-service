@@ -208,7 +208,7 @@ class FileService {
         try {
             files.each { file ->
                 File f = file
-                if(f.exists() && !f.isDirectory()) {
+                if (f.exists() && !f.isDirectory() && f.getName() != 'download.zip') {
                     //prefix is always the location of the relative dir
                     String name = zipEntryName(f.getPath(), prefix)
                     ZipEntry ze = new ZipEntry(name)

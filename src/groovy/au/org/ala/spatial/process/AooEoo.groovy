@@ -21,6 +21,9 @@ import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
+import org.geotools.kml.KML
+import org.geotools.kml.KMLConfiguration
+import org.geotools.xml.Encoder
 
 import java.awt.geom.Point2D
 
@@ -71,15 +74,19 @@ class AooEoo extends SlaveProcess {
 
             if (eoo > 0) {
 
-                FileUtils.writeStringToFile(new File(getTaskPath() + "Extent of occurrence.wkt"), wkt)
+                def filename = "Extent of occurrence.wkt"
+                FileUtils.writeStringToFile(new File(getTaskPath() + filename), wkt)
                 def values = [file: "Extent of occurrence.wkt", name: "Extent of occurrence (area): " + species.name,
                               description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
+                addOutput("files", filename, true)
 
-                FileUtils.writeStringToFile(new File(getTaskPath() + "Area of occupancy.wkt"), aWkt)
+                filename = "Area of occupancy.wkt"
+                FileUtils.writeStringToFile(new File(getTaskPath() + filename), aWkt)
                 values = [file: "Area of occupancy.wkt", name: "Area of occupancy (area): " + species.name,
                           description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
+                addOutput("files", filename, true)
 
                 metadata = "<html><body>" +
                         "<div class='aooeoo'>" +
@@ -95,8 +102,16 @@ class AooEoo extends SlaveProcess {
 
                 FileUtils.writeStringToFile(new File(getTaskPath() + "Calculated AOO and EOO.html"), metadata)
 
-                def tp = getTaskPath()
                 addOutput("metadata", "Calculated AOO and EOO.html", true)
+
+                //export areas in kml format
+                filename = "Extent of occurrence.kml"
+                writeWktAsKmlToFile(new File(getTaskPath() + filename), wkt)
+                addOutput("files", filename, true)
+
+                filename = "Area of occupancy.kml"
+                writeWktAsKmlToFile(new File(getTaskPath() + filename), aWkt)
+                addOutput("files", filename, true)
             } else {
                 log.error 'Extent of occurrences is 0.'
             }
@@ -104,6 +119,19 @@ class AooEoo extends SlaveProcess {
         } catch (err) {
             log.error 'failed to calculate aoo eoo ' + task.id, err
         }
+    }
+
+    void writeWktAsKmlToFile(File file, String wkt) {
+        String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><kml xmlns=\"http://earth.google.com/kml/2.2\"><Document>  <name></name>  <description></description>  <Style id=\"style1\">    <LineStyle>      <color>40000000</color>      <width>3</width>    </LineStyle>    <PolyStyle>      <color>73FF0000</color>      <fill>1</fill>      <outline>1</outline>    </PolyStyle>  </Style>  <Placemark>    <name></name>    <description></description>    <styleUrl>#style1</styleUrl>"
+
+        Encoder encoder = new Encoder(new KMLConfiguration())
+        encoder.setIndenting(true)
+        WKTReader reader = new WKTReader()
+        String kml = encoder.encodeAsString(reader.read(wkt), KML.Geometry)
+
+        String footer = "</Placemark></Document></kml>"
+
+        FileUtils.writeStringToFile(file, header + kml + footer)
     }
 
     int processPoints(points, StringBuilder sb) {

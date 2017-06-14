@@ -98,10 +98,10 @@ class DistributionCreation extends SlaveProcess {
                             values.append("\'\'").append(sqlEscapeString(p.getValue()).replace("\'", "\'\'")).append("\'\'")
                         } else if (v[1].equalsIgnoreCase('b')) {
                             //boolean
-                            values.append(p.getValue().toString())
+                            values.append(sqlEscapeString(p.getValue().toString()))
                         } else {
                             //number
-                            values.append('' + p.getValue())
+                            values.append(sqlEscapeString('' + p.getValue()))
                         }
                     }
                 }

@@ -19,6 +19,7 @@ import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.AreaReportPDF
 import grails.converters.JSON
 import groovy.util.logging.Commons
+import org.apache.commons.io.FileUtils
 
 @Commons
 
@@ -38,23 +39,31 @@ class AreaReport extends SlaveProcess {
         //test for pid
         new AreaReportPDF(grailsApplication.config.geoserver.url.toString(),
                 grailsApplication.config.biocacheServiceUrl.toString(),
+                grailsApplication.config.biocacheUrl.toString(),
                 q,
                 area[0].pid.toString(),
                 area[0].name.toString(),
                 area[0].area_km.toString(),
                 null, task.history,
                 grailsApplication.config.layersService.url.toString(),
-                null, grailsApplication.config.wkhtmltopdf.path.toString(),
+                null,
                 getTaskPath(),
                 grailsApplication.config.journalmap.url.toString(),
-                grailsApplication.config.data.dir)
+                grailsApplication.config.data.dir.toString())
+
+        File pdf = new File(getTaskPath() + "areaReport" + task.id + ".pdf")
+        def outputStream = FileUtils.openOutputStream(pdf)
+
+        InputStream stream = new URL(grailsApplication.config.grails.serverURL + '/slave/areaReport/' + task.id).openStream()
+        outputStream << stream
+        outputStream.flush()
+        outputStream.close()
 
         File dir = new File(getTaskPath())
 
-        File pdf = new File(getTaskPath() + 'output.pdf')
         if (dir.listFiles().length == 0) {
             task.history.put(System.currentTimeMillis(), "Failed.")
-        } else if (!pdf.exists()) {
+        } else if (!pdf.exists() || pdf.length() <= 0) {
             task.history.put(System.currentTimeMillis(), "Failed to make PDF. Exporting html instead.")
         }
 

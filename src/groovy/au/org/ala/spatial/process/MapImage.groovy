@@ -23,6 +23,8 @@ import org.apache.commons.io.FileUtils
 @Commons
 class MapImage extends SlaveProcess {
 
+    def pdfRenderingService
+
     void start() {
 
         ///area to restrict
@@ -52,7 +54,6 @@ class MapImage extends SlaveProcess {
         //test for pid
         def imageBytes = new PrintMapComposer(
                 grailsApplication.config.geoserver.url.toString(),
-                grailsApplication.config.wkhtmltopdf.path.toString(),
                 baseMap,
                 mapLayers,
                 bbox,
@@ -63,14 +64,27 @@ class MapImage extends SlaveProcess {
                 resolution,
                 grailsApplication.config.data.dir).get()
 
-        FileUtils.writeByteArrayToFile(new File(getTaskPath() + task.id + "." + outputType), imageBytes)
+        if (outputType == 'pdf') {
+            FileUtils.writeByteArrayToFile(new File(getTaskPath() + task.id + ".jpg"), imageBytes)
+
+            File pdf = new File(getTaskPath() + task.id + ".pdf")
+            def outputStream = FileUtils.openOutputStream(pdf)
+
+            InputStream stream = new URL(grailsApplication.config.grails.serverURL + '/slave/exportMap/' + task.id).openStream()
+            outputStream << stream
+            outputStream.flush()
+            outputStream.close()
+
+        } else {
+            FileUtils.writeByteArrayToFile(new File(getTaskPath() + task.id + "." + outputType), imageBytes)
+        }
 
         File dir = new File(getTaskPath())
 
         File pdf = new File(getTaskPath() + 'output.pdf')
         if (dir.listFiles().length == 0) {
             task.history.put(System.currentTimeMillis(), "Failed.")
-        } else if (!pdf.exists()) {
+        } else if (outputType == 'pdf' && !pdf.exists()) {
             task.history.put(System.currentTimeMillis(), "Failed to make PDF. Exporting html instead.")
         }
 

@@ -17,6 +17,8 @@ package au.org.ala.spatial.slave
 
 import grails.converters.JSON
 
+import javax.imageio.ImageIO
+
 import static grails.async.Promises.onComplete
 import static grails.async.Promises.task
 
@@ -80,5 +82,103 @@ class SlaveController {
         def map = [status: "alive"]
 
         render map as JSON
+    }
+
+    /**
+     * pdf area report
+     *
+     * @return
+     */
+    def areaReport(Long id) {
+        def pages = []
+
+        File file
+        def i = params.start?.toInteger() ?: 1
+        def end = params.end?.toInteger() ?: 500
+        while (i <= end &&
+                ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
+                        (file = new File(grailsApplication.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists())) {
+            pages.add(cleanPageText(file.text, i, file))
+            i = i + 1
+        }
+
+        pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/area-report/furtherLinks.html").text, i, null))
+
+        //find class='title' for table of contents
+        StringBuilder sb = new StringBuilder()
+        sb.append("<div id='tableOfContents'><h1>Table of Contents</h1><ol class='toc'>")
+        for (String page : pages) {
+            page.findAll(" class='title' id='([^']*)'") { match, bookmark ->
+                sb.append("<li><a href='#").append(bookmark).append("'>").append(bookmark).append("</a></li>")
+            }
+        }
+        sb.append("</ol></div>")
+        pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
+
+        renderPdf(template: "areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: true)
+    }
+
+    private def cleanPageText(text, i, file) {
+        text.replaceAll("^.*<body>", i > 1 ? "<div class='content'>" : "<div>").
+                replaceAll("</body>.*\$", "</div>").
+                replaceAll("<tr></tr>", "").
+                replaceAll("&([^a][^m][^p])", "&amp;\$1").
+                replaceAll(" src='([^/']*)'", " src='file://${file?.getParent()}/\$1'")
+    }
+
+    def exportMap(Long id) {
+        def img = new File(grailsApplication.config.data.dir + '/public/' + id + '/' + id + '.jpg')
+        if (!img.exists()) img = new File(grailsApplication.config.data.dir + '/private/' + id + '/' + id + '.jpg')
+
+        def image = ImageIO.read(img)
+
+        renderPdf(template: 'exportMap',
+                model: [imageBytes: img.bytes, height: image.height, width: image.width],
+                stream: true)
+    }
+
+    def pdf(Long id) {
+        def pages = []
+
+        if (!new File(grailsApplication.config.data.dir + '/public/' + id + '/report.1.html').exists()) {
+            //export map
+
+            def img = new File(grailsApplication.config.data.dir + '/public/' + id + '/' + id + '.jpg')
+            if (!img.exists()) img = new File(grailsApplication.config.data.dir + '/private/' + id + '/' + id + '.jpg')
+
+            def image = ImageIO.read(img)
+
+            renderPdf(template: 'exportMap',
+                    model: [imageBytes: img.bytes, height: image.height, width: image.width],
+                    stream: true)
+
+        } else {
+            //area report
+            File file
+            def i = 1
+            while ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
+                    (file = new File(grailsApplication.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists()) {
+                pages.add(file.text.replaceAll("^.*<body>", "").//<div style='page-break-before: always;'>").
+                        replaceAll("</body>.*\$", "").//</div>").
+                        replaceAll("<tr></tr>", "").
+                        replaceAll(" src='([^/']*)'", " src='file://${grailsApplication.config.data.dir}/task/${id}/\$1'"))
+                i = i + 1
+            }
+
+            pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/area-report/furtherLinks.html").text, i, null))
+
+            //find class='title' for table of contents
+            StringBuilder sb = new StringBuilder()
+            sb.append("<div id='tableOfContents'><h1>Table of Contents</h1><ol class='toc'>")
+            for (String page : pages) {
+                page.findAll(" class='title' id='([^']*)'") { match, bookmark ->
+                    sb.append("<li><a href='#").append(bookmark).append("'>").append(bookmark).append("</a></li>")
+                }
+            }
+            sb.append("</ol></div>")
+            pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
+
+            [pages: pages, id: id]
+        }
     }
 }

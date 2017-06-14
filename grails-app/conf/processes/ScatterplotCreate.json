@@ -1,6 +1,6 @@
 {
   "name": "ScatterplotCreate",
-  "description": "List of scatterplots.",
+  "description": "Create a scatterplot.",
   "isBackground": false,
   "version": 1.0,
   "private": {

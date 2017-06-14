@@ -32,7 +32,7 @@
       }
     },
     "species": {
-      "description": "Occurrences to use in the prediction.",
+      "description": "Occurrences to use.",
       "type": "species",
       "constraints": {
         "min": 1,
@@ -46,9 +46,6 @@
     },
     "files": {
       "description": "Output files."
-    },
-    "metadata": {
-      "description": "Prediction metadata."
     },
     "download": {
       "description": "Files in the download zip."
