@@ -28,7 +28,6 @@ import com.thoughtworks.xstream.io.xml.DomDriver
 import com.thoughtworks.xstream.mapper.MapperWrapper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.ArrayUtils
-import org.geotools.graph.util.ZipUtil
 
 import java.nio.file.Files
 
@@ -111,12 +110,12 @@ class LegacyService {
                                 "                                    \"download\":{\"description\":\"Files in the download zip.\"}},\n" +
                                 "                                    \"version\":1.0}"
 
-                        FileUtils.writeStringToFile(spec, "spec.json")
+                        FileUtils.writeStringToFile(new File(grailsApplication.config.data.dir + "/public/" + f.getName() + '/spec.json'), spec)
                     }
                 } else if (f.isDirectory()) {
                     //link layer files
                     def analysisFiles = f.listFiles()
-                    File taskDir = grailsApplication.config.data.dir + '/public/' + f.getName()
+                    File taskDir = new File(grailsApplication.config.data.dir + '/public/' + f.getName())
                     if (!taskDir.exists()) taskDir.mkdirs()
                     for (File af : analysisFiles) {
                         if (af.getName().endsWith(".grd") || af.getName().endsWith(".gri")) {
@@ -129,49 +128,51 @@ class LegacyService {
                                 sitesbyspecies = true
                             }
                         } else if (af.getName().endsWith(".asc")) {
-                            nf = new File(grailsApplication.config.data.dir + '/layer/' + af.getName().replaceAll("\\..*", ".tif"))
+                            String newName = f.getName() + '_' + af.getName().replaceAll("\\..*", ".tif")
+                            nf = new File("${grailsApplication.config.data.dir}/layer/${newName}.tif")
                             if (!nf.exists()) {
-                                //copy as tiff
-                                String[] cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff",
-                                                "-a_srs", "EPSG:4326", "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES",
-                                                "-co", "BIGTIFF=IF_SAFER", af.getPath(),
-                                                grailsApplication.config.data.dir + '/layer/' + af.getName().replaceAll("\\..*", ".tif")]
-                                Util.runCmd(cmd)
-
-                                //copy sld
-                                File sld = new File(taskDir.getPath() + '/' + af.getName().replace('.asc', '.sld'))
-                                String oldLayerName = ''
-                                String sldName = ''
-                                if ('aloc'.equalsIgnoreCase(dir)) {
-                                    sldName = 'aloc_' + f.getName()
-                                    oldLayerName = "aloc_" + f.getName()
-                                } else if ('gdm'.equalsIgnoreCase(dir)) {
-                                    sldName = 'alastyles' //default sld for gdm
-                                    oldLayerName = 'gdm_' + af.getName().replace('.asc', '_' + f.getName())
-                                } else if ('maxent'.equalsIgnoreCase(dir)) {
-                                    oldLayerName = 'species_' + f.getName()
-                                } else if ('sitesbyspecies'.equalsIgnoreCase(dir)) {
-                                    if (af.getName().contains("occurrence")) {
-                                        odensity = true
-                                        sldName = 'odensity_' + f.getName()
-                                        oldLayerName = sldName
-                                    } else if (af.getName().contains("species")) {
-                                        srichness = true
-                                        sldName = 'srichness_' + f.getName()
-                                        oldLayerName = sldName
-                                    }
-                                }
-                                if (!sldName.isEmpty()) {
-                                    FileUtils.writeStringToFile(sld, getSld(sldName))
-                                    FileUtils.copyFile(sld, new File(grailsApplication.config.data.dir + '/layer/' + f.getName() + '_' + af.getName().replace('.asc', '.sld')))
-                                }
-
                                 if ("move".equalsIgnoreCase(grailsApplication.config.legacy.type.toString())) {
+
+                                    //copy as tiff
+                                    String[] cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff",
+                                                    "-a_srs", "EPSG:4326", "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES",
+                                                    "-co", "BIGTIFF=IF_SAFER", af.getPath(),
+                                                    grailsApplication.config.data.dir + '/layer/' + newName + '.tif']
+                                    Util.runCmd(cmd)
+
+                                    //copy sld
+                                    File sld = new File(taskDir.getPath() + '/' + newName + '.sld')
+                                    String oldLayerName = ''
+                                    String sldName = ''
+                                    if ('aloc'.equalsIgnoreCase(dir)) {
+                                        sldName = 'aloc_' + f.getName()
+                                        oldLayerName = "aloc_" + f.getName()
+                                    } else if ('gdm'.equalsIgnoreCase(dir)) {
+                                        sldName = 'alastyles' //default sld for gdm
+                                        oldLayerName = 'gdm_' + af.getName().replace('.asc', '_' + f.getName())
+                                    } else if ('maxent'.equalsIgnoreCase(dir)) {
+                                        oldLayerName = 'species_' + f.getName()
+                                    } else if ('sitesbyspecies'.equalsIgnoreCase(dir)) {
+                                        if (af.getName().contains("occurrence")) {
+                                            odensity = true
+                                            sldName = 'odensity_' + f.getName()
+                                            oldLayerName = sldName
+                                        } else if (af.getName().contains("species")) {
+                                            srichness = true
+                                            sldName = 'srichness_' + f.getName()
+                                            oldLayerName = sldName
+                                        }
+                                    }
+                                    if (!sldName.isEmpty()) {
+                                        FileUtils.writeStringToFile(sld, getSld(sldName))
+                                        FileUtils.copyFile(sld, new File(grailsApplication.config.data.dir + '/layer/' + newName + '.sld'))
+                                    }
+
                                     //delete layer
                                     deleteLayer(oldLayerName)
 
                                     //add new layer
-                                    createLayer(af.getPath().replace(".asc", ".tif"), oldLayerName)
+                                    createLayer(af.getParent() + '/' + newName + '.tif', oldLayerName)
                                 } else if ("copy".equalsIgnoreCase(grailsApplication.config.legacy.type.toString())) {
                                     //add new layer, it has the same name so skip creation
                                 }
@@ -183,11 +184,7 @@ class LegacyService {
                         }
                     }
 
-                    //zip task
-                    nf = new File(taskDir.getPath() + '/download.zip')
-                    if (!nf.exists()) {
-                        ZipUtil.zip(nf, analysisFiles)
-                    }
+                    //zip task only when requested from TaskController.output
 
                     //create spec.json for usage
                     String time = String.valueOf(System.currentTimeMillis())
@@ -250,23 +247,24 @@ class LegacyService {
                                 "                        \"metadata\":{\"files\":[\"sxs_metadata.html\"],\"description\":\"Points To Grid metadata.\"}},\n" +
                                 "                        \"version\": 0}"
                     }
-                    FileUtils.writeStringToFile(spec, "spec.json")
+                    FileUtils.writeStringToFile(new File(grailsApplication.config.data.dir + "/public/" + f.getName() + '/spec.json'), spec)
                 }
             }
         }
     }
 
     def convertSessionFiles(File[] files, String name) {
-        //def dir = grailsApplication.config.sessions.dir
+        if (files.length == 0) return
+
+        def dir = files[0].getParent()
 
         Map m = new HashMap()
 
-        def dir = "/data/s"
-        Scanner scanner = null;
+        Scanner scanner = null
         try {
-            scanner = new Scanner(new File(dir + "/details.txt"));
+            scanner = new Scanner(new File(dir + "/details.txt"))
             // first grab the zoom level and bounding box
-            String[] mapdetails = scanner.nextLine().split(",");
+            String[] mapdetails = scanner.nextLine().split(",")
 
             float[] bb = [Float.parseFloat(mapdetails[1]), Float.parseFloat(mapdetails[2]),
                           Float.parseFloat(mapdetails[3]), Float.parseFloat(mapdetails[4])]
@@ -288,31 +286,31 @@ class LegacyService {
                     return new MapperWrapper(next) {
                         public boolean shouldSerializeMember(Class definedIn, String fieldName) {
                             if (definedIn == Object.class || !super.shouldSerializeMember(definedIn, fieldName))
-                                System.out.println("faled to read: " + definedIn + ", " + fieldName);
+                                System.out.println("faled to read: " + definedIn + ", " + fieldName)
 
-                            return definedIn != Object.class ? super.shouldSerializeMember(definedIn, fieldName) : false;
+                            return definedIn != Object.class ? super.shouldSerializeMember(definedIn, fieldName) : false
                         }
-                    };
+                    }
                 }
 
                 @Override
                 public Object unmarshal(HierarchicalStreamReader reader) {
-                    Object o = super.unmarshal(reader);
-                    return o;
+                    Object o = super.unmarshal(reader)
+                    return o
                 }
 
                 @Override
                 public Object unmarshal(HierarchicalStreamReader reader, Object root) {
-                    Object o = super.unmarshal(reader, root);
-                    return o;
+                    Object o = super.unmarshal(reader, root)
+                    return o
                 }
 
                 @Override
                 public Object unmarshal(HierarchicalStreamReader reader, Object root, DataHolder dataHolder) {
-                    Object o = super.unmarshal(reader, root, dataHolder);
-                    return o;
+                    Object o = super.unmarshal(reader, root, dataHolder)
+                    return o
                 }
-            };
+            }
             xstream.registerConverter(new MapConverter())
             xstream.alias("au.org.emii.portal.menu.MapLayer", HashMap.class)
 
@@ -372,7 +370,7 @@ class LegacyService {
 
         } finally {
             if (scanner != null) {
-                scanner.close();
+                scanner.close()
             }
         }
     }
@@ -385,7 +383,7 @@ class LegacyService {
         def url = geoserverUrl + "/rest/styles/" + name
         def result = manageLayersService.httpCall("GET", url, geoserverUsername, geoserverPassword, null, null, "text/plain")
 
-        result
+        result[1]
     }
 
     def legacySet(File src, File target, boolean force = false) {
@@ -460,8 +458,8 @@ class LegacyService {
             try {
 
                 //TODO: Why is.prj interfering with Geoserver discovering .tif is EPSG:4326?
-                def oldPrj = new File(p.replace('.tif', '.prj'))
-                def tmpPrj = new File(p.replace('.tif', '.prj.tmp'))
+                def oldPrj = new File(tiff.replace('.tif', '.prj'))
+                def tmpPrj = new File(tiff.replace('.tif', '.prj.tmp'))
                 if (oldPrj.exists()) FileUtils.moveFile(oldPrj, tmpPrj)
 
                 //attempt to delete
@@ -476,7 +474,7 @@ class LegacyService {
                         geoserverUsername, geoserverPassword,
                         null,
                         "file://" + geotiff.getPath(),
-                        "text/plain");
+                        "text/plain")
                 if (result[0] != "200" && result[0] != "201") {
                     log.error("failed to PUT tiff: " + geotiff.getPath() + ", " + result[0] + ": " + result[1])
                 }
@@ -495,14 +493,14 @@ class LegacyService {
 
                     //Upload sld
                     out = UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + name,
-                            extra, geoserverUsername, geoserverPassword, sld.getPath());
+                            extra, geoserverUsername, geoserverPassword, sld.getPath())
                     if (!out.startsWith("200") && !out.startsWith("201")) {
                         log.error("failed to upload style: " + sld.getPath())
                     }
 
                     //Apply style
                     String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
-                            "</name></defaultStyle></layer>";
+                            "</name></defaultStyle></layer>"
                     out = UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + name, extra,
                             geoserverUsername, geoserverPassword, data)
                     if (!out.startsWith("200") && !out.startsWith("201")) {
@@ -518,7 +516,7 @@ class LegacyService {
     class MapConverter implements Converter {
 
         boolean canConvert(Class clazz) {
-            return true;
+            return true
         }
 
         void marshal(Object value, HierarchicalStreamWriter writer,

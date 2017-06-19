@@ -14,8 +14,6 @@ import au.org.ala.spatial.Util;
 import au.org.ala.spatial.util.SamplingUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -129,9 +127,14 @@ public class Scatterplot {
                 for (int j = i + 1; j < layercount; j++) {
                     col1 = i;
                     col2 = j;
-                    buildScatterplot();
 
-                    renderScatterplot("_" + layers[i] + "_" + layers[j]);
+                    try {
+                        buildScatterplot();
+
+                        renderScatterplot("_" + layers[i] + "_" + layers[j]);
+                    } catch (Exception e) {
+                        //failed to make this scatterplot. one layer may have no intersections.
+                    }
                 }
             }
 

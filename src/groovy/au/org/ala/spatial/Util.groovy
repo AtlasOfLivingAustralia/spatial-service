@@ -28,6 +28,9 @@ import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
 class Util {
 
     static final Logger log = Logger.getLogger(Util.toString())
@@ -288,7 +291,7 @@ class Util {
             // any error???
             exitValue = exitVal
         } catch (Exception e) {
-            log.debug(e.getMessage())
+            log.error(e.getMessage(), e)
         } finally {
             if (proc) {
                 try {
@@ -440,5 +443,30 @@ class Util {
             s = s.replaceAll(k, v)
         }
         FileUtils.writeStringToFile(new File(path), s)
+    }
+
+    static void zip(String zipFilename, String[] filenames, String[] archFilenames) throws IOException {
+        ZipOutputStream zout = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFilename)))
+        try {
+            byte[] data = new byte[512]
+
+            for (int i = 0; i < filenames.length; ++i) {
+                InputStream fin = new BufferedInputStream(new FileInputStream(filenames[i]))
+                try {
+                    ZipEntry entry = new ZipEntry((new File(archFilenames[i])).getName())
+                    zout.putNextEntry(entry)
+
+                    int bc
+                    while ((bc = fin.read(data, 0, 512)) != -1) {
+                        zout.write(data, 0, bc)
+                    }
+                } finally {
+                    fin.close()
+                }
+            }
+        } finally {
+            zout.flush()
+            zout.close()
+        }
     }
 }

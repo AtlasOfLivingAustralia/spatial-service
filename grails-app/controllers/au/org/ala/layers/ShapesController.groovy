@@ -97,7 +97,7 @@ class ShapesController {
         OutputStream os = null
         try {
             os = response.getOutputStream()
-            response.setContentType("application/json subtype=geojson")
+            response.setContentType("application/json; subtype=geojson;")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".geojson\"")
             objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'geojson')
             os.flush()

@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.service
 
+import au.org.ala.spatial.Util
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.transaction.Transactional
@@ -174,6 +175,31 @@ class TasksController {
         if (params.containsKey('p3')) file += "/${params.p3}"
 
         def f = new File(file)
+        if (!f.exists() && f.getName() == "download.zip") {
+            //build download.zip when it is absent and there are listed files in the spec.json
+            try {
+                def spec = JSON.parse(new File(f.getParent() + "/spec.json").text)
+                if (spec?.download) {
+                    def fileList = []
+                    def fileNamesList = []
+                    for (String s : spec?.download) {
+                        File af = new File(f.getParent() + "/" + s)
+                        if (af.exists()) {
+                            if (af.isDirectory()) {
+                                fileList.addAll(af.listFiles().collect { it -> it.getPath() })
+                                fileNamesList.addAll(af.listFiles().collect { it -> it.getPath().substring(f.getParent().length() + 1) })
+                            } else {
+                                fileList.add(af.getPath())
+                                fileNamesList.addAll(af.getPath().substring(f.getParent().length() + 1))
+                            }
+                        }
+                    }
+                    Util.zip(f.getParent() + "/download.zip", (String[]) fileList.toArray(new String[0]),
+                            (String[]) fileNamesList.toArray(new String[0]))
+                }
+            } catch (IOException e) {
+            }
+        }
         if (f.exists()) {
             boolean ok = false
             if (file.endsWith('.zip')) {
