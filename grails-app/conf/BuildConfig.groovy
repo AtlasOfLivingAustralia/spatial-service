@@ -25,8 +25,6 @@ grails.project.fork = [
         run: false, test: false
 ]
 
-grails.spring.bean.packages = ['au.org.ala.layers']
-
 grails.project.dependency.resolver = "maven" // or ivy
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies

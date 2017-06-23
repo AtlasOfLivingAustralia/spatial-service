@@ -228,6 +228,8 @@ legacy.workingdir='/data/ala/data/alaspatial/'
 
 legacy.enabled=true
 
+grails.spring.bean.packages = ['au.org.ala.layers']
+
 //legacy compatability type
 //"link" = link legacy files into new locations
 //"copy" = copy legacy files into new locations
