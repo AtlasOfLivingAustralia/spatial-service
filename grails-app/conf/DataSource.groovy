@@ -12,15 +12,7 @@ dataSource {
 environments {
     development {
         dataSource {
-            dbCreate = "update"
 
-            pooled = true
-            jmxExport = true
-            driverClassName = "org.postgresql.Driver"
-            username = "postgres"
-            password = "postgres"
-
-            url= "jdbc:postgresql://localhost:5432/layersdb"
         }
     }
     test {

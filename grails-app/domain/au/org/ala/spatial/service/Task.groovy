@@ -74,6 +74,10 @@ class Task {
         sessionId index: 'task_sessionId_idx'
         name index: 'task_name_idx'
 
+        history lazy: true, fetch: 'select'
+        input lazy: true, fetch: 'select'
+        output lazy: true, fetch: 'select'
+
         version false
     }
 }

@@ -51,6 +51,8 @@ class AdminController {
     def tasks() {
         login('tasks')
 
+        params.max = params?.max ?: 10
+
         List list
         if (params.containsKey('all')) {
             list = Task.list(params)

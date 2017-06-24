@@ -1,12 +1,18 @@
-import au.org.ala.layers.dto.*
-import au.org.ala.layers.grid.GridCutter
-import au.org.ala.layers.intersect.IntersectConfig
-import grails.converters.JSON
-import org.apache.naming.ContextAccessController
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext
-import grails.util.Environment
 
-import javax.naming.InitialContext
+import au.org.ala.layers.dto.AnalysisLayer
+import au.org.ala.layers.dto.Distribution
+import au.org.ala.layers.dto.Facet
+import au.org.ala.layers.dto.Field
+import au.org.ala.layers.dto.Layer
+import au.org.ala.layers.dto.Objects
+import au.org.ala.layers.dto.SearchObject
+import au.org.ala.layers.dto.Tabulation
+import au.org.ala.spatial.service.InputParameter
+import au.org.ala.spatial.service.OutputParameter
+import grails.converters.JSON
+import au.org.ala.spatial.service.*
+
+import java.lang.reflect.Array
 
 class BootStrap {
 
@@ -24,10 +30,18 @@ class BootStrap {
         //avoid circular reference
         masterService._tasksService = tasksService
 
-        //layers-store classes requiring an updated marshaller
-        [AnalysisLayer, Distribution, Facet, Field, Layer, Objects, SearchObject, Tabulation, Task].each { clazz ->
-            JSON.registerObjectMarshaller(clazz) {
-                it.properties.findAll { it.value != null && it.key != 'class' }
+        //layers-store and domain classes requiring an updated marshaller
+        [AnalysisLayer, Distribution, Facet, Field, Layer, Objects, SearchObject, Tabulation,
+            Task, Log, InputParameter, OutputParameter].each { clazz ->
+            JSON.registerObjectMarshaller(clazz) { i ->
+                i.properties.findAll {
+                    it.value != null && it.key != 'class' && it.key != '_ref' &&
+                        (!(it.value instanceof Collection) || it.value.size() > 0) &&
+                        (!(it.value instanceof Array) || it.value.length > 0) &&
+                            (it.key != 'task' || !(i instanceof InputParameter)) &&
+                            (it.key != 'task' || !(i instanceof OutputParameter))
+                } + (i instanceof InputParameter || i instanceof OutputParameter || i instanceof Task ||
+                        i instanceof Log? [id: i.id] : [:])
             }
         }
 

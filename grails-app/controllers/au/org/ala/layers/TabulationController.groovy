@@ -48,7 +48,14 @@ class TabulationController {
         if (!params.wkt && pid) {
             pid = objectDao.getObjectsGeometryById(pid, 'wkt')
         }
-        render tabulationDao.getTabulationSingle(fid, pid) as JSON
+        try {
+            def tabulation = tabulationDao.getTabulationSingle(fid, pid)
+            if (tabulation)
+                render tabulationDao.getTabulationSingle(fid, pid) as JSON
+        } catch (Exception e) {
+        }
+
+        render status: 404
     }
 
     def show(String func1, String fid1, String fid2, String type) {

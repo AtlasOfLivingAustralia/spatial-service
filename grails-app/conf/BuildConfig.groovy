@@ -5,7 +5,6 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.work.dir = "target/work"
 grails.project.target.level = 1.7
 grails.project.source.level = 1.7
-//grails.project.war.file = "target/${appName}-${appVersion}.war"
 
 grails.server.port.http = 8085
 
@@ -84,7 +83,7 @@ grails.project.dependency.resolution = {
         compile ':cache:1.1.8'
 
         // plugins needed at runtime but not for compilation
-        runtime ":hibernate4:4.3.10" // or ":hibernate4:4.3.5.4"
+        runtime ":hibernate:3.6.10.19" // or ":hibernate4:4.3.5.4"
         runtime ":database-migration:1.4.0"
         runtime ":jquery:1.11.1"
         runtime ":resources:1.2.14"

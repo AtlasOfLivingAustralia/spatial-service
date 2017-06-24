@@ -246,9 +246,13 @@ class Util {
                 [Accept: "application/json, text/javascript, */*"])
 
         if (response) {
-            JSONParser jp = new JSONParser()
-            JSONArray ja = (JSONArray) jp.parse(response)
-            return ja
+            try {
+                JSONParser jp = new JSONParser()
+                JSONArray ja = (JSONArray) jp.parse(response)
+                return ja
+            } catch (Exception e) {
+                log.error(layersUrl + sbProcessUrl.toString() + " failed", e)
+            }
         }
 
         return null

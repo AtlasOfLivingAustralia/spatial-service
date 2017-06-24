@@ -88,7 +88,11 @@ class TasksController {
     def show(Task task) {
         login()
 
-        render task as JSON
+        if (task) {
+            render task as JSON
+        } else {
+            render status: 404
+        }
     }
 
     private login() {
@@ -106,7 +110,7 @@ class TasksController {
     /**
      * @return a map of inputs to errors, or the created task
      */
-    @Transactional
+    @Transactional(readOnly = false)
     create() {
         login()
 
@@ -126,7 +130,7 @@ class TasksController {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     cancel(Task task) {
         login()
 
@@ -152,7 +156,7 @@ class TasksController {
         render file: file, contentType: 'application/zip'
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     reRun(Task task) {
         login()
 
@@ -239,6 +243,7 @@ class TasksController {
         }
     }
 
+    @Transactional(readOnly = false)
     def cancelAll() {
         login()
 

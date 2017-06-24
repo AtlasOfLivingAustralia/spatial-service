@@ -69,28 +69,29 @@ class TasksService {
     }
 
     @Transactional(readOnly = false)
-    synchronized def update(id, newValues) {
-        Task.withTransaction {
-            Task t = Task.get(id)
-            if (t != null) {
-                newValues.each { k, v ->
-                    if ('status'.equals(k)) t.status = v
-                    else if ('message'.equals(k)) t.message = v
-                    else if ('url'.equals(k)) t.url = v
-                    else if ('err'.equals(k)) t.err.putAll(v)
-                    else if ('history'.equals(k)) {
-                        if (v.size() == 1) {
-                            def n = 1
-                        }
-                        t.history.putAll(v)
-                    } else if ('slave'.equals(k)) t.slave = v
-                    else if ('output'.equals(k)) t.output = v
-                }
+    def update(id, newValues) {
+        Task.withNewTransaction {
+            _update(id, newValues)
+        }
+    }
+
+    synchronized def _update(id, newValues) {
+        Task t = Task.get(id)
+        if (t != null) {
+            newValues.each { k, v ->
+                if ('status'.equals(k)) t.status = v
+                else if ('message'.equals(k)) t.message = v
+                else if ('url'.equals(k)) t.url = v
+                else if ('err'.equals(k)) t.err.putAll(v)
+                else if ('history'.equals(k)) {
+                    t.history.putAll(v)
+                } else if ('slave'.equals(k)) t.slave = v
+                else if ('output'.equals(k)) t.output = v
             }
-            if (!t.save(flush: true)) {
-                t.errors.each {
-                    log.error 'failed update status for task:' + id
-                }
+        }
+        if (!t.save(flush: true)) {
+            t.errors.each {
+                log.error 'failed update status for task:' + id
             }
         }
     }
@@ -190,7 +191,7 @@ class TasksService {
     @Transactional(readOnly = false)
     def afterPublish(taskId, spec) {
 
-        def task = Task.get(taskId)
+        def task = Task.read(taskId)
         //task.err = spec.err
 
         def newValues = [:]
@@ -241,7 +242,12 @@ class TasksService {
 
         if (formattedOutput.size() > 0) newValues.put('output', formattedOutput)
 
-        if (newValues.size() > 0) update(taskId, newValues)
+
+        if (newValues.size() > 0) {
+            Task.withTransaction {
+                _update(taskId, newValues)
+            }
+        }
     }
 
     def validateInput(request) {
@@ -328,9 +334,9 @@ class TasksService {
                         int gridAsShp = 0
                         for (Object area : i) {
                             if (area.pid?.toString()?.contains(":[")) {
-                                envelopes ++
+                                envelopes++
                             } else if (area.pid?.toString()?.contains(":")) {
-                                gridAsShp ++
+                                gridAsShp++
                             }
                         }
                         //envelopes are not allowed (false)
@@ -387,7 +393,7 @@ class TasksService {
                                 if (!f?.indb && v.constraints.containsKey('indb') && !v.constraints.indb.toString().toBoolean()) {
                                     errors.put(k, "Input parameter $k layers must be in biocache index. Remove: ${f.name} (${layer}).")
                                 }
-                            } else if(layerIntersectDao.getConfig().getIntersectionFile(layer) != null &&
+                            } else if (layerIntersectDao.getConfig().getIntersectionFile(layer) != null &&
                                     v.constraints.containsKey('analysis') && !v.constraints.analysis.toString().toBoolean()) {
                                 //analysis layers have an IntersectionFile but do not have a Field.
                                 errors.put(k, "Input parameter $k cannot contain analysis layers. Remove: ${f.name} (${layer}).")

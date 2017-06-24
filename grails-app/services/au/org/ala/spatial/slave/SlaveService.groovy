@@ -342,7 +342,7 @@ class SlaveService {
             log.error "", err
         }
 
-        task.err.put(System.currentTimeMillis(), "failed to publish results")
+        task.history.put(System.currentTimeMillis(), "failed to publish results")
 
         return false
     }
