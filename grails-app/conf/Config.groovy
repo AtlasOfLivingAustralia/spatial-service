@@ -156,7 +156,6 @@ batch_sampling_fields_limit = 1000
 //
 // au.org.ala.spatial.slave config
 //
-//spatialService.url = "http://spatial-test.ala.org.au/spatial-service"
 spatialService.url = "http://spatial-test.ala.org.au/spatial-service"
 data.dir = "/data/spatial-data"
 shp2pgsql.path = "/usr/bin/shp2pgsql"
@@ -204,7 +203,6 @@ bie.searchPath = '/search'
 records.url = 'http://biocache.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
 api_key = ''
-layersService.url = 'http://spatial-test.ala.org.au/spatial-service'
 lists.url = 'http://lists.ala.org.au'
 collections.url = 'http://collections.ala.org.au'
 sandboxHubUrl = 'http://sandbox.ala.org.au/ala-hub'
@@ -214,7 +212,7 @@ phyloServiceUrl = 'http://phylolink.ala.org.au'
 spatialHubUrl = 'http://spatial.ala.org.au'
 
 gazField = 'cl915'
-userObjectsField = 'cl1082'
+userObjectsField = 'cl1083'
 
 apiKeyCheckUrlTemplate = 'http://auth.ala.org.au/apikey/ws/check?apikey={0}'
 

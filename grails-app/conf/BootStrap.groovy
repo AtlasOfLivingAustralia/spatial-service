@@ -22,6 +22,7 @@ class BootStrap {
     def masterService
     def tasksService
     def legacyService
+    def fieldDao
 
     def init = { servletContext ->
 
@@ -55,6 +56,19 @@ class BootStrap {
         }
         if (grailsApplication.config.slave.enable) {
             slaveService.monitor()
+        }
+
+        //create user objects field if it is missing
+        if (!fieldDao.getFieldById(grailsApplication.config.userObjectsField)) {
+            Field f = new Field()
+            f.id = grailsApplication.config.userObjectsField
+            f.name = 'user'
+            f.desc = ''
+            f.type = 'c'
+            f.indb = false
+            f.enabled = true
+            f.namesearch = false
+            fieldDao.addField(defaultObjects)
         }
     }
 

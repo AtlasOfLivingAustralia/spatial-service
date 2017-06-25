@@ -45,7 +45,7 @@ class AreaReport extends SlaveProcess {
                 area[0].name.toString(),
                 area[0].area_km.toString(),
                 null, task.history,
-                grailsApplication.config.layersService.url.toString(),
+                grailsApplication.config.spatialService.url.toString(),
                 null,
                 getTaskPath(),
                 grailsApplication.config.journalmap.url.toString(),

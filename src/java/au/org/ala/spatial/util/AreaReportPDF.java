@@ -261,7 +261,7 @@ public class AreaReportPDF {
                 figureNumber++;
                 mapPage(fw, displayname, figureNumber, tableNumber, shortname + ".png",
                         description,
-                        (JSONObject) tabulations.get(shortname)
+                        (JSONArray) tabulations.get(shortname)
                         , geoserver_url.isEmpty() ? null : geoserver_url);
                 fw.write("</body></html>");
                 fw.close();
@@ -512,7 +512,7 @@ public class AreaReportPDF {
         fw.write("</table>");
     }
 
-    private void mapPage(FileWriter fw, String areaName, int figureNumber, int tableNumber, String imageUrl, String notes, JSONObject tabulation, String legendUrl) throws Exception {
+    private void mapPage(FileWriter fw, String areaName, int figureNumber, int tableNumber, String imageUrl, String notes, JSONArray tabulation, String legendUrl) throws Exception {
         String imageUrlActual = imageUrl;
 
         fw.write("<table id='mapPage'>");
@@ -541,9 +541,9 @@ public class AreaReportPDF {
         fw.write("</tr><tr>");
 
         //tabulation table
-        if (tabulation != null && tabulation.containsKey("tabulationList")) {
+        if (tabulation != null) {
             double totalArea = 0;
-            for (Object o : (JSONArray) tabulation.get("tabulationList")) {
+            for (Object o : tabulation) {
                 JSONObject jo = (JSONObject) o;
                 totalArea += Double.parseDouble(jo.get("area").toString()) / 1000000.0;
             }
@@ -555,7 +555,7 @@ public class AreaReportPDF {
                 fw.write("<br></br><table id='table'><tr><td>Class/Region</td><td>Area (sq km)</td><td>% of total area</td></tr>");
 
                 int row = 0;
-                for (Object o : (JSONArray) tabulation.get("tabulationList")) {
+                for (Object o : tabulation) {
                     JSONObject jo = (JSONObject) o;
                     if (row % 2 == 0) {
                         fw.write("<tr class='odd'>");
