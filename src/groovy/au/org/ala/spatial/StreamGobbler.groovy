@@ -16,8 +16,7 @@
 package au.org.ala.spatial
 
 import au.org.ala.spatial.slave.Task
-
-import java.util.logging.Logger
+import org.apache.log4j.Logger
 
 class StreamGobbler extends Thread {
 

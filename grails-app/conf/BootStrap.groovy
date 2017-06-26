@@ -60,15 +60,15 @@ class BootStrap {
 
         //create user objects field if it is missing
         if (!fieldDao.getFieldById(grailsApplication.config.userObjectsField)) {
-            Field f = new Field()
-            f.id = grailsApplication.config.userObjectsField
-            f.name = 'user'
-            f.desc = ''
-            f.type = 'c'
-            f.indb = false
-            f.enabled = true
-            f.namesearch = false
-            fieldDao.addField(defaultObjects)
+            Task.executeQuery("INSERT INTO fields (id, name, \"desc\", type, indb, enabled, namesearch) VALUES " +
+                    "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, true, false);")
+        }
+
+        //create missing azimuth function from st_azimuth
+        try {
+            Task.executeQuery('CREATE OR REPLACE FUNCTION azimuth (anyelement, anyelement) returns double precision language sql as $$ select st_azimuth($1, $2) $$')
+        } catch (Exception e) {
+            log.error(e)
         }
     }
 
