@@ -478,7 +478,7 @@ class GDMStep2 extends SlaveProcess {
                     "<p>" +
                     images +
                     "</p>" +
-                    "</section></div><footer><p>&copy; <a href='http://www.ala.org.au/'>Atlas of Living Australia 2012</a></p></footer></div></body></html>")
+                    "</section></div><footer><p>&copy; <a href='https://www.ala.org.au/'>Atlas of Living Australia 2012</a></p></footer></div></body></html>")
             sbMetadata.append("")
 
             File spFile = new File(outputdir + "gdm.html")
