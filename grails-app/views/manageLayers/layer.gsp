@@ -114,8 +114,8 @@
 
                     var map = L.map('map').setView([-22, 122], 4);
 
-                    L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     }).addTo(map);
 
                     var wmsLayer = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {

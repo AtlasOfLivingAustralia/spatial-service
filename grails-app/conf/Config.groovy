@@ -139,11 +139,11 @@ geoserver.canDeploy = true
 //gdal.dir="/usr/bin/"
 shpResolutions = [0.5, 0.25, 0.1, 0.05]
 grdResolutions = [0.5, 0.25, 0.1, 0.05, 0.01]
-//biocacheServiceUrl = 'http://biocache.ala.org.au/ws'
+//biocacheServiceUrl = 'https://biocache.ala.org.au/ws'
 //biocacheServiceUrl = 'http://ala-cohen.it.csiro.au/biocache-service'
-biocacheServiceUrl = 'http://biocache.ala.org.au/ws'
+biocacheServiceUrl = 'https://biocache.ala.org.au/ws'
 //biocacheServiceUrl = 'http://ala-starr.it.csiro.au:8080/biocache-service'
-biocacheUrl = 'http://biocache.ala.org.au'
+biocacheUrl = 'https://biocache.ala.org.au'
 
 slave.enable = true
 service.enable = true
@@ -195,15 +195,15 @@ security.cas.disableCAS=false
 auth.admin_role = "ROLE_ADMIN"
 app.http.header.userId = "X-ALA-userId"
 
-headerAndFooter.baseURL = 'http://www2.ala.org.au/commonui-bs3'
-ala.baseURL = 'http://www.ala.org.au'
-bie.baseURL = 'http://bie.ala.org.au'
+headerAndFooter.baseURL = 'https://www2.ala.org.au/commonui-bs3'
+ala.baseURL = 'https://www.ala.org.au'
+bie.baseURL = 'https://bie.ala.org.au'
 bie.searchPath = '/search'
 
-records.url = 'http://biocache.ala.org.au/archives/exports/lat_lon_taxon.zip'
+records.url = 'https://biocache.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
 api_key = ''
-lists.url = 'http://lists.ala.org.au'
+lists.url = 'https://lists.ala.org.au'
 collections.url = 'http://collections.ala.org.au'
 sandboxHubUrl = 'http://sandbox.ala.org.au/ala-hub'
 sandboxBiocacheServiceUrl = 'http://sandbox.ala.org.au/ws'
@@ -214,7 +214,7 @@ spatialHubUrl = 'http://spatial.ala.org.au'
 gazField = 'cl915'
 userObjectsField = 'cl1083'
 
-apiKeyCheckUrlTemplate = 'http://auth.ala.org.au/apikey/ws/check?apikey={0}'
+apiKeyCheckUrlTemplate = 'https://auth.ala.org.au/apikey/ws/check?apikey={0}'
 
 spatialService.remote = "http://spatial-test.ala.org.au/spatial-service"
 
@@ -249,7 +249,7 @@ i18n.override.dir='/data/spatial-service/config/i81n/'
 layers_store.BATCH_THREAD_COUNT=3
 
 //Set LAYER_INDEX_URL to use REMOVE layer intersections.
-//layers_store.LAYER_INDEX_URL=http://spatial.ala.org.au/layers-service
+//layers_store.LAYER_INDEX_URL=https://spatial.ala.org.au/layers-service
 
 //Use local layer files for sampling or the /intersect/batch service provided by LAYER_INDEX_URL
 //layers_store.LOCAL_SAMPLING=false
@@ -281,7 +281,7 @@ layers_store.CAN_GENRATE_THUMBNAILS=false
 //geoserver styles with the name <fieldId>_style exist. e.g. cl21_style
 layers_store.FIELD_STYLES=true
 
-layers_store.GEONETWORK_URL='http://spatial.ala.org.au/geonetwork'
+layers_store.GEONETWORK_URL='https://spatial.ala.org.au/geonetwork'
 
 distributions.cache.dir = "/data/${appName}/mapCache/"
-distributions.geoserver.image.url = "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&sld=http://fish.ala.org.au/data/dist.sld&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"
+distributions.geoserver.image.url = "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&sld=https://fish.ala.org.au/data/dist.sld&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"
