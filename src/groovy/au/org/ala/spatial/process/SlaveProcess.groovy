@@ -942,4 +942,12 @@ class SlaveProcess {
         Util.runCmd(cmd, logToTask, task)
     }
 
+    def setMessage(String msg) {
+        task.message = msg
+    }
+
+    def taskLog(String msg) {
+        task.history.put(System.currentTimeMillis(), msg)
+    }
+
 }

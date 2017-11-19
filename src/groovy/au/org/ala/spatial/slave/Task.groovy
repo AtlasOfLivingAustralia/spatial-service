@@ -28,7 +28,7 @@ class Task {
     String name
 
     // log
-    Map history = [:]
+    Map history = [:] as LinkedHashMap
 
     // parameters
     Map input = [:]

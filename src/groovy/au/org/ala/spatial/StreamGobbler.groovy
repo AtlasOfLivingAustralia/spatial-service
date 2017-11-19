@@ -38,7 +38,7 @@ class StreamGobbler extends Thread {
             String line
             while ((line = br.readLine()) != null) {
                 if (task != null) {
-                    task.history.put(String.valueOf(System.currentTimeMillis()), logPrefix + ": " + line)
+                    task.history.put(System.currentTimeMillis(), logPrefix + ": " + line)
                 }
                 log.debug logPrefix + ": " + line
             }

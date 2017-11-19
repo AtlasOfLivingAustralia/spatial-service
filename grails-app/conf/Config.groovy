@@ -195,7 +195,7 @@ security.cas.disableCAS=false
 auth.admin_role = "ROLE_ADMIN"
 app.http.header.userId = "X-ALA-userId"
 
-headerAndFooter.baseURL = 'http://www2.ala.org.au/commonui-bs3'
+headerAndFooter.baseURL = 'https://www.ala.org.au/commonui-bs3'
 ala.baseURL = 'http://www.ala.org.au'
 bie.baseURL = 'http://bie.ala.org.au'
 bie.searchPath = '/search'

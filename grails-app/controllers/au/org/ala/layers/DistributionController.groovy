@@ -97,7 +97,7 @@ class DistributionController {
 
 
     def lsid(String lsid) {
-        List distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
+        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrls(distributions)
             render distributions.collect {

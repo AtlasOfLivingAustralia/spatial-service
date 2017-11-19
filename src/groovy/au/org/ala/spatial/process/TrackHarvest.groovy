@@ -48,7 +48,8 @@ class TrackHarvest extends SlaveProcess {
                     'familyID.p'       : 'family_lsid',
                     'dataProviderUid.p': 'data_resource_uid',
                     'footprintWKT'     : 'the_geom',
-                    'uuid'             : 'group_name'
+                    'uuid'             : 'group_name',
+                    'eventID'          : 'area_name'
             ]
 
             //get

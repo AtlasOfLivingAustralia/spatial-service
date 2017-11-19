@@ -51,8 +51,9 @@ class TaskService {
             running.put(request.id, [request: request, thread: t])
         } catch (err) {
             log.error "failed to start thread for task: " + req.id, err
-            req.output.put(System.currentTimeMillis(), "unknown error")
-            req.setFinished(true)
+            req.output.put(System.currentTimeMillis(), "unknown error (id:${req.id})")
+            req.message = 'finished'
+            req.finished = true
         }
     }
 
@@ -69,7 +70,7 @@ class TaskService {
                     Class clazz = Class.forName(name)
                     list.add(((SlaveProcess) clazz.newInstance()).spec())
                 } catch (err) {
-                    log.error("unable to instantiate $name. ${err.getMessage()}")
+                    log.error("unable to instantiate $name. ${err.getMessage()}", err)
                 }
             }
         }
@@ -242,7 +243,7 @@ class TaskService {
                 }
 
                 if (operator == null) {
-                    log.error "missing process for task: ${request.name}"
+                    throw new Exception("missing process for task: ${request.name}")
                 }
 
                 request.message = 'getting resources'
@@ -262,6 +263,7 @@ class TaskService {
                 request.message = 'running'
                 log.debug "task:${request.id} running"
                 operator.start()
+                operator.taskLog("finished")
 
                 request.message = 'publishing'
                 log.debug "task:${request.id} publishing"
@@ -269,6 +271,7 @@ class TaskService {
 
                 request.finished = true
                 request.message = 'finished'
+                request.history.put(System.currentTimeMillis(), "failed (id:${request.id})")
                 log.debug "task:${request.id} finished"
 
                 taskService.slaveService.signalMasterImmediately(request)
@@ -281,7 +284,7 @@ class TaskService {
 
                 request.finished = true
                 request.message = 'finished'
-                request.history.put(System.currentTimeMillis(), "failed")
+                request.history.put(System.currentTimeMillis(), "failed (id:${request.id})")
 
                 taskService.slaveService.signalMasterImmediately(request)
 
@@ -289,7 +292,7 @@ class TaskService {
 
                 //taskService.tasks.remove(request.id)
             }
-            log.error 'about to remove running task'
+            log.debug 'about to remove running task'
 
             taskService.running.remove(request.id)
 

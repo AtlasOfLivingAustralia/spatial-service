@@ -216,7 +216,7 @@ class MasterController {
 
         masterService.slaves.put(json.url.toString(), slave)
 
-        slave
+        render slave as JSON
     }
 
     /**
@@ -245,6 +245,8 @@ class MasterController {
         }
 
         tasksService.update(id, newValues)
+
+        render {} as JSON
     }
 
 }

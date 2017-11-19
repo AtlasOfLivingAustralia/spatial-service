@@ -12,6 +12,7 @@ dataSource {
 environments {
     development {
         dataSource {
+//            logSql = true
 
         }
     }

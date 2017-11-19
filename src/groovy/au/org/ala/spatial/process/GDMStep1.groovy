@@ -40,6 +40,11 @@ class GDMStep1 extends SlaveProcess {
         //target resolution
         def resolution = task.input.resolution
 
+        if (getSpeciesList(species).length() < 2) {
+            //TODO Log error, >1 species is required
+            return
+        }
+
         OccurrenceData od = new OccurrenceData()
         String[] s = od.getSpeciesData(species.q, species.bs, null, "names_and_lsid")
 
@@ -166,7 +171,5 @@ class GDMStep1 extends SlaveProcess {
             System.out.println("error generating species file")
             e.printStackTrace(System.out)
         }
-
-        return null
     }
 }

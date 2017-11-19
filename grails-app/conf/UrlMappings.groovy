@@ -25,6 +25,23 @@ class UrlMappings {
         "/distributions"(controller: "distribution", action: "index")
         "/distributions/lsids"(controller: "distribution", action: "listLsids")
 
+        "/track/counts"(controller: "track", action: "count")
+        "/track/radius/count"(controller: "track", action: "pointRadiusCount")
+        "/track/radius"(controller: "track", action: "pointRadius")
+        "/track/lsid/$lsid"(controller: "track", action: "lsid")
+        "/track/lsids/$lsid"(controller: "track", action: "lsids")
+        "/track/map/$geomIdx"(controller: "track", action: "map")
+        "/track/map/png/$geomIdx"(controller: "track", action: "overviewMapPng")
+        "/track/map/seed"(controller: "track", action: "overviewMapSeed")
+        "/track/outliers/$outliers"(controller: "track", action: "outliers")
+        "/track/map/lsid/$lsid"(controller: "track", action: "overviewMapPngLsid")
+        "/track/map/spcode/$spcode"(controller: "track", action: "overviewMapPngSpcode")
+        "/track/map/name/$name"(controller: "track", action: "overviewMapPngName")
+        "/track/map/lsids/$lsid"(controller: "track", action: "lsidMaps")
+        "/track/$id"(controller: "track", action: "show")
+        "/tracks"(controller: "track", action: "index")
+        "/tracks/lsids"(controller: "track", action: "listLsids")
+        
         "/attribution/clearCache"(controller: "distribution", action: "clearAttributionCache")
 
         "/fields"(controller: "field", action: "index")
