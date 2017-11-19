@@ -67,7 +67,7 @@ public class SitesBySpecies {
             File joinedRecords = new File("/data/joinedRecords");
             StringBuilder sb = new StringBuilder();
             String file = "/data/sxs.records";
-            Records r = new Records("http://biocache.ala.org.au/ws",
+            Records r = new Records("https://biocache.ala.org.au/ws",
                     "Macropus%20agilis", bbox, file, null);
 
             String outputDir = "/data/";

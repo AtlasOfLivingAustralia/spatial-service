@@ -139,11 +139,11 @@ geoserver.canDeploy = true
 //gdal.dir="/usr/bin/"
 shpResolutions = [0.5, 0.25, 0.1, 0.05]
 grdResolutions = [0.5, 0.25, 0.1, 0.05, 0.01]
-//biocacheServiceUrl = 'http://biocache.ala.org.au/ws'
+//biocacheServiceUrl = 'https://biocache.ala.org.au/ws'
 //biocacheServiceUrl = 'http://ala-cohen.it.csiro.au/biocache-service'
-biocacheServiceUrl = 'http://biocache.ala.org.au/ws'
+biocacheServiceUrl = 'https://biocache.ala.org.au/ws'
 //biocacheServiceUrl = 'http://ala-starr.it.csiro.au:8080/biocache-service'
-biocacheUrl = 'http://biocache.ala.org.au'
+biocacheUrl = 'https://biocache.ala.org.au'
 
 slave.enable = true
 service.enable = true
@@ -195,7 +195,7 @@ security.cas.disableCAS=false
 auth.admin_role = "ROLE_ADMIN"
 app.http.header.userId = "X-ALA-userId"
 
-headerAndFooter.baseURL = 'https://www.ala.org.au/commonui-bs3'
+headerAndFooter.baseURL = 'http://www2.ala.org.au/commonui-bs3'
 ala.baseURL = 'http://www.ala.org.au'
 bie.baseURL = 'http://bie.ala.org.au'
 bie.searchPath = '/search'

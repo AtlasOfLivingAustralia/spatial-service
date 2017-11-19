@@ -227,7 +227,7 @@ class LayerController {
             sb.append("<location>")
             sb.append("<address>")
             sb.append("<electronic type=\"url\">")
-            sb.append("<value>http://spatial.ala.org.au/layers</value>")
+            sb.append("<value>https://spatial.ala.org.au/layers</value>")
             sb.append("</electronic>")
             sb.append("</address>")
             sb.append("</location>")
