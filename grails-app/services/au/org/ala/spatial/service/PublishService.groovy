@@ -18,7 +18,7 @@ package au.org.ala.spatial.service
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
 import org.apache.commons.io.FileUtils
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate
+import org.springframework.jdbc.core.JdbcTemplate
 
 import javax.sql.DataSource
 
@@ -27,7 +27,7 @@ class PublishService {
     def grailsApplication
     def layerIntersectDao
     def manageLayersService
-    def jdbcTemplate
+    JdbcTemplate jdbcTemplate
     def tasksService
     def fileService
     def dataSource
@@ -37,7 +37,7 @@ class PublishService {
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource
-        jdbcTemplate = new SimpleJdbcTemplate(dataSource)
+        jdbcTemplate = new JdbcTemplate(dataSource)
     }
 
     // Unpacks a published zip file and performs some actions.

@@ -20,7 +20,7 @@ import au.org.ala.layers.dto.Objects
 import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.Util
 import grails.converters.JSON
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 
 class TasksService {
 

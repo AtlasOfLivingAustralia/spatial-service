@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial.service
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
 
 class LogController {

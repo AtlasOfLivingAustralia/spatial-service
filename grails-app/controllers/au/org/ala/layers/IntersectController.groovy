@@ -21,8 +21,7 @@ import au.org.ala.spatial.util.BatchConsumer
 import au.org.ala.spatial.util.BatchProducer
 import com.vividsolutions.jts.geom.Geometry
 import grails.converters.JSON
-import org.apache.log4j.Logger
-import org.codehaus.groovy.grails.commons.GrailsApplication
+import grails.core.GrailsApplication
 import org.geotools.geojson.geom.GeometryJSON
 
 import java.util.zip.ZipEntry
@@ -30,8 +29,6 @@ import java.util.zip.ZipOutputStream
 
 //TODO: replace batch intersections with a slave process
 class IntersectController {
-
-    final Logger log = Logger.getLogger(IntersectController.class)
 
     ObjectDAO objectDao
     LayerIntersectDAO layerIntersectDao

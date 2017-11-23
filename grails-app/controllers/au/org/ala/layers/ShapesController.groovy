@@ -40,8 +40,6 @@ import java.awt.image.BufferedImage
 import java.text.MessageFormat
 
 class ShapesController {
-    
-    final Logger log = Logger.getLogger(ShapesController.class)
 
     def objectDao
 

@@ -18,15 +18,7 @@ package au.org.ala.spatial.service
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.json.JsonOutput
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
-import org.apache.commons.io.IOUtils
-import org.apache.http.HttpResponse
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.DefaultHttpClient
-import org.apache.http.params.HttpConnectionParams
-import org.apache.http.params.HttpParams
 
 import java.util.concurrent.ConcurrentHashMap
 

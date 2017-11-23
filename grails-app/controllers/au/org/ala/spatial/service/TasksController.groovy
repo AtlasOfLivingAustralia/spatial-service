@@ -18,9 +18,9 @@ package au.org.ala.spatial.service
 import au.org.ala.spatial.Util
 import au.org.ala.web.AuthService
 import grails.converters.JSON
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.apache.commons.io.IOUtils
-import org.codehaus.groovy.grails.web.json.JSONObject
+import org.grails.web.json.JSONObject
 
 @Transactional(readOnly = true)
 class TasksController {

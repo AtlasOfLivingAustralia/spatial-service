@@ -20,7 +20,7 @@ import au.org.ala.layers.dto.Distribution
 import au.org.ala.layers.dto.MapDTO
 import au.org.ala.spatial.util.AttributionCache
 import grails.converters.JSON
-import org.codehaus.groovy.grails.web.json.JSONObject
+import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 import org.json.simple.parser.ParseException
 

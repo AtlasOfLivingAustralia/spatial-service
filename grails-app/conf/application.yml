@@ -1,0 +1,316 @@
+---
+grails:
+    profile: web
+    codegen:
+        defaultPackage: au.org.ala.spatial.service
+    config:
+        locations:
+          - file:/data/spatial-service/config/spatial-service-config.properties
+          - file:/data/spatial-service/config/spatial-service-config.yml
+          - file:/data/spatial-service/config/spatial-service-config.groovy
+    spring:
+        transactionManagement:
+            proxies: false
+    gorm:
+        reactor:
+            # Whether to translate GORM events into Reactor events
+            # Disabled by default for performance reasons
+            events: false
+info:
+    app:
+        name: '@info.app.name@'
+        version: '@info.app.version@'
+        grailsVersion: '@info.app.grailsVersion@'
+spring:
+    main:
+        banner-mode: "off"
+    groovy:
+        template:
+            check-template-location: false
+
+# Spring Actuator Endpoints are Disabled by Default
+endpoints:
+    enabled: false
+    jmx:
+        enabled: true
+
+---
+grails:
+    mime:
+        disable:
+            accept:
+                header:
+                    userAgents:
+                        - Gecko
+                        - WebKit
+                        - Presto
+                        - Trident
+        types:
+            all: '*/*'
+            atom: application/atom+xml
+            css: text/css
+            csv: text/csv
+            form: application/x-www-form-urlencoded
+            html:
+              - text/html
+              - application/xhtml+xml
+            js: text/javascript
+            json:
+              - application/json
+              - text/json
+            multipartForm: multipart/form-data
+            pdf: application/pdf
+            rss: application/rss+xml
+            text: text/plain
+            hal:
+              - application/hal+json
+              - application/hal+xml
+            xml:
+              - text/xml
+              - application/xml
+    urlmapping:
+        cache:
+            maxsize: 1000
+    controllers:
+        defaultScope: singleton
+    converters:
+        encoding: UTF-8
+    views:
+        default:
+            codec: html
+        gsp:
+            encoding: UTF-8
+            htmlcodec: xml
+            codecs:
+                expression: html
+                scriptlets: html
+                taglib: none
+                staticparts: none
+    spring:
+        bean:
+            packages:
+              - 'au.org.ala.layers'
+endpoints:
+    jmx:
+        unique-names: true
+---
+#
+# au.org.ala.spatial.service config
+#
+data:
+  dir: '/data/spatial-data'
+#geoserver.url = 'http://local.ala.org.au:8080/geoserver'
+geoserver:
+  url: 'http://local.ala.org.au:8079/geoserver'
+  username: ''
+  password: ''
+  canDeploy: true
+#gdal.dir="/usr/bin/"
+shpResolutions:
+  - 0.5
+  - 0.25
+  - 0.1
+  - 0.05
+grdResolutions:
+  - 0.5
+  - 0.25
+  - 0.1
+  - 0.05
+  - 0.01
+#biocacheServiceUrl: 'https://biocache.ala.org.au/ws'
+#biocacheServiceUrl: 'http://ala-cohen.it.csiro.au/biocache-service'
+biocacheServiceUrl: 'https://biocache.ala.org.au/ws'
+#biocacheServiceUrl: 'http://ala-starr.it.csiro.au:8080/biocache-service'
+biocacheUrl: 'https://biocache.ala.org.au'
+
+slave.enable: true
+service.enable: true
+
+serviceKey: ""
+batch_sampling_passwords: ''
+batch_sampling_points_limit: 1000000
+batch_sampling_fields_limit: 1000
+
+---
+#
+# au.org.ala.spatial.slave config
+#
+spatialService.url: "http://spatial-test.ala.org.au/spatial-service"
+data.dir: "/data/spatial-data"
+shp2pgsql.path: "/usr/bin/shp2pgsql"
+gdal.dir: "/usr/bin/"
+#gdal.dir: '/usr/local/Cellar/gdal/1.11.5_3/bin/'
+aloc.xmx: "6G"
+aloc.threads: 4
+maxent.mx: "1G"
+maxent.threads: 4
+
+sampling.threads: 4
+
+slaveKey: ""
+serviceKey: ""
+
+# time between pushing status updates to the master for a task
+statusTime: 3000
+retryCount: 10
+retryTime: 30000
+
+#
+#  CAS SETTINGS
+#
+#  NOTE: Some of these will be ignored if default_config exists
+security:
+  cas:
+#    casServerName: 'https://auth.ala.org.au'
+#    loginUrl: 'https://auth.ala.org.au/cas/login'
+#    logoutUrl: 'https://auth.ala.org.au/cas/logout'
+#    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
+    bypass: false # set to true for non-ALA deployment
+    gateway: false
+    uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
+    uriFilterPattern: '/manageLayers,/manageLayers/.*,/admin,/admin/.*'
+    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/tasks,/tasks/.*'
+    disableCAS: false
+
+auth.admin_role: "ROLE_ADMIN"
+app.http.header.userId: "X-ALA-userId"
+
+headerAndFooter.baseURL: 'https://www.ala.org.au/commonui-bs3'
+ala.baseURL: 'http://www.ala.org.au'
+bie.baseURL: 'http://bie.ala.org.au'
+bie.searchPath: '/search'
+
+records.url: 'http://biocache.ala.org.au/archives/exports/lat_lon_taxon.zip'
+
+api_key: ''
+lists.url: 'http://lists.ala.org.au'
+collections.url: 'http://collections.ala.org.au'
+sandboxHubUrl: 'http://sandbox.ala.org.au/ala-hub'
+sandboxBiocacheServiceUrl: 'http://sandbox.ala.org.au/ws'
+phyloServiceUrl: 'http://phylolink.ala.org.au'
+
+spatialHubUrl: 'http://spatial.ala.org.au'
+
+gazField: 'cl915'
+userObjectsField: 'cl1083'
+
+apiKeyCheckUrlTemplate: 'http://auth.ala.org.au/apikey/ws/check?apikey={0}'
+spatialService.remote: "http://spatial-test.ala.org.au/spatial-service"
+
+journalmap.api_key: ''
+journalmap.url: 'https://www.journalmap.org/'
+
+# For side by side installation with layers-service, analysis-service
+legacy.workingdir: '/data/ala/data/alaspatial/'
+
+legacy.enabled: true
+
+#legacy compatability type
+#"link" = link legacy files into new locations
+#"copy" = copy legacy files into new locations
+#"move" = move legacy files into new locations
+#legacy.type="link"
+
+legacy.ANALYSIS_LAYER_FILES_PATH: '/data/ala/data/layers/analysis/'
+legacy.LAYER_FILES_PATH: '/data/ala/data/layers/ready'
+legacy.ALASPATIAL_OUTPUT_PATH: '/data/ala/runtime/output'
+
+grails.plugin.elfinder.rootDir: '/data/spatial-service'
+
+i18n.override.dir: '/data/spatial-service/config/i81n/'
+
+
+#layers-store config
+
+#Threads created for each batch intersection and each individual shape file
+layers_store.BATCH_THREAD_COUNT: 3
+
+#Set LAYER_INDEX_URL to use REMOVE layer intersections.
+#layers_store.LAYER_INDEX_URL: http://spatial.ala.org.au/layers-service
+
+#Use local layer files for sampling or the /intersect/batch service provided by LAYER_INDEX_URL
+#layers_store.LOCAL_SAMPLING: false
+layers_store.LOCAL_SAMPLING: true
+
+# Set intersect config reload time in ms
+layers_store.CONFIG_RELOAD_WAIT: 12000000
+
+#Comma separated shape file fields to preload, or 'all'
+#layers_store.PRELOADED_SHAPE_FILES: all
+#layers_store.PRELOADED_SHAPE_FILES: cl22,cl20
+
+# Grid intersection buffer size in bytes.  Must be multiple of 64.
+# Only applies to grids > 80MB.
+# layers_store.GRID_BUFFER_SIZE=4096
+layers_store.GRID_BUFFER_SIZE: 40960
+
+# Number of GridCacheReader objects to open.
+layers_store.GRID_CACHE_READER_COUNT: 5
+
+# layers_store ingestion
+layers_store.CAN_INGEST_LAYERS: false
+layers_store.CAN_UPDATE_LAYER_DISTANCES: false
+layers_store.CAN_UPDATE_GRID_CACHE: false
+layers_store.CAN_GENERATE_ANALYSIS_FILES: false
+layers_store.CAN_INTERSECT_LAYERS: false
+layers_store.CAN_GENRATE_THUMBNAILS: false
+
+#geoserver styles with the name <fieldId>_style exist. e.g. cl21_style
+layers_store.FIELD_STYLES: true
+
+layers_store.GEONETWORK_URL: 'http://spatial.ala.org.au/geonetwork'
+
+distributions.cache.dir: "/data/${appName}/mapCache/"
+distributions.geoserver.image.url: "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&sld=http://fish.ala.org.au/data/dist.sld&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"
+
+---
+
+hibernate:
+    # flush mode changed in Grails 3.3 / Gorm 6.1 from AUTO to COMMIT
+    # This means each db write should be in a transaction.
+    # TODO Check that AUTO is not required or convert missed db writes to be in transactional service methods
+#    flush:
+#        mode: AUTO
+    cache:
+        queries: false
+        use_second_level_cache: false
+        use_query_cache: false
+dataSource:
+    pooled: true
+    jmxExport: true
+    driverClassName: org.postgresql.Driver
+    url: 'jdbc:postgresql://localhost/layersdb'
+    dbCreate: update
+    username: postgres
+    password: 'postgres'
+
+environments:
+#    development:
+#        dataSource:
+#            logSql: true
+    test:
+        dataSource:
+            dbCreate: update
+            url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+    production:
+        dataSource:
+            dbCreate: update
+            logSql: false
+            properties:
+                jmxEnabled: true
+                initialSize: 5
+                maxActive: 50
+                minIdle: 5
+                maxIdle: 25
+                maxWait: 10000
+                maxAge: 600000
+                timeBetweenEvictionRunsMillis: 5000
+                minEvictableIdleTimeMillis: 60000
+                validationQuery: SELECT 1
+                validationQueryTimeout: 3
+                validationInterval: 15000
+                testOnBorrow: true
+                testWhileIdle: true
+                testOnReturn: false
+                jdbcInterceptors: ConnectionState
+                defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED

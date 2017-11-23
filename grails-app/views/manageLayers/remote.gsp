@@ -150,9 +150,6 @@
     </div>
 </div>
 
-<script src="/spatial-service/js/jquery.js"></script>
-<script src="/spatial-service/js/jquery.dataTables.min.js"></script>
-
 <script>
     function confirmDelete(id, name) {
         if (confirm("Permanently delete layer " + name + "?")) {

@@ -18,12 +18,9 @@ package au.org.ala.layers
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.layers.legend.LegendObject
 import au.org.ala.layers.legend.QueryField
-import org.apache.log4j.Logger
 
 //TODO: create associated Controller
 class UserDataService {
-
-    final static Logger logger = Logger.getLogger(UserDataService.class)
 
     def userDataDao
 
@@ -57,7 +54,7 @@ class UserDataService {
                 hasHeader = true
             }
 
-            logger.debug("hasHeader: " + hasHeader)
+            log.debug("hasHeader: " + hasHeader)
 
             // check if the count of points goes over the threshold.
             int sizeToCheck = (hasHeader) ? userPoints.size() - 1 : userPoints.size()
@@ -158,7 +155,7 @@ class UserDataService {
 
             return true
         } catch (Exception e) {
-            logger.error("failed to import user csv", e)
+            log.error("failed to import user csv", e)
         }
 
         return false

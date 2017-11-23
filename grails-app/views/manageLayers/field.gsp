@@ -3,16 +3,13 @@
 <head>
     <title></title>
     <meta name="layout" content="main"/>
-    <link rel="stylesheet" href="/spatial-service/css/leaflet.css"/>
-    <script src="/spatial-service/js/jquery.js"></script>
-    <script src="/spatial-service/js/leaflet.js"></script>
-    <script src="/spatial-service/js/BetterWMS.js"></script>
-
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'manage.css')}" type="text/css">
-
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <script src="${resource(dir: 'js', file: 'leaflet.js')}"></script>
+    <script src="${resource(dir: 'js', file: 'BetterWMS.js')}"></script>
 </head>
 
 <body>

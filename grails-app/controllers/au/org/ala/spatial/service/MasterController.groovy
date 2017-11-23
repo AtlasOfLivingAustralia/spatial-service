@@ -16,14 +16,13 @@
 package au.org.ala.spatial.service
 
 import grails.converters.JSON
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
-import org.codehaus.groovy.grails.web.json.JSONObject
+import org.grails.web.json.JSONObject
 
 @Transactional(readOnly = true)
 class MasterController {
 
-    def grailsApplication
     def fileService
     def publishService
     def masterService

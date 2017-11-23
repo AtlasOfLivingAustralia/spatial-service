@@ -18,10 +18,10 @@ package au.org.ala.layers
 import au.com.bytecode.opencsv.CSVWriter
 import au.org.ala.layers.dto.Layer
 import grails.converters.JSON
+import grails.io.IOUtils
 import org.apache.commons.lang.ArrayUtils
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.lang.StringUtils
-import org.codehaus.groovy.grails.io.support.IOUtils
 
 import java.text.SimpleDateFormat
 
@@ -79,6 +79,9 @@ class LayerController {
                     }
                 }
             }
+        } else {
+            response.sendError(404, "$id not found")
+            return
         }
     }
 

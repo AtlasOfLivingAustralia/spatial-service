@@ -19,10 +19,9 @@ import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.converters.XML
+import grails.core.GrailsApplication
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.h2.mvstore.StreamStore
 import org.hibernate.criterion.CriteriaSpecification
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
