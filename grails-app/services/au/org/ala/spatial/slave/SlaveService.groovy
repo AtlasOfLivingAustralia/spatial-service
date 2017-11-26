@@ -101,7 +101,7 @@ class SlaveService {
 
             log.debug('master register url: ' + url + ', json: ' + json)
 
-            if (response && response?.text) {
+            if (response && response?.text && response?.statusCode >= 200 && response?.statusCode < 300) {
                 if (JSON.parse(response.text) != null) {
                     return true
                 }
@@ -144,7 +144,7 @@ class SlaveService {
                     ["Content-Type": "application/json; charset=UTF-8"],
                     new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
 
-            if (response) {
+            if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
                 if (JSON.parse(response?.text) != null) {
                     return true
                 }

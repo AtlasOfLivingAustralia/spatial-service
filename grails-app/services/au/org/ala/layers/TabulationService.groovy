@@ -70,7 +70,7 @@ class TabulationService {
             String value = null
             if (func.equals("area")) {
                 //sq km
-                value = String.format("%.2f", t.getArea())
+                value = String.format("%.1f", t.getArea())
             } else if (func.equals("occurrences")) {
                 value = String.valueOf(t.getOccurrences())
             } else if (func.equals("species")) {

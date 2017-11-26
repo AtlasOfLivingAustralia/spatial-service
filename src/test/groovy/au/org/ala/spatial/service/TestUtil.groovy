@@ -68,4 +68,14 @@ class TestUtil {
         return null
     }
 
+    static def GDALInstalled(String path) {
+        // check for some gdal executables
+        def gdal_translate = new File(path + "/gdal_translate")
+        if (!gdal_translate.exists()) {
+            new Error("GDAL is not installed. Unable to find " + gdal_translate.getPath()).printStackTrace()
+            false
+        } else {
+            true
+        }
+    }
 }

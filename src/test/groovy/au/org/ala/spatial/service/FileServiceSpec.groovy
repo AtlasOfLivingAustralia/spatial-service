@@ -19,7 +19,6 @@ import grails.config.Config
 import grails.testing.services.ServiceUnitTest
 import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import javax.sql.DataSource
@@ -70,8 +69,6 @@ class FileServiceSpec extends Specification implements ServiceUnitTest<FileServi
         '/does not exist' || 1 || false
     }
 
-    // TODO Fix this tests
-    @Ignore("TODO Fix this test")
     void 'zip unzip'() {
         when:
 
@@ -84,8 +81,8 @@ class FileServiceSpec extends Specification implements ServiceUnitTest<FileServi
         def rootDirRemote = File.createTempDir()
         def taskDirRemote = File.createTempDir()
 
-        FileUtils.copyDirectoryToDirectory(new File(grailsApplication.config.data.dir), rootDirLocal)
-        FileUtils.copyDirectoryToDirectory(new File(grailsApplication.config.data.dir), taskDirLocal)
+        FileUtils.copyDirectory(new File(grailsApplication.config.data.dir), rootDirLocal)
+        FileUtils.copyDirectory(new File(grailsApplication.config.data.dir), taskDirLocal)
 
         def srcFiles = service.getFilesFromBase(path, grailsApplication.config.data.dir)
 
@@ -97,8 +94,12 @@ class FileServiceSpec extends Specification implements ServiceUnitTest<FileServi
         grailsApplication.config.data.dir = rootDirRemote.getPath()
         service.unzip(tmpfile.getPath(), taskDirRemote.getPath(), false)
 
-        //wait a little for the unzip
-        Thread.sleep(1000)
+        // TODO: replace Thread.sleep with something more reliable.
+        //wait a little for the unzip.
+        Thread.sleep(5000)
+
+        // revert data.dir change
+        grailsApplication.config.data.dir = origDir
 
         then:
         //same number of files in each location

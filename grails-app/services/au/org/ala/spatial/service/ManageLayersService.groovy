@@ -45,7 +45,7 @@ class ManageLayersService {
     def tasksService
     def slaveService
 
-    def getPublishService() {
+    PublishService getPublishService() {
         grailsApplication.mainContext.publishService
     }
 

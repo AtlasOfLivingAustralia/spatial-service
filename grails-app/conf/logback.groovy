@@ -1,3 +1,4 @@
+import ch.qos.logback.classic.Level
 import grails.util.BuildSettings
 import grails.util.Environment
 import org.springframework.boot.logging.logback.ColorConverter
@@ -32,5 +33,7 @@ if (Environment.isDevelopmentMode() && targetDir != null) {
         }
     }
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
+    logger("au.org.ala.layers", DEBUG, ['STDOUT'], false)
+    logger("au.org.ala.spatial", DEBUG, ['STDOUT'], false)
 }
-root(INFO, ['STDOUT'])
+root(Level.ERROR, ['STDOUT'])

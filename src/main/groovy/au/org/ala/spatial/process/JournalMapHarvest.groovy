@@ -45,7 +45,7 @@ class JournalMapHarvest extends SlaveProcess {
 
                 Map response = Util.urlResponse("GET", url)
 
-                if (response) {
+                if (response &&  response?.statusCode >= 200 && response?.statusCode < 300) {
                     //update maxpage
                     maxpage = Integer.parseInt(response.get("X-Pages")?.toString())
 
@@ -76,7 +76,7 @@ class JournalMapHarvest extends SlaveProcess {
 
                         Map response = Util.urlResponse("GET", url)
 
-                        if (response) {
+                        if (response && response?.statusCode >= 200 && resposne?.statusCode < 300) {
                             //update maxpage
                             maxpage = Integer.parseInt(response.get("X-Pages")?.toString())
 

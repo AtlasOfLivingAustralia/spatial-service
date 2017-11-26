@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://earth.google.com/kml/2.2"><Document>  <name></name>  <description></description>  <Style id="style1">    <LineStyle>      <color>40000000</color>      <width>3</width>    </LineStyle>    <PolyStyle>      <color>73FF0000</color>      <fill>1</fill>      <outline>1</outline>    </PolyStyle>  </Style>  <Placemark>    <name></name>    <description></description>    <styleUrl>#style1</styleUrl><?xml version="1.0" encoding="UTF-8"?><kml:MultiGeometry xmlns:kml="http://earth.google.com/kml/2.1">
+<kml:Polygon>
+<kml:outerBoundaryIs>
+<kml:LinearRing>
+<kml:coordinates>-15.02,120.0 -15.02,120.02 -15.000000457763672,120.02 -15.000000457763672,120.0 -15.02,120.0</kml:coordinates>
+</kml:LinearRing>
+</kml:outerBoundaryIs>
+</kml:Polygon>
+<kml:Polygon>
+<kml:outerBoundaryIs>
+<kml:LinearRing>
+<kml:coordinates>-40.02,140.0 -40.02,140.02 -40.00000045776367,140.02 -40.00000045776367,140.0 -40.02,140.0</kml:coordinates>
+</kml:LinearRing>
+</kml:outerBoundaryIs>
+</kml:Polygon>
+<kml:Polygon>
+<kml:outerBoundaryIs>
+<kml:LinearRing>
+<kml:coordinates>-25.02,154.0 -25.02,154.02 -25.000000457763672,154.02 -25.000000457763672,154.0 -25.02,154.0</kml:coordinates>
+</kml:LinearRing>
+</kml:outerBoundaryIs>
+</kml:Polygon>
+</kml:MultiGeometry>
+</Placemark></Document></kml>

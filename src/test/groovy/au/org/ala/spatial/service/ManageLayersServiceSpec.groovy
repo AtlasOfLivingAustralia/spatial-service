@@ -25,18 +25,19 @@ import grails.testing.gorm.DomainUnitTest
 import grails.testing.services.ServiceUnitTest
 import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import javax.sql.DataSource
 
 class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<ManageLayersService>, DomainUnitTest<Task> {
 
+    def gdalInstalled = false
+
     @Override
     Closure doWithSpring() {{ ->
         dataSource(InstanceFactoryBean, Stub(DataSource), DataSource)
 
-        publishService(InstanceFactoryBean, Stub(PublishService), PublishService)
+        publishService(InstanceFactoryBean, Mock(PublishService), PublishService)
     }}
 
     @Override
@@ -50,9 +51,6 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
     }}
 
     def setup() {
-
-//        mockDataService(PublishService)
-
         service.layerIntersectDao = Mock(LayerIntersectDAO)
         service.fieldDao = Mock(FieldDAO)
 
@@ -63,11 +61,12 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         service.tasksService = Mock(TasksService)
         service.slaveService = Mock(SlaveService)
 
-//        service.publishService = Stub(PublishService)
-//        service.publishService.layerToGeoserver(_, _) >> null
+        // removes the need for a geoserver instance for testing
+        grailsApplication.config.geoserver.canDeploy = false
 
-        service.grailsApplication.mainContext.publishService.layerToGeoserver(_, _) >> null
-//        grailsApplication.config.geoserver.canDeploy = false
+        // gdal installation is required for 'processUpload'
+        grailsApplication.config.gdal.dir = '/usr/bin'
+        gdalInstalled = TestUtil.GDALInstalled(grailsApplication.config.gdal.dir)
     }
 
     def cleanup() {
@@ -75,8 +74,6 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
 
     void "listUploadedFiles"() {
         when:
-        service.grailsApplication.mainContext.publishService.layerToGeoserver(_, _) >> null
-
         grailsApplication.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDir"
 
         if (taskStatus > 0) new Task(name: "LayerCreation", tag: uploadId, status: taskStatus).save()
@@ -103,34 +100,40 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         "5" || -1 || [:] || [raw_id: "5", filename: "5", name: "5", displayname: "5", checklist: "5"]
     }
 
-    // TODO Fix this tests
-    @Ignore("TODO Fix this test")
     void "processUpload"() {
+
         when:
-        File tmpDir = File.createTempDir()
-        FileUtils.copyDirectory(new File(new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDirLayerCreation"), tmpDir)
-        grailsApplication.config.data.dir = tmpDir.getPath()
+        def tmpDir
+        def result
+        if (gdalInstalled) {
+            tmpDir = File.createTempDir()
+            FileUtils.copyDirectory(new File(new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDirLayerCreation"), tmpDir)
+            grailsApplication.config.data.dir = tmpDir.getPath()
 
-        def result = service.processUpload(new File(tmpDir.getPath() + "/uploads/" + dir), dir)
-
-        then:
-        !files || files.each { file ->
-            assert new File(tmpDir.getPath() + "/uploads/" + dir + "/" + file).exists()
+            result = service.processUpload(new File(tmpDir.getPath() + "/uploads/" + dir), dir)
         }
 
-        if (error) {
-            assert result.containsKey("error")
-        } else {
-            assert result.raw_id == raw_id
-            assert result.columns == columns
-            assert result.test_url.contains("ALA:" + dir + "&")
+        then:
+
+        if (gdalInstalled) {
+            !files || files.each { file ->
+                assert new File(tmpDir.getPath() + "/uploads/" + dir + "/" + file).exists()
+            }
+
+            if (error) {
+                assert result.containsKey("error")
+            } else {
+                assert result.raw_id == raw_id
+                assert result.columns == columns
+                assert result.test_url.contains("ALA:" + dir + "&")
+            }
         }
 
         where:
-        dir || error || raw_id || columns || files
-        "1" || false || "relief_ave" || [] || ["flatten.txt", "original.name", "1.grd", "1.gri", "1.bil", "1.hdr", "1.tif"]
-        "2" || false || "aus1" || ["the_geom", "NAME_1", "TYPE"] || ["original.name", "2.dbf", "2.shp", "2.shx", "2.prj"]
-        "4" || true || "" || [] || []
+        dir || error || raw_id       || columns                        || files
+        "1" || false || "relief_ave" || []                             || ["flatten.txt", "original.name", "1.grd", "1.gri", "1.bil", "1.hdr", "1.tif"]
+        "2" || false || "aus1"       || ["the_geom", "NAME_1", "TYPE"] || ["original.name", "2.dbf", "2.shp", "2.shx", "2.prj"]
+        "4" || true  || ""           || []                             || []
     }
 
     void "fieldMapDefault"() {

@@ -135,7 +135,7 @@ batch_sampling_fields_limit: 1000
 #
 # au.org.ala.spatial.slave config
 #
-spatialService.url: "http://spatial-test.ala.org.au/spatial-service"
+spatialService.url: "http://localhost:8080"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"
@@ -285,9 +285,12 @@ dataSource:
     password: 'postgres'
 
 environments:
-#    development:
-#        dataSource:
-#            logSql: true
+    development:
+        dataSource:
+            logSql: false
+            dbCreate: update
+        grails:
+            serverURL: http://localhost:8080
     test:
         dataSource:
             dbCreate: update

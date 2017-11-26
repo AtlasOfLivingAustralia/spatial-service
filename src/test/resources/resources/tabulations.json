@@ -1,6 +1,6 @@
-[{"fid1":"cl1", "fid2":"cl2", "name1":"name1", "name2":"name3","pid1":"1", "pid2": "3", "area":50000000, "speciest1": 5, "speciest2": 6, "occurrences": 100, "species": 2},
-  {"fid1":"cl1", "fid2":"cl2", "name1":"name1", "name2":"name4", "pid1":"1", "pid2": "4", "area":3000000, "speciest1": 5, "speciest2": 2, "occurrences": 1000, "species": 2},
-  {"fid1":"cl1", "fid2":"cl2", "name1":"name2", "name2":"name5", "pid1":"2", "pid2": "5", "area":7000000, "speciest1": 7, "speciest2": 1, "occurrences": 200, "species": 1},
-  {"fid1":"cl1", "fid2":"cl2", "name1":"name2", "name2":"name3", "pid1":"2", "pid2": "3", "area":1000000, "speciest1": 7, "speciest2": 6, "occurrences": 300, "species": 6},
-  {"fid1":"cl1", "fid2":"cl2", "name1":"name2", "name2":"name4", "pid1":"2", "pid2": "4", "area":70000000, "speciest1": 7, "speciest2": 2, "occurrences": 400, "species": 2},
-  {"fid1":"cl1", "fid2":"cl2", "name1":"name0", "name2":"name3", "pid1":"0", "pid2": "3", "area":10000000, "speciest1": 1, "speciest2": 6, "occurrences": 500, "species": 1}]
+[{"fid1":"cl1", "fid2":"cl2", "name1":"name1", "name2":"name3","pid1":"1", "pid2": "3", "area":50, "speciest1": 5, "speciest2": 6, "occurrences": 100, "species": 2},
+  {"fid1":"cl1", "fid2":"cl2", "name1":"name1", "name2":"name4", "pid1":"1", "pid2": "4", "area":3, "speciest1": 5, "speciest2": 2, "occurrences": 1000, "species": 2},
+  {"fid1":"cl1", "fid2":"cl2", "name1":"name2", "name2":"name5", "pid1":"2", "pid2": "5", "area":7, "speciest1": 7, "speciest2": 1, "occurrences": 200, "species": 1},
+  {"fid1":"cl1", "fid2":"cl2", "name1":"name2", "name2":"name3", "pid1":"2", "pid2": "3", "area":1, "speciest1": 7, "speciest2": 6, "occurrences": 300, "species": 6},
+  {"fid1":"cl1", "fid2":"cl2", "name1":"name2", "name2":"name4", "pid1":"2", "pid2": "4", "area":70, "speciest1": 7, "speciest2": 2, "occurrences": 400, "species": 2},
+  {"fid1":"cl1", "fid2":"cl2", "name1":"name0", "name2":"name3", "pid1":"0", "pid2": "3", "area":10, "speciest1": 1, "speciest2": 6, "occurrences": 500, "species": 1}]
