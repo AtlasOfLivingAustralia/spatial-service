@@ -159,7 +159,7 @@ class Maxent extends SlaveProcess {
                     }
                     br.close()
 
-                    String header = "'Sensitive species' have been masked out of the model. See: http://www.ala.org.au/about/program-of-projects/sds/\r\n\r\nLSID,Species scientific name,Taxon rank"
+                    String header = "'Sensitive species' have been masked out of the model. See: https://www.ala.org.au/about/program-of-projects/sds/\r\n\r\nLSID,Species scientific name,Taxon rank"
                     FileUtils.writeStringToFile(header + removedSpecies.toString(),
                             getTaskPath() + File.separator + "Prediction_maskedOutSensitiveSpecies.csv")
 

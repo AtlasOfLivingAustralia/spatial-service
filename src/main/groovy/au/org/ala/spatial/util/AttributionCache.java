@@ -31,7 +31,7 @@ public class AttributionCache {
         if (a == null) {
             ObjectMapper om = new ObjectMapper();
             om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            a = om.readValue(new URL("http://collections.ala.org.au/ws/dataResource/" + dataResourceUid), AttributionDTO.class);
+            a = om.readValue(new URL("https://collections.ala.org.au/ws/dataResource/" + dataResourceUid), AttributionDTO.class);
             cache.put(dataResourceUid, a);
         }
         return a;
