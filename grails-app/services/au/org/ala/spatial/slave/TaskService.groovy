@@ -271,7 +271,7 @@ class TaskService {
 
                 request.finished = true
                 request.message = 'finished'
-                request.history.put(System.currentTimeMillis(), "failed (id:${request.id})")
+                request.history.put(System.currentTimeMillis(), "finished (id:${request.id})")
                 log.debug "task:${request.id} finished"
 
                 taskService.slaveService.signalMasterImmediately(request)

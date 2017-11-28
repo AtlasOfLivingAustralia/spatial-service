@@ -65,7 +65,6 @@ class SlaveProcess {
         s
     }
 
-
     String getTaskPath() {
         taskService.getBasePath(task)
     }

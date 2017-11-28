@@ -54,7 +54,7 @@ class MergeAreas extends SlaveProcess {
             String wkt = geometry.toString()
             FileUtils.writeStringToFile(new File(getTaskPath() + "area.wkt"), wkt)
 
-            def values = [file: "area.wkt", name: "Merged area", description: "Created by Merge Areas Tool"]
+            def values = [file: "area.wkt", name: name ?: "Merged area", description: description ?: "Created by Merge Areas Tool"]
             addOutput("areas", (values as JSON).toString(), true)
         }
     }

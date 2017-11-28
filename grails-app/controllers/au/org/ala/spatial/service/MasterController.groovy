@@ -245,7 +245,7 @@ class MasterController {
 
         tasksService.update(id, newValues)
 
-        render {} as JSON
+        render new Object() as JSON
     }
 
 }
