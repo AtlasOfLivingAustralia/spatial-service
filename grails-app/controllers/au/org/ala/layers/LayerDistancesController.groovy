@@ -17,21 +17,22 @@ package au.org.ala.layers
 
 import au.org.ala.spatial.analysis.layers.LayerDistanceIndex
 import grails.converters.JSON
+import org.apache.commons.io.IOUtils
 
 class LayerDistancesController {
 
     def layerDistancesService
 
     def layerdistancesJSON() {
-        render LayerDistanceIndex.loadDistances() as JSON
+        render layerDistancesService.loadDistances() as JSON
     }
 
     def csvRawnames() {
-        render file: layerDistancesService.makeCSV("name"), contentType: 'text/csv'
+        render file: IOUtils.toInputStream(layerDistancesService.makeCSV("name")), contentType: 'text/csv'
     }
 
     def csv() {
-        render file: layerDistancesService.makeCSV("displayname"), contentType: 'text/csv'
+        render file: IOUtils.toInputStream(layerDistancesService.makeCSV("displayname")), contentType: 'text/csv'
     }
 
 }
