@@ -3,10 +3,11 @@ package au.org.ala.spatial.service
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.springframework.context.EnvironmentAware
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.core.env.Environment
 import org.springframework.core.env.PropertiesPropertySource
 
-//@ComponentScan(['au.org.ala.layers', 'au.org.ala.spatial'])
+@ComponentScan(['au.org.ala.layers', 'au.org.ala.spatial']) // @ComponentScan required for fieldDao usage in BootStrap.groovy
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static void main(String[] args) {
         GrailsApp.run(Application, args)
