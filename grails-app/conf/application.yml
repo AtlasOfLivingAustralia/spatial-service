@@ -1,5 +1,7 @@
 ---
 grails:
+    cors:
+        enabled: true
     profile: web
     codegen:
         defaultPackage: au.org.ala.spatial.service
