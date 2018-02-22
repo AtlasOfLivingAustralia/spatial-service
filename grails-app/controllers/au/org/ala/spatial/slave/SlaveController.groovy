@@ -102,7 +102,7 @@ class SlaveController {
             i = i + 1
         }
 
-        pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/area-report/furtherLinks.html").text, i, null))
+        pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/static/area-report/furtherLinks.html").text, i, null))
 
         //find class='title' for table of contents
         StringBuilder sb = new StringBuilder()
@@ -165,7 +165,7 @@ class SlaveController {
                 i = i + 1
             }
 
-            pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/area-report/furtherLinks.html").text, i, null))
+            pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/static/area-report/furtherLinks.html").text, i, null))
 
             //find class='title' for table of contents
             StringBuilder sb = new StringBuilder()

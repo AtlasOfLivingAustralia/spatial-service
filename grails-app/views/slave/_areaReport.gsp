@@ -6,7 +6,7 @@
 <head>
     <title>Area Report</title>
 
-    <link rel="stylesheet" href="${grailsApplication.config.grails.serverURL}/area-report/areaReport.css"
+    <link rel="stylesheet" href="${grailsApplication.config.grails.serverURL}/static/area-report/areaReport.css"
           type="text/css"></link>
 </head>
 

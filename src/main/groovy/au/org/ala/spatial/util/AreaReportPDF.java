@@ -183,7 +183,7 @@ public class AreaReportPDF {
             FileWriter fw = startHtmlOut(fileNumber, filename);
 
             //box summary
-            fw.write("<img  id='imgHeader' src='" + serverUrl + "/image/header.jpg' width='100%' ></img>");
+            fw.write("<img  id='imgHeader' src='" + serverUrl + "/static/image/header.jpg' width='100%' ></img>");
             //fw.write("<div>AREA REPORT</div>");
             fw.write("<table id='dashboard' >");
             fw.write("<tr>");
@@ -419,7 +419,7 @@ public class AreaReportPDF {
     private FileWriter startHtmlOut(int fileNumber, String filename) throws Exception {
         FileWriter fw = new FileWriter(filename.replace(".", "." + fileNumber + "."));
         fw.write("<html>");
-        fw.write("<head><link rel='stylesheet' type='text/css' href='" + serverUrl + "/area-report/areaReport.css'></link></head>");
+        fw.write("<head><link rel='stylesheet' type='text/css' href='" + serverUrl + "/static/area-report/areaReport.css'></link></head>");
         fw.write("<body>");
         return fw;
     }
@@ -717,7 +717,7 @@ public class AreaReportPDF {
             fw.write(JSONValue.toJSONString(csvs));
             fw.close();
 
-            FileUtils.copyURLToFile(new URL(serverUrl + "/area-report/toc.xsl"),
+            FileUtils.copyURLToFile(new URL(serverUrl + "/static/area-report/toc.xsl"),
                     new File(filePath + "/toc.xsl"));
         } catch (Exception e) {
             LOGGER.error("failed to output area report information", e);
