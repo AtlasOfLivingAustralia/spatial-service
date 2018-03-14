@@ -197,7 +197,7 @@ gazField: 'cl915'
 userObjectsField: 'cl1083'
 
 apiKeyCheckUrlTemplate: 'https://auth.ala.org.au/apikey/ws/check?apikey={0}'
-spatialService.remote: "http://spatial-test.ala.org.au/spatial-service"
+spatialService.remote: "https://nectar-spatial-staging.ala.org.au/spatial-service"
 
 journalmap.api_key: ''
 journalmap.url: 'https://www.journalmap.org/'
