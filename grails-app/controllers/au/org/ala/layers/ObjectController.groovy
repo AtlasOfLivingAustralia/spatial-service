@@ -35,6 +35,7 @@ class ObjectController {
     def show(String pid) {
         def obj = objectDao.getObjectByPid(pid)
         if (obj != null) render obj as JSON
+        else render(status: 404, text: 'Invalid id')
     }
 
     /*

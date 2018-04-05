@@ -112,6 +112,8 @@ dependencies {
     compile "org.geotools:gt-jts-wrapper:11.1"
 //    compile "org.apache.httpcomponents:httpmime:4.3.3"
     testCompile "org.apache.ant:ant:1.8.4"
+
+    compile 'com.github.ziplet:ziplet:2.0.0'
 }
 
 springBoot {

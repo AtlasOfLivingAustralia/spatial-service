@@ -34,7 +34,7 @@ class Envelope extends SlaveProcess {
         if (envelope) {
             filter = LayerFilter.parseLayerFilters(envelope)
             filter.each {
-                slaveService.getLayerFile(resolution, it.getLayername())
+                slaveService.getFile('/layer/' + it.getLayername())
             }
         }
 
