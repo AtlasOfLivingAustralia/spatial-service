@@ -119,7 +119,8 @@ class PointsToGrid extends SlaveProcess {
             SitesBySpecies sbs = new SitesBySpecies(gridCellSize, bbox)
             int[] counts = sbs.write(records, getTaskPath(), region, envelopeGrid)
             writeMetadata(getTaskPath() + "sxs_metadata.html", "Sites by Species", records, bbox, false, false, counts, "" /*TODO: area_km*/, species.name.toString(), gridCellSize, movingAverageStr)
-            addOutput("metadata", "sxs_metadata.html")
+            addOutput("metadata", "sxs_metadata.html", true)
+            addOutput("files", "SitesBySpecies.csv", true)
         }
 
         if (occurrenceDensity) {
@@ -146,8 +147,8 @@ class PointsToGrid extends SlaveProcess {
             addOutput("files", "occurrence_density.asc", true)
 
             writeMetadata(getTaskPath() + "odensity_metadata.html", "Occurrence Density", records, bbox, occurrenceDensity, false, null, null, species.name.toString(), gridCellSize, movingAverageStr)
-            addOutput("files", "odensity_metadata.html")
-            addOutput("files", "occurrence_density.png")
+            addOutput("files", "odensity_metadata.html", true)
+            addOutput("files", "occurrence_density.png", true)
         }
 
         if (speciesRichness) {
