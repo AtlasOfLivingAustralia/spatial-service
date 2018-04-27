@@ -260,7 +260,7 @@ class FileService {
 
         if (path.startsWith(prefix)) {
             //location is in prefix dir
-            length = grailsApplication.config.data.dir.toString().length()
+            length = prefix.toString().length()
 
             //prefix may or nay not be supplied with '/'
             if (!prefix.endsWith('/')) {
