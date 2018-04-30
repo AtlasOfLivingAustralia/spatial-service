@@ -148,7 +148,6 @@ class PointsToGrid extends SlaveProcess {
 
             writeMetadata(getTaskPath() + "odensity_metadata.html", "Occurrence Density", records, bbox, occurrenceDensity, false, null, null, species.name.toString(), gridCellSize, movingAverageStr)
             addOutput("files", "odensity_metadata.html", true)
-            addOutput("files", "occurrence_density.png", true)
         }
 
         if (speciesRichness) {
