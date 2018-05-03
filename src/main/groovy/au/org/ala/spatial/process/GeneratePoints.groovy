@@ -39,8 +39,8 @@ class GeneratePoints extends SlaveProcess {
         def wkt = getWkt(area[0].pid)
         def simpleArea = SimpleShapeFile.parseWKT(wkt)
 
-        // dump the species data to a file
-        task.message = "getting iterating across bbox"
+        // dump the data to a file
+        task.message = "Loading area ..."
 
         def points = []
         for (double x = bbox[0]; x <= bbox[2]; x += distance) {
