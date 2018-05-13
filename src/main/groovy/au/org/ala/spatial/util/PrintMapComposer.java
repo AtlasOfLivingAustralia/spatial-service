@@ -240,7 +240,7 @@ public class PrintMapComposer {
                 File file = new File(cacheFilename);
 
                 if (!file.exists()) {
-                    String u = url.replace(":", "%3A").replace("[", "%5B").replace("]", "%5D").replace("http%3A", "http:");
+                    String u = url.replace(":", "%3A").replace("[", "%5B").replace("]", "%5D").replace("http%3A", "http:").replace("https%3A", "https:");
                     Map<String, Object> response = Util.getStream(u);
                     try {
                         //construct cache filename
