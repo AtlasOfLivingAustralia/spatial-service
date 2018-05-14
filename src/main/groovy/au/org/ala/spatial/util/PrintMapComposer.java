@@ -53,15 +53,17 @@ public class PrintMapComposer {
     //private LayerUtilities layerUtilities;
     String geoserverUrl;
     String dataDir;
+    String googleApiKey;
 
     //uses MapComposer information
     public PrintMapComposer(String geoserverUrl, String baseMap, List<String> mapLayers,
                             double[] bb, double[] extents, int[] windowSize, String comment, String outputType, int resolution,
-                            String dataDir) {
+                            String dataDir, String googleApiKey) {
         this.geoserverUrl = geoserverUrl;
         this.mapLayers = new ArrayList(mapLayers);
         this.baseMap = baseMap;
         this.dataDir = dataDir;
+        this.googleApiKey = googleApiKey;
 
         this.extents = new double[]{
                 SpatialUtils.convertLngToMeters(bb[0])
@@ -134,7 +136,8 @@ public class PrintMapComposer {
 
     //extents are in 4326
     public PrintMapComposer(double[] bbox, String baseMap, String[] mapLayers, double aspectRatio, String comment,
-                            String type, int resolution, String dataDir) {
+                            String type, int resolution, String dataDir, String googleApiKey) {
+        this.googleApiKey = googleApiKey;
         //this.layerUtilities = new LayerUtilitiesImpl();
         this.mapLayers = Arrays.asList(mapLayers);
         this.baseMap = baseMap;
@@ -484,6 +487,8 @@ public class PrintMapComposer {
 
         String uri = "https://maps.googleapis.com/maps/api/staticmap?";
         String parameters = "center=" + latitude + "," + longitude + "&zoom=" + res + "&scale=" + gScale + "&size=" + imgWidth + "x" + imgHeight + "&maptype=" + maptype;
+        String key = googleApiKey;
+        if (key != null) parameters += "&key=" + key;
 
         RescaleOp op = new RescaleOp(new float[]{1f, 1f, 1f, 1f}, new float[]{0f, 0f, 0f, 0f}, null);
 

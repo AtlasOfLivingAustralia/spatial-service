@@ -1089,41 +1089,41 @@ public class AreaReportPDF {
 
             setProgress("Getting information: making map of " + shortname, 0);
             if (isCancelled()) return;
-            saveImage(shortname, new PrintMapComposer(extents, basemap, new String[]{mlArea, ml}, aspectRatio, "", type, resolution, dataDir).get());
+            saveImage(shortname, new PrintMapComposer(extents, basemap, new String[]{mlArea, ml}, aspectRatio, "", type, resolution, dataDir, null).get());
         }
 
         setProgress("Getting information: making map of area", 0);
         if (isCancelled()) return;
-        saveImage("base_area", new PrintMapComposer(extents, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir).get());
+        saveImage("base_area", new PrintMapComposer(extents, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making map of area overview", 0);
         if (isCancelled()) return;
-        saveImage("base_area_zoomed_out", new PrintMapComposer(extentsLarge, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir).get());
+        saveImage("base_area_zoomed_out", new PrintMapComposer(extentsLarge, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making occurrences", 0);
         if (isCancelled()) return;
-        saveImage("occurrences", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, mlSpecies}, aspectRatio, "", type, resolution, dataDir).get());
+        saveImage("occurrences", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, mlSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making threatened species", 0);
         if (isCancelled()) return;
-        saveImage("Threatened_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, threatenedSpecies}, aspectRatio, "", type, resolution, dataDir).get());
+        saveImage("Threatened_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, threatenedSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making iconic species", 0);
         if (isCancelled()) return;
-        saveImage("Iconic_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, iconicSpecies}, aspectRatio, "", type, resolution, dataDir).get());
+        saveImage("Iconic_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, iconicSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making migratory species", 0);
         if (isCancelled()) return;
-        saveImage("Migratory_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, migratorySpecies}, aspectRatio, "", type, resolution, dataDir).get());
+        saveImage("Migratory_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, migratorySpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making invasive species", 0);
         if (isCancelled()) return;
-        saveImage("Invasive_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, invasiveSpecies}, aspectRatio, "", type, resolution, dataDir).get());
+        saveImage("Invasive_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, invasiveSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         for (int i = 0; i < SPECIES_GROUPS.length; i++) {
             setProgress("Getting information: making map of lifeform " + SPECIES_GROUPS[i], 0);
             if (isCancelled()) return;
-            saveImage("lifeform - " + SPECIES_GROUPS[i], new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, lifeforms.get(i)}, aspectRatio, "", type, resolution, dataDir).get());
+            saveImage("lifeform - " + SPECIES_GROUPS[i], new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, lifeforms.get(i)}, aspectRatio, "", type, resolution, dataDir, null).get());
         }
     }
 

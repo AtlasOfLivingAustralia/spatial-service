@@ -62,7 +62,7 @@ class MapImage extends SlaveProcess {
                 comment,
                 outputType,
                 resolution,
-                grailsApplication.config.data.dir).get()
+                grailsApplication.config.data.dir, grailsApplication.config.google.apikey).get()
 
         if (outputType == 'pdf') {
             FileUtils.writeByteArrayToFile(new File(getTaskPath() + task.id + ".jpg"), imageBytes)
