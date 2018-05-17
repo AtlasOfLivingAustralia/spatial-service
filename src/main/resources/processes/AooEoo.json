@@ -41,6 +41,9 @@
     }
   },
   "output": {
+    "metadata": {
+      "description": "Output summary."
+    },
     "areas": {
       "description": "Output areas."
     },
