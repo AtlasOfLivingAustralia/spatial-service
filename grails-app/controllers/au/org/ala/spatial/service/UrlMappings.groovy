@@ -9,6 +9,7 @@ class UrlMappings {
         "/checklists"(controller: "checklist", action: "index")
         "/checklist/$id"(controller: "checklist", action: "show")
         "/checklists/lsids"(controller: "checklist", action: "lsids")
+        "/checklist/lsid"(controller: "checklist", action: "lsids")
 
         "/distribution/counts"(controller: "distribution", action: "count")
         "/distribution/radius/count"(controller: "distribution", action: "pointRadiusCount")
