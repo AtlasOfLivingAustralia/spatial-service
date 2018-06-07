@@ -92,6 +92,7 @@ class UrlMappings {
         "/shape/wkt/$id"(controller: "shapes", action: "wkt")
         "/shape/geojson/$id"(controller: "shapes", action: "geojson")
         "/shape/shp/$id"(controller: "shapes", action: "shp")
+        "/shape/shapefile/$id"(controller: "shapes", action: "shp")
         "/shape/kml/$id"(controller: "shapes", action: "kml")
         "/shape/upload/wkt"(controller: "shapes", action: "uploadWkt")
         "/shape/upload/wkt/$pid"(controller: "shapes", action: "updateWithWKT")
