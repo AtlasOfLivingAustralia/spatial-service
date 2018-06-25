@@ -177,18 +177,16 @@ class FileService {
      * @return
      */
     def zip(String outFilename, String taskDir, filenames) {
-        if (filenames) {
-            OutputStream os = new BufferedOutputStream(new FileOutputStream(outFilename))
+        OutputStream os = new BufferedOutputStream(new FileOutputStream(outFilename))
 
-            def listOfFiles = []
-            filenames.each { f ->
-                listOfFiles.addAll(getFilesFromBase(f, taskDir))
-            }
-            zip(os, listOfFiles, taskDir, true)
-
-            os.flush()
-            os.close()
+        def listOfFiles = []
+        filenames.each { f ->
+            listOfFiles.addAll(getFilesFromBase(f, taskDir))
         }
+        zip(os, listOfFiles, taskDir, true)
+
+        os.flush()
+        os.close()
     }
 
     /**

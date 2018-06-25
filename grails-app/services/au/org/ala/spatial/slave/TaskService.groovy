@@ -185,7 +185,8 @@ class TaskService {
     }
 
     def getStatus(task) {
-        def map = [history: task.history, message: task.message, additionalMessage: task.additionalMessage]
+        def map = [history: task.history, message: task.message]
+        if (task.additionalMessage) map.put('additionalMessage', task.additionalMessage)
         if (task.finished) map.put('finished', true)
 
         map
