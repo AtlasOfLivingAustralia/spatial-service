@@ -75,8 +75,8 @@ class TaskServiceSpec extends Specification implements ServiceUnitTest<TaskServi
 
     void "getStatus"() {
         when:
-        def task = [history: [1:"a", 2:"b"], message: "test"]
-        def taskFinished = [history: [1:"a", 2:"b"], message: "test", finished: true]
+        def task = [history: [1:"a", 2:"b"], message: "test", additionalMessage: null]
+        def taskFinished = [history: [1:"a", 2:"b"], message: "test", additionalMessage: null, finished: true]
         def status = service.getStatus(task)
         def statusFinished = service.getStatus(taskFinished)
 
