@@ -97,6 +97,7 @@ class PointsToGrid extends SlaveProcess {
         }
         if (error != null) {
             //error
+            task.additionalMessage = error
             return
         }
 

@@ -185,7 +185,7 @@ class TaskService {
     }
 
     def getStatus(task) {
-        def map = [history: task.history, message: task.message]
+        def map = [history: task.history, message: task.message, additionalMessage: task.additionalMessage]
         if (task.finished) map.put('finished', true)
 
         map
@@ -265,6 +265,9 @@ class TaskService {
                 operator.start()
                 operator.taskLog("finished")
 
+                if (request.additionalMessage) {
+                    request.history.put(System.currentTimeMillis(), request.additionalMessage)
+                }
                 request.message = 'publishing'
                 log.debug "task:${request.id} publishing"
                 taskService.slaveService.publishResults(request)

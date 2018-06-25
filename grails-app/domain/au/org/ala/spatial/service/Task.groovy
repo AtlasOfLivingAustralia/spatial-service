@@ -29,7 +29,7 @@ class Task {
     // tag
     String tag
 
-    // 0 = in_queue, 1 = running, 2 = cancelled, 3 = error, 4 = finished
+    // 0 = in_queue, 1 = running, 2 = cancelled, 3 = error, 4 = finished, 5 = finished but no record returned
     Integer status = 0
 
     // status message

@@ -42,6 +42,10 @@ class Task {
     // status message
     String message = "starting"
 
+    // additional message
+    // currently used when task returns 0 records
+    String additionalMessage
+
     // finished flag
     Boolean finished = false
 }
