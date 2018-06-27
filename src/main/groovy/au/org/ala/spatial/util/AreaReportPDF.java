@@ -174,6 +174,9 @@ public class AreaReportPDF {
             //read data
 
             JSONParser jp = new JSONParser();
+            String tabulationFile = filePath + "/tabulations.json";
+            LOGGER.debug("Temp tabulation file: " + tabulationFile);
+            LOGGER.debug(FileUtils.readFileToString(new File(filePath + "/tabulations.json")));
             JSONObject tabulations = (JSONObject) jp.parse(FileUtils.readFileToString(new File(filePath + "/tabulations.json"), "UTF-8"));
             JSONObject csvs = (JSONObject) jp.parse(FileUtils.readFileToString(new File(filePath + "/csvs.json")));
             JSONObject counts = (JSONObject) jp.parse(FileUtils.readFileToString(new File(filePath + "/counts.json"), "UTF-8"));
