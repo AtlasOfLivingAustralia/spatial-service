@@ -114,9 +114,10 @@ class SlaveController {
             }
         }
         sb.append("</ol></div>")
-        //pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
+        pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
         log.error("Area reports: "+ i + " : " + Arrays.toString(pages))
-        renderPdf(template: "areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: true)
+        render(template: "areaReport", model: [pages: pages, id: id])
+        //renderPdf(template: "areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: true)
     }
 
     private def cleanPageText(text, i, file) {
