@@ -59,8 +59,11 @@ class ScatterplotDraw extends SlaveProcess {
         newStyle.setHighlightWkt(wkt)
 
         try {
-            scatterplot.annotatePixelBox(selection[0].toInteger(), selection[1].toInteger(), selection[2].toInteger(), selection[3].toInteger())
-        } catch (Exception e) {}
+            scatterplot.annotatePixelBox(Double.valueOf(selection[0]).intValue(), Double.valueOf(selection[1]).intValue(),
+                    Double.valueOf(selection[2]).intValue(), Double.valueOf(selection[3]).intValue())
+        } catch (Exception e) {
+            log.error(e.getMessage(), e)
+        }
 
         scatterplot.getScatterplotDTO().setId('' + System.currentTimeMillis())
         scatterplot.reStyle(newStyle,
