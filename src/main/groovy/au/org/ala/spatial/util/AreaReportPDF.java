@@ -263,16 +263,9 @@ public class AreaReportPDF {
                 fw = startHtmlOut(fileNumber, filename);
                 figureNumber++;
 
-                //Todo need to optimised
-                JSONArray shortnameValue = new JSONArray();
-                if ( tabulations.get(shortname) instanceof JSONArray)
-                    shortnameValue = (JSONArray)tabulations.get(shortname);
-                else
-                    shortnameValue.add((JSONObject)tabulations.get(shortname));
-
                 mapPage(fw, displayname, figureNumber, tableNumber, shortname + ".png",
                         description,
-                        shortnameValue
+                        (JSONArray)tabulations.get(shortname)
                         , geoserver_url.isEmpty() ? null : geoserver_url);
                 fw.write("</body></html>");
                 fw.close();
