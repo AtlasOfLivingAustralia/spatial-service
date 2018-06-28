@@ -174,6 +174,9 @@ public class AreaReportPDF {
             //read data
 
             JSONParser jp = new JSONParser();
+            String tabulationFile = filePath + "/tabulations.json";
+            LOGGER.error("Temp tabulation file: " + tabulationFile);
+            LOGGER.error(FileUtils.readFileToString(new File(filePath + "/tabulations.json")));
             JSONObject tabulations = (JSONObject) jp.parse(FileUtils.readFileToString(new File(filePath + "/tabulations.json"), "UTF-8"));
             JSONObject csvs = (JSONObject) jp.parse(FileUtils.readFileToString(new File(filePath + "/csvs.json")));
             JSONObject counts = (JSONObject) jp.parse(FileUtils.readFileToString(new File(filePath + "/counts.json"), "UTF-8"));
@@ -256,15 +259,21 @@ public class AreaReportPDF {
                 String canSetColourMode = split[3];
                 String description = split[4];
 
-                fileNumber++;
-                fw = startHtmlOut(fileNumber, filename);
-                figureNumber++;
-                mapPage(fw, displayname, figureNumber, tableNumber, shortname + ".png",
-                        description,
-                        (JSONArray) tabulations.get(shortname)
-                        , geoserver_url.isEmpty() ? null : geoserver_url);
-                fw.write("</body></html>");
-                fw.close();
+                if (tabulations.get(shortname) instanceof JSONArray) {
+
+                    fileNumber++;
+                    fw = startHtmlOut(fileNumber, filename);
+                    figureNumber++;
+
+                    mapPage(fw, displayname, figureNumber, tableNumber, shortname + ".png",
+                            description,
+                            (JSONArray) tabulations.get(shortname)
+                            , geoserver_url.isEmpty() ? null : geoserver_url);
+                    fw.write("</body></html>");
+                    fw.close();
+                }else{
+                    LOGGER.error(shortname + " has an runtime error! ");
+                }
             }
 
             fileNumber++;
