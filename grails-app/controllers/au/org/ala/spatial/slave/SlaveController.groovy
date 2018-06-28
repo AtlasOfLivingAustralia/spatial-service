@@ -115,7 +115,7 @@ class SlaveController {
         }
         sb.append("</ol></div>")
         //pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
-        log.error("Area report - after fix:" + Arrays.toString(pages))
+        log.error("Area reports: "+ i + " : " + Arrays.toString(pages))
         renderPdf(template: "areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: true)
     }
 
