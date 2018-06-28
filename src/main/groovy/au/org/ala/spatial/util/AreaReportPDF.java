@@ -259,16 +259,21 @@ public class AreaReportPDF {
                 String canSetColourMode = split[3];
                 String description = split[4];
 
-                fileNumber++;
-                fw = startHtmlOut(fileNumber, filename);
-                figureNumber++;
+                if (tabulations.get(shortname) instanceof JSONArray) {
 
-                mapPage(fw, displayname, figureNumber, tableNumber, shortname + ".png",
-                        description,
-                        (JSONArray)tabulations.get(shortname)
-                        , geoserver_url.isEmpty() ? null : geoserver_url);
-                fw.write("</body></html>");
-                fw.close();
+                    fileNumber++;
+                    fw = startHtmlOut(fileNumber, filename);
+                    figureNumber++;
+
+                    mapPage(fw, displayname, figureNumber, tableNumber, shortname + ".png",
+                            description,
+                            (JSONArray) tabulations.get(shortname)
+                            , geoserver_url.isEmpty() ? null : geoserver_url);
+                    fw.write("</body></html>");
+                    fw.close();
+                }else{
+                    LOGGER.error(shortname + " has an runtime error! ");
+                }
             }
 
             fileNumber++;
