@@ -29,6 +29,7 @@ class SlaveController {
     def fileLockService
     def slaveAuthService
 
+
     def reRegister() {
         if (!slaveAuthService.isValid(params.api_key)) {
             def err = [error: 'not authorised']
@@ -114,6 +115,8 @@ class SlaveController {
         }
         sb.append("</ol></div>")
         pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
+
+        log.error("Report: " + Arrays.toString(pages))
 
         renderPdf(template: "areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: true)
     }
