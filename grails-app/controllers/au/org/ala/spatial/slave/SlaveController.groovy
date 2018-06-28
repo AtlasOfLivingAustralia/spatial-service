@@ -94,6 +94,7 @@ class SlaveController {
         def pages = []
 
         File file
+        def isStream = params.stream ? params.stream: true
         def i = params.start?.toInteger() ?: 1
         def end = params.end?.toInteger() ?: 500
         while (i <= end &&
@@ -115,9 +116,8 @@ class SlaveController {
         }
         sb.append("</ol></div>")
         pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
-        log.error("Area reports: "+ i + " : " + Arrays.toString(pages))
-        render(template: "areaReport", model: [pages: pages, id: id])
-        //renderPdf(template: "areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: true)
+        //render(template: "areaReport", model: [pages: pages, id: id])
+        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: isStream)
     }
 
     private def cleanPageText(text, i, file) {
