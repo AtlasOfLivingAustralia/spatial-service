@@ -901,14 +901,25 @@ class SlaveProcess {
         if (species.fq) q.addAll(species.fq)
         if (species.fqs) q.addAll(species.fqs)
 
-        if (area.q) {
+        def wkt = null
+
+        if (area.q && area[0].q.size() > 0) {
             q.addAll(area.q)
-        } else if (area.wkt) {
+        } else if (area.wkt && area[0].wkt?.size() > 0) {
+            wkt = area.wkt //area[0].wkt
+        } else if (area.pid && area[0].pid?.size() > 0) {
+            wkt = getWkt(area[0].pid)
+        }
+
+        // area does not have q, has wkt or pid
+        if (!(area.q && area[0].q.size() > 0) && wkt) {
+            // use area wkt if species does not have one
             if (!species.wkt) {
-                species.wkt = area.wkt
+                species.wkt = wkt
             } else {
+                // find intersection of species wkt and area wkt
                 Geometry g1 = Geometry.CreateFromWkt(species.wkt)
-                Geometry g2 = Geometry.CreateFromWkt(area.wkt)
+                Geometry g2 = Geometry.CreateFromWkt(wkt)
 
                 try {
                     Geometry intersection = g1.Intersection(g2)
@@ -919,6 +930,7 @@ class SlaveProcess {
                         q = ["-*:*"]
                     }
                 } catch (Exception e) {
+                    log.error("Falied to retrieve intersection area", e)
                     species.wkt = null
                     q = ["-*:*"]
                 }
