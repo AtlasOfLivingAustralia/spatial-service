@@ -227,6 +227,13 @@ class TasksService {
                 out.files.each { f1 ->
                     formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: task))
                 }
+            } else if (k.equals('csv')) {
+                out.files.each { f1 ->
+                    if (f1.endsWith('.csv')) {
+                        //a csv file
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                    }
+                }
             }
 
         }

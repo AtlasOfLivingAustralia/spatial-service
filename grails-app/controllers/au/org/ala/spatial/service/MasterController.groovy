@@ -239,7 +239,7 @@ class MasterController {
         if (json.task?.history) newValues.put('history', json.task.history as Map)
         if (json.task?.finished && json.task.finished) {
             if (json.task?.additionalMessage && json.task.additionalMessage) {
-                newValues.put('status', 5)
+                newValues.put('status', 3)
             } else {
                 newValues.put('status', 4)
             }

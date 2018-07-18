@@ -77,7 +77,7 @@ class MasterService {
         def newValues = [:]
         if (status?.status?.finished) {
             if (status?.status?.additionalMessage) {
-                newValues.put('status', 5)
+                newValues.put('status', 3)
             } else {
                 newValues.put('status', 4)
             }

@@ -285,9 +285,7 @@ class DistributionsService {
     def get(params, String type, requestType) {
 
         String wkt = params?.wkt
-        if (params?.wkt && params.wkt.toString().isNumber() && (
-                requestType == COUNT
-        )) {
+        if (params?.wkt && params.wkt.toString().isNumber()) {
             wkt = objectDao.getObjectsGeometryById(params.wkt.toString(), "wkt")
         }
         if (!wkt) wkt = ''

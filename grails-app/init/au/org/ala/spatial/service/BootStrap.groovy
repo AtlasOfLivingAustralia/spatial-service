@@ -70,7 +70,9 @@ class BootStrap {
                         "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, true, false);")
             }
         } catch (Exception e) {
-            log.error("Error ", e)
+            if (!e.getMessage().contains("duplicate key value")) {
+                log.error("Error ", e)
+            }
         }
 
         //create missing azimuth function from st_azimuth

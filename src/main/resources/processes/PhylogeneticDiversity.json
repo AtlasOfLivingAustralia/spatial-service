@@ -40,6 +40,9 @@
     }
   },
   "output": {
+    "csv": {
+      "description": "Output as CSV."
+    },
     "files": {
       "description": "Output files."
     },
