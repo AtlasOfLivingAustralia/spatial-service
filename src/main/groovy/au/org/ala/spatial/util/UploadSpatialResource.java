@@ -115,7 +115,7 @@ public class UploadSpatialResource {
         }
 
         // Execute the request
-        return processResponse(Util.urlResponse("POST", url, null, null, entity,
+        return processResponse(Util.urlResponse("PUT", url, null, null, entity,
                 true, username, password));
     }
 }
