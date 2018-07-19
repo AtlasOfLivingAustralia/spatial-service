@@ -63,6 +63,7 @@ class Classification extends SlaveProcess {
             replaceMap.put(it + '.grd', getLayer(getField(it).spid).displayname)
             replaceMap.put(it, getLayer(getField(it).spid).displayname)
         }
+        replaceMap.put('http://spatial.ala.org.au', task.input.layersServiceUrl)
 
         cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
