@@ -887,7 +887,22 @@ class SlaveProcess {
         [region, envelope]
     }
 
-    def getSpeciesArea(species, area) {
+    /**
+     * Create a new species by combining a species and area.
+     *
+     * @param species
+     * @param area array of areas, only the first area is used
+     * @return
+     */
+    def getSpeciesArea(species, areas) {
+        // check for absent area
+        if (areas instanceof List && areas.length == 0) {
+            return species
+        }
+
+        // support areas and single area
+        def area = areas instanceof List && areas.size() >= 1 ? areas[0] : areas
+
         if (!species.q) {
             return species
         }
@@ -903,16 +918,16 @@ class SlaveProcess {
 
         def wkt = null
 
-        if (area.q && area[0].q.size() > 0) {
+        if (area.q && area.q.size() > 0) {
             q.addAll(area.q)
-        } else if (area.wkt && area[0].wkt?.size() > 0) {
-            wkt = area.wkt //area[0].wkt
-        } else if (area.pid && area[0].pid?.size() > 0) {
-            wkt = getWkt(area[0].pid)
+        } else if (area.wkt && area.wkt?.size() > 0) {
+            wkt = area.wkt
+        } else if (area.pid && area.pid?.size() > 0) {
+            wkt = getWkt(area.pid)
         }
 
         // area does not have q, has wkt or pid
-        if (!(area.q && area[0].q.size() > 0) && wkt) {
+        if (!(area.q && area.q.size() > 0) && wkt) {
             // use area wkt if species does not have one
             if (!species.wkt) {
                 species.wkt = wkt

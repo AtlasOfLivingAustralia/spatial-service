@@ -51,6 +51,8 @@ import java.util.List;
 
 /**
  * Created by a on 10/03/2014.
+ *
+ * TODO: when all values are NaN, report this error
  */
 public class Scatterplot {
 
