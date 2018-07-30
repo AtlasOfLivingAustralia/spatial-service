@@ -124,6 +124,8 @@ grdResolutions:
 biocacheServiceUrl: 'https://biocache.ala.org.au/ws'
 #biocacheServiceUrl: 'http://ala-starr.it.csiro.au:8080/biocache-service'
 biocacheUrl: 'https://biocache.ala.org.au'
+openstreetmap:
+  url: 'https://tile.openstreetmap.org'
 
 slave.enable: true
 service.enable: true

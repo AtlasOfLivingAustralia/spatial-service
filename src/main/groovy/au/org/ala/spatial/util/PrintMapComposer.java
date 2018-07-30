@@ -1,14 +1,16 @@
 package au.org.ala.spatial.util;
 
 import au.org.ala.spatial.Util;
-import org.apache.commons.httpclient.HttpMethodBase;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -52,14 +54,16 @@ public class PrintMapComposer {
     private List<String> mapLayers;
     //private LayerUtilities layerUtilities;
     String geoserverUrl;
+    String openstreetmapUrl;
     String dataDir;
     String googleApiKey;
 
     //uses MapComposer information
-    public PrintMapComposer(String geoserverUrl, String baseMap, List<String> mapLayers,
+    public PrintMapComposer(String geoserverUrl, String openstreetmapUrl, String baseMap, List<String> mapLayers,
                             double[] bb, double[] extents, int[] windowSize, String comment, String outputType, int resolution,
                             String dataDir, String googleApiKey) {
         this.geoserverUrl = geoserverUrl;
+        this.openstreetmapUrl = openstreetmapUrl;
         this.mapLayers = new ArrayList(mapLayers);
         this.baseMap = baseMap;
         this.dataDir = dataDir;
@@ -135,8 +139,10 @@ public class PrintMapComposer {
     }
 
     //extents are in 4326
-    public PrintMapComposer(double[] bbox, String baseMap, String[] mapLayers, double aspectRatio, String comment,
+    public PrintMapComposer(String geoserverUrl, String openstreetmapUrl, double[] bbox, String baseMap, String[] mapLayers, double aspectRatio, String comment,
                             String type, int resolution, String dataDir, String googleApiKey) {
+        this.geoserverUrl = geoserverUrl;
+        this.openstreetmapUrl = openstreetmapUrl;
         this.googleApiKey = googleApiKey;
         //this.layerUtilities = new LayerUtilitiesImpl();
         this.mapLayers = Arrays.asList(mapLayers);
@@ -247,15 +253,7 @@ public class PrintMapComposer {
                     Map<String, Object> response = Util.getStream(u);
                     try {
                         //construct cache filename
-                        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFilename));
-                        BufferedInputStream bis = new BufferedInputStream((((HttpMethodBase) response.get("call")).getResponseBodyAsStream()));
-                        byte[] bytes = new byte[1024];
-                        int n;
-                        while ((n = bis.read(bytes)) > 0) {
-                            bos.write(bytes, 0, n);
-                        }
-                        bos.close();
-                        bis.close();
+                        FileUtils.copyURLToFile(new URL(u), new File(cacheFilename));
                     } catch (Exception e) {
                         LOGGER.error("failed to get image at url: " + url + ", or write to file failed for: " + getCacheFilename(url), e);
                     }
@@ -416,16 +414,14 @@ public class PrintMapComposer {
 
         RescaleOp op = new RescaleOp(new float[]{1f, 1f, 1f, 1f}, new float[]{0f, 0f, 0f, 0f}, null);
 
-        String uri = "https://tile.openstreetmap.org/";
         for (int iy = my; iy >= sy; iy--) {
             for (int ix = sx; ix <= mx; ix++) {
                 String bbox = res + "/" + (ix % tiles) + "/" + iy + ".png";
-                //LOGGER.trace("print uri: " + uri + bbox);
 
-                imageUrls.add(uri + bbox);
+                imageUrls.add(openstreetmapUrl + bbox);
 
                 if (drawTiles) {
-                    BufferedImage img = getImage(uri + bbox, true);
+                    BufferedImage img = getImage(openstreetmapUrl + bbox, true);
                     if (img != null) {
                         int nx = (ix - sx) * srcWidth + xOffset;
                         int ny = (iy - sy) * srcHeight + yOffset;

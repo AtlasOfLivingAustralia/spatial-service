@@ -14,6 +14,12 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     }
 
     @Override
+    void doWithApplicationContext() {
+        // Ensure that layers-store will use the correct context
+        au.org.ala.layers.client.Client.setContext(applicationContext)
+    }
+
+    @Override
     void setEnvironment(Environment environment) {
         def envName = environment.getProperty("ENV_NAME")
 

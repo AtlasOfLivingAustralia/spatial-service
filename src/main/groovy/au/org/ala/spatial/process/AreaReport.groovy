@@ -37,6 +37,7 @@ class AreaReport extends SlaveProcess {
 
         //test for pid
         new AreaReportPDF(grailsApplication.config.geoserver.url.toString(),
+                grailsApplication.config.openstreetmap.url.toString(),
                 grailsApplication.config.biocacheServiceUrl.toString(),
                 grailsApplication.config.biocacheUrl.toString(),
                 q,

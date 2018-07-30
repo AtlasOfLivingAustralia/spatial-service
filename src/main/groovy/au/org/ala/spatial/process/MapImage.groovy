@@ -54,6 +54,7 @@ class MapImage extends SlaveProcess {
         //test for pid
         def imageBytes = new PrintMapComposer(
                 grailsApplication.config.geoserver.url.toString(),
+                grailsApplication.config.openstreetmap.url.toString(),
                 baseMap,
                 mapLayers,
                 bbox,

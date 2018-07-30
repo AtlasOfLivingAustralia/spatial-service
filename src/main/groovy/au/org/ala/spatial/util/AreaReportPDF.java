@@ -54,6 +54,7 @@ public class AreaReportPDF {
     private String wkhtmltopdfPath;
     private String bbox;
     String geoserverUrl;
+    String openstreetmapUrl;
     String biocacheServiceUrl;
     String biocacheHubUrl;
 
@@ -91,7 +92,8 @@ public class AreaReportPDF {
     String pid;
     String dataDir;
 
-    public AreaReportPDF(String geoserverUrl, String biocacheServiceUrl, String biocacheHubUrl, String q, String pid,
+    public AreaReportPDF(String geoserverUrl, String openstreetmapUrl, String biocacheServiceUrl, String biocacheHubUrl,
+                         String q, String pid,
                          String areaName,
                          String area_km,
                          List<String> facets, Map progress, String serverUrl,
@@ -111,6 +113,7 @@ public class AreaReportPDF {
         this.progress = progress;
         this.serverUrl = serverUrl;
         this.geoserverUrl = geoserverUrl;
+        this.openstreetmapUrl = openstreetmapUrl;
         this.biocacheServiceUrl = biocacheServiceUrl;
         this.biocacheHubUrl = biocacheHubUrl;
 
@@ -1017,8 +1020,6 @@ public class AreaReportPDF {
 
         String basemap = "Minimal";
 
-        //mlArea.setColourMode("hatching");
-
         List<Double> bbox = new ArrayList<Double>();
 
         //convert POLYGON box to bounds
@@ -1098,41 +1099,41 @@ public class AreaReportPDF {
 
             setProgress("Getting information: making map of " + shortname, 0);
             if (isCancelled()) return;
-            saveImage(shortname, new PrintMapComposer(extents, basemap, new String[]{mlArea, ml}, aspectRatio, "", type, resolution, dataDir, null).get());
+            saveImage(shortname, new PrintMapComposer(geoserverUrl, openstreetmapUrl, extents, basemap, new String[]{mlArea, ml}, aspectRatio, "", type, resolution, dataDir, null).get());
         }
 
         setProgress("Getting information: making map of area", 0);
         if (isCancelled()) return;
-        saveImage("base_area", new PrintMapComposer(extents, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir, null).get());
+        saveImage("base_area", new PrintMapComposer(geoserverUrl, openstreetmapUrl, extents, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making map of area overview", 0);
         if (isCancelled()) return;
-        saveImage("base_area_zoomed_out", new PrintMapComposer(extentsLarge, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir, null).get());
+        saveImage("base_area_zoomed_out", new PrintMapComposer(geoserverUrl, openstreetmapUrl, extentsLarge, basemap, new String[]{mlArea}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making occurrences", 0);
         if (isCancelled()) return;
-        saveImage("occurrences", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, mlSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
+        saveImage("occurrences", new PrintMapComposer(geoserverUrl, openstreetmapUrl, extentsSmall, basemap, new String[]{mlArea, mlSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making threatened species", 0);
         if (isCancelled()) return;
-        saveImage("Threatened_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, threatenedSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
+        saveImage("Threatened_Species", new PrintMapComposer(geoserverUrl, openstreetmapUrl, extentsSmall, basemap, new String[]{mlArea, threatenedSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making iconic species", 0);
         if (isCancelled()) return;
-        saveImage("Iconic_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, iconicSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
+        saveImage("Iconic_Species", new PrintMapComposer(geoserverUrl, openstreetmapUrl, extentsSmall, basemap, new String[]{mlArea, iconicSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making migratory species", 0);
         if (isCancelled()) return;
-        saveImage("Migratory_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, migratorySpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
+        saveImage("Migratory_Species", new PrintMapComposer(geoserverUrl, openstreetmapUrl, extentsSmall, basemap, new String[]{mlArea, migratorySpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         setProgress("Getting information: making invasive species", 0);
         if (isCancelled()) return;
-        saveImage("Invasive_Species", new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, invasiveSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
+        saveImage("Invasive_Species", new PrintMapComposer(geoserverUrl, openstreetmapUrl, extentsSmall, basemap, new String[]{mlArea, invasiveSpecies}, aspectRatio, "", type, resolution, dataDir, null).get());
 
         for (int i = 0; i < SPECIES_GROUPS.length; i++) {
             setProgress("Getting information: making map of lifeform " + SPECIES_GROUPS[i], 0);
             if (isCancelled()) return;
-            saveImage("lifeform - " + SPECIES_GROUPS[i], new PrintMapComposer(extentsSmall, basemap, new String[]{mlArea, lifeforms.get(i)}, aspectRatio, "", type, resolution, dataDir, null).get());
+            saveImage("lifeform - " + SPECIES_GROUPS[i], new PrintMapComposer(geoserverUrl, openstreetmapUrl, extentsSmall, basemap, new String[]{mlArea, lifeforms.get(i)}, aspectRatio, "", type, resolution, dataDir, null).get());
         }
     }
 
@@ -1221,10 +1222,6 @@ public class AreaReportPDF {
 
     public String addWMSLayer(String name) {
         String mapLayer = geoserverUrl + "/wms/reflect?REQUEST=GetMap&VERSION=1.1.0&FORMAT=image/png&layers=ALA%3A" + name;
-
-//        String uriActual = CommonData.getGeoServer() + "/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=9&LAYER="
-//                + mapLayer.getLayer() + (fieldId.length() < 10 ? "&styles=" + fieldId + "_style" : "");
-
 
         return mapLayer;
     }
