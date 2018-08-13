@@ -174,11 +174,31 @@ class TasksController {
     }
 
     def output() {
-        def file = "${grailsApplication.config.data.dir}/public/${params.p1}"
-        if (params.containsKey('p2')) file += "/${params.p2}"
-        if (params.containsKey('p3')) file += "/${params.p3}"
+        def path = "${grailsApplication.config.data.dir}/public"
+        def p1 = params.p1
+        def p2 = params.p2
+        def p3 = params.p3
+        if (params.filename) {
+            if (p3) {
+                p3 = params.filename
+            } else if (p2) {
+                p2 = params.filename
+            } else if (p1) {
+                p1 = params.filename
+            }
+        }
+
+        def file = "${path}/${p1}"
+        if (p2) file += "/${p2}"
+        if (p3) file += "/${p3}"
 
         def f = new File(file)
+
+        if (!f.canonicalPath.startsWith(new File(path).canonicalPath)) {
+            response.status = 404
+            render ""
+        }
+
         if (!f.exists() && f.getName() == "download.zip") {
             //build download.zip when it is absent and there are listed files in the spec.json
             try {
