@@ -69,14 +69,14 @@ class MonitorService {
             def list = Task.findAllByStatus(1)
             list.each { task ->
 
-                log.error "checking task " + task.id
+                log.debug "checking task " + task.id
                 def up = false
 
                 // query status
                 try {
                     def t = Task.get(task.id)
                     up = masterService.checkStatus(t)
-                    log.error "is up " + up
+                    log.debug "is up " + up
                 } catch (StaleObjectStateException err) {
                     up = true
                 } catch (err) {
@@ -84,12 +84,12 @@ class MonitorService {
                 }
 
                 if (!up) {
-                    log.error "not up " + task.id
+                    log.warn "not up " + task.id
                     //TODO: handle slow or tmp unavailable server. Task errors will report as up and will not get here.
 
                     //make this task available for another slave
                     try {
-                        log.error "making available to another slave" + task.id
+                        log.warn "making available to another slave" + task.id
                         def newValues = [status: 0, url: null, slave: null]
                         tasksService.update(task.id, newValues)
                     } catch (StaleObjectStateException err) {
@@ -125,7 +125,7 @@ class MonitorService {
                         }
                     }
                     if (!found) {
-                        log.error "removing task from slave"
+                        log.warn "removing task from slave"
                         slave.remove(t.value)
                     }
                 }
@@ -155,7 +155,7 @@ class MonitorService {
                         //compare server capabilities against this task
                         if (slave.canAdd(nextTask)) {
 
-                            log.error "starting: " + nextTask.id
+                            log.debug "starting: " + nextTask.id
 
                             def input = []
                             Task.withNewTransaction {
@@ -193,7 +193,7 @@ class MonitorService {
                             def id = nextTask.id
                             def response = masterService.start(slave, nextTask, i)
 
-                            log.error "started: " + response
+                            log.debug "started: " + response
 
                             if (response != null) {
                                 slave.add(nextTask)

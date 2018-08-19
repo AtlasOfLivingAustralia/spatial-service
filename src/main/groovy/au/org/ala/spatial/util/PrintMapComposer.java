@@ -62,8 +62,8 @@ public class PrintMapComposer {
     public PrintMapComposer(String geoserverUrl, String openstreetmapUrl, String baseMap, List<String> mapLayers,
                             double[] bb, double[] extents, int[] windowSize, String comment, String outputType, int resolution,
                             String dataDir, String googleApiKey) {
-        this.geoserverUrl = geoserverUrl;
-        this.openstreetmapUrl = openstreetmapUrl;
+        this.geoserverUrl = endUrl(geoserverUrl);
+        this.openstreetmapUrl = endUrl(openstreetmapUrl);
         this.mapLayers = new ArrayList(mapLayers);
         this.baseMap = baseMap;
         this.dataDir = dataDir;
@@ -141,8 +141,8 @@ public class PrintMapComposer {
     //extents are in 4326
     public PrintMapComposer(String geoserverUrl, String openstreetmapUrl, double[] bbox, String baseMap, String[] mapLayers, double aspectRatio, String comment,
                             String type, int resolution, String dataDir, String googleApiKey) {
-        this.geoserverUrl = geoserverUrl;
-        this.openstreetmapUrl = openstreetmapUrl;
+        this.geoserverUrl = endUrl(geoserverUrl);
+        this.openstreetmapUrl = endUrl(openstreetmapUrl);
         this.googleApiKey = googleApiKey;
         //this.layerUtilities = new LayerUtilitiesImpl();
         this.mapLayers = Arrays.asList(mapLayers);
@@ -199,6 +199,13 @@ public class PrintMapComposer {
         scale = 1;
 
         dpi = (resolution == 1 && "outline".equalsIgnoreCase(baseMap)) ? DPI_HIGH_RES : DPI_LOW_RES;
+    }
+
+    private String endUrl(String url) {
+        while (url.length() > 1 && url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url;
     }
 
 
@@ -416,7 +423,7 @@ public class PrintMapComposer {
 
         for (int iy = my; iy >= sy; iy--) {
             for (int ix = sx; ix <= mx; ix++) {
-                String bbox = res + "/" + (ix % tiles) + "/" + iy + ".png";
+                String bbox = "/" + res + "/" + (ix % tiles) + "/" + iy + ".png";
 
                 imageUrls.add(openstreetmapUrl + bbox);
 

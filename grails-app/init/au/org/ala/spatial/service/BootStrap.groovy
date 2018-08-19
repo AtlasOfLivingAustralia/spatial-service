@@ -1,15 +1,9 @@
 package au.org.ala.spatial.service
 
-import au.org.ala.layers.dto.AnalysisLayer
-import au.org.ala.layers.dto.Distribution
-import au.org.ala.layers.dto.Facet
-import au.org.ala.layers.dto.Field
-import au.org.ala.layers.dto.Layer
-import au.org.ala.layers.dto.Objects
-import au.org.ala.layers.dto.SearchObject
-import au.org.ala.layers.dto.Tabulation
+import au.org.ala.layers.dto.*
 import au.org.ala.layers.grid.GridCutter
 import au.org.ala.layers.intersect.IntersectConfig
+import au.org.ala.spatial.service.Task
 import grails.config.Config
 import grails.converters.JSON
 
@@ -67,7 +61,7 @@ class BootStrap {
             def rs = groovySql.executeQuery("SELECT * FROM fields WHERE id = '${grailsApplication.config.userObjectsField;}'")
             if (rs.isClosed() || rs.getRow() == 0) {
                 groovySql.execute("INSERT INTO fields (id, name, \"desc\", type, indb, enabled, namesearch) VALUES " +
-                        "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, true, false);")
+                        "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, false, false);")
             }
         } catch (Exception e) {
             if (!e.getMessage().contains("duplicate key value")) {

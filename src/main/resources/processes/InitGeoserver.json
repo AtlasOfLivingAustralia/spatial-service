@@ -1,0 +1,32 @@
+{
+  "name": "InitGeoserver",
+  "description": "Performs geoserver setup",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+    "geoserverUrl": {
+      "type": "string"
+    },
+    "geoserverUser": {
+      "type": "string"
+    },
+    "geoserverPassword": {
+      "type": "string"
+    },
+    "postgresqlPath": {
+      "type": "string"
+    },
+    "postgresqlUser": {
+      "type": "string"
+    },
+    "postgresqlPassword": {
+      "type": "string"
+    }
+  },
+  "output": {
+  }
+}
