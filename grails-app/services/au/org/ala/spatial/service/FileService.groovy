@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.service
 
+import groovy.util.logging.Slf4j
 import org.apache.commons.io.IOUtils
 
 import java.nio.file.Files
@@ -22,6 +23,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
+@Slf4j
 class FileService {
 
     def grailsApplication
@@ -258,7 +260,7 @@ class FileService {
         //default to data.dir location
         int length = grailsApplication.config.data.dir.toString().length()
 
-        if (path.startsWith(prefix)) {
+        if (prefix != null && path.startsWith(prefix)) {
             //location is in prefix dir
             length = prefix.toString().length()
 

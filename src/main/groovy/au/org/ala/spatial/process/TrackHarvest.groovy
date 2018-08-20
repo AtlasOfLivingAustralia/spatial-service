@@ -37,23 +37,22 @@ class TrackHarvest extends SlaveProcess {
 
             //biocache-store to distributions mapping
             Map mapping = [
-                    'genusID.p'        : 'genus_lsid',
-                    'taxonConceptID.p' : 'lsid',
+                    'genus_guid'       : 'genus_lsid',
+                    'species_guid'     : 'lsid',
                     'collectionID'     : 'metadata_u',
-                    'family.p'         : 'family',
-                    'genus.p'          : 'genus_name',
-                    'scientificName.p' : 'scientific',
-                    'scientificName'   : 'specific_n',
-                    'vernacularName.p' : 'common_nam',
-                    'familyID.p'       : 'family_lsid',
-                    'dataProviderUid.p': 'data_resource_uid',
+                    'family'           : 'family',
+                    'genus'            : 'genus_name',
+                    'scientificName'   : 'scientific',
+                    'raw_taxon_name'   : 'specific_n',
+                    'vernacularName'   : 'common_nam',
+                    'family_id'        : 'family_lsid',
+                    'data_resource_uid': 'data_resource_uid',
                     'footprintWKT'     : 'the_geom',
-                    'uuid'             : 'group_name',
+                    'recordID'         : 'group_name',
                     'eventID'          : 'area_name'
             ]
-
             //get
-            String records = new URL("${biocacheServiceUrl}/occurrences/download?facet=off&q=data_provider_uid:${dataProviderIds.join(" OR data_provider_uid:")}&fields=${mapping.keySet().join(",")}&reasonTypeId=10&zip=false&qa=none&dwcHeaders=true").text
+            String records = new URL("${biocacheServiceUrl}/occurrences/index/download?facet=off&q=data_provider_uid:${dataProviderIds.join(" OR data_provider_uid:")}&fields=${mapping.keySet().join(",")}&reasonTypeId=10&zip=false&qa=none&dwcHeaders=true").text
 
             CSVReader csv = new CSVReader(new StringReader(records))
 
@@ -63,9 +62,15 @@ class TrackHarvest extends SlaveProcess {
 
             List header = csv.readNext().toList()
             def columns = []
+            def scientificAdded = false
             for (String s : header) {
                 if (s.equals("scientificName")) {
-                    columns.add("scientific")
+                    if (!scientificAdded) {
+                        columns.add("scientific")
+                        scientificAdded = true
+                    } else {
+                        columns.add("specific_n")
+                    }
                 } else {
                     String h = mapping.get(s)
                     if (h == null && s.endsWith("_raw")) {

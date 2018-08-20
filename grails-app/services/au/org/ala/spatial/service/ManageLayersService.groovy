@@ -416,6 +416,9 @@ class ManageLayersService {
                 if (upload.size() == 0) map.putAll(l.toMap())
                 //try to get from layer info
                 map.put("raw_id", l.getId())
+                if (!map.containsKey("layer_id")) {
+                    map.put("layer_id", l.getId() + "")
+                }
                 //TODO: stop this failing when the table is not yet created
                 //map.put("columns", layerDao.getLayerColumns(l.getId()));
                 map.put("test_url",

@@ -48,28 +48,30 @@ class CompareAreas extends SlaveProcess {
         def speciesBoth = []
 
         taskLog("sort species lists")
-        def header = area1.speciesList[0]
-        def sorted1 = area1.speciesList.subList(1, area1.speciesList.size).sort(new StringArrayComparator())
-        def sorted2 = area2.speciesList.subList(1, area2.speciesList.size).sort(new StringArrayComparator())
+        def header = appendStrings(area1.speciesList[0], area1.name, area2.name)
+        def sorted1 = area1.speciesList.subList(1, area1.speciesList.size)
+        sorted1.sort(new StringArrayComparator())
+        def sorted2 = area2.speciesList.subList(1, area2.speciesList.size)
+        sorted2.sort(new StringArrayComparator())
 
         def i1 = 0
         def i2 = 0
 
         taskLog("compare species")
         def csv = new CSVWriter(new FileWriter(taskPath + '/comparison.csv'))
-        csv.writeNext(header + [area1.name, area2.name])
+        csv.writeNext(header)
         while (i1 < sorted1.size && i2 < sorted2.size) {
-            if (i1 >= sorted1.size || sorted1[i1] > sorted2[i2]) {
-                speciesOnly2.push(sorted2[i2])
-                csv.writeNext(sorted2[i2] + ["", "found"])
+            if (i1 >= sorted1.size || sorted1[i1][0] > sorted2[i2][0]) {
+                speciesOnly2.push(sorted2[i2][0])
+                csv.writeNext(appendStrings(sorted2[i2], "", "found"))
                 i2++
-            } else if (i2 >= sorted2.size || sorted1[i1] < sorted2[i2]) {
-                speciesOnly1.push(sorted2[i2])
-                csv.writeNext(sorted2[i2] + ["found", ""])
+            } else if (i2 >= sorted2.size || sorted1[i1][0] < sorted2[i2][0]) {
+                speciesOnly1.push(sorted2[i2][0])
+                csv.writeNext(appendStrings(sorted2[i2], "found", ""))
                 i1++
-            } else if (sorted1[i1] == sorted2[i2]) {
-                speciesBoth.push(sorted1[i1])
-                csv.writeNext(sorted2[i2] + ["found", "found"])
+            } else if (sorted1[i1][0] == sorted2[i2][0]) {
+                speciesBoth.push(sorted1[i1][0])
+                csv.writeNext(appendStrings(sorted2[i2], "found", "found"))
                 i1++
                 i2++
             }
@@ -78,28 +80,46 @@ class CompareAreas extends SlaveProcess {
         addOutput("csv", "comparison.csv", true)
 
         def csvTop = new CSVWriter(new FileWriter(taskPath + '/comparisonSummary.csv'))
-        csvTop.writeNext(["Species", "Area name", "Sq km", "Occurrences", "Species"])
-        csvTop.writeNext([species.name, area1.name, area1.area_km, area1.occurrences, area1.speciesList.size])
-        csvTop.writeNext([species.name, area2.name, area2.area_km, area2.occurrences, area2.speciesList.size])
-        csvTop.writeNext([""])
-        csvTop.writeNext(["Species found only in ${area1.name}", speciesOnly1.size])
-        csvTop.writeNext(["Species found only in ${area2.name}", speciesOnly2.size])
-        csvTop.writeNext(["Species found in both areas", speciesBoth.size])
-        csvTop.writeNext([""])
+        csvTop.writeNext(["Species", "Area name", "Sq km", "Occurrences", "Species"].toArray(new String[0]))
+        csvTop.writeNext([species.name, area1.name, area1.area_km, area1.numberOfOccurrences, area1.speciesList.size].collect {
+            it.toString()
+        }.toArray(new String[0]))
+        csvTop.writeNext([species.name, area2.name, area2.area_km, area2.numberOfOccurrences, area2.speciesList.size].collect {
+            it.toString()
+        }.toArray(new String[0]))
+        csvTop.writeNext([""].toArray(new String[0]))
+        csvTop.writeNext(["Species found only in ${area1.name}", speciesOnly1.size].collect {
+            it.toString()
+        }.toArray(new String[0]))
+        csvTop.writeNext(["Species found only in ${area2.name}", speciesOnly2.size].collect {
+            it.toString()
+        }.toArray(new String[0]))
+        csvTop.writeNext(["Species found in both areas", speciesBoth.size].collect {
+            it.toString()
+        }.toArray(new String[0]))
+        csvTop.writeNext([""].toArray(new String[0]))
         csvTop.close()
         addOutput("csv", "comparisonSummary.csv", true)
 
         taskLog("build summary")
         def html = "<div><div>Report for: ${species.name}<br>${area1.name}<br>${area2.name}</div><br>" +
                 "<table><tbody><tr><td>Area name</td><td>Sq km</td><td>Occurrences</td><td>Species</td></tr>" +
-                "<tr><td>${area1.name}</td><td>${area1.area_km}</td><td>${area1.occurrences}</td><td>${area1.species}</td></tr>" +
-                "<tr><td>${area2.name}</td><td>${area2.area_km}</td><td>${area2.occurrences}</td><td>${area2.species}</td></tr>" +
+                "<tr><td>${area1.name}</td><td>${area1.area_km}</td><td>${area1.numberOfOccurrences}</td><td>${area1.speciesList.size}</td></tr>" +
+                "<tr><td>${area2.name}</td><td>${area2.area_km}</td><td>${area2.numberOfOccurrences}</td><td>${area2.speciesList.size}</td></tr>" +
                 "<tr><td>&nbsp;</td></tr><tr><td>Species found only in ${area1.name}</td><td>${speciesOnly1.size}</td></tr>" +
                 "<tr><td>Species found only in ${area2.name}</td><td>${speciesOnly2.size}</td></tr>" +
                 "<tr><td>Species found in both areas</td><td>${speciesBoth.size}</td></tr></tbody></table></div>"
 
-        FileUtils.writeStringToFile(taskPath + '/comparison.html')
-        addOutput("html", "comparison.html", true)
+        FileUtils.writeStringToFile(new File(taskPath + '/comparison.html'), html)
+        addOutput("metadata", "comparison.html", true)
+    }
+
+    private String[] appendStrings(String[] list, String append1, String append2) {
+        String[] join = new String[list.length + 2]
+        System.arraycopy(list, 0, join, 0, list.length)
+        join[list.length] = append1
+        join[list.length + 1] = append2
+        return join
     }
 
     class StringArrayComparator implements Comparator<String[]> {

@@ -75,6 +75,10 @@ class TasksService {
         }
     }
 
+    private trimString(str, len) {
+        return str.toString().substring(0, Math.min(len, str.toString().length()))
+    }
+
     synchronized def _update(id, newValues) {
         Task t = Task.get(id)
         if (t != null) {
@@ -82,9 +86,10 @@ class TasksService {
                 if ('status'.equals(k)) t.status = v
                 else if ('message'.equals(k)) t.message = v
                 else if ('url'.equals(k)) t.url = v
-                else if ('err'.equals(k)) t.err.putAll(v)
                 else if ('history'.equals(k)) {
-                    t.history.putAll(v)
+                    v.each { k1, v1 ->
+                        t.history.put(k1, trimString(v1, 254))
+                    }
                 } else if ('slave'.equals(k)) t.slave = v
                 else if ('output'.equals(k)) t.output = v
             }
@@ -148,7 +153,8 @@ class TasksService {
                     //register area pid
                     def list = []
                     v.each { a ->
-                        if (a instanceof Map && !a.containsKey('pid') && a.containsKey('wkt') && a.containsKey('name') && a.wkt.length() > 0) {
+                        if (a instanceof Map && a.containsKey('wkt') && a.containsKey('name') && a.wkt.length() > 0 &&
+                                (!a.containsKey('pid') || a.get('pid').length() == 0)) {
                             String pid = objectDao.createUserUploadedObject(a.wkt.toString(), a.name.toString(), '', null);
                             Objects object = objectDao.getObjectByPid(pid);
                             a.put('area_km', object.area_km)

@@ -28,11 +28,12 @@ import au.org.ala.spatial.slave.SlaveService
 import au.org.ala.spatial.slave.Task
 import au.org.ala.spatial.slave.TaskService
 import au.org.ala.spatial.util.OccurrenceData
+import com.vividsolutions.jts.geom.Geometry
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.gdal.ogr.Geometry
+import org.geotools.geometry.jts.WKTReader2
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -894,7 +895,10 @@ class SlaveProcess {
      * @param area array of areas, only the first area is used
      * @return
      */
-    def getSpeciesArea(species, areas) {
+    def getSpeciesArea(speciesIn, areas) {
+        // copy species
+        def species = speciesIn.collectEntries { k, v -> [(k): v] }
+
         // check for absent area
         if (areas instanceof List && areas.length == 0) {
             return species
@@ -933,13 +937,15 @@ class SlaveProcess {
                 species.wkt = wkt
             } else {
                 // find intersection of species wkt and area wkt
-                Geometry g1 = Geometry.CreateFromWkt(species.wkt)
-                Geometry g2 = Geometry.CreateFromWkt(wkt)
+                WKTReader2 wktReader = new WKTReader2();
+
+                Geometry g1 = wktReader.read(species.wkt)
+                Geometry g2 = wktReader.read(wkt)
 
                 try {
-                    Geometry intersection = g1.Intersection(g2)
-                    if (intersection.Area() > 0) {
-                        species.wkt = intersection.ExportToWkt()
+                    Geometry intersection = g1.intersection(g2)
+                    if (intersection.area > 0) {
+                        species.wkt = intersection.toText()
                     } else {
                         species.wkt = null
                         q = ["-*:*"]

@@ -35,8 +35,13 @@ class LayerCopy extends SlaveProcess {
         def layer = getLayer(layerId)
 
         //get style
-        slaveService.getFile("/layer/${fieldId}.sld", sourceUrl)
-        addOutput('sld', '/layer/' + fieldId + ".sld")
+        if (fieldId.toString().startsWith("cl")) {
+            slaveService.getFile("/layer/${fieldId}.sld", sourceUrl)
+            addOutput('sld', '/layer/' + fieldId + ".sld")
+        } else {
+            slaveService.getFile("/layer/${layer.name}.sld", sourceUrl)
+            addOutput('sld', '/layer/' + layer.name + ".sld")
+        }
 
         //get layer files
         //TODO: do not download layer files if they are already up to date

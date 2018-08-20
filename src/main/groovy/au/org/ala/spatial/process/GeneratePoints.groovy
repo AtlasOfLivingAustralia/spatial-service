@@ -100,6 +100,9 @@ class GeneratePoints extends SlaveProcess {
                 } else if (txt.contains("FAILED")) {
                     task.message = "failed upload " + statusUrl
                     break
+                } else {
+                    def json = txt as JSON
+                    task.message = json.status + ": " + json.description
                 }
             }
         }
