@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
 import groovy.util.logging.Slf4j
+import org.apache.commons.httpclient.Header
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue
@@ -47,7 +48,7 @@ class JournalMapHarvest extends SlaveProcess {
 
                 if (response &&  response?.statusCode >= 200 && response?.statusCode < 300) {
                     //update maxpage
-                    maxpage = Integer.parseInt(response.get("X-Pages")?.toString())
+                    maxpage = Integer.parseInt(getHeader(response.headers, "X-Pages")?.toString())
 
                     //cache
                     JSONParser jp = new JSONParser()
@@ -76,9 +77,9 @@ class JournalMapHarvest extends SlaveProcess {
 
                         Map response = Util.urlResponse("GET", url)
 
-                        if (response && response?.statusCode >= 200 && resposne?.statusCode < 300) {
+                        if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
                             //update maxpage
-                            maxpage = Integer.parseInt(response.get("X-Pages")?.toString())
+                            maxpage = Integer.parseInt(getHeader(response.headers, "X-Pages")?.toString())
 
                             //cache
                             JSONParser jp = new JSONParser()
@@ -106,10 +107,20 @@ class JournalMapHarvest extends SlaveProcess {
             fw.flush()
             fw.close()
 
-            addOutput('file', '/journalmap.json')
+            addOutput('files', '/journalmap.json')
 
         } catch (Exception e) {
             log.error("error initialising journalmap data", e)
         }
+    }
+
+    String getHeader(headers, key) {
+        for (Header h : headers) {
+            if (h.name == key) {
+                return h.value
+            }
+        }
+
+        return ''
     }
 }

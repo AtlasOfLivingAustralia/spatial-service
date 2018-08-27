@@ -200,7 +200,7 @@
                                         <g:each in="${columns}" var="column">
                                             <g:if test="${column != 'the_geom'}">
                                                 <option value="${column}"
-                                                        <g:if test="${sid == column}">selected</g:if>>${column}</option>
+                                                        <g:if test="${sid.equalsIgnoreCase(column)}">selected</g:if>>${column}</option>
                                             </g:if>
                                         </g:each>
                                     </select>

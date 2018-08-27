@@ -296,13 +296,13 @@ class FieldCreation extends SlaveProcess {
                 if (confirmedSid == null) {
                     f.getProperties().each { p ->
                         if (p.getName().toString().equalsIgnoreCase(sid)) {
-                            confirmedSid = sid
+                            confirmedSid = p.getName().toString()
                         }
                         if (p.getName().toString().equalsIgnoreCase(sname)) {
-                            confirmedSname = sname
+                            confirmedSname = p.getName().toString()
                         }
                         if (sdesc != null && p.getName().toString().equalsIgnoreCase(sdesc.toString())) {
-                            confirmedSdesc = sdesc
+                            confirmedSdesc = p.getName().toString()
                         }
                     }
                 }

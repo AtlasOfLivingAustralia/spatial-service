@@ -212,9 +212,9 @@ class SlaveProcess {
         for (File f : file.listFiles()) {
             if (f.getName().equals(fend) || f.getName().startsWith("${fend}.")) {
                 if (layers &&
-                        (f.getText().endsWith(".sld") || f.getText().endsWith(".grd") ||
-                                f.getText().endsWith(".gri") || f.getText().endsWith(".tif") ||
-                                f.getText().endsWith(".prj") || f.getText().endsWith(".shp"))) {
+                        (f.getName().endsWith(".sld") || f.getName().endsWith(".grd") ||
+                                f.getName().endsWith(".gri") || f.getName().endsWith(".tif") ||
+                                f.getName().endsWith(".prj") || f.getName().endsWith(".shp"))) {
                     addOutput("layers", fstart + '/' + f.getName())
                 } else {
                     addOutput("files", fstart + '/' + f.getName())

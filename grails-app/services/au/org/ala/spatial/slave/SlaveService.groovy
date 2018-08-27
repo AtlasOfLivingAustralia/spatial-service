@@ -22,7 +22,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.methods.multipart.FilePart
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
 import org.apache.commons.httpclient.methods.multipart.Part
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipInputStream
@@ -259,7 +259,12 @@ class SlaveService {
                         def filepath = grailsApplication.config.data.dir + entry.getName()
                         def f = new File(filepath)
                         f.getParentFile().mkdirs()
-                        FileUtils.copyInputStreamToFile(zf, f)
+
+                        //TODO: copyInputStreamToFile closes the stream even if there are more entries
+                        def fout = new FileOutputStream(f)
+                        IOUtils.copy(zf, fout);
+                        fout.close()
+
                         zf.closeEntry()
 
                         //update lastmodified time
@@ -275,7 +280,7 @@ class SlaveService {
                     } catch (err) {}
                 }
             } catch (err) {
-                log.error "failed to get: " + path
+                log.error "failed to get: " + path, err
             }
 
             tmpFile.delete()

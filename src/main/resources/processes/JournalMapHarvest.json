@@ -1,0 +1,17 @@
+{
+  "name": "JournalMapHarvest",
+  "description": "",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": true,
+    "public": false
+  },
+  "input": {
+  },
+  "output": {
+    "files": {
+      "description": "Output files."
+    }
+  }
+}

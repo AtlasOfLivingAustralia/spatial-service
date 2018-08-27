@@ -6,9 +6,11 @@ import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.spatial.service.Task
 import grails.config.Config
 import grails.converters.JSON
+import groovy.util.logging.Slf4j
 
 import java.lang.reflect.Array
 
+@Slf4j
 class BootStrap {
 
     def monitorService
@@ -21,6 +23,8 @@ class BootStrap {
     def groovySql
 
     def init = { servletContext ->
+
+        log.error("TEST")
 
         layersStoreConfig(grailsApplication.config)
 
@@ -54,6 +58,19 @@ class BootStrap {
         }
         if (grailsApplication.config.slave.enable) {
             slaveService.monitor()
+        }
+
+        //create database required by layers-store
+        try {
+            def rs = groovySql.executeQuery("SELECT * FROM fields WHERE id = '${grailsApplication.config.userObjectsField;}'")
+            if (rs.isClosed() || rs.getRow() == 0) {
+                groovySql.execute("INSERT INTO fields (id, name, \"desc\", type, indb, enabled, namesearch) VALUES " +
+                        "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, false, false);")
+            }
+        } catch (Exception e) {
+            if (!e.getMessage().contains("duplicate key value")) {
+                log.error("Error ", e)
+            }
         }
 
         //create user objects field if it is missing

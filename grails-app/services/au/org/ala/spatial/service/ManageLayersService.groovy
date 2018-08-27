@@ -679,12 +679,6 @@ class ManageLayersService {
 
         fieldMap.put("requestedId", (isContextual ? "cl" : "el") + layerId)
 
-        if (isContextual && layerMap.containsKey("columns") && layerMap.get("columns") != null) {
-            fieldMap.put("sid", ((List) layerMap.get("columns")).get(0))
-            fieldMap.put("sname", ((List) layerMap.get("columns")).get(0))
-            //"sdesc" is optional
-        }
-
         //type
         //Contextual and shapefile = c, Environmental = e, Contextual and grid file = a & b
         if (isContextual) {
@@ -701,7 +695,7 @@ class ManageLayersService {
 
         //TODO: do not set defaults
         fieldMap.put("filetype", "bil")
-        fieldMap.put("columns", [:])
+        fieldMap.put("columns", [])
 
         if (loadedShp.exists()) {
             fieldMap.put("filetype", "shp")
@@ -716,6 +710,13 @@ class ManageLayersService {
         } else if (bil.exists()) {
 //            fieldMap.put("filetype", "bil");
 //            fieldMap.put("columns", [:]);
+        }
+
+        if (isContextual && fieldMap.containsKey("columns") && fieldMap.get("columns") != null &&
+                ((List) fieldMap.get("columns")).size > 0) {
+            fieldMap.put("sid", ((List) fieldMap.get("columns")).get(0))
+            fieldMap.put("sname", ((List) fieldMap.get("columns")).get(0))
+            //"sdesc" is optional
         }
 
         return fieldMap

@@ -84,7 +84,7 @@ class TabulationCreateOne extends SlaveProcess {
 
             importTabulation()
         } catch (err) {
-            task.err.put(System.currentTimeMillis(), 'unknown error')
+            task.history.put(System.currentTimeMillis(), 'unknown error')
             log.error "failed to produce tabulation for: " + fieldId1 + " and " + fieldId2, err
         }
 
@@ -125,9 +125,18 @@ class TabulationCreateOne extends SlaveProcess {
                 String typeName1 = dataStore1.getTypeNames()[0]
                 FeatureSource source1 = dataStore1.getFeatureSource(typeName1)
                 FeatureIterator iterator1 = source1.getFeatures().features()
+                String field1sid = null
                 while (iterator1.hasNext()) {
                     SimpleFeature feature1 = (SimpleFeature) iterator1.next()
-                    p1.put(feature1.getID(), feature1.getAttribute(field1.sid.toString()).toString())
+
+                    if (field1sid == null) {
+                        for (Object k : feature1.value) {
+                            if (k.getName().toString().equalsIgnoreCase(field1.sid.toString())) {
+                                field1sid = k.getName().toString()
+                            }
+                        }
+                    }
+                    p1.put(feature1.getID(), feature1.getAttribute(field1sid).toString())
                 }
                 iterator1.close()
                 dataStore1.dispose()
@@ -138,9 +147,19 @@ class TabulationCreateOne extends SlaveProcess {
                 def typeName2 = dataStore2.getTypeNames()[0]
                 def source2 = dataStore2.getFeatureSource(typeName2)
                 def iterator2 = source2.getFeatures().features()
+                String field2sid = null
                 while (iterator2.hasNext()) {
                     SimpleFeature feature2 = (SimpleFeature) iterator2.next()
-                    p2.put(feature2.getID(), feature2.getAttribute(field2.sid.toString()).toString())
+
+                    if (field2sid == null) {
+                        for (Object k : feature2.value) {
+                            if (k.getName().toString().equalsIgnoreCase(field2.sid.toString())) {
+                                field2sid = k.getName().toString()
+                            }
+                        }
+                    }
+
+                    p2.put(feature2.getID(), feature2.getAttribute(field2sid).toString())
                 }
                 iterator2.close()
                 dataStore2.dispose()
@@ -227,7 +246,7 @@ class TabulationCreateOne extends SlaveProcess {
                                     }
                                 }
                             } else {
-                                log.debug 'unhandled geom type: ' + w.substring(0, 50) + "..."
+                                log.debug 'unhandled geom type: ' + w.substring(0, Math.min(50, w.length())) + "..."
                             }
                         }
                     }
@@ -254,7 +273,7 @@ class TabulationCreateOne extends SlaveProcess {
                 //TODO: comparisons when at least one contextual layer is a grid file
             }
         } catch (err) {
-            task.err.put(System.currentTimeMillis(), 'unknown error')
+            task.history.put(System.currentTimeMillis(), 'unknown error')
             log.error 'failed tabulation create one for :' + fieldId1 + ', ' + fieldId2, err
         }
 

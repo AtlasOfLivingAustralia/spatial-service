@@ -283,7 +283,6 @@ class TasksService {
 
         if (spec == null) {
             log.error("failed to find spec for: " + name)
-
         }
 
         def errors = [:]

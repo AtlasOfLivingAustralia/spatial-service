@@ -184,7 +184,7 @@ ala.baseURL: 'https://www.ala.org.au'
 bie.baseURL: 'https://bie.ala.org.au'
 bie.searchPath: '/search'
 
-records.url: 'https://biocache.ala.org.au/archives/exports/lat_lon_taxon.zip'
+records.url: 'https://archives.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
 api_key: ''
 lists.url: 'https://lists.ala.org.au'
