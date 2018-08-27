@@ -979,7 +979,10 @@ class ManageLayersService {
             ShapefileDataStore sds = new ShapefileDataStore(shp.toURI().toURL())
             SimpleFeatureType schema = sds.getSchema()
             for (AttributeDescriptor ad : schema.getAttributeDescriptors()) {
-                columns.add(ad.getLocalName())
+                // ignore geometry columns
+                if (!(ad.type instanceof org.opengis.feature.type.GeometryType)) {
+                    columns.add(ad.getLocalName())
+                }
             }
         } catch (IOException e) {
             log.error("failed to get dbf column names for: " + shp.getPath(), e)

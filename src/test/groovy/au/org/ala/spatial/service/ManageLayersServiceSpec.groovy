@@ -130,10 +130,10 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         }
 
         where:
-        dir || error || raw_id       || columns                        || files
-        "1" || false || "relief_ave" || []                             || ["flatten.txt", "original.name", "1.grd", "1.gri", "1.bil", "1.hdr", "1.tif"]
-        "2" || false || "aus1"       || ["the_geom", "NAME_1", "TYPE"] || ["original.name", "2.dbf", "2.shp", "2.shx", "2.prj"]
-        "4" || true  || ""           || []                             || []
+        dir || error || raw_id       || columns            || files
+        "1" || false || "relief_ave" || []                 || ["flatten.txt", "original.name", "1.grd", "1.gri", "1.bil", "1.hdr", "1.tif"]
+        "2" || false || "aus1"       || ["NAME_1", "TYPE"] || ["original.name", "2.dbf", "2.shp", "2.shx", "2.prj"]
+        "4" || true  || ""           || []                 || []
     }
 
     void "fieldMapDefault"() {
@@ -148,10 +148,10 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         map.remove('created')
         map.remove('test_url')
 
-        def expect = [name: "name1", desc: "name1", raw_id: "1", layer_id: "1", displayname: "name1", indb: true,
+        def expect = [name     : "name1", desc: "name1", raw_id: "1", layer_id: "1", displayname: "name1", indb: true,
                       intersect: false, analysis: true, addtomap: true, enabled: true, requestedId: "cl1", type:'c',
-                      filetype:"shp", columns: ["the_geom", "NAME_1", "TYPE"], fields:[], has_layer:true,
-                      filename: "1", classifications:[]]
+                      filetype : "shp", columns: ["NAME_1", "TYPE"], fields: [], has_layer: true,
+                      filename : "1", classifications: [], sid: "NAME_1", sname: "NAME_1"]
 
         then:
 
@@ -168,7 +168,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         def columns = service.getShapeFileColumns(new File(new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDirLayerCreation/uploads/2/aus1.shp"))
 
         then:
-        columns == ["the_geom", "NAME_1", "TYPE"]
+        columns == ["NAME_1", "TYPE"]
     }
 
 }
