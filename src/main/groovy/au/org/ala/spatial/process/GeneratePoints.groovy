@@ -36,7 +36,7 @@ class GeneratePoints extends SlaveProcess {
 
         double[] bbox = area[0].bbox
 
-        def wkt = getWkt(area[0].pid)
+        def wkt = getAreaWkt(area[0])
         def simpleArea = SimpleShapeFile.parseWKT(wkt)
 
         // dump the data to a file

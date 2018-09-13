@@ -61,7 +61,7 @@ class PublishService {
                 // no activity required. The unzip takes care of this
 
             } else if ('shapefile'.equalsIgnoreCase(k) || 'raster'.equalsIgnoreCase(k) || 'layer'.equalsIgnoreCase(k) ||
-                    'layers'.equalsIgnoreCase(k)) {
+                    'layers'.equalsIgnoreCase(k) || 'envelopes'.equalsIgnoreCase(k)) {
                 // note: identify single area shapefile and raster as contextual layer variations
 
                 // put into geoserver or as new layer
@@ -279,13 +279,20 @@ class PublishService {
             output.files.each { f ->
                 def p = path == null ? f : (f.startsWith('/') ? grailsApplication.config.data.dir + f : path + '/' + f)
                 def file = f
-                if (!f.endsWith('.tif') && !f.endsWith('.shp')) {
+
+                if (f.startsWith("{")) {
+                    // parse 'file' out of JSON
+                    def values = JSON.parse(f)
+                    p = (values.file.startsWith('/') ? grailsApplication.config.data.dir + values.file : path + '/' + values.file)
+                    file = values.file
+                }
+                if (!file.endsWith('.tif') && !file.endsWith('.shp')) {
                     if (new File(p + '.tif').exists()) {
                         p = p + '.tif'
-                        file = f + '.tif'
+                        file = file + '.tif'
                     } else if (new File(p + '.shp').exists()) {
                         p = p + '.shp'
-                        file = f + '.shp'
+                        file = file + '.shp'
                     }
                 }
                 if (file.endsWith('.tif')) {

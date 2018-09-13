@@ -225,7 +225,7 @@ class TasksService {
             } else if (k.equals('download')) {
                 //a download zip exists
                 formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: task))
-            } else if (k.equals('areas')) {
+            } else if (k.equals('areas') || k.equals('envelopes')) {
                 out.files.each { f1 ->
                     formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: task))
                 }

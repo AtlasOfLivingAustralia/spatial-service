@@ -121,7 +121,7 @@ class Classification extends SlaveProcess {
         }
 
         if (makeShapefile.toString().toBoolean()) {
-            SpatialUtils.grid2shp(getTaskPath() + "aloc")
+            SpatialUtils.grid2shp(getTaskPath() + "aloc", null)
             addOutput("files", "aloc.shp", true)
             addOutput("files", "aloc.shx", true)
             addOutput("files", "aloc.dbf", true)

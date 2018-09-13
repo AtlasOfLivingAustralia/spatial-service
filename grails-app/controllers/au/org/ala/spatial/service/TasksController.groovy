@@ -73,9 +73,13 @@ class TasksController {
 
         if (params.containsKey('last')) {
             def lg = status.history.findAll { k, v ->
-                if (Long.parseLong(k.toString()) > Long.parseLong(params?.last?.toString())) {
-                    [k: v]
-                } else {
+                try {
+                    if (Long.parseLong(k.toString()) > Long.parseLong(params?.last?.toString())) {
+                        [k: v]
+                    } else {
+                        null
+                    }
+                } catch (Exception e) {
                     null
                 }
             }

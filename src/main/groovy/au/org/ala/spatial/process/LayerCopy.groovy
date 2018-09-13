@@ -49,6 +49,7 @@ class LayerCopy extends SlaveProcess {
         addOutputFiles("/layer/${layer.name}", true)
 
         //get standardized files
+        taskLog("get standardized files")
         def resolutions
         if (layer.type == 'Contextual') resolutions = grailsApplication.config.shpResolutions
         else resolutions = grailsApplication.config.grdResolutions
@@ -58,6 +59,7 @@ class LayerCopy extends SlaveProcess {
         }
 
         //get layerdistances
+        taskLog("get layer distances")
         slaveService.getFile('/public/layerDistances.properties')
         JSONObject dists = JSON.parse(Util.getUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json"))
         def distString = ''
