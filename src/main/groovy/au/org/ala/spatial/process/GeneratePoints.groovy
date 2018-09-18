@@ -86,7 +86,9 @@ class GeneratePoints extends SlaveProcess {
             def maxTime = 60 * 60 * 1000 //2hr
             while (start + maxTime > System.currentTimeMillis()) {
                 def txt = Util.getUrl(statusUrl)
-                if (txt.contains("COMPLETE")) {
+                if (txt == null) {
+                    // retry
+                } else if (txt.contains("COMPLETE")) {
                     task.message = "upload successful"
 
                     //add species layer
