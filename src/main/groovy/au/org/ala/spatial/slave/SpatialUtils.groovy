@@ -59,7 +59,7 @@ import java.awt.image.BufferedImage
 import java.util.List
 
 class SpatialUtils {
-    static void grid2shp(String grdPath) {
+    static void grid2shp(String grdPath, List shpValues) {
         File shpFile = new File(grdPath + '.shp')
         Grid grid = new Grid(grdPath)
         if (grid != null) {
@@ -68,12 +68,17 @@ class SpatialUtils {
             //get list of unique grid values
             def data = grid.getGrid()
             def values = [] as Set
-            data.each { values.add(it) }
+            if (shpValues) {
+                values.addAll(shpValues)
+            } else {
+                data.each { values.add(it) }
+            }
 
-            def classificationMeans = new CSVReader(new FileReader(shpFile.getParent() + File.separator + "classification_means.csv")).readAll()
+            def means = new File(shpFile.getParent() + File.separator + "classification_means.csv")
+            def classificationMeans = means.exists() ? new CSVReader(new FileReader(means)).readAll() : [[]]
 
             try {
-                final SimpleFeatureType type = createFeatureType(classificationMeans.get(0));
+                final SimpleFeatureType type = createFeatureType(means.exists() ? classificationMeans.get(0) : null);
 
                 List<SimpleFeature> features = new ArrayList<SimpleFeature>();
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(type);
@@ -88,13 +93,15 @@ class SpatialUtils {
                         SimpleFeature feature = featureBuilder.buildFeature(null)
                         feature.setAttribute("group", String.valueOf((int) value))
 
-                        classificationMeans.each { cm ->
-                            if (cm[0].equals(String.valueOf((int) value))) {
-                                for (int i = 1; i < cm.length; i++) {
-                                    try {
-                                        feature.setAttribute(classificationMeans.get(0)[i], Double.parseDouble(cm[i]))
-                                    } catch (err) {
-                                        //failures to parse cm[i] as double are valid (missing values)
+                        if (means.exists()) {
+                            classificationMeans.each { cm ->
+                                if (cm[0].equals(String.valueOf((int) value))) {
+                                    for (int i = 1; i < cm.length; i++) {
+                                        try {
+                                            feature.setAttribute(classificationMeans.get(0)[i], Double.parseDouble(cm[i]))
+                                        } catch (err) {
+                                            //failures to parse cm[i] as double are valid (missing values)
+                                        }
                                     }
                                 }
                             }
@@ -129,17 +136,14 @@ class SpatialUtils {
                     featureStore.addFeatures(collection);
                     transaction.commit();
                 } catch (Exception problem) {
-                    //log.error("error pricessing shape file: " + shpFile.getAbsolutePath(), problem);
+                    problem.printStackTrace()
                     transaction.rollback();
 
                 } finally {
                     transaction.close();
                 }
-
-                //log.debug("Active Area shapefile written to: " + shpFile.getAbsolutePath())
-
             } catch (Exception e) {
-                //log.error("Unable to save shapefile: " + shpFile.getAbsolutePath(), e);
+                e.printStackTrace()
             }
         }
     }
@@ -153,7 +157,7 @@ class SpatialUtils {
         builder.add("the_geom", MultiPolygon.class);
         builder.add("group", String.class);
 
-        for (int i = 1; i < additionalColumns.length; i++) {
+        for (int i = 1; additionalColumns != null && i < additionalColumns.length; i++) {
             builder.add(additionalColumns[i], Double.class)
         }
 

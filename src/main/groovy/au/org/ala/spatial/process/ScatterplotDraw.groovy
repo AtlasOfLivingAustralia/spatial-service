@@ -26,7 +26,7 @@ class ScatterplotDraw extends SlaveProcess {
     void start() {
         //optional area to restrict
         def area = JSON.parse(task.input?.wkt ?: '[]')
-        def wkt = area.size() > 0 ? getWkt(area[0].pid) : null
+        def wkt = area.size() > 0 ? getAreaWkt(area[0]) : null
 
         def layersServiceUrl = task.input.layersServiceUrl
 

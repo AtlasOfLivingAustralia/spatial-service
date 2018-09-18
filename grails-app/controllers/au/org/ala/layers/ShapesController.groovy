@@ -29,9 +29,18 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.tuple.Pair
-import org.apache.log4j.Logger
 import org.codehaus.jackson.map.ObjectMapper
+import org.geotools.data.DataUtilities
+import org.geotools.data.FeatureReader
+import org.geotools.data.shapefile.ShapefileDataStore
+import org.geotools.feature.DefaultFeatureCollection
+import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.geojson.geom.GeometryJSON
+import org.geotools.graph.util.ZipUtil
+import org.geotools.kml.KML
+import org.geotools.kml.KMLConfiguration
+import org.geotools.xml.Encoder
+import org.opengis.feature.simple.SimpleFeatureType
 import org.springframework.dao.DataAccessException
 import org.springframework.web.multipart.MultipartFile
 
@@ -51,7 +60,11 @@ class ShapesController {
             os = response.getOutputStream()
             response.setContentType("application/wkt")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".wkt\"")
-            objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'wkt')
+            if (id.startsWith("ENVELOPE")) {
+                streamEnvelope(os, id.replace("ENVELOPE", ""), 'wkt')
+            } else {
+                objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'wkt')
+            }
             os.flush()
         } catch (err) {
             log.error 'failed to get wkt for object: ' + id, err
@@ -74,7 +87,11 @@ class ShapesController {
             os = response.getOutputStream()
             response.setContentType("application/vnd.google-earth.kml+xml")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".kml\"")
-            objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'kml')
+            if (id.startsWith("ENVELOPE")) {
+                streamEnvelope(os, id.replace("ENVELOPE", ""), 'kml')
+            } else {
+                objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'kml')
+            }
             os.flush()
         } catch (err) {
             log.error 'failed to get kml for object: ' + id, err
@@ -97,7 +114,12 @@ class ShapesController {
             os = response.getOutputStream()
             response.setContentType("application/json; subtype=geojson;")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".geojson\"")
-            objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'geojson')
+            if (id.startsWith("ENVELOPE")) {
+                streamEnvelope(os, id.replace("ENVELOPE", ""), 'geojson')
+            } else {
+                objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'geojson')
+            }
+
             os.flush()
         } catch (err) {
             log.error 'failed to get geojson for object: ' + id, err
@@ -120,7 +142,11 @@ class ShapesController {
             os = response.getOutputStream()
             response.setContentType("application/zip")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".zip\"")
-            objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'shp')
+            if (id.startsWith("ENVELOPE")) {
+                streamEnvelope(os, id.replace("ENVELOPE", ""), 'shp')
+            } else {
+                objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'shp')
+            }
             os.flush()
         } catch (err) {
             log.error 'failed to get shapefile zip for object: ' + id, err
@@ -672,6 +698,61 @@ class ShapesController {
 
     private String makeValidFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z0-9\\(\\)\\[\\]\\-]", "_")
+    }
+
+    private void streamEnvelope(OutputStream os, String envelopeTaskId, String type) {
+        String filePrefix = grailsApplication.config.data.dir + "/public/" + envelopeTaskId + "/envelope"
+
+        if (type == 'shp') {
+            def file = new File(filePrefix + "-shp.zip")
+            if (!file.exists()) {
+                ZipUtil.zip(filePrefix + "-shp.zip", (String[]) [filePrefix + ".shp", filePrefix + ".shx", filePrefix + ".dbf", filePrefix + ".fix"])
+            }
+            InputStream is;
+            try {
+                is = FileUtils.openInputStream(new File(filePrefix + "-shp.zip"))
+
+                int len;
+                byte[] bytes = new byte[1024];
+                while ((len = is.read(bytes)) > 0) {
+                    os.write(bytes, 0, len)
+                }
+            } catch (Exception e) {
+                log.error("failed to make shapefile for " + envelopeTaskId, e)
+            } finally {
+                if (is != null) {
+                    is.close()
+                }
+            }
+        } else {
+            def file = new File(filePrefix + ".shp")
+
+            ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
+            FeatureReader reader = sds.featureReader
+
+            if (reader.hasNext()) {
+                def f = reader.next()
+                Geometry g = f.getDefaultGeometry()
+
+                if (type == 'wkt') {
+                    os.write(g.toText().bytes)
+                } else if (type == 'geojson') {
+                    GeometryJSON geojson = new GeometryJSON()
+                    geojson.write(g, os)
+                } else {
+                    // kml
+                    DefaultFeatureCollection collection = new DefaultFeatureCollection()
+                    SimpleFeatureType sft = DataUtilities.createType("location", "geom:Geometry,name:String")
+                    collection.add(SimpleFeatureBuilder.build(sft, (List<Object>) [g, "envelope"], null))
+
+                    Encoder encoder = new Encoder(new KMLConfiguration())
+
+                    encoder.encode(collection, KML.kml, os)
+                }
+            }
+
+            sds.dispose()
+        }
     }
 
 }

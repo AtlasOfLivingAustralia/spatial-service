@@ -33,6 +33,8 @@ import grails.converters.JSON
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
+import org.geotools.data.FeatureReader
+import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.WKTReader2
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -184,6 +186,33 @@ class SlaveProcess {
                 String url = task.input.layersServiceUrl + '/shapes/wkt/' + objectId
                 wkt = Util.getUrl(url)
             }
+        } catch (err) {
+            log.error "failed to lookup object wkt: ${objectId}", err
+        }
+
+        wkt
+    }
+
+    String getEnvelopeWkt(objectId) {
+        String wkt = ''
+
+        try {
+            String taskId = objectId.replace("ENVELOPE", "")
+
+            slaveService.getFile('/public/' + taskId + "/envelope")
+
+            def file = new File(grailsApplication.config.data.dir + "/public/" + taskId + "/" + taskId + ".shp")
+
+            ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
+            FeatureReader reader = sds.featureReader
+
+            if (reader.hasNext()) {
+                def f = reader.next()
+                Geometry g = f.getDefaultGeometry()
+                wkt = g.toText()
+            }
+
+            sds.dispose()
         } catch (err) {
             log.error "failed to lookup object wkt: ${objectId}", err
         }
@@ -858,6 +887,10 @@ class SlaveProcess {
     }
 
     def getAreaWkt(area) {
+        if (area.type == 'envelope') {
+            return getEnvelopeWkt(area.pid)
+        }
+
         if (area.wkt) {
             return area.wkt
         }
@@ -927,7 +960,7 @@ class SlaveProcess {
         } else if (area.wkt && area.wkt?.size() > 0) {
             wkt = area.wkt
         } else if (area.pid && area.pid?.size() > 0) {
-            wkt = getWkt(area.pid)
+            wkt = getAreaWkt(area)
         }
 
         // area does not have q, has wkt or pid

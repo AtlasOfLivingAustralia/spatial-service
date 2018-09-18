@@ -36,7 +36,7 @@ class GeneratePoints extends SlaveProcess {
 
         double[] bbox = area[0].bbox
 
-        def wkt = getWkt(area[0].pid)
+        def wkt = getAreaWkt(area[0])
         def simpleArea = SimpleShapeFile.parseWKT(wkt)
 
         // dump the data to a file
@@ -86,7 +86,9 @@ class GeneratePoints extends SlaveProcess {
             def maxTime = 60 * 60 * 1000 //2hr
             while (start + maxTime > System.currentTimeMillis()) {
                 def txt = Util.getUrl(statusUrl)
-                if (txt.contains("COMPLETE")) {
+                if (txt == null) {
+                    // retry
+                } else if (txt.contains("COMPLETE")) {
                     task.message = "upload successful"
 
                     //add species layer

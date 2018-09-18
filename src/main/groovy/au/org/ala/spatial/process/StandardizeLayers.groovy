@@ -248,7 +248,7 @@ class StandardizeLayers extends SlaveProcess {
 
                 WKTReader r = new WKTReader()
                 objects.each {
-                    Geometry geom = r.read(getWkt(it.pid))
+                    Geometry geom = r.read(getAreaWkt(it))
                     featureBuilder.add(geom)
                     featureBuilder.add(Integer.valueOf(e1))
                     SimpleFeature f = featureBuilder.buildFeature(String.valueOf(e1))
