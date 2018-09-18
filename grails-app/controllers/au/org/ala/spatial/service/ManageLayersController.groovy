@@ -178,7 +178,11 @@ class ManageLayersController {
             //delete uploaded zip now that it has been unzipped
             uploadFile.delete()
 
-            manageLayersService.processUpload(uploadFile.getParentFile(), id)
+            def result = manageLayersService.processUpload(uploadFile.getParentFile(), id)
+
+            if (result.error){
+                return redirect(action: 'uploads')
+            }
         } catch (err) {
             err.printStackTrace()
             log.error 'upload failed', err
@@ -554,6 +558,8 @@ class ManageLayersController {
         def fieldId = params.fieldId;
 
         manageLayersService.updateFromRemote(spatialServiceUrl, fieldId)
+        redirect(controller: "Tasks", action: "index" )
+
     }
 
     private def login() {

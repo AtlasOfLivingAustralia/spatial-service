@@ -75,7 +75,7 @@ class LayerCopy extends SlaveProcess {
             addOutput('append', '/public/layerDistances.properties?' + distString)
         }
 
-        def m = [fieldId: String.valueOf(field.id), uploadId: layer.id]
+        def m = [fieldId: String.valueOf(field.id), uploadId: layer.id, skipSLDCreation: true]
         addOutput("process", "FieldCreation " + (m as JSON))
     }
 }

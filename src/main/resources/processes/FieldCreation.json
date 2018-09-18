@@ -19,7 +19,14 @@
     },
     "ignoreNullObjects": {
       "type": "boolean"
+    },
+    "skipSLDCreation":{
+      "type": "boolean",
+      "constraints": {
+        "default": false
+      }
     }
+
   },
   "output": {
     "layers": {

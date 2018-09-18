@@ -72,7 +72,8 @@ class PublishService {
                 // update output.geoserverLayerName
 
                 // register as a layer (single area or contextual or environmental)
-            } else if ('sld'.equalsIgnoreCase(k)) {
+            } else if ('sld'.equalsIgnoreCase(k)  ) {
+                //skipSLDCreation
                 addStyle(output, path)
             } else if ('areas'.equalsIgnoreCase(k)) {
                 addArea(output, path)
@@ -169,7 +170,7 @@ class PublishService {
                             extra, geoserverUsername, geoserverPassword, name)
                     if (!out.startsWith("200") && !out.startsWith("201")) {
                         //ignore errors
-                        // errors.put(String.valueOf(System.currentTimeMillis()), out)
+                        errors.put(String.valueOf(System.currentTimeMillis()), out)
                     }
 
                     //Upload sld
@@ -179,9 +180,9 @@ class PublishService {
                         errors.put(String.valueOf(System.currentTimeMillis()), out)
                     } else {
                         //when the sld is for a field, apply to the layer as the default sld
-                        def field = fieldDao.getFieldById(name)
+                        def field = fieldDao.getFieldById(name,false)
                         if (field != null) {
-                            def layer = layerDao.getLayerById(Integer.parseInt(field.spid))
+                            def layer = layerDao.getLayerById(Integer.parseInt(field.spid),false)
                             if (layer != null) {
                                 //Apply style
                                 String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
@@ -210,7 +211,8 @@ class PublishService {
 
             }
         } catch (err) {
-            log.error 'failed to upload sld: ' + output + ', ' + path, err
+-            log.error ('failed to upload sld: ' + output + ', ' + path);
+             log.error ('Error: '+ err);
         }
 
         errors
@@ -370,6 +372,7 @@ class PublishService {
 
                     if (!"201".equals(result[0])) {
                         errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
+                        errors.put(String.valueOf(System.currentTimeMillis()), result[0]+' : ' + result[1])
                         log.error 'failed to upload shp to geoserver: ' + shp.getPath()
                     } else {
                         if (sld.exists()) {

@@ -254,7 +254,7 @@ class ManageLayersService {
                 def errors = publishService.layerToGeoserver([files: [shp.exists() ? shp.getPath() : bil.getPath()]], null)
 
                 if (errors) {
-                    map.put("error", "failed to upload to geoserver")
+                    map.put("error", errors.inspect())
                 } else {
                     map.put("raw_id", name)
                     map.put("columns", columns)
@@ -270,7 +270,7 @@ class ManageLayersService {
             return map
         }
 
-        return null
+        return [error: pth +" does not exist!" ]
     }
 
     /**
@@ -313,6 +313,13 @@ class ManageLayersService {
             if (response.text) {
                 output[1] = response.text
             }
+            //Add extra info
+            switch (response.statusCode) {
+                case "401":
+                    output[1] = 'UNAUTHORIZED: ' + url;
+                    break
+            }
+
         }
 
         return output

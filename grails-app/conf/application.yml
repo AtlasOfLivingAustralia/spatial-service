@@ -295,6 +295,7 @@ environments:
             dbCreate: update
         grails:
             serverURL: http://localhost:8080
+
     test:
         dataSource:
             dbCreate: update

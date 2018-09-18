@@ -36,6 +36,8 @@ class FieldCreation extends SlaveProcess {
     void start() {
         String fieldId = task.input.fieldId
         def ignoreNullObjects = task.input.ignoreNullObjects
+        //TODO: check if we need to skip SLD creation from input params
+        // Query geoserver to check - SlaveService.peekFile to check
 
         // get layer info
         Map field = getField(fieldId)
@@ -98,6 +100,7 @@ class FieldCreation extends SlaveProcess {
                         (field.sdesc != null) ? field.sdesc.toString() : null, field.id.toString(), field.namesearch.toString(),
                         ignoreNullObjects)
 
+                //Todo ignoreSLDCreation check
                 task.message = 'creating sld'
                 createContextualFieldStyle(field.id.toString(), field.sid.toString(), name)
 

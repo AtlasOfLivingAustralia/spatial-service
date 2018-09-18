@@ -277,7 +277,9 @@ class SlaveService {
                 } finally {
                     try {
                         zf.close()
-                    } catch (err) {}
+                    } catch (err) {
+                        log.error('Error in reading uploaded file: '+ err.printStackTrace())
+                    }
                 }
             } catch (err) {
                 log.error "failed to get: " + path, err

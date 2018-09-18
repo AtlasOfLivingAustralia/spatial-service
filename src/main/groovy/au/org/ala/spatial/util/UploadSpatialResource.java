@@ -78,6 +78,9 @@ public class UploadSpatialResource {
     private static String processResponse(Map<String, Object> response) {
         String output;
         if (response != null) {
+            int statuscode = ((Integer)response.get("statusCode")).intValue();
+            if (statuscode == 401)
+                output = "401: Unauthorised ";
             output = response.get("statusCode") + ": " + response.get("text");
         } else {
             output = "0: failed";
