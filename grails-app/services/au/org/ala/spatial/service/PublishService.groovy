@@ -334,10 +334,10 @@ class PublishService {
 
                                 // upload the prj file
                                 if (tmpPrj.exists()) {
-                                    callGeoserver("PUT", geoserverUrl + "/rest/resource/data/" + name + ".prj", tmpPrj.getPath(), null)
+                                    callGeoserver("PUT", "/rest/resource/data/" + name + ".prj", tmpPrj.getPath(), null)
                                 }
                             } else {
-                                String[] result = callGeoserver("PUT", geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
+                                String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
                                         null, "file://" + geotiff.getPath());
                                 if (result[0] != "200" && result[0] != "201") {
                                     errors.put(String.valueOf(System.currentTimeMillis()), result[0] + ": " + result[1])
@@ -366,7 +366,7 @@ class PublishService {
                     def sld = new File(name + ".sld")
 
 
-                    callGeoserver("DELETE", geoserverUrl + "/rest/workspaces/ALA/datastores/" + name, null, null)
+                    callGeoserver("DELETE", "/rest/workspaces/ALA/datastores/" + name, null, null)
 
                     if (grailsApplication.config.geoserver.remote.geoserver_data_dir) {
                         for (String filetype : ["shp", "prj", "shx", "dbf", "fix", "sbn", "sbx", "fbn", "fbx", "qix", "cpg", "shp.xml", "atx", "mxs", "ixs", "ain", "aih"]) {
@@ -384,7 +384,7 @@ class PublishService {
                         callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
                                 null, "file://" + shp.getPath())
                     } else {
-                        String[] result = callGeoserver("PUT", geoserverUrl + "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
+                        String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
                                 null, "file://" + shp.getPath())
 
                         if (!"201".equals(result[0])) {
