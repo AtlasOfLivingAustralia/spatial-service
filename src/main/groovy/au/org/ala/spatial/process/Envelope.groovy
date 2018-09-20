@@ -93,18 +93,14 @@ class Envelope extends SlaveProcess {
             FileUtils.writeStringToFile(new File(dir.getPath() + File.separator + "envelope.html"), metadata)
             addOutput("metadata", "envelope.html")
 
-            //if (makeShapefile) {
             SpatialUtils.grid2shp(grid.getPath(), [1])
 
-            FileUtils.moveFile(new File(grid.getPath() + ".shp"), new File(dir.getPath() + File.separator + "envelope.shp"))
-            FileUtils.moveFile(new File(grid.getPath() + ".shx"), new File(dir.getPath() + File.separator + "envelope.shx"))
-            FileUtils.moveFile(new File(grid.getPath() + ".fix"), new File(dir.getPath() + File.separator + "envelope.fix"))
-            FileUtils.moveFile(new File(grid.getPath() + ".dbf"), new File(dir.getPath() + File.separator + "envelope.dbf"))
-                addOutput("files", "envelope.shp")
-                addOutput("files", "envelope.shx")
-                addOutput("files", "envelope.fix")
-                addOutput("files", "envelope.dbf")
-            //}
+            for (String ext : [".shp", ".shx", ".fix", ".dbf"]) {
+                File newFile = new File(dir.getPath() + File.separator + "envelope" + ext)
+                if (newFile.exists()) newFile.delete()
+                FileUtils.moveFile(new File(grid.getPath() + ext), newFile)
+                addOutput("files", "envelope" + ext)
+            }
         } else {
             taskLog("ERROR: Area of the envelope is 0 sq km.")
         }
