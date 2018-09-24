@@ -84,7 +84,7 @@ dependencies {
     // plugins needed at runtime but not for compilation
     compile "org.grails.plugins:ala-admin-plugin:2.0"
     compile "org.grails.plugins:ala-auth:3.0.2"
-    compile "org.grails.plugins:ala-bootstrap3:3.0.1"
+    compile "org.grails.plugins:ala-bootstrap3:3.0.6"
     compile 'org.grails.plugins:rendering:2.0.3'
     compile 'org.grails.plugins:mail:2.0.0.RC6'
     compile 'org.grails.plugins:external-config:1.1.2'
