@@ -78,7 +78,7 @@ class Envelope extends SlaveProcess {
 
             def values = [name       : "Environmental envelope",
                           description: "",
-                          q          : task.input.envelope,
+                          q          : envelope,
                           bbox       : "POLYGON((" + g.xmin + " " + g.ymin + "," + g.xmax + " " + g.ymin + "," +
                                   g.xmax + " " + g.ymax + "," + g.xmin + " " + g.ymax + "," +
                                   g.xmin + " " + g.ymin + "))",

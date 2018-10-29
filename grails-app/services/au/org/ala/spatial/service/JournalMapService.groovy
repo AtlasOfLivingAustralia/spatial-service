@@ -15,14 +15,12 @@
 
 package au.org.ala.spatial.service
 
+import com.vividsolutions.jts.geom.Geometry
 import org.apache.commons.io.FileUtils
-import org.geotools.geometry.GeometryBuilder
-import org.geotools.geometry.text.WKTParser
-import org.geotools.referencing.crs.DefaultGeographicCRS
+import org.geotools.geometry.jts.WKTReader2
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
-import org.opengis.geometry.Geometry
 
 class JournalMapService {
 
@@ -34,39 +32,45 @@ class JournalMapService {
     def search(String wkt, int max) {
         init()
 
-        GeometryBuilder gb = new GeometryBuilder(DefaultGeographicCRS.WGS84)
-        WKTParser wktParser = new WKTParser(gb)
-        Geometry g = wktParser.parse(wkt)
+        WKTReader2 reader2 = new WKTReader2()
+        Geometry g = reader2.read(wkt)
 
-        def found = []
-        def count = 0
+        def found = new HashSet()
+        def count = new HashSet()
 
         for (Map loc : journalMapLocations) {
-            if (loc.point.intersects(g)) {
-                if (found.size() < max) found.add(journalMapArticles.get(loc.index))
-                count++
+            try {
+                if (loc.point.intersects(g)) {
+                    if (found.size() < max) found.add(journalMapArticles.get(loc.index))
+                    count.add(journalMapArticles.get(loc.index))
+                }
+            } catch (err) {
+
             }
         }
 
-        return [article: found, count: count]
+        return [article: found, count: count.size()]
     }
 
     def count(String wkt) {
         init()
 
-        GeometryBuilder gb = new GeometryBuilder(DefaultGeographicCRS.WGS84)
-        WKTParser wktParser = new WKTParser(gb)
-        Geometry g = wktParser.parse(wkt)
+        WKTReader2 reader2 = new WKTReader2()
+        Geometry g = reader2.read(wkt)
 
-        def count = 0
+        def count = new HashSet()
 
         for (Map loc : journalMapLocations) {
-            if (loc.point.intersects(g)) {
-                count++
+            try {
+                if (loc.point.intersects(g)) {
+                    count.add(journalMapArticles.get(loc.index))
+                }
+            } catch (err) {
+
             }
         }
 
-        return count
+        return count.size()
     }
 
     def init() {
@@ -90,14 +94,25 @@ class JournalMapService {
         for (int i = 0; i < journalMapArticles.size(); i++) {
             JSONArray locations = (JSONArray) journalMapArticles.get(i).get("locations")
 
-            GeometryBuilder gb = new GeometryBuilder(DefaultGeographicCRS.WGS84)
-            WKTParser wktParser = new WKTParser(gb)
+            WKTReader2 reader2 = new WKTReader2()
 
             for (int j = 0; j < locations.size(); j++) {
                 JSONObject l = (JSONObject) locations.get(j)
-                double longitude = Double.parseDouble(l.get("longitude").toString())
-                double latitude = Double.parseDouble(l.get("latitude").toString())
-                journalMapLocations.add([point: wktParser.parse("POINT (" + longitude + " " + latitude + ")"), index: i])
+                try {
+                    double longitude
+                    double latitude
+                    if (l.containsKey('coords')) {
+                        longitude = Double.parseDouble(l.get("coords").get('lon').toString())
+                        latitude = Double.parseDouble(l.get("coords").get('lat').toString())
+                    } else {
+                        longitude = Double.parseDouble(l.get("longitude").toString())
+                        latitude = Double.parseDouble(l.get("latitude").toString())
+                    }
+
+                    journalMapLocations.add([point: reader2.read("POINT (" + longitude + " " + latitude + ")"), index: i])
+                } catch (err) {
+                    // failed to load this point
+                }
             }
         }
     }

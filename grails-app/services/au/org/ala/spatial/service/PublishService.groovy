@@ -18,26 +18,17 @@ package au.org.ala.spatial.service
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
 import org.apache.commons.io.FileUtils
-import org.springframework.jdbc.core.JdbcTemplate
-
-import javax.sql.DataSource
 
 class PublishService {
 
     def grailsApplication
     def manageLayersService
-    JdbcTemplate jdbcTemplate
     def tasksService
     def fileService
     def dataSource
     def layerDao
     def fieldDao
     def objectDao
-
-    void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource
-        jdbcTemplate = new JdbcTemplate(dataSource)
-    }
 
     // Unpacks a published zip file and performs some actions.
     // Run time should be kept to a minimum because a spatial-slave is waiting for this to complete
@@ -58,6 +49,9 @@ class PublishService {
         spec.output.each { k, output ->
             if ('file'.equalsIgnoreCase(k) || 'metadata'.equalsIgnoreCase(k)) {
                 // no activity required. The unzip takes care of this
+
+            } else if ('delete'.equalsIgnoreCase(k)) {
+                delete(output, path)
 
             } else if ('shapefile'.equalsIgnoreCase(k) || 'raster'.equalsIgnoreCase(k) || 'layer'.equalsIgnoreCase(k) ||
                     'layers'.equalsIgnoreCase(k) || 'envelopes'.equalsIgnoreCase(k)) {
@@ -210,6 +204,29 @@ class PublishService {
             }
         } catch (err) {
             log.error 'failed to upload sld: ' + output + ', ' + path, err
+        }
+
+        errors
+
+    }
+
+    def delete(output, path) {
+        def errors = [:]
+        try {
+            output.files.each { file ->
+
+                def p = (file.startsWith('/') ? grailsApplication.config.data.dir + file : path + '/' + file)
+                def f = new File(p)
+                if (f.exists()) {
+                    try {
+                        f.delete()
+                    } catch (err) {
+                        log.error 'failed to delete file: ' + file + ', ' + path, err
+                    }
+                }
+            }
+        } catch (err) {
+            log.error 'failed to delete file: ' + output + ', ' + path, err
         }
 
         errors

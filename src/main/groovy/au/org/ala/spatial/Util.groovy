@@ -23,6 +23,7 @@ import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.methods.*
 import org.apache.commons.httpclient.params.HttpClientParams
 import org.apache.commons.io.FileUtils
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.log4j.Logger
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -42,6 +43,8 @@ class Util {
     static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null) {
         urlResponse("POST", url, nameValues, headers)?.text
     }
+
+    static PoolingHttpClientConnectionManager pool = new PoolingHttpClientConnectionManager()
 
     static Map<String, Object> getStream(url) {
         HttpClient client = null
@@ -85,12 +88,14 @@ class Util {
         }
     }
 
+    static MultiThreadedHttpConnectionManager mgr = new MultiThreadedHttpConnectionManager();
+
     static Map<String, Object> urlResponse(String type, String url, NameValuePair[] nameValues = null,
                            Map<String, String> headers = null, RequestEntity entity = null,
                            Boolean doAuthentication = null, String username = null, String password = null) {
         HttpClient client
         try {
-            client = new HttpClient()
+            client = new HttpClient(new HttpClientParams(), mgr)
 
             HttpClientParams httpParams = client.getParams()
             httpParams.setSoTimeout(60000)
@@ -471,6 +476,55 @@ class Util {
         } finally {
             zout.flush()
             zout.close()
+        }
+    }
+
+    static void readReplaceAfter(String fname, String start, String oldPattern, String replPattern) {
+        String line
+        StringBuffer sb = new StringBuffer()
+        try {
+            FileInputStream fis = new FileInputStream(fname)
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
+            int afterPos = -1
+            while ((line = reader.readLine()) != null) {
+                if (afterPos < 0 && (afterPos = line.indexOf(start)) >= 0) {
+                    line = line.substring(0, afterPos + start.length()) + line.substring(afterPos + start.length()).replaceAll(oldPattern, replPattern)
+                } else if (afterPos > 0) {
+                    line = line.replaceAll(oldPattern, replPattern)
+                }
+                sb.append(line + "\n")
+            }
+            reader.close()
+            BufferedWriter out = new BufferedWriter(new FileWriter(fname))
+            out.write(sb.toString())
+            out.close()
+        } catch (Throwable e) {
+            e.printStackTrace(System.out)
+        }
+    }
+
+    static void readReplaceBetween(String fname, String startOldText, String endOldText, String replText) {
+        String line
+        StringBuffer sb = new StringBuffer()
+        try {
+            FileInputStream fis = new FileInputStream(fname)
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
+            while ((line = reader.readLine()) != null) {
+                sb.append(line + "\n")
+            }
+            int start, end
+            start = sb.indexOf(startOldText)
+            if (start >= 0) {
+                end = sb.indexOf(endOldText, start + 1)
+                sb.replace(start, end + endOldText.length(), replText)
+            }
+            reader.close()
+            BufferedWriter out = new BufferedWriter(new FileWriter(fname))
+            out.write(sb.toString())
+            out.close()
+        } catch (Throwable e) {
+            System.err.println("*** exception ***")
+            e.printStackTrace(System.out)
         }
     }
 }

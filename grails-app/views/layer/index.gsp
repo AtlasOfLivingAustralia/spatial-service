@@ -63,7 +63,6 @@
 </div>
 <script>
     $(document).ready(function(){
-        $('#layersTable').DataTable();
         var imgs = $("img")
         imgs.attr('src',function(i,currentvalue) {
             if (imgs[i].attributes !== undefined && imgs[i].attributes.defer_src) {
@@ -72,6 +71,7 @@
                 return currentvalue
             }
         })
+        $('#layersTable').DataTable();
     });
 
     function downloadCSV() {

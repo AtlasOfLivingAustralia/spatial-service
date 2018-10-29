@@ -55,20 +55,12 @@ public class RecordsSmall {
 
         if (!smallFile.exists() && new File(filename + "records.csv").exists()) {
             try {
-                //makeSmallFile(filename);
-                //makeUniquePoints();
+                makeSmallFile(filename);
+                makeUniquePoints();
             } catch (Exception e) {
                 logger.error("failed to make small records files", e);
             }
         }
-
-        try {
-            //makeSmallFile(filename);
-            makeUniquePoints();
-        } catch (Exception e) {
-            logger.error("failed to make small records files", e);
-        }
-
 
         //read species
         if (smallFile.exists()) {

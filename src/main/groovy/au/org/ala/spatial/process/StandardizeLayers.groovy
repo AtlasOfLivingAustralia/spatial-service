@@ -100,7 +100,9 @@ class StandardizeLayers extends SlaveProcess {
                         double nearestSmallerRes = 1
                         grdResolutions.each { Double res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (true || !slaveService.peekFile(path)[0].exists) {
+                            if (!slaveService.peekFile(path)[0].exists) {
+                                task.message = 'running: making for field ' + f.id + ' and resolution ' + res
+
                                 // no need to make for this resolution if it is < the actual grid resolution (and not close)
                                 double dres = res.doubleValue()
                                 if (minRes < dres * 1.2) {

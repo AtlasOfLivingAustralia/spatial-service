@@ -1,0 +1,396 @@
+[
+  {
+    "type": "title",
+    "image": "header.jpg",
+    "counts": [
+      {
+        "label": "Area: %s sq km",
+        "type": "attribute",
+        "name": "area_km"
+      },
+      {
+        "label": "Species: %s",
+        "type": "species",
+        "field": "names_and_lsid"
+      },
+      {
+        "label": "Occurrences: %s",
+        "type": "occurrences"
+      },
+      {
+        "label": "Endemic species: %s",
+        "type": "species",
+        "endemic": true,
+        "field": "names_and_lsid"
+      },
+      {
+        "label": "All threatened species: %s",
+        "type": "species",
+        "field": "names_and_lsid",
+        "fq": "species_list_uid:dr1782 OR species_list_uid:dr967 OR species_list_uid:dr656 OR species_list_uid:dr649 OR species_list_uid:dr650 OR species_list_uid:dr651 OR species_list_uid:dr492 OR species_list_uid:dr1770 OR species_list_uid:dr493 OR species_list_uid:dr653 OR species_list_uid:dr884 OR species_list_uid:dr654 OR species_list_uid:dr655 OR species_list_uid:dr490 OR species_list_uid:dr2201"
+      },
+      {
+        "label": "Migratory species: %s",
+        "type": "species",
+        "field": "names_and_lsid",
+        "fq": "species_list_uid:dr1005"
+      },
+      {
+        "label": "All invasive species: %s",
+        "type": "species",
+        "field": "names_and_lsid",
+        "fq": "species_list_uid:dr947 OR species_list_uid:dr707 OR species_list_uid:dr945 OR species_list_uid:dr873 OR species_list_uid:dr872 OR species_list_uid:dr1105 OR species_list_uid:dr1787 OR species_list_uid:dr943 OR species_list_uid:dr877 OR species_list_uid:dr878 OR species_list_uid:dr1013 OR species_list_uid:dr879 OR species_list_uid:dr880 OR species_list_uid:dr881 OR species_list_uid:dr882 OR species_list_uid:dr883 OR species_list_uid:dr927 OR species_list_uid:dr823"
+      },
+      {
+        "label": "Iconic species: %s",
+        "type": "species",
+        "field": "names_and_lsid",
+        "fq": "species_list_uid:dr781"
+      },
+      {
+        "label": "JournalMap Articles: %s",
+        "type": "journalmap"
+      },
+      {
+        "label": "Animals: %s",
+        "type": "species",
+        "field": "names_and_lsid",
+        "fq": "species_group:Animals"
+      },
+      {
+        "label": "Plants: %s",
+        "type": "species",
+        "field": "names_and_lsid",
+        "fq": "species_group:Plants"
+      },
+      {
+        "label": "Birds: %s",
+        "type": "species",
+        "field": "names_and_lsid",
+        "fq": "species_group:Birds"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "label": "%s",
+        "type": "attribute",
+        "name": "name"
+      },
+      {
+        "label": "Area: %s sq km",
+        "type": "attribute",
+        "name": "area_km"
+      },
+      {
+        "type": "map",
+        "buffer": 10.0
+      },
+      {
+        "type": "map",
+        "buffer": 0.3
+      },
+      {
+        "type": "figure"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "type": "text",
+        "text": "National Dynamic Land Cover"
+      },
+      {
+        "type": "text",
+        "text": "The Dynamic Land Cover Dataset is the first nationally consistent and thematically comprehensive land cover reference for Australia. It provides a base-line for reporting on change and trends in vegetation cover and extent. Information about land cover dynamics is essential to understanding and addressing a range of national challenges such as drought, salinity, water availability and ecosystem health. The data is a synopsis of land cover information for every 250m by 250m area of the country from April 2000 to April 2008. The classification scheme used to describe land cover categories in the Dataset conforms to the 2007 International Standards Organisation (ISO) land cover standard (19144-2). The Dataset shows Australian land covers clustered into 34 ISO classes. These reflect the structural character of vegetation, ranging from cultivated and managed land covers (crops and pastures) to natural land covers such as closed forest and open grasslands. [Ref1]<br></br>Australia's Dynamic Land Cover: <a href='http://www.ga.gov.au/earth-observation/landcover.html'>http://www.ga.gov.au/earth-observation/landcover.html</a><br></br>National Dynamic Land Cover layer: Classification: Vegetation; Type: Contextual (polygonal); Metadata contact organisation: Geoscience Australia (GA). <a href='https://spatial.ala.org.au/ws/layers/view/more/dlcmv1'>https://spatial.ala.org.au/ws/layers/view/more/dlcmv1</a>"
+      },
+      {
+        "type": "map",
+        "buffer": 0.3,
+        "layer": "cl1918",
+        "legendUrl": "https://spatial.ala.org.au/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=9&LAYER=dlcmv1"
+      },
+      {
+        "type": "figure"
+      },
+      {
+        "type": "table",
+        "table": "tabulation",
+        "value": "cl1918"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "type": "text",
+        "text": "Global Context Ecoregions"
+      },
+      {
+        "type": "text",
+        "text": "<br></br>Terrestrial Ecoregions of the World (TEOW)<br></br>Terrestrial Ecoregions of the World (TEOW) is a biogeographic regionalisation of the Earth's terrestrial biodiversity. Our biogeographic units are ecoregions, which are defined as relatively large units of land or water containing a distinct assemblage of natural communities sharing a large majority of species, dynamics, and environmental conditions. There are 867 terrestrial ecoregions, classified into 14 different biomes such as forests, grasslands, or deserts. Ecoregions represent the original distribution of distinct assemblages of species and communities. [Ref2]<br></br>TEOW: <a href='https://worldwildlife.org/biome-categories/terrestrial-ecoregions'>https://worldwildlife.org/biome-categories/terrestrial-ecoregions</a><br></br>Terrestrial Ecoregional Boundaries layer: Classification: Biodiversity - Region; Type: Contextual (polygonal); Metadata contact organisation: The Nature Conservancy (TNC).  <a href='https://spatial.ala.org.au/ws/layers/view/more/1053'>https://spatial.ala.org.au/ws/layers/view/more/1053</a>"
+      },
+      {
+        "type": "map",
+        "buffer": 0.3,
+        "layer": "cl1053"
+      },
+      {
+        "type": "figure"
+      },
+      {
+        "type": "table",
+        "table": "tabulation",
+        "value": "cl1053"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "type": "text",
+        "text": "Freshwater Ecoregions of the World (FEOW)"
+      },
+      {
+        "type": "text",
+        "text": "Freshwater Ecoregions of the World (FEOW) is a collaborative project providing the first global biogeographic regionalization of the Earth's freshwater biodiversity, and synthesizing biodiversity and threat data for the resulting ecoregions. We define a freshwater ecoregion as a large area encompassing one or more freshwater systems that contains a distinct assemblage of natural freshwater communities and species. The freshwater species, dynamics, and environmental conditions within a given ecoregion are more similar to each other than to those of surrounding ecoregions and together form a conservation unit. [Ref5]<br></br>FEOW: <a href='https://worldwildlife.org/biome-categories/freshwater-ecoregions'>https://worldwildlife.org/biome-categories/freshwater-ecoregions</a><br></br>Freshwater Ecoregions of the World layer: Classification: Biodiversity - Region; Type: Contextual (polygonal); Metadata contact organisation: TNC. <a href='https://spatial.ala.org.au/ws/layers/view/more/1052'>https://spatial.ala.org.au/ws/layers/view/more/1052</a>"
+      },
+      {
+        "type": "map",
+        "buffer": 0.3,
+        "layer": "cl1052"
+      },
+      {
+        "type": "figure"
+      },
+      {
+        "type": "table",
+        "table": "tabulation",
+        "value": "cl1052"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "type": "text",
+        "text": "Occurrences"
+      },
+      {
+        "label": "Occurrences: <b>%s</b>",
+        "type": "occurrences"
+      },
+      {
+        "type": "text",
+        "text": "Spatially valid records are considered those that do not have any type of flag questioning their location, for example a terrestrial species being recorded in the ocean. [Ref6]"
+      },
+      {
+        "label": "Number of occurrences (spatially valid only): <b>%s</b>",
+        "type": "occurrences",
+        "fq": "geospatial_kosher:true"
+      },
+      {
+        "type": "map",
+        "buffer": 0.3,
+        "fq": "*:*"
+      },
+      {
+        "type": "figure"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "type": "text",
+        "text": "Species"
+      },
+      {
+        "label": "Species: <b>%s</b>",
+        "type": "species"
+      },
+      {
+        "type": "text",
+        "text": "Spatially valid records are considered those that do not have any type of flag questioning their location, for example a terrestrial species being recorded in the ocean. [Ref6]"
+      },
+      {
+        "label": "Number of species (spatially valid only): <b>%s</b>",
+        "type": "species",
+        "fq": "geospatial_kosher:true"
+      },
+      {
+        "type": "table",
+        "table": "species"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "subpages": 26,
+    "text1": [
+      "All threatened species",
+      "All invasive species",
+      "Iconic species",
+      "Migratory species",
+      "lifeform - Algae",
+      "lifeform - Amphibians",
+      "lifeform - Angiosperms",
+      "lifeform - Animals",
+      "lifeform - Arthropods",
+      "lifeform - Bacteria",
+      "lifeform - Birds",
+      "lifeform - Bryophytes",
+      "lifeform - Chromista",
+      "lifeform - Crustaceans",
+      "lifeform - Dicots",
+      "lifeform - FernsAndAllies",
+      "lifeform - Fishes",
+      "lifeform - Fungi",
+      "lifeform - Gymnosperms",
+      "lifeform - Insects",
+      "lifeform - Mammals",
+      "lifeform - Molluscs",
+      "lifeform - Monocots",
+      "lifeform - Plants",
+      "lifeform - Protozoa",
+      "lifeform - Reptiles"
+    ],
+    "label2": [
+      "Number of threatened species: <b>%s</b>",
+      "Number of invasive species: <b>%s</b>",
+      "Number of iconic species: <b>%s</b>",
+      "Number of migratory species: <b>%s</b>",
+      "Number of Algae <b>%s</b>",
+      "Number of Amphibians <b>%s</b>",
+      "Number of Angiosperms <b>%s</b>",
+      "Number of Animals <b>%s</b>",
+      "Number of Arthropods <b>%s</b>",
+      "Number of Bacteria <b>%s</b>",
+      "Number of Birds <b>%s</b>",
+      "Number of Bryophytes <b>%s</b>",
+      "Number of Chromista <b>%s</b>",
+      "Number of Crustaceans <b>%s</b>",
+      "Number of Dicots <b>%s</b>",
+      "Number of FernsAndAllies <b>%s</b>",
+      "Number of Fishes <b>%s</b>",
+      "Number of Fungi <b>%s</b>",
+      "Number of Gymnosperms <b>%s</b>",
+      "Number of Insects <b>%s</b>",
+      "Number of Mammals <b>%s</b>",
+      "Number of Molluscs <b>%s</b>",
+      "Number of Monocots <b>%s</b>",
+      "Number of Plants <b>%s</b>",
+      "Number of Protozoa <b>%s</b>",
+      "Number of Reptiles <b>%s</b>"
+    ],
+    "fqs": [
+      "species_list_uid:dr1782 OR species_list_uid:dr967 OR species_list_uid:dr656 OR species_list_uid:dr649 OR species_list_uid:dr650 OR species_list_uid:dr651 OR species_list_uid:dr492 OR species_list_uid:dr1770 OR species_list_uid:dr493 OR species_list_uid:dr653 OR species_list_uid:dr884 OR species_list_uid:dr654 OR species_list_uid:dr655 OR species_list_uid:dr490 OR species_list_uid:dr2201",
+      "species_list_uid:dr947 OR species_list_uid:dr707 OR species_list_uid:dr945 OR species_list_uid:dr873 OR species_list_uid:dr872 OR species_list_uid:dr1105 OR species_list_uid:dr1787 OR species_list_uid:dr943 OR species_list_uid:dr877 OR species_list_uid:dr878 OR species_list_uid:dr1013 OR species_list_uid:dr879 OR species_list_uid:dr880 OR species_list_uid:dr881 OR species_list_uid:dr882 OR species_list_uid:dr883 OR species_list_uid:dr927 OR species_list_uid:dr823",
+      "species_list_uid:dr781",
+      "species_list_uid:dr1005",
+      "species_group:Algae",
+      "species_group:Amphibians",
+      "species_group:Angiosperms",
+      "species_group:Animals",
+      "species_group:Arthropods",
+      "species_group:Bacteria",
+      "species_group:Birds",
+      "species_group:Bryophytes",
+      "species_group:Chromista",
+      "species_group:Crustaceans",
+      "species_group:Dicots",
+      "species_group:FernsAndAllies",
+      "species_group:Fishes",
+      "species_group:Fungi",
+      "species_group:Gymnosperms",
+      "species_group:Insects",
+      "species_group:Mammals",
+      "species_group:Molluscs",
+      "species_group:Monocots",
+      "species_group:Plants",
+      "species_group:Protozoa",
+      "species_group:Reptiles"
+    ],
+    "items": [
+      {
+        "type": "text"
+      },
+      {
+        "type": "species"
+      },
+      {
+        "type": "map"
+      },
+      {
+        "type": "figure"
+      },
+      {
+        "type": "table",
+        "table": "species"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "text": "Expert Distributions",
+        "type": "text"
+      },
+      {
+        "label": "Number of expert distributions: <b>%s</b>",
+        "type": "expertdistributions"
+      },
+      {
+        "type": "table",
+        "table": "expertdistributions"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "text": "Checklist Areas",
+        "type": "text"
+      },
+      {
+        "label": "Number of checklist areas: <b>%s</b>",
+        "type": "checklists"
+      },
+      {
+        "type": "table",
+        "table": "checklists"
+      }
+    ]
+  },
+  {
+    "type": "general",
+    "items": [
+      {
+        "text": "JournalMap Articles",
+        "type": "text"
+      },
+      {
+        "label": "Number of JournalMap articles: <b>%s</b>",
+        "type": "journalmap"
+      },
+      {
+        "type": "table",
+        "table": "journalmap"
+      }
+    ]
+  },
+  {
+    "type": "file",
+    "file": "furtherLinks.html"
+  }
+]

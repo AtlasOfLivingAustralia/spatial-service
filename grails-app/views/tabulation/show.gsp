@@ -29,7 +29,7 @@
             <tr>
                 <g:each var="row" in="${data.take(1)}">
                     <g:each var="value" in="${row}">
-                        <th>${(value.trim().matches('^\\d+\\.?\\d*$')) ? (int) value.toDouble() : value}&nbsp;</th>
+                        <th>${(value.trim().matches('^\\d+\\.?\\d*$')) ? (long) value.toDouble() : value}&nbsp;</th>
                     </g:each>
                 </g:each>
             </tr>
@@ -39,7 +39,7 @@
                 <g:if test="${idx > 0}">
                     <tr>
                         <g:each var="value" in="${row}">
-                            <td>${(value.trim().matches('^\\d+\\.?\\d*$')) ? (int) value.toDouble() : value}</td>
+                            <td>${(value.trim().matches('^\\d+\\.?\\d*$')) ? (long) value.toDouble() : value}</td>
                         </g:each>
                     </tr>
                 </g:if>

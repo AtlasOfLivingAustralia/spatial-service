@@ -1,5 +1,5 @@
 {
-  "name": "GDM Step 2",
+  "name": "GDMStep2",
   "description": "GDM Step 2. Defaults are set by GDM Step 1 for; cutpoint, distance ",
   "isBackground": false,
   "version": 1.0,
@@ -25,7 +25,7 @@
     },
     "cutpoint": {
       "description": "The minimum number of taxa in a single grid-cell representing an assemblage to include.",
-      "type": "table",
+      "type": "list",
       "constraints": {
         "selection": "single",
         "content": [
@@ -46,56 +46,37 @@
       "constraints": {
         "selection": "single",
         "content": [
+          "0",
+          "1"
+        ],
+        "labels": [
           "equally",
           "by number of species"
         ]
       }
     },
-    "subsample": {
-      "description": "Do sub sample",
-      "type": "boolean",
-      "constraints": {
-        "default": false
-      }
-    },
     "sitePairsSize": {
-      "description": "Site pairs size.",
+      "description": "Site pairs size",
       "type": "int",
       "constraints": {
-        "min": -1,
-        "max": 9,
-        "default": 1
-      }
-    },
-    "area": {
-      "description": "Area to restrict the GDM.",
-      "type": "area",
-      "constraints": {
-        "min": 1,
-        "max": 1
-      }
-    },
-    "layer": {
-      "description": "Layers to use in the GDM. 1 to 10.",
-      "type": "layer",
-      "constraints": {
-        "min": 1,
-        "max": 10,
-        "contextual": true,
-        "environmental": true,
-        "analysis": true
+        "min": 0,
+        "max": 1,
+        "default": 0
       }
     }
   },
   "output": {
-    "layer": {
+    "layers": {
       "description": "Output layers."
     },
     "metadata": {
       "description": "GDM metadata."
     },
-    "file": {
+    "files": {
       "description": "Other output files."
+    },
+    "download": {
+      "description": "zipped download"
     }
   }
 }

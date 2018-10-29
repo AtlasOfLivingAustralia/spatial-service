@@ -28,6 +28,10 @@ class Pair {
         this.key = key
         String[] split = key.split("\\|")
         v1 = split[0]
-        v2 = split[1]
+        if (split.length == 2) {
+            v2 = split[1]
+        } else {
+            v2 = ''
+        }
     }
 }

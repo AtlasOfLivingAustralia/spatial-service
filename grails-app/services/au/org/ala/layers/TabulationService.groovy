@@ -129,6 +129,10 @@ class TabulationService {
 
     String generateTabulationCSVHTML(String fid1, String fid2, String wkt, String func, String type) throws IOException {
         List<Tabulation> tabulations = tabulationDao.getTabulation(fid1, fid2, wkt)
+        for (Tabulation t : tabulations) {
+            if (t.name1 == null) t.name1 = t.pid1
+            if (t.name2 == null) t.name2 = t.pid2
+        }
 
         String[][] grid = tabulationGridGenerator(tabulations, func)
         double[] sumOfColumns = func == "species" ? speciesTotals(tabulations, true) : tabulationSumOfColumnsGenerator(grid, func)
