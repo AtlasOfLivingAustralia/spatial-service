@@ -1,0 +1,62 @@
+{
+  "name": "TaxonFrequency",
+  "description": "Area and Extent of Occupancy.",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "area": {
+      "description": "Area to restrict the species.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1,
+        "minArea": -1,
+        "maxArea": -1
+      }
+    },
+    "species1": {
+      "description": "Occurrences to use.",
+      "type": "species",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    },
+/*    "species2": {
+      "description": "A supset of the first species(optional).",
+      "type": "species",
+      "constraints": {
+        "min":0,
+        "max": 1
+      }
+    },*/
+    "minYear": {
+      "description": " Year of start",
+      "type": "int",
+      "constraints": {
+        "min": 1800,
+        "max": 2100,
+        "default": 1980
+      }
+    }
+  },
+  "output": {
+    "metadata": {
+      "description": "Output summary."
+    },
+    "files": {
+      "description": "Output files."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

@@ -468,6 +468,8 @@ class LegacyService {
                         geoserverUsername, geoserverPassword,
                         null, null, "text/plain")
 
+                // no need to handle remote geoserver
+
                 String[] result = manageLayersService.httpCall("PUT",
                         geoserverUrl + "/rest/workspaces/ALA/coveragestores/" +
                                 name + "/external.geotiff?configure=first",
@@ -484,25 +486,7 @@ class LegacyService {
 
                 if (sld.exists()) {
                     //Create style
-                    String extra = ""
-                    String out = UploadSpatialResource.loadCreateStyle(geoserverUrl + "/rest/styles/",
-                            extra, geoserverUsername, geoserverPassword, name)
-                    if (!out.startsWith("200") && !out.startsWith("201")) {
-                        log.error("failed to create style")
-                    }
-
-                    //Upload sld
-                    out = UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + name,
-                            extra, geoserverUsername, geoserverPassword, sld.getPath())
-                    if (!out.startsWith("200") && !out.startsWith("201")) {
-                        log.error("failed to upload style: " + sld.getPath())
-                    }
-
-                    //Apply style
-                    String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
-                            "</name></defaultStyle></layer>"
-                    out = UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + name, extra,
-                            geoserverUsername, geoserverPassword, data)
+                    def out = UploadSpatialResource.sld(geoserverUrl, geoserverUsername, geoserverPassword, name, sld.getPath())
                     if (!out.startsWith("200") && !out.startsWith("201")) {
                         log.error("failed to apply style: " + name)
                     }

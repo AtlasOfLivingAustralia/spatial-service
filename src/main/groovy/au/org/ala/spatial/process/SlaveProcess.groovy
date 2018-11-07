@@ -276,6 +276,13 @@ class SlaveProcess {
         }
     }
 
+    def facetOccurenceCount(facet, species) {
+        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=-1&fsort=index&q=" + species.q
+        String response = Util.getUrl(url)
+        JSONParser jp = new JSONParser()
+        ((JSONArray) jp.parse(response))
+    }
+
     def facetCount(facet, species) {
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q
         String response = Util.getUrl(url)

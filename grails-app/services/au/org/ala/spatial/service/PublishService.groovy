@@ -25,7 +25,6 @@ import javax.sql.DataSource
 class PublishService {
 
     def grailsApplication
-    def layerIntersectDao
     def manageLayersService
     JdbcTemplate jdbcTemplate
     def tasksService
@@ -35,7 +34,7 @@ class PublishService {
     def fieldDao
     def objectDao
 
-    public void setDataSource(DataSource dataSource) {
+    void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource
         jdbcTemplate = new JdbcTemplate(dataSource)
     }
@@ -180,9 +179,9 @@ class PublishService {
                         errors.put(String.valueOf(System.currentTimeMillis()), out)
                     } else {
                         //when the sld is for a field, apply to the layer as the default sld
-                        def field = fieldDao.getFieldById(name,false)
+                        def field = fieldDao.getFieldById(name, false)
                         if (field != null) {
-                            def layer = layerDao.getLayerById(Integer.parseInt(field.spid),false)
+                            def layer = layerDao.getLayerById(Integer.parseInt(field.spid), false)
                             if (layer != null) {
                                 //Apply style
                                 String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
@@ -211,8 +210,7 @@ class PublishService {
 
             }
         } catch (err) {
--            log.error ('failed to upload sld: ' + output + ', ' + path);
-             log.error ('Error: '+ err);
+            log.error 'failed to upload sld: ' + output + ', ' + path, err
         }
 
         errors
@@ -270,6 +268,14 @@ class PublishService {
         errors
     }
 
+    def callGeoserver(String type, String urlPath, String file, String resource) {
+        return manageLayersService.httpCall(type,
+                grailsApplication.config.geoserver.url + urlPath,
+                grailsApplication.config.geoserver.username,
+                grailsApplication.config.geoserver.password,
+                file, resource, "text/plain")
+    }
+
     def layerToGeoserver(output, path) {
         def errors = [:]
         if (grailsApplication.config.geoserver.canDeploy) {
@@ -311,20 +317,32 @@ class PublishService {
                             if (oldPrj.exists()) FileUtils.moveFile(oldPrj, tmpPrj)
 
                             //attempt to delete
-                            manageLayersService.httpCall("DELETE",
-                                    geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + name,
-                                    geoserverUsername, geoserverPassword,
-                                    null, null, "text/plain")
+                            callGeoserver("DELETE", "/rest/workspaces/ALA/coveragestores/" + name, null, null)
 
-                            String[] result = manageLayersService.httpCall("PUT",
-                                    geoserverUrl + "/rest/workspaces/ALA/coveragestores/" +
-                                            name + "/external.geotiff?configure=first",
-                                    geoserverUsername, geoserverPassword,
-                                    null,
-                                    "file://" + geotiff.getPath(),
-                                    "text/plain");
-                            if (result[0] != "200" && result[0] != "201") {
-                                errors.put(String.valueOf(System.currentTimeMillis()), result[0] + ": " + result[1])
+                            if (grailsApplication.config.geoserver.remote.geoserver_data_dir) {
+                                // delete the tif file if it exists
+                                callGeoserver("DELETE", "/rest/resource/data/" + name + ".tif", null, null)
+
+                                // delete the prj file if it exists
+                                callGeoserver("DELETE", "/rest/resource/data/" + name + ".prj", null, null)
+
+                                // upload the tif file
+                                callGeoserver("PUT", "/rest/resource/data/" + name + ".tif", geotiff.getPath(), null)
+
+                                // create the layer
+                                callGeoserver("PUT", "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
+                                        null, "file://" + grailsApplication.config.geoserver.remote.geoserver_data_dir + "/data/" + name + ".tif")
+
+                                // upload the prj file
+                                if (tmpPrj.exists()) {
+                                    callGeoserver("PUT", "/rest/resource/data/" + name + ".prj", tmpPrj.getPath(), null)
+                                }
+                            } else {
+                                String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
+                                        null, "file://" + geotiff.getPath());
+                                if (result[0] != "200" && result[0] != "201") {
+                                    errors.put(String.valueOf(System.currentTimeMillis()), result[0] + ": " + result[1])
+                                }
                             }
 
                             //return prj
@@ -365,50 +383,42 @@ class PublishService {
                     def name = shp.getName().replace('.shp', '')
                     def sld = new File(name + ".sld")
 
-                    manageLayersService.httpCall("DELETE",
-                            geoserverUrl + "/rest/workspaces/ALA/datastores/" + name,
-                            geoserverUsername, geoserverPassword,
-                            null, null, "text/plain")
 
-                    String[] result = manageLayersService.httpCall("PUT",
-                            geoserverUrl + "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
-                            geoserverUsername, geoserverPassword,
-                            null,
-                            "file://" + shp.getPath(),
-                            "text/plain");
+                    callGeoserver("DELETE", "/rest/workspaces/ALA/datastores/" + name, null, null)
 
-                    if (!"201".equals(result[0])) {
-                        errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
-                        errors.put(String.valueOf(System.currentTimeMillis()), result[0]+' : ' + result[1])
-                        log.error 'failed to upload shp to geoserver: ' + shp.getPath()
+                    if (grailsApplication.config.geoserver.remote.geoserver_data_dir) {
+                        for (String filetype : ["shp", "prj", "shx", "dbf", "fix", "sbn", "sbx", "fbn", "fbx", "qix", "cpg", "shp.xml", "atx", "mxs", "ixs", "ain", "aih"]) {
+                            // delete file if it exists
+                            callGeoserver("DELETE", "/rest/resource/data/" + name + "." + filetype, null, null)
+
+                            // upload the file
+                            File uploadFile = new File(shp.getPath().replace(".shp", "." + filetype))
+                            if (uploadFile.exists()) {
+                                callGeoserver("PUT", "/rest/resource/data/" + name + "." + filetype, uploadFile.getPath(), null)
+                            }
+                        }
+
+                        // create the layer
+                        callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
+                                null, "file://" + shp.getPath())
                     } else {
-                        if (sld.exists()) {
-                            //Create style
-                            String extra = "";
-                            String out = UploadSpatialResource.loadCreateStyle(geoserverUrl + "/rest/styles/",
-                                    extra, geoserverUsername, geoserverPassword, name)
-                            if (!out.startsWith("200") && !out.startsWith("201")) {
-                                errors.put(String.valueOf(System.currentTimeMillis()), out)
-                            }
+                        String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
+                                null, "file://" + shp.getPath())
 
-                            //Upload sld
-                            out = UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + name,
-                                    extra, geoserverUsername, geoserverPassword, sld.getPath());
-                            if (!out.startsWith("200") && !out.startsWith("201")) {
-                                errors.put(String.valueOf(System.currentTimeMillis()), out)
-                            }
-
-                            //Apply style
-                            String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
-                                    "</name></defaultStyle></layer>";
-                            out = UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + name, extra,
-                                    geoserverUsername, geoserverPassword, data);
-                            if (!out.startsWith("200") && !out.startsWith("201")) {
-                                errors.put(String.valueOf(System.currentTimeMillis()), out)
-                            }
+                        if (!"201".equals(result[0])) {
+                            errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
+                            log.error 'failed to upload shp to geoserver: ' + shp.getPath()
                         }
                     }
 
+                    if (sld.exists()) {
+                        //Create style
+                        def out = UploadSpatialResource.sld(geoserverUrl + "/rest/styles/", geoserverUsername, geoserverPassword, name, sld.getPath())
+
+                        if (!out.startsWith("200") && !out.startsWith("201")) {
+                            errors.put(String.valueOf(System.currentTimeMillis()), out)
+                        }
+                    }
                 }
             }
         }

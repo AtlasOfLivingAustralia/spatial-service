@@ -121,4 +121,24 @@ public class UploadSpatialResource {
         return processResponse(Util.urlResponse("PUT", url, null, null, entity,
                 true, username, password));
     }
+
+    public static String sld(String geoserverUrl, String geoserverUsername, String geoserverPassword, String name, String pathToSldFile) {
+        String extra = "";
+
+        // Create sld
+        UploadSpatialResource.loadCreateStyle(geoserverUrl + "/rest/styles/",
+                extra, geoserverUsername, geoserverPassword, name);
+
+        // Upload sld
+        UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + name,
+                extra, geoserverUsername, geoserverPassword, pathToSldFile);
+
+        // Apply style
+        String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
+                "</name></defaultStyle></layer>";
+
+        return UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + name, extra,
+                geoserverUsername, geoserverPassword, data);
+
+    }
 }

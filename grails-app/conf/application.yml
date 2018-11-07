@@ -107,7 +107,11 @@ geoserver:
   username: ''
   password: ''
   canDeploy: true
-#gdal.dir="/usr/bin/"
+# To use a remote geoserver instance, set geoserver.remote.geoserver_data_dir to the geoserver_data_dir path on the
+# remote server. This will cause layer files to be copied to geoserver_data_dir/data/
+#  remote:
+#    geoserver_data_dir: '/data/geoserver_data_dir'
+
 shpResolutions:
   - 0.5
   - 0.25
@@ -119,10 +123,7 @@ grdResolutions:
   - 0.1
   - 0.05
   - 0.01
-#biocacheServiceUrl: 'https://biocache.ala.org.au/ws'
-#biocacheServiceUrl: 'http://ala-cohen.it.csiro.au/biocache-service'
 biocacheServiceUrl: 'https://biocache.ala.org.au/ws'
-#biocacheServiceUrl: 'http://ala-starr.it.csiro.au:8080/biocache-service'
 biocacheUrl: 'https://biocache.ala.org.au'
 openstreetmap:
   url: 'https://tile.openstreetmap.org'
@@ -143,7 +144,6 @@ spatialService.url: "http://localhost:8080"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"
-#gdal.dir: '/usr/local/Cellar/gdal/1.11.5_3/bin/'
 aloc.xmx: "6G"
 aloc.threads: 4
 maxent.mx: "1G"
