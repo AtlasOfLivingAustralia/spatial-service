@@ -1011,7 +1011,9 @@ class ManageLayersService {
             retMap.put("error", "name parameter missing")
         } else {
             //make it simple, sname = sid
-            field.put('sname', field.sid)
+            if (field.sname == null || field.sname.isEmpty()) {
+                field.put('sname', field.sid)
+            }
 
             //swap 'true' with 'on'
             if (field.containsKey('addtomap') && "true".equalsIgnoreCase(String.valueOf(field.addtomap))) field.addtomap = 'on'
@@ -1089,7 +1091,12 @@ class ManageLayersService {
                 if (!field.containsKey('name')) field.put('name', defaultField.name)
                 if (!field.containsKey('type')) field.put('name', defaultField.type)
 
-                Map lyr = layerMap(id)
+                Map lyr
+                if (field.containsKey('spid')) {
+                    lyr = layerMap(field.spid)
+                } else {
+                    lyr = layerMap(id)
+                }
 
                 if ("contextual".equalsIgnoreCase(lyr.type.toString())) {
                     //match case insensitive for sname, sid, sdesc

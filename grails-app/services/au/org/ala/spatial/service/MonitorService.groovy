@@ -162,6 +162,13 @@ class MonitorService {
                                 input = InputParameter.findAllByTask(nextTask)
                             }
 
+                            //reset output
+                            OutputParameter.withNewTransaction {
+                                OutputParameter.findAllByTask(nextTask).each {
+                                    it.delete()
+                                }
+                            }
+
                             //insert default inputs
 
                             //format inputs
@@ -189,6 +196,7 @@ class MonitorService {
                             i.put('grdResolutions', grailsApplication.config.grdResolutions)
                             i.put('sandboxHubUrl', grailsApplication.config.sandboxHubUrl)
                             i.put('sandboxBiocacheServiceUrl', grailsApplication.config.sandboxBiocacheServiceUrl)
+                            i.put('geoserverUrl', grailsApplication.config.geoserver.url)
 
                             def id = nextTask.id
                             def response = masterService.start(slave, nextTask, i)

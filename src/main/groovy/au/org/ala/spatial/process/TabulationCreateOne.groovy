@@ -16,6 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.layers.tabulation.Intersection
+import au.org.ala.layers.tabulation.TabulationGenerator
 import au.org.ala.layers.util.SpatialUtil
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.geom.GeometryCollection
@@ -270,7 +271,21 @@ class TabulationCreateOne extends SlaveProcess {
                     }
                 }
             } else {
-                //TODO: comparisons when at least one contextual layer is a grid file
+                // comparisons when at least one contextual layer is a grid file
+                def sql = TabulationGenerator.gridToGrid(fieldId1, fieldId2, null)
+
+                // sql statements to put pairs into tabulation
+                int counter = 0
+                // init sql
+                String fname = 'import' + counter + '.sql'
+                FileUtils.writeStringToFile(new File(getTaskPath() + fname), "DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
+                addOutput('sql', fname)
+                counter++
+
+                fname = 'import' + counter + '.sql'
+                FileUtils.writeStringToFile(new File(getTaskPath() + fname), sql)
+                addOutput('sql', fname)
+                counter++
             }
         } catch (err) {
             task.history.put(System.currentTimeMillis(), 'unknown error')

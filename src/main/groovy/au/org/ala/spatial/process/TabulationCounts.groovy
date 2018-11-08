@@ -15,6 +15,8 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.layers.client.Client
+import au.org.ala.layers.dto.IntersectionFile
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.util.RecordsSmall
@@ -77,25 +79,30 @@ class TabulationCounts extends SlaveProcess {
         fields.eachWithIndex { field1, idx1 ->
             Object[] o1 = null
             fields.eachWithIndex { field2, idx2 ->
-                if (idx1 < idx2) {
+                if (idx1 < idx2 && (field1.id.equals('cl2125') || field2.id.equals('cl2125'))) {
                     task.message = 'tabulating ' + field1.id + ' and ' + field2.id
-                    if (o1 == null) o1 = loadFile(pidFiles[idx1], (allPoints.length / 2).intValue())
-                    Object[] o2 = loadFile(pidFiles[idx2], (allPoints.length / 2).intValue())
+                    try {
+                        if (o1 == null) o1 = loadFile(pidFiles[idx1], (allPoints.length / 2).intValue())
+                        Object[] o2 = loadFile(pidFiles[idx2], (allPoints.length / 2).intValue())
 
-                    String pth = field1.id + field2.id + '.sql'
-                    File sqlFile = new File(getTaskPath() + pth)
-                    addOutput('sql', pth)
+                        String pth = field1.id + field2.id + '.sql'
+                        File sqlFile = new File(getTaskPath() + pth)
+                        addOutput('sql', pth)
 
-                    // compare
-                    List sqlUpdates = compare(records, pidx, (short[]) o1[0], (short[]) o2[0], (String[]) o1[1], (String[]) o2[1], field1.id.toString(), field2.id.toString())
+                        // compare
+                        List sqlUpdates = compare(records, pidx, (short[]) o1[0], (short[]) o2[0], (String[]) o1[1], (String[]) o2[1], field1.id.toString(), field2.id.toString())
 
-                    FileWriter fw = new FileWriter(sqlFile)
-                    sqlUpdates.each { sql ->
-                        fw.write(sql.toString())
+                        FileWriter fw = new FileWriter(sqlFile)
+                        sqlUpdates.each { sql ->
+                            fw.write(sql.toString())
+                        }
+                        fw.flush()
+                        fw.close()
+                        task.message = 'finished tabulating ' + field1.id + ' and ' + field2.id
+                    } catch (err) {
+                        log.error 'failed tabulating ' + field1.id + ' and ' + field2.id, err
+                        taskLog('failed tabulating ' + field1.id + ' and ' + field2.id)
                     }
-                    fw.flush()
-                    fw.close()
-                    task.message = 'finished tabulating ' + field1.id + ' and ' + field2.id
                 }
             }
         }
@@ -150,14 +157,16 @@ class TabulationCounts extends SlaveProcess {
 
         // produce sql update statements
         for (String k : species.keySet()) {
-            String[] pids = k.split(" ")
+            String[] pids = k.split(" ", 2)
+            if (pids.length == 1)
+                pids = [pids[0], '']
             sqlUpdates.add("UPDATE tabulation SET " + "species = " + species.get(k).cardinality() + ", " + "occurrences = " + occurrences.get(k) + " WHERE (pid1='" + pids[0] + "' AND pid2='"
-                    + pids[1] + "') " + "OR (pid1='" + pids[1] + "' AND pid2='" + pids[0] + "');")
+                    + pids[1] + "') " + "OR (pid1='" + sqlEscapeString(pids[1]) + "' AND pid2='" + sqlEscapeString(pids[0]) + "');")
         }
 
         // produce sql update statements
         for (String k : speciesTotals.keySet()) {
-            String pid = k
+            String pid = sqlEscapeString(k)
             sqlUpdates.add("UPDATE tabulation SET " + "speciest1 = " + speciesTotals.get(k).cardinality()
                     + " WHERE (pid1='" + pid + "' AND fid1='" + fid1 + "' AND fid2='" + fid2 + "') OR "
                     + " (pid2='" + pid + "' AND fid2='" + fid1 + "' AND fid1='" + fid2 + "');")
@@ -169,7 +178,7 @@ class TabulationCounts extends SlaveProcess {
         return sqlUpdates
     }
 
-    def Object[] loadFile(File file, int size) {
+    Object[] loadFile(File file, int size) {
         List s = []
         short[] pids = null
         try {
@@ -228,16 +237,37 @@ class TabulationCounts extends SlaveProcess {
                     // catagories to pid
                     List fieldObjects = getObjects(field.id)
                     int[] catToPid = new int[catagories.length]
-                    for (int j = 0; j < fieldObjects.size(); j++) {
-                        for (int i = 0; i < catagories.length; i++) {
-                            if ((catagories[i] == null || fieldObjects.get(j).id == null) &&
-                                    catagories[i].compareTo(fieldObjects.get(j).id.toString())) {
+                    for (int j = 0; j < catToPid.length; j++) {
+                        catToPid[j] = -1;
+                    }
+                    for (int i = 0; i < catagories.length; i++) {
+                        for (int j = 0; j < fieldObjects.size(); j++) {
+                            if ((catagories[i] == null || fieldObjects.get(j).name == null) &&
+                                    catagories[i].compareTo(fieldObjects.get(j).name.toString())) {
                                 catToPid[i] = j
                                 break
-                            } else if (catagories[i] != null && fieldObjects.get(j).id != null &&
-                                    catagories[i].compareTo(fieldObjects.get(j).id.toString()) == 0) {
+                            } else if (catagories[i] != null && fieldObjects.get(j).name != null &&
+                                    catagories[i].compareTo(fieldObjects.get(j).name.toString()) == 0) {
                                 catToPid[i] = j
                                 break
+                            }
+                        }
+                    }
+                    // repeat check with a filter for encoding differences
+                    // TODO: why are there encoding differences? Are they only from copied layers?
+                    for (int i = 0; i < catagories.length; i++) {
+                        if (catToPid[i] < 0) {
+                            String cat = catagories[i].replaceAll("[^a-zA-Z0-9]", "")
+                            for (int j = 0; j < fieldObjects.size(); j++) {
+                                if ((cat == null || fieldObjects.get(j).name == null) &&
+                                        cat.compareTo(fieldObjects.get(j).name.toString().replaceAll("[^a-zA-Z0-9]", ""))) {
+                                    catToPid[i] = j
+                                    break
+                                } else if (cat != null && fieldObjects.get(j).name != null &&
+                                        cat.compareTo(fieldObjects.get(j).name.toString().replaceAll("[^a-zA-Z0-9]", "")) == 0) {
+                                    catToPid[i] = j
+                                    break
+                                }
                             }
                         }
                     }
@@ -259,7 +289,11 @@ class TabulationCounts extends SlaveProcess {
                         if (catToPid != null) {
                             for (int i = 0; i < catToPid.length; i++) {
                                 if (i > 0) catPid.write("\n")
-                                catPid.write(fieldObjects.get(catToPid[i]).pid.toString())
+                                if (catToPid[i] >= 0) {
+                                    catPid.write(fieldObjects.get(catToPid[i]).pid.toString())
+                                } else {
+                                    taskLog("ERROR: no object pid for " + field.id + ", \"" + catagories[i] + "\"")
+                                }
                             }
                         }
 
@@ -288,21 +322,31 @@ class TabulationCounts extends SlaveProcess {
                         float[] values = g.getValues(points)
 
                         // export pids in points order
-                        FileWriter fw = null
+                        DataOutputStream fw = null
+                        FileWriter catPid = null
                         try {
-                            fw = new FileWriter(file)
+                            fw = new DataOutputStream(
+                                    new BufferedOutputStream(new FileOutputStream(file)))
                             if (values != null) {
                                 for (int i = 0; i < values.length; i++) {
-                                    if (i > 0) {
-                                        fw.append("\n")
-                                    }
-                                    if (values[i] >= 0) {
-                                        fw.append(String.valueOf(values[i]))
-                                    } else {
-                                        fw.append("n/a")
+                                    fw.writeShort((int) values[i])
+                                }
+                            }
+
+                            catPid = new FileWriter(file.getPath() + ".cat")
+                            IntersectionFile f = Client.getLayerIntersectDao().getConfig().getIntersectionFile(field.id);
+
+                            if (f != null) {
+                                def maxKey = f.classes.keySet().max()
+                                for (int i = 0; i <= maxKey; i++) {
+                                    if (i > 0) catPid.write("\n")
+                                    def value = f.classes.get(i)
+                                    if (value != null) {
+                                        catPid.write(value.name)
                                     }
                                 }
                             }
+
                         } catch (err) {
                             log.error 'failed to export pid file', err
                         } finally {
@@ -310,7 +354,14 @@ class TabulationCounts extends SlaveProcess {
                                 try {
                                     fw.close()
                                 } catch (err) {
-                                    log.error 'failed to close pid file', err
+                                    log.error 'faild to close pid file', err
+                                }
+                            }
+                            if (catPid != null) {
+                                try {
+                                    catPid.close()
+                                } catch (err) {
+                                    log.error 'faild to close cat2pid file', err
                                 }
                             }
                         }

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>Atlas of Living Austrlaia - Spatial Service</title>
+    <title>${grailsApplication.config.skin.orgNameLong} - Spatial Service</title>
 </head>
 
 <body>

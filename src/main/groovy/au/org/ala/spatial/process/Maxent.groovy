@@ -116,7 +116,7 @@ class Maxent extends SlaveProcess {
 
                 replaceMap.put("<td>" + it + "</td>", "<td>" + getLayer(field.spid).displayname + "</td>")
 
-                readReplaceAfter(getTaskPath() + "species.html", "(all continuous)", it, displayname)
+                Util.readReplaceAfter(getTaskPath() + "species.html", "(all continuous)", it, displayname)
             }
 
             replaceMap.put("end of this page.<br>", "end of this page.<br><p>" + paramlist + "</p>")
@@ -128,8 +128,8 @@ class Maxent extends SlaveProcess {
 
             paramlist += "</ul>"
 
-            readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "")
-            readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "")
+            Util.readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "")
+            Util.readReplaceBetween(getTaskPath() + "species.html", "Command line", "<br>", "")
 
             if (responseCurves) {
                 StringBuffer sbTable = new StringBuffer()
@@ -146,8 +146,8 @@ class Maxent extends SlaveProcess {
                 }
             }
 
-            readReplaceBetween(getTaskPath() + "species.html", "<br>Click <a href=species_explain.bat", "memory.<br>", "")
-            readReplaceBetween(getTaskPath() + "species.html", "(A link to the Explain", "additive models.)", "")
+            Util.readReplaceBetween(getTaskPath() + "species.html", "<br>Click <a href=species_explain.bat", "memory.<br>", "")
+            Util.readReplaceBetween(getTaskPath() + "species.html", "(A link to the Explain", "additive models.)", "")
 
             StringBuffer removedSpecies = new StringBuffer()
             try {
@@ -246,55 +246,6 @@ class Maxent extends SlaveProcess {
                 "        </UserStyle>\n" +
                 "  </NamedLayer>\n" +
                 "        </StyledLayerDescriptor>")
-    }
-
-    static public void readReplaceAfter(String fname, String start, String oldPattern, String replPattern) {
-        String line
-        StringBuffer sb = new StringBuffer()
-        try {
-            FileInputStream fis = new FileInputStream(fname)
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
-            int afterPos = -1
-            while ((line = reader.readLine()) != null) {
-                if (afterPos < 0 && (afterPos = line.indexOf(start)) >= 0) {
-                    line = line.substring(0, afterPos + start.length()) + line.substring(afterPos + start.length()).replaceAll(oldPattern, replPattern)
-                } else if (afterPos > 0) {
-                    line = line.replaceAll(oldPattern, replPattern)
-                }
-                sb.append(line + "\n")
-            }
-            reader.close()
-            BufferedWriter out = new BufferedWriter(new FileWriter(fname))
-            out.write(sb.toString())
-            out.close()
-        } catch (Throwable e) {
-            e.printStackTrace(System.out)
-        }
-    }
-
-    public void readReplaceBetween(String fname, String startOldText, String endOldText, String replText) {
-        String line
-        StringBuffer sb = new StringBuffer()
-        try {
-            FileInputStream fis = new FileInputStream(fname)
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n")
-            }
-            int start, end
-            start = sb.indexOf(startOldText)
-            if (start >= 0) {
-                end = sb.indexOf(endOldText, start + 1)
-                sb.replace(start, end + endOldText.length(), replText)
-            }
-            reader.close()
-            BufferedWriter out = new BufferedWriter(new FileWriter(fname))
-            out.write(sb.toString())
-            out.close()
-        } catch (Throwable e) {
-            System.err.println("*** exception ***")
-            e.printStackTrace(System.out)
-        }
     }
 
     private void writeProjectionFile(String outputpath) {

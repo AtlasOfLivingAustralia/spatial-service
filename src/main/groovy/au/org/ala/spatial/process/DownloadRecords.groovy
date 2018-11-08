@@ -15,8 +15,11 @@
 
 package au.org.ala.spatial.process
 
+import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.util.RecordsSmall
 import groovy.util.logging.Slf4j
+
+import java.util.zip.ZipInputStream
 
 @Slf4j
 class DownloadRecords extends SlaveProcess {
@@ -26,32 +29,32 @@ class DownloadRecords extends SlaveProcess {
         file.getParentFile().mkdirs()
 
         task.message = 'downloading new records'
-//        try {
-//            ZipInputStream zis = new ZipInputStream(new URL(grailsApplication.config.records.url.toString()).openConnection().getInputStream())
-//
-//            //only 1 file in the download zip
-//            zis.getNextEntry()
-//
-//            CSVReader csv = new CSVReader(new InputStreamReader(zis), '\t' as char, '|' as char)
-//            BufferedWriter br = new BufferedWriter(new FileWriter(file))
-//
-//            //convert to unescaped form
-//            String[] next
-//            br.write('latitude,longitude,names_and_lsid')
-//            while ((next = csv.readNext()) != null) {
-//                if (!'decimalLatitude_p'.equals(next[0]) && !'rowKey'.equals(next[0]) && next[0].length() > 0) {
-//                    br.write('\n' + next[0] + ',' + next[1] + ',' + (next[2] + '|' + next[3]).replace(',', ' '))
-//                }
-//            }
-//
-//            csv.close()
-//            br.close()
-//            zis.close()
-//        } catch (err) {
-//            err.printStackTrace()
-//        }
-//
-//        addOutput('file', '/sample/records.csv')
+        try {
+            ZipInputStream zis = new ZipInputStream(new URL(grailsApplication.config.records.url.toString()).openConnection().getInputStream())
+
+            //only 1 file in the download zip
+            zis.getNextEntry()
+
+            CSVReader csv = new CSVReader(new InputStreamReader(zis), '\t' as char, '|' as char)
+            BufferedWriter br = new BufferedWriter(new FileWriter(file))
+
+            //convert to unescaped form
+            String[] next
+            br.write('latitude,longitude,names_and_lsid')
+            while ((next = csv.readNext()) != null) {
+                if (!'decimalLatitude_p'.equals(next[0]) && !'rowKey'.equals(next[0]) && next[0].length() > 0) {
+                    br.write('\n' + next[0] + ',' + next[1] + ',' + (next[2] + '|' + next[3]).replace(',', ' '))
+                }
+            }
+
+            csv.close()
+            br.close()
+            zis.close()
+        } catch (err) {
+            err.printStackTrace()
+        }
+
+        addOutput('file', '/sample/records.csv')
 
         task.message = 'making small records files'
 

@@ -101,7 +101,6 @@ endpoints:
 #
 data:
   dir: '/data/spatial-data'
-#geoserver.url = 'http://local.ala.org.au:8080/geoserver'
 geoserver:
   url: 'http://local.ala.org.au:8079/geoserver'
   username: ''
@@ -144,6 +143,8 @@ spatialService.url: "http://localhost:8080"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"
+gdm.dir: "/data/spatial-data/modelling/gdm/DoGdm"
+
 aloc.xmx: "6G"
 aloc.threads: 4
 maxent.mx: "1G"

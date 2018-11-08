@@ -240,6 +240,10 @@ class TasksService {
                         formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
                     }
                 }
+            } else {
+                out.files.each { f1 ->
+                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: task))
+                }
             }
 
         }
@@ -434,7 +438,10 @@ class TasksService {
                     }
 
                     if ("process".equals(v.type)) {
-                        def process = Task.findById(i)
+                        def process
+                        Task.withNewTransaction {
+                            process = Task.findById(i)
+                        }
                         if (!process) {
                             errors.put(k, "Input parameter $k=$i does not exist.")
                         } else if (process.status < 2) {

@@ -18,6 +18,7 @@ package au.org.ala.layers
 import au.org.ala.layers.dto.Objects
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.layers.util.SpatialConversionUtils
+import au.org.ala.spatial.service.Task
 import grails.converters.JSON
 
 import java.util.zip.GZIPOutputStream
@@ -33,9 +34,25 @@ class ObjectController {
      */
 
     def show(String pid) {
-        def obj = objectDao.getObjectByPid(pid)
+        def obj
+        if (pid.startsWith("ENVELOPE")) {
+            obj = getEnvelope(pid.replace("ENVELOPE", ""))
+        } else {
+            obj = objectDao.getObjectByPid(pid)
+        }
         if (obj != null) render obj as JSON
         else render(status: 404, text: 'Invalid id')
+    }
+
+    def getEnvelope(String envelopeTaskId) {
+        def task = Task.get(envelopeTaskId)
+
+        for (def output : task.output) {
+            if ("area".equals(output.name)) {
+                return JSON.parse(output.file)
+            }
+        }
+        return null
     }
 
     /*
