@@ -18,8 +18,7 @@ package au.org.ala.spatial.process
 
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-
-
+import org.apache.commons.io.FileUtils
 import org.jfree.chart.ChartFactory;
 
 import org.jfree.chart.JFreeChart
@@ -37,6 +36,9 @@ import static org.jfree.chart.ChartUtilities.*
 
 @Slf4j
 class TaxonFrequency extends SlaveProcess {
+
+    static  int width = 640;    /* Width of the image */
+    static int height = 480;   /* Height of the image */
 
     void start() {
 
@@ -130,6 +132,24 @@ class TaxonFrequency extends SlaveProcess {
             }
         }
 
+
+
+
+        String metadata = "<html><body>";
+
+
+        def imgs = task.output['files'].findAll{it.endsWith('.jpeg') || it.endsWith('.jpg')}
+        imgs.each {
+            def main = it.substring(0, it.lastIndexOf('.'))
+            def img = '<div><img src=' +it+'></div><br><a href='+main+'.csv >Download CSV</a>'
+            metadata +=img;
+        }
+        metadata+='</body></html>'
+
+        FileUtils.writeStringToFile(new File(getTaskPath() + "charts.html"), metadata)
+
+        addOutput("metadata", "charts.html", true)
+
     }
 
 
@@ -141,12 +161,6 @@ class TaxonFrequency extends SlaveProcess {
         NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
         DecimalFormat pctFormat = new DecimalFormat("#");
         yAxis.setNumberFormatOverride(pctFormat);
-
-
-
-        int width = 640;    /* Width of the image */
-        int height = 480;   /* Height of the image */
-
 
         new File(getTaskPath().toString()).mkdirs()
         File chart_file = new File( getTaskPath() + outputfile +".jpeg");
@@ -161,9 +175,6 @@ class TaxonFrequency extends SlaveProcess {
 
     //return  Files of csv and jpeg
     String[] generateRatioChart(DefaultCategoryDataset ds, String title, String outputfile,isLineChart){
-
-        int width = 640;    /* Width of the image */
-        int height = 480;   /* Height of the image */
 
         List<float[]> ratios = generateRatio(ds)
 
