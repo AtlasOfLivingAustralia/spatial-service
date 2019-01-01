@@ -97,6 +97,7 @@ class SlaveController {
         def isStream = params.stream ? params.stream: true
         def i = params.start?.toInteger() ?: 1
         def end = params.end?.toInteger() ?: 500
+
         while (i <= end &&
                 ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
                         (file = new File(grailsApplication.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists())) {
@@ -104,11 +105,9 @@ class SlaveController {
             i = i + 1
         }
 
-        pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/static/area-report/furtherLinks.html").text, i, null))
-
         //find class='title' for table of contents
         StringBuilder sb = new StringBuilder()
-        sb.append("<div id='tableOfContents'><h1>Table of Contents</h1><ol class='toc'>")
+        sb.append("<div class='tableOfContents'><h1>Table of Contents</h1><ol class='toc'>")
         for (String page : pages) {
             page.findAll(" class='title' id='([^']*)'") { match, bookmark ->
                 sb.append("<li><a href='#").append(bookmark).append("'>").append(bookmark).append("</a></li>")
@@ -116,8 +115,10 @@ class SlaveController {
         }
         sb.append("</ol></div>")
         pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
-        //render(template: "areaReport", model: [pages: pages, id: id])
-        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id], filename: "areaReport" + id + ".pdf", stream: isStream)
+
+        def cssFile = SlaveController.class.getResource('/areareport/areaReport.css')
+
+        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id, cssFile: cssFile], filename: "areaReport" + id + ".pdf", stream: isStream)
     }
 
     private def cleanPageText(text, i, file) {
@@ -166,8 +167,6 @@ class SlaveController {
                         replaceAll(" src='([^/']*)'", " src='file://${grailsApplication.config.data.dir}/task/${id}/\$1'"))
                 i = i + 1
             }
-
-            pages.add(cleanPageText(new URL("${grailsApplication.config.grails.serverURL}/static/area-report/furtherLinks.html").text, i, null))
 
             //find class='title' for table of contents
             StringBuilder sb = new StringBuilder()

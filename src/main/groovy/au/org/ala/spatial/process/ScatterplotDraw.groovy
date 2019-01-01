@@ -59,8 +59,13 @@ class ScatterplotDraw extends SlaveProcess {
         newStyle.setHighlightWkt(wkt)
 
         try {
-            scatterplot.annotatePixelBox(Double.valueOf(selection[0]).intValue(), Double.valueOf(selection[1]).intValue(),
-                    Double.valueOf(selection[2]).intValue(), Double.valueOf(selection[3]).intValue())
+            if (selection && selection.length < 4) {
+                scatterplot.scatterplotStyleDTO.setSelection(null)
+                scatterplot.buildScatterplot()
+            } else {
+                scatterplot.annotatePixelBox(Double.valueOf(selection[0]).intValue(), Double.valueOf(selection[1]).intValue(),
+                        Double.valueOf(selection[2]).intValue(), Double.valueOf(selection[3]).intValue())
+            }
         } catch (Exception e) {
             log.error(e.getMessage(), e)
         }
@@ -75,12 +80,12 @@ class ScatterplotDraw extends SlaveProcess {
                 !existingStyle.getSize() != newStyle.getSize(),
                 !existingStyle.getHighlightWkt() != newStyle.getHighlightWkt())
 
-//        scatterplot.save(dataFile)
-//        addOutput("file", "/public/" + taskId + "/data.xml")
-
         def image = [:]
         image.putAt("scatterplotId", task.id)
-        image.putAt("scatterplotUrl", scatterplot.getImagePath().replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/'))
+        def imgFile = new File(scatterplot.getImagePath())
+        image.putAt("scatterplotUrl",
+                imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
+                        .replace(imgFile.name, "Scatterplot%20(" + task.id + ").png?filename=" + imgFile.name))
 
         //style
         image.putAt('red', newStyle.red)

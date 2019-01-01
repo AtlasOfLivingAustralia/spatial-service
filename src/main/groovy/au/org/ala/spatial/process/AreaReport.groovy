@@ -44,9 +44,8 @@ class AreaReport extends SlaveProcess {
                 area[0].pid.toString(),
                 area[0].name.toString(),
                 area[0].area_km.toString(),
-                null, task.history,
+                task.history,
                 grailsApplication.config.spatialService.url.toString(),
-                null,
                 getTaskPath(),
                 grailsApplication.config.journalmap.url.toString(),
                 grailsApplication.config.data.dir.toString())
@@ -69,12 +68,8 @@ class AreaReport extends SlaveProcess {
 
         //all for download
         for (File f : dir.listFiles()) {
-            if (f.getName().equals("index.html")) {
-                addOutput('metadata', 'index.html', !pdf.exists())
-            } else if (f.getName().endsWith(".pdf")) {
+            if (f.getName().endsWith(".pdf")) {
                 addOutput('files', f.getName(), true)
-            } else {
-                addOutput('files', f.getName(), !pdf.exists())
             }
         }
     }

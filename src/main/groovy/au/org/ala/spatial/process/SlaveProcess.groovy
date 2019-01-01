@@ -262,7 +262,7 @@ class SlaveProcess {
         if (!task.output.containsKey(name)) task.output.put(name, [])
         task.output.get(name).add(value)
 
-        if (download) {
+        if (download && !"download".equalsIgnoreCase(name)) {
             addOutput('download', value)
         }
     }
@@ -991,7 +991,7 @@ class SlaveProcess {
                         q = ["-*:*"]
                     }
                 } catch (Exception e) {
-                    log.error("Falied to retrieve intersection area", e)
+                    log.error("Failed to retrieve intersection area", e)
                     species.wkt = null
                     q = ["-*:*"]
                 }

@@ -77,7 +77,10 @@ class ScatterplotCreate extends SlaveProcess {
             scatterplot.save(file)
 
             species1.putAt("scatterplotId", task.id)
-            species1.putAt("scatterplotUrl", scatterplot.getImagePath().replace(getTaskPath(), layersServiceUrl + "/tasks/output/" + task.id + "/"))
+            def imgFile = new File(scatterplot.getImagePath())
+            species1.putAt("scatterplotUrl",
+                    imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
+                            .replace(imgFile.name, "Scatterplot%20(" + task.id + ").png?filename=" + imgFile.name))
 
             //style
             species1.putAt('red', style.red)

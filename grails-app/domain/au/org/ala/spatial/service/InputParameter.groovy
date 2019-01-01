@@ -20,7 +20,7 @@ class InputParameter {
     String name
 
     static mapping = {
-        value type: 'text'
+        value type: 'text', nullable: true
     }
 
     static belongsTo = [task: Task]

@@ -1,6 +1,6 @@
 {
   "name": "AreaReport",
-  "description": "Detailed area report.",
+  "description": "Area Report - PDF",
   "isBackground": false,
   "version": 1.0,
   "private": {

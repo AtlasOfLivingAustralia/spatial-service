@@ -100,12 +100,9 @@ dependencies {
     compile 'com.thoughtworks.xstream:xstream:1.4.2' // TODO Upgrade to latest version due to CVEs
     compile 'commons-io:commons-io:2.4'
     compile "org.geotools:gt-jts-wrapper:11.1"
-//    compile "org.apache.httpcomponents:httpmime:4.3.3"
     testCompile "org.apache.ant:ant:1.8.4"
 
     compile 'com.github.ziplet:ziplet:2.0.0'
-
-    compile group: 'org.codehaus.groovy.modules.http-builder', name: 'http-builder', version: '0.7.1'
 }
 
 springBoot {

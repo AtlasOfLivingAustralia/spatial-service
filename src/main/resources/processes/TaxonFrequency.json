@@ -1,6 +1,6 @@
 {
   "name": "TaxonFrequency",
-  "description": "Area and Extent of Occupancy.",
+  "description": "Taxon Frequency",
   "isBackground": false,
   "version": 1.0,
   "private": {
@@ -23,7 +23,7 @@
       }
     },
     "species1": {
-      "description": "Occurrences to use.",
+      "description": "Target taxon",
       "type": "species",
       "constraints": {
         "min": 1,
@@ -31,7 +31,7 @@
       }
     },
     "species2": {
-      "description": "A supset of the first species(optional).",
+      "description": "Second taxon (ratio denominator)",
       "type": "species",
       "constraints": {
         "min":0,
@@ -39,7 +39,7 @@
       }
     },
     "minYear": {
-      "description": " Year of start",
+      "description": "Start year for occurrences",
       "type": "int",
       "constraints": {
         "min": 1800,

@@ -57,70 +57,75 @@ table {
 }
 
 tr {
-    margin-top: 5px;
-    margin-bottom: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 
-img {
+.map img {
     width: 600px;
     border: solid 2px #666666;
     display: block;
     margin-top: 15px;
+    margin-left: 70px;
 }
 
-#imgWithLegend {
+img.imgWithLegend {
     float: left;
     width: 550px;
+    margin-left: 0px;
+    display: block;
 }
 
-#legend {
+img.legend {
     width: 150px;
     border: solid 2px black;
     padding: 0px;
     display: block;
-    margin-top: 15px;
+    padding-top: 15px;
     float: right;
+    margin-left: 0px;
 }
 
-#imgHeader {
+img.imgHeader {
     width: 100%;
     border: 0px;
     padding: 0px;
-    margin-top: 0px;
+    padding-top: 0px;
+    margin-left: 0px;
 }
 
-#table tr:nth-child(even) {
+.table tr:nth-child(even) {
     background-color: #dddddd;
     font-size: 8px;
     text-align: center;
     color: black;
 }
 
-#table {
-    margin-top: 15px;
+.table {
+    padding-top: 15px;
     margin-left: 15%;
     width: 70%;
 }
 
-#table tr {
-    margin-bottom: 0px;
+.table tr {
+    padding-bottom: 0px;
 }
 
-#table tr:nth-child(odd) {
+.table tr:nth-child(odd) {
     font-size: 8px;
     text-align: center;
     color: black;
 }
 
-#table tr td:first-child {
+.table tr td:first-child {
     text-align: left;
 }
 
-#table tr td {
+.table tr td {
     text-align: center;
 }
 
-#table tr:first-child td {
+.table tr:first-child td {
     font-weight: bold;
     font-size: 9px;
     text-align: center;
@@ -129,30 +134,30 @@ img {
     border-bottom: solid 2px;
 }
 
-#tablesmall {
+.tablesmall {
     margin-top: 0px;
     margin-left: 15%;
     margin-right: 15%;
     width: 70%;
 }
 
-#tablesmall tr {
+.tablesmall tr {
     margin-bottom: 0px;
 }
 
-#tablesmall tr:nth-child(odd) {
+.tablesmall tr:nth-child(odd) {
     font-size: 8px;
     text-align: center;
     color: black;
 }
 
-#dashboard {
+.dashboard {
     width: 600px;
     margin-left: 80px;
-    margin-top: 60px;
+    padding-top: 60px;
 }
 
-#dashboard tr td {
+.dashboard tr td {
     text-decoration: none;
     font-weight: bold;
     font-size: 15px;
@@ -170,16 +175,21 @@ img {
     text-decoration: underline;
 }
 
-#figure {
+.figure {
     text-align: center;
 }
 
-#tableNumber {
+.tableNumber {
     text-align: center;
-    margin-bottom: 5px;
+    padding-bottom: 5px;
+    display: block;
 }
 
-#scientificName {
+.species td {
+    padding-bottom: 20px;
+}
+
+.scientificName {
     font-style: italic;
 }
 
@@ -197,53 +207,38 @@ p {
 
 h1 {
     page-break-before: always;
+    padding-bottom: 20px;
 }
 
 .odd {
     background: #dddddd;
 }
 
-#species table {
-    margin-left: 110px;
-}
-
-#species img {
-    margin-left: 70px;
-}
-
-#mapPage img {
-    margin-left: 70px;
-}
-
-#mapPage #imgWithLegend {
+.legend {
     margin-left: 0px;
 }
 
-#mapPage #legend {
-    margin-left: 0px;
-}
-
-#tableOfContents {
+.tableOfContents {
     width: 500px;
     margin-left: 100px;
     font-size: 14px;
 }
 
-#tableOfContents h1 {
+.tableOfContents h1 {
     text-align: center;
     font-size: 20px;
-    margin-bottom: 20px;
+    padding-bottom: 20px;
 }
 
-#tableOfContents span {
+.tableOfContents span {
     float: right;
 }
 
-#tableOfContents li {
+.tableOfContents li {
     list-style: none;
 }
 
-#tableOfContents a {
+.tableOfContents a {
     text-decoration: none;
     color: black;
 }

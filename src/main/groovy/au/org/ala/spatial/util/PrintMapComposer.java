@@ -1,6 +1,5 @@
 package au.org.ala.spatial.util;
 
-import au.org.ala.spatial.Util;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
@@ -12,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -232,7 +232,9 @@ public class PrintMapComposer {
 
         //wms layers
         for (int i = mapLayers.size() - 1; i >= 0; i--) {
-            urls.addAll(drawLayer(g, mapLayers.get(i), drawTiles));
+            if (mapLayers.get(i) != null) {
+                urls.addAll(drawLayer(g, mapLayers.get(i), drawTiles));
+            }
         }
 
 
@@ -256,15 +258,24 @@ public class PrintMapComposer {
                 File file = new File(cacheFilename);
 
                 if (!file.exists()) {
-                    String u = url.replace(":", "%3A").replace("[", "%5B").replace("]", "%5D").replace("http%3A", "http:").replace("https%3A", "https:");
-                    Map<String, Object> response = Util.getStream(u);
+                    int len = url.indexOf("?");
+                    if (len == -1) len = url.length();
+                    else len++;
+                    String u = url.substring(0, len);
+                    String params = len == url.length() ? "" : url.substring(len, url.length());
+                    for (String param : params.split("&")) {
+                        int eq = param.indexOf('=');
+                        if (eq > 0) {
+                            u += "&" + param.substring(0, eq + 1) + URLEncoder.encode(param.substring(eq + 1, param.length()), "UTF-8");
+                        }
+                    }
+
                     try {
                         //construct cache filename
                         FileUtils.copyURLToFile(new URL(u), new File(cacheFilename));
                     } catch (Exception e) {
-                        LOGGER.error("failed to get image at url: " + url + ", or write to file failed for: " + getCacheFilename(url), e);
+                        LOGGER.error("failed to get image at url: " + u + ", or write to file failed for: " + getCacheFilename(url), e);
                     }
-                    Util.closeStream(response);
                 }
 
                 return null;
@@ -276,7 +287,7 @@ public class PrintMapComposer {
             fileCacheUrls.add(new FileCacheUrl((String) o));
         }
 
-        int NUMBER_OF_GET_IMAGE_THREADS = 4;    //best not keep it at 4 unless updating code to 4 per site
+        int NUMBER_OF_GET_IMAGE_THREADS = 1;    //best not keep it at 4 unless updating code to 4 per site
         ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_GET_IMAGE_THREADS);
 
         try {
@@ -423,7 +434,7 @@ public class PrintMapComposer {
 
         for (int iy = my; iy >= sy; iy--) {
             for (int ix = sx; ix <= mx; ix++) {
-                String bbox = "/" + res + "/" + (ix % tiles) + "/" + iy + ".png";
+                String bbox = "/" + res + "/" + (ix % tiles) + "/" + (iy % tiles) + ".png";
 
                 imageUrls.add(openstreetmapUrl + bbox);
 

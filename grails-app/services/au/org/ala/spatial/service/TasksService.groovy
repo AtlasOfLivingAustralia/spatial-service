@@ -183,7 +183,7 @@ class TasksService {
                 inputs.each {
                     if (!it.save(flush: true)) {
                         it.errors.each {
-                            log.error it
+                            log.error 'create task failed', it
                         }
                     }
                 }

@@ -254,6 +254,9 @@ class TasksController {
             }
 
             if (ok) {
+                response.setContentLength((int) f.length());
+                response.addHeader("Content-Disposition", "attachment");
+
                 OutputStream os = response.getOutputStream()
                 InputStream is = new BufferedInputStream(new FileInputStream(f))
                 try {

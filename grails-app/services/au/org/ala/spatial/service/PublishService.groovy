@@ -293,6 +293,17 @@ class PublishService {
                 file, resource, "text/plain")
     }
 
+    def callGeoserverDelete(String urlPath) {
+        def getResponse = callGeoserver("GET", urlPath, null, null)
+
+        // only delete when there is a response status code 2xx
+        if (getResponse && getResponse[0].startsWith("2")) {
+            return callGeoserver("DELETE", urlPath, null, null)
+        } else {
+            return null;
+        }
+    }
+
     def layerToGeoserver(output, path) {
         def errors = [:]
         if (grailsApplication.config.geoserver.canDeploy) {
@@ -334,14 +345,14 @@ class PublishService {
                             if (oldPrj.exists()) FileUtils.moveFile(oldPrj, tmpPrj)
 
                             //attempt to delete
-                            callGeoserver("DELETE", "/rest/workspaces/ALA/coveragestores/" + name, null, null)
+                            callGeoserverDelete("/rest/workspaces/ALA/coveragestores/" + name)
 
                             if (grailsApplication.config.geoserver.remote.geoserver_data_dir) {
                                 // delete the tif file if it exists
-                                callGeoserver("DELETE", "/rest/resource/data/" + name + ".tif", null, null)
+                                callGeoserverDelete("/rest/resource/data/" + name + ".tif")
 
                                 // delete the prj file if it exists
-                                callGeoserver("DELETE", "/rest/resource/data/" + name + ".prj", null, null)
+                                callGeoserverDelete("/rest/resource/data/" + name + ".prj")
 
                                 // upload the tif file
                                 callGeoserver("PUT", "/rest/resource/data/" + name + ".tif", geotiff.getPath(), null)
@@ -401,12 +412,12 @@ class PublishService {
                     def sld = new File(name + ".sld")
 
 
-                    callGeoserver("DELETE", "/rest/workspaces/ALA/datastores/" + name, null, null)
+                    callGeoserverDelete("/rest/workspaces/ALA/datastores/" + name)
 
                     if (grailsApplication.config.geoserver.remote.geoserver_data_dir) {
                         for (String filetype : ["shp", "prj", "shx", "dbf", "fix", "sbn", "sbx", "fbn", "fbx", "qix", "cpg", "shp.xml", "atx", "mxs", "ixs", "ain", "aih"]) {
                             // delete file if it exists
-                            callGeoserver("DELETE", "/rest/resource/data/" + name + "." + filetype, null, null)
+                            callGeoserverDelete("/rest/resource/data/" + name + "." + filetype)
 
                             // upload the file
                             File uploadFile = new File(shp.getPath().replace(".shp", "." + filetype))

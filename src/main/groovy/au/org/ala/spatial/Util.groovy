@@ -98,7 +98,7 @@ class Util {
             client = new HttpClient(new HttpClientParams(), mgr)
 
             HttpClientParams httpParams = client.getParams()
-            httpParams.setSoTimeout(60000)
+            httpParams.setSoTimeout(300000)
             httpParams.setConnectionManagerTimeout(10000)
 
             if (username != null && password != null) {

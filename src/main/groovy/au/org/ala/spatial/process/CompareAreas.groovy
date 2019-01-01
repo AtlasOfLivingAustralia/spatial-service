@@ -48,7 +48,7 @@ class CompareAreas extends SlaveProcess {
         def speciesBoth = []
 
         taskLog("sort species lists")
-        def header = appendStrings(area1.speciesList[0], area1.name, area2.name)
+        def header = appendStrings(area1.speciesList[0], "Number of occurrences - " + area1.name, "Number of occurrences - " + area2.name)
         def sorted1 = area1.speciesList.subList(1, area1.speciesList.size)
         sorted1.sort(new StringArrayComparator())
         def sorted2 = area2.speciesList.subList(1, area2.speciesList.size)
@@ -58,28 +58,29 @@ class CompareAreas extends SlaveProcess {
         def i2 = 0
 
         taskLog("compare species")
-        def csv = new CSVWriter(new FileWriter(taskPath + '/comparison.csv'))
+        File tmpFile = new File(taskPath + '/comparison.tmp.csv')
+        def csv = new CSVWriter(new FileWriter(tmpFile))
         csv.writeNext(header)
         while (i1 < sorted1.size && i2 < sorted2.size) {
             if (i1 >= sorted1.size || sorted1[i1][0] > sorted2[i2][0]) {
                 speciesOnly2.push(sorted2[i2][0])
-                csv.writeNext(appendStrings(sorted2[i2], "", "found"))
+                csv.writeNext(appendStrings(sorted2[i2], "0", sorted2[i2][11]))
                 i2++
             } else if (i2 >= sorted2.size || sorted1[i1][0] < sorted2[i2][0]) {
                 speciesOnly1.push(sorted2[i2][0])
-                csv.writeNext(appendStrings(sorted2[i2], "found", ""))
+                csv.writeNext(appendStrings(sorted2[i2], sorted1[i1][11], "0"))
                 i1++
             } else if (sorted1[i1][0] == sorted2[i2][0]) {
                 speciesBoth.push(sorted1[i1][0])
-                csv.writeNext(appendStrings(sorted2[i2], "found", "found"))
+                csv.writeNext(appendStrings(sorted2[i2], sorted1[i1][11], sorted1[i2][11]))
                 i1++
                 i2++
             }
         }
         csv.close()
-        addOutput("csv", "comparison.csv", true)
 
-        def csvTop = new CSVWriter(new FileWriter(taskPath + '/comparisonSummary.csv'))
+        File csvFile = new File(taskPath + '/comparison.csv')
+        def csvTop = new CSVWriter(new FileWriter(csvFile))
         csvTop.writeNext(["Species", "Area name", "Sq km", "Occurrences", "Species"].toArray(new String[0]))
         csvTop.writeNext([species.name, area1.name, area1.area_km, area1.numberOfOccurrences, area1.speciesList.size].collect {
             it.toString()
@@ -98,8 +99,12 @@ class CompareAreas extends SlaveProcess {
             it.toString()
         }.toArray(new String[0]))
         csvTop.writeNext([""].toArray(new String[0]))
+        csvTop.writeNext([""].toArray(new String[0]))
         csvTop.close()
-        addOutput("csv", "comparisonSummary.csv", true)
+
+        // insert comparison summary at the beginning of comparison.csv
+        FileUtils.writeStringToFile(csvFile, tmpFile.text, true)
+        addOutput("csv", "comparison.csv", true)
 
         taskLog("build summary")
         def html = "<div><div>Report for: ${species.name}<br>${area1.name}<br>${area2.name}</div><br>" +

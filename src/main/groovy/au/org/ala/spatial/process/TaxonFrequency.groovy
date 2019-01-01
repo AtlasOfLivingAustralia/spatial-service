@@ -15,136 +15,97 @@
 
 package au.org.ala.spatial.process
 
-
+import au.com.bytecode.opencsv.CSVWriter
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.jfree.chart.ChartFactory;
-
+import org.jfree.chart.ChartFactory
 import org.jfree.chart.JFreeChart
-import org.jfree.chart.StandardChartTheme;
-import org.jfree.chart.axis.CategoryLabelPositions;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.renderer.category.BarRenderer
-import org.jfree.chart.renderer.category.LineAndShapeRenderer;
-import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.StandardChartTheme
+import org.jfree.chart.axis.NumberAxis
+import org.jfree.chart.plot.PlotOrientation
+import org.jfree.chart.plot.XYPlot
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
+import org.jfree.data.time.TimeSeries
+import org.jfree.data.time.TimeSeriesCollection
+import org.jfree.data.time.TimeSeriesDataItem
+import org.jfree.data.time.Year
+
 import java.text.DecimalFormat
 
-import static org.jfree.chart.ChartUtilities.*
+import static org.jfree.chart.ChartUtilities.saveChartAsJPEG
 
 @Slf4j
 class TaxonFrequency extends SlaveProcess {
 
-    static  int width = 640;    /* Width of the image */
+    static int width = 640;    /* Width of the image */
     static int height = 480;   /* Height of the image */
 
     void start() {
-
-        //grid size
-        //def gridSize = task.input.resolution.toDouble()
+        //min year
+        def minYear = task.input.minYear.toInteger()
 
         //area to restrict
         def area = JSON.parse(task.input.area.toString())
 
         //number of target species
         def species1 = JSON.parse(task.input.species1.toString())
-        def species1_name = species1.name;
+        def species1Name = species1.name;
         def species1Area = getSpeciesArea(species1, area[0])
 
-        def  results_1 = facetOccurenceCount('year',species1Area)
-        List resultsOfyears_1 = results_1.find{it.fieldName=="year"}.fieldResult
+        def facets1 = facetOccurenceCount('year', species1Area)
+        List years1 = facets1.find { it.fieldName == "year" }.fieldResult
 
-        DefaultCategoryDataset cumulative_ds = new DefaultCategoryDataset();
-        DefaultCategoryDataset ratio_ds = new DefaultCategoryDataset();
+        TimeSeries cumulative1 = new TimeSeries(species1Name, "Year", "Count");
+        TimeSeries count1 = new TimeSeries(species1Name, "Year", "Count");
 
-        if(resultsOfyears_1.size()>0) {
-            //add the first item in
-            cumulative_ds.addValue(resultsOfyears_1[0].count, species1_name, Integer.parseInt(resultsOfyears_1[0].label))
-            ratio_ds.addValue(resultsOfyears_1[0].count, species1_name, Integer.parseInt(resultsOfyears_1[0].label))
+        buildDatasets(count1, cumulative1, years1, minYear)
 
-            for (int i = 1; i < resultsOfyears_1.size(); i++) {
-                def result = resultsOfyears_1[i];
-                try {
-                    def year = Integer.parseInt(result.label)
-                    def v = result.count;
-                    result.count = resultsOfyears_1[i - 1].count + result.count;
+        //if only one taxon has been selected.
+        def files = []
+        files.push(generateChart(count1, 'Frequency of ' + species1Name, 'frequency', false, false))
+        files.push(generateChart(cumulative1, 'Cumulative frequency of ' + species1Name, 'cumulative_frequency', true, false))
 
-                    ratio_ds.addValue(v, species1_name, year)
-                    cumulative_ds.addValue(result.count, species1_name, year) //push into category for csv generation
-                } catch (Exception e) {
-                    println i + ' record is incorrect' + resultsOfyears_1[i].toString()
-                }
-            }
-        }
+        def species2 = JSON.parse(task.input.species2.toString())
+        def species2Name = species2.name;
 
-       
-        if (task.input.species2) {
-            def species2 = JSON.parse(task.input.species2.toString())
-            def species2_name = species2.name;
+        if (species2.q) {
             def species2Area = getSpeciesArea(species2, area[0])
 
-            def results_2 = facetOccurenceCount('year',species2Area)
-            def resultsOfyears_2 = results_2.find{it.fieldName=="year"}.fieldResult
+            def facets2 = facetOccurenceCount('year', species2Area)
+            def years2 = facets2.find { it.fieldName == "year" }.fieldResult
+
+            TimeSeries cumulative2 = new TimeSeries(species2Name, "Year", "Count");
+            TimeSeries count2 = new TimeSeries(species2Name, "Year", "Count");
+
+            buildDatasets(count2, cumulative2, years2, minYear)
+
+            TimeSeries cumulativeRatio = new TimeSeries("", "", "");
+            TimeSeries ratio = new TimeSeries("", "", "");
+
+            createRatio(count1, count2, ratio, cumulativeRatio)
 
             //cumulative count
-            if (resultsOfyears_2.size()>0){
-
-                cumulative_ds.addValue(resultsOfyears_2[0].count, species2_name, Integer.parseInt(resultsOfyears_2[0].label))
-                ratio_ds.addValue(resultsOfyears_2[0].count, species2_name, Integer.parseInt(resultsOfyears_2[0].label))
-
-                for(int i=1;i<resultsOfyears_2.size();i++){
-                    def result = resultsOfyears_2[i];
-                    try {
-                        def year = Integer.parseInt(result.label)
-                        def v = result.count;
-                        ratio_ds.addValue(v, species2_name, year)
-
-                        result.count = resultsOfyears_2[i - 1].count + v;
-                        cumulative_ds.addValue( result.count , species2_name, year) //push into category for csv generation
-
-                    }catch(Exception e){
-                        println i + ' record is incorrect' + resultsOfyears_2[i].toString()
-                    }
-                }
-
-                String[] cumufiles = generateRatioChart(cumulative_ds,'Cumulative Ratio: ' + species1_name +" / " +species2_name,'cumulative_ratio',true)
-                cumufiles.each {
-                    addOutput("files", it, true)
-                }
-
-                String[] frefiles = generateRatioChart(ratio_ds,'Frequency Ratio: '+ species1_name +" / " +species2_name,'frequency_ratio',true)
-                frefiles.each {
-                    addOutput("files", it, true)
-                }
-            }
-          }else{  //if only one taxon has been selected.
-
-            String[] frefiles = generateChart(ratio_ds,'Frequency of '+species1_name,'frequency',false)
-            frefiles.each {
-                addOutput("files", it, true)
-            }
-
-            String[] cumfiles = generateChart(cumulative_ds,'Cumulative frequency of '+species1_name,'cumulative_frequency',true)
-            cumfiles.each {
-                addOutput("files", it, true)
-            }
+            files.push(generateRatioChart(cumulativeRatio, 'Cumulative Ratio: ' + species1Name + " / " + species2Name, 'cumulative_ratio', true, true))
+            files.push(generateRatioChart(ratio, 'Frequency Ratio: ' + species1Name + " / " + species2Name, 'frequency_ratio', true, true))
+            files.push(createCSV(count1, count2, ratio, species1Name, species2Name, "data.csv"))
+        } else {
+            files.push(createCSV(count1, null, null, species1Name, null, "data.csv"))
         }
 
-
-
+        files.each {
+            addOutput("files", it, true)
+        }
 
         String metadata = "<html><body>";
 
-
-        def imgs = task.output['files'].findAll{it.endsWith('.jpeg') || it.endsWith('.jpg')}
+        def imgs = files.findAll { it.endsWith('.jpeg') || it.endsWith('.jpg') }
+        metadata += "<a href='data.csv'>Download CSV</a>"
         imgs.each {
-            def main = it.substring(0, it.lastIndexOf('.'))
-            def img = '<div><img src=' +it+'></div><br><a href='+main+'.csv >Download CSV</a>'
-            metadata +=img;
+            def img = '<div><img src=' + it + '></div><br>'
+            metadata += img;
         }
-        metadata+='</body></html>'
+        metadata += '</body></html>'
 
         FileUtils.writeStringToFile(new File(getTaskPath() + "charts.html"), metadata)
 
@@ -152,160 +113,149 @@ class TaxonFrequency extends SlaveProcess {
 
     }
 
-
     //return  Files of csv and jpeg
-    String[] generateChart(DefaultCategoryDataset ds, String title, String outputfile,isLineChart){
-        JFreeChart chart = createChartInstance(ds,title,isLineChart)
-        // Use nomral Y format
-        CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-        DecimalFormat pctFormat = new DecimalFormat("#");
-        yAxis.setNumberFormatOverride(pctFormat);
+    String generateChart(ds, String title, String outputfile, isLineChart, isPercent) {
+        JFreeChart chart = createChartInstance(ds, title, isLineChart, isPercent)
 
         new File(getTaskPath().toString()).mkdirs()
-        File chart_file = new File( getTaskPath() + outputfile +".jpeg");
-        saveChartAsJPEG( chart_file ,chart, width , height )
+        File chart_file = new File(getTaskPath() + outputfile + ".jpeg");
+        saveChartAsJPEG(chart_file, chart, width, height)
 
-        String csvfile = createCSV(ds,outputfile+'.csv')
-        return [outputfile+'.jpeg',csvfile]
+        outputfile + '.jpeg'
     }
 
+    def createRatio(ds1, ds2, ratio, cumulativeRatio) {
 
-
-
-    //return  Files of csv and jpeg
-    String[] generateRatioChart(DefaultCategoryDataset ds, String title, String outputfile,isLineChart){
-
-        List<float[]> ratios = generateRatio(ds)
-
-        DefaultCategoryDataset ratio_ds = new DefaultCategoryDataset();
         //The third one is ratio
-        ratios.each {ratio_ds.addValue(it[3],'ratio',  new Integer((int)it[0]))}
-        def ratio_chart = createChartInstance(ratio_ds,title,true);
+        def maxYear = Math.max(ds1.getTimePeriods().max().year, ds2.getTimePeriods().max().year)
+        def minYear = Math.min(ds1.getTimePeriods().min().year, ds2.getTimePeriods().min().year)
+        int sum1 = 0;
+        int sum2 = 0;
+        for (int year = minYear; year <= maxYear; year++) {
+            def y = new Year(year)
 
-        new File(getTaskPath().toString()).mkdirs()
-        File ratio_chart_file = new File( getTaskPath() + outputfile +".jpeg");
-        saveChartAsJPEG( ratio_chart_file ,ratio_chart, width , height )
+            def v1 = ds1.getValue(y)
+            def v2 = ds2.getValue(y)
+            sum1 += v1 ?: 0
+            sum2 += v2 ?: 0
 
-        //Keys: Acacia, Koala etc
-        String[] sps = ds.getRowKeys()
+            if (v1 != null && v2 != 0) {
+                ratio.add(y, v1 / v2)
+            }
 
-        File ratio_csv_file = new File(getTaskPath() + outputfile+'.csv')
-        ratio_csv_file.withWriter{ out ->
-            out.println('Year,'+ sps.join(',') +','+'ratio'); //add header
-            ratios.each {
-                out.println((int)it[0]+','+(int)it[1]+','+(int)it[2]+','+it[3])}
+            if (sum2 > 0 && v1 != null && v2 != null) {
+                cumulativeRatio.add(y, sum1 / sum2)
+            }
         }
-
-        return [outputfile+'.jpeg',outputfile+'.csv']
     }
 
-    JFreeChart createChartInstance(DefaultCategoryDataset ds,String title,boolean  isLineChart){
+    //return  Files of csv and jpeg
+    String generateRatioChart(ratio_ds, String title, String outputfile, isLineChart, isPercent) {
+
+        def ratio_chart = createChartInstance(ratio_ds, title, isLineChart, isPercent);
+
+        new File(getTaskPath().toString()).mkdirs()
+        File ratio_chart_file = new File(getTaskPath() + outputfile + ".jpeg");
+        saveChartAsJPEG(ratio_chart_file, ratio_chart, width, height)
+
+        outputfile + '.jpeg'
+    }
+
+    JFreeChart createChartInstance(ds, String title, boolean isLineChart, boolean isPercent) {
         // Ratio chart
-        def chart,plot
+        def series = new TimeSeriesCollection(ds)
+        def chart, plot
         ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
         if (isLineChart) {
-            chart = ChartFactory.createLineChart(
+            chart = ChartFactory.createTimeSeriesChart(
                     title,
-                    "Year", "",
-                     ds, PlotOrientation.VERTICAL,
+                    "Year",
+                    "Count",
+                    series,
                     false, true, false);
-        }
-        else {
-            chart = ChartFactory.createBarChart(
-                    title,
-                    "Year", "",
-                    ds, PlotOrientation.VERTICAL,
-                    false, true, false);
-        }
 
-        plot = (CategoryPlot) chart.getPlot();
-        plot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.UP_90);
+            plot = (XYPlot) chart.getPlot();
 
-
-        if(isLineChart){
-            LineAndShapeRenderer renderer =
-                    (LineAndShapeRenderer)plot.getRenderer()
+            XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer()
             renderer.setBaseShapesVisible(true);
 
-            NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-            DecimalFormat pctFormat = new DecimalFormat("#.##%");
-            yAxis.setNumberFormatOverride(pctFormat);
-        }
-        else{
-            // disable bar outlines...
-            final BarRenderer renderer = (BarRenderer) plot.getRenderer();
-            renderer.setDrawBarOutline(false);
+            if (isPercent) {
+                NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+                DecimalFormat pctFormat = new DecimalFormat("#.##%");
+                yAxis.setNumberFormatOverride(pctFormat);
+            }
+        } else {
+            chart = ChartFactory.createXYBarChart(
+                    title,
+                    "Year",
+                    true,
+                    "Count",
+                    series, PlotOrientation.VERTICAL,
+                    false, true, false);
+
+            plot = (XYPlot) chart.getPlot();
+            plot.getRenderer()
+
+            plot.getRenderer().setShadowVisible(false)
+
         }
 
-        return chart
+        chart
     }
 
+    String createCSV(ds1, ds2, ratio, speciesName1, speciesName2, String filename) {
+        CSVWriter writer = new CSVWriter(new FileWriter(getTaskPath() + filename));
 
+        if (ds2 != null) {
+            writer.writeNext((String[]) ["Year", "Frequency-" + speciesName1, "Cumulative frequency-" + speciesName1,
+                                         "Frequency-" + speciesName2, "Cumulative frequency-" + speciesName2,
+                                         "Ratio", "Cumulative ratio"])
 
-    //Need and only need two taxon
-    //Year, s0, s1, ratio
-    List<float[]> generateRatio(DefaultCategoryDataset ds){
-        int rowNum = ds.getRowCount();
-        int colNum = ds.getColumnCount()
+            def i1sum = 0
+            def i2sum = 0
+            for (TimeSeriesDataItem i : ratio.getItems()) {
+                def i1 = ds1.getValue(i.period)
+                def i2 = ds2.getValue(i.period)
+                i1sum += i1 ?: 0
+                i2sum += i2 ?: 0
+                writer.writeNext((String[]) [i.period, i1?.value ?: '', i1sum, i2?.value ?: '', i2sum,
+                                             i2?.value > 0 ? i1?.value / i2?.value : '', i2sum > 0 ? i1sum / i2sum : ''])
+            }
+        } else {
+            writer.writeNext((String[]) ["Year", "Frequency-" + speciesName1, "Cumulative frequency-" + speciesName1,
+                                         "Frequency-" + speciesName2])
 
-        //Keys: Acacia, Koala etc
-        String[] sps = ds.getRowKeys()
-        List years = ds.getColumnKeys().toSorted()
-        //years = years.sort()
-
-        //String[][] csv = new String[colNum][rowNum]
-        List<float[]> csv= new ArrayList()
-
-        for(int i=0;i<colNum;i++) {
-            try{
-
-                int year = years[i];
-                Long v0 = ds.getValue(sps[0],year);
-                Long v1 = ds.getValue(sps[1],year);
-
-                if ( v0 && v1 ){
-                    float ratio = v0/v1
-                    float[] row = [(int)year,(int)v0,(int)v1,ratio]
-                    csv.push(row);
-                }
-            }catch(Exception e){
-
+            def i1sum = 0
+            for (TimeSeriesDataItem i : ds1.getItems()) {
+                def i1 = ds1.getValue(i.period)
+                i1sum += i1 ?: 0
+                writer.writeNext((String[]) [i.period, i1?.value ?: '', i1sum])
             }
         }
-        return csv;
+
+        writer.flush()
+        writer.close()
+
+        filename
     }
-    
-    String createCSV(DefaultCategoryDataset ds, String filename){
-        //CSV generation
-        int rowNum = ds.getRowCount();
-        int colNum = ds.getColumnCount()
 
-        //Keys: Acacia, Koala etc
-        String[] sps = ds.getRowKeys()
-        List years = ds.getColumnKeys().toSorted()
-        //years = years.sort()
+    void buildDatasets(count, cumulative, list, min) {
+        if (list.size() > 0) {
+            int sum = 0;
+            for (int i = 0; i < list.size(); i++) {
+                def item = list[i];
 
-        String[][] csv = new String[colNum][rowNum]
-        for(int i=0;i<colNum;i++) {
-            String[] row = new String[rowNum + 1]
-            int year = years[i];
-            row[0] = year;
-            for (int j = 0; j < rowNum; j++) {
-                try {
-                    row[j + 1] = ds.getValue(sps[j], year)?(int)ds.getValue(sps[j], year):''
-                } catch (Exception e) {
-                    row[j] = '';
+                if (item.label?.isNumber()) {
+                    def year = Integer.parseInt(item.label)
+
+                    if (year >= min) {
+                        sum += item.count;
+
+                        count.add(new Year(year), new Double(item.count))
+                        cumulative.add(new Year(year), sum)
+                    }
                 }
             }
-            csv[i] = row;
         }
-
-        File csvFile = new File(getTaskPath() + filename)
-        csvFile.withWriter{ out ->
-            out.println('Year,'+ sps.join(','));
-            csv.each { out.println(it.join(","))}
-        }
-        return filename;
     }
 }
