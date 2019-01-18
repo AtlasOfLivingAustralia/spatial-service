@@ -95,7 +95,6 @@
     </div>
     <table class="table table-bordered table-striped">
         <thead>
-        <tr>
 
             <g:sortableColumn property="message" title="${message(code: 'task.message.label', default: 'Message')}"/>
 
@@ -111,7 +110,9 @@
 
             <g:sortableColumn property="history" title="${message(code: 'task.history.label', default: 'History')}"/>
 
-        </tr>
+            <th></th>
+
+            <th></th>
         </thead>
         <tbody>
         <g:each in="${taskInstanceList}" status="i" var="taskInstance">
