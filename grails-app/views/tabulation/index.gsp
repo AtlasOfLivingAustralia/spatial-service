@@ -1,17 +1,16 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title></title>
+    <title>Tabulations</title>
+    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
 </head>
 
 <body>
-<ul class="breadcrumb">
-    <li><g:link controller="main" action="index">Home</g:link></li>
-    <li class="active">Tabulations</li>
-</ul>
-
 <div class="container-fluid">
+
+    <h1>Tabulations</h1>
+
     <table class="table table-bordered">
         <tr>
             <td>Contextual layer 1</td>

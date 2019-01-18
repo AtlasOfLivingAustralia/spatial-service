@@ -1,7 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title></title>
+    <title>Copy Layers</title>
+    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
 
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
@@ -11,13 +12,11 @@
 
 <body>
 <div class="col-lg-8">
-    <ul class="breadcrumb">
-        <li><g:link controller="main" action="index">Home</g:link></li>
-        <li class="active">Copy Layers</li>
-    </ul>
+    <h1>Copy Layers from Remote Server</h1>
 </div>
 
-<div class="panel panel-default col-lg-4">
+<div class=" col-lg-4">
+<div class="panel panel-default">
     <div class="panel-heading">
         <h4 class="panel-title">Navigation</h4>
     </div>
@@ -27,6 +26,7 @@
         <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
         <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
     </div>
+</div>
 </div>
 
 <g:if test="${error != null}">

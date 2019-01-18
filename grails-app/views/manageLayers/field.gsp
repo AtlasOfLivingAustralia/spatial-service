@@ -1,7 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title></title>
+    <title>Edit Layer</title>
+    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink( controller: 'manageLayers', action: 'layers')}, Layers"/>
+
     <meta name="layout" content="main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'manage.css')}" type="text/css">
@@ -14,23 +16,19 @@
 
 <body>
 <div class="col-lg-8">
-    <ul class="breadcrumb">
-        <li><g:link controller="main" action="index">Home</g:link></li>
-        <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>
-        <li><g:link controller="manageLayers" action="layer" id="${raw_id}">Edit Layer</g:link></li>
-        <li class="active">${is_field ? "Edit Field" : "Create Field"}</li>
-    </ul>
+    <h1>Edit Layer</h1>
 </div>
-
-<div class="panel panel-default col-lg-4">
-    <div class="panel-heading">
-        <h4 class="panel-title">Navigation</h4>
-    </div>
-    <div class="panel-body">
-        <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-        <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-        <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-        <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+<div class=" col-lg-4">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Navigation
+        </div>
+        <div class="panel-body">
+            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+        </div>
     </div>
 </div>
 
