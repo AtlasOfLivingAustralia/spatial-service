@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title></title>
+    <title>Layers</title>
+    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
-
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
@@ -12,22 +12,20 @@
 <body>
 
 <div class="col-lg-8">
-    <ul class="breadcrumb">
-        <li><g:link controller="main" action="index">Home</g:link></li>
-        <li class="active">Layers</li>
-        <br>
-    </ul>
+    <h1>Layers</h1>
 </div>
 
-<div class="panel panel-default col-lg-4">
-    <div class="panel-heading">
-        <h4 class="panel-title">Navigation</h4>
-    </div>
-    <div class="panel-body">
-        <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-        <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-        <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-        <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+<div class="col-lg-4">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Navigation
+        </div>
+        <div class="panel-body">
+            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+        </div>
     </div>
 </div>
 

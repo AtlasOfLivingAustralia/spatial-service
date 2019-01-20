@@ -2,29 +2,24 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>${grailsApplication.config.skin.orgNameLong} - Spatial Service</title>
+    <title>Spatial Service</title>
 </head>
-
 <body>
-
-<ul class="breadcrumb">
-    <li class="active">Home</li>
+<h1>Spatial service</h1>
+<p>
+    This is an administration interface for managing the layers available in the system.
+</p>
+<ul>
+    <li><g:link controller="tabulation" action="index">Tabulations</g:link> - View the available tabulations (2 dimension matrices of contextual variables)</li>
+    <li><g:link controller="layer" action="list">Layers</g:link> - View available spatial layers (Grid or Polygon)</li>
 </ul>
 
-<br/>
-<g:link controller="tabulation" action="index">Tabulations</g:link>
-<br/>
-<g:link controller="layer" action="list">Layers</g:link>
-<br/>
-<br/>
-<span>Admin</span>
-<br/>
-<g:link controller="manageLayers" action="uploads">uploads</g:link>
-<br/>
-<g:link controller="manageLayers" action="layers">layers</g:link>
-<br/>
-<g:link controller="tasks" action="index">tasks</g:link>
-<br/>
-<g:link controller="manageLayers" action="remote">Copy Layer</g:link>
+<h3>Admin tools</h3>
+<ul>
+    <li><g:link controller="manageLayers" action="uploads">Manage layer uploads</g:link> - Upload, edit or delete layers from the system</li>
+    <li><g:link controller="manageLayers" action="layers">View available layers</g:link> - View lists of existing layers</li>
+    <li><g:link controller="tasks" action="index">Background tasks</g:link> - View the status of background task</li>
+    <li><g:link controller="manageLayers" action="remote">Copy layers from remote servers</g:link> - transfer layers from test environment to production</li>
+</ul>
 </body>
 </html>

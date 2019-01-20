@@ -1,17 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title></title>
+    <title>${layer.displayname}</title>
+    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink( controller: 'manageLayers', action: 'layers')}, Layers"/>
     <meta name="layout" content="main"/>
 </head>
 
 <body>
-<ul class="breadcrumb">
-    <li><g:link controller="main" action="index">Home</g:link></li>
-    <li><g:link controller="layer" action="list">Layers</g:link></li>
-    <li class="active">${layer.displayname}</li>
-</ul>
-
 <div class="container-fluid">
     <table class="table table-bordered">
         <tr>

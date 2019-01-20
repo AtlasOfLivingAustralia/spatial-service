@@ -1,7 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title></title>
+    <title>Layers</title>
+    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
 
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
@@ -11,30 +12,28 @@
 
 <body>
 <style>
-    body {
-        font-size: 12px;
+    #layersTable {
+        font-size: 11px;
     }
 </style>
-<ul class="breadcrumb">
-    <li><g:link controller="main" action="index">Home</g:link></li>
-    <li class="active">Layers</li>
-</ul>
 
 <div class="container-fluid">
+
+    <h1>Layers</h1>
     <div style="float:right">
         <button onclick="downloadCSV()">download as CSV</button>
     </div>
     <table id="layersTable" name="layersTable" class="table table-bordered table-striped table-condensed">
         <thead>
         <tr>
-            <th>Classification 1</th>
-            <th>Classification 2</th>
-            <th>Display name</th>
-            <th>Short name</th>
+            <th>Classification&nbsp;1</th>
+            <th>Classification&nbsp;2</th>
+            <th>Display&nbsp;name</th>
+            <th>Short&nbsp;name</th>
             <th>Description</th>
             <th>Type</th>
-            <th>Date added</th>
-            <th>Metadata contact organization</th>
+            <th>Date&nbsp;added</th>
+            <th>Metadata&nbsp;contact&nbsp;organization</th>
             <th>Keywords</th>
             <th>Preview</th>
         </tr>
