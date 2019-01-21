@@ -166,13 +166,12 @@ class TasksService {
                     }
                     inputs.add(new InputParameter(name: k, value: (list as JSON).toString(), task: task))
                 } else if (v instanceof List) {
+                    for (def item : v) {
+                        registerSpeciesQid(item)
+                    }
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
                 } else if (v instanceof Map) {
-                    //register species qid
-                    if (v.containsKey('q') && v.containsKey('bs') && v.q instanceof List &&
-                            v.containsKey('bs') && v.q.size() > 0) {
-                        v.put('q', 'qid:' + Util.makeQid(v))
-                    }
+                    registerSpeciesQid(v)
 
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
                 } else {
@@ -191,6 +190,13 @@ class TasksService {
         }
 
         task
+    }
+
+    def registerSpeciesQid(v) {
+        if (v instanceof Map && v.containsKey('q') && v.containsKey('bs') && v.q instanceof List &&
+                v.containsKey('bs') && v.q.size() > 0) {
+            v.put('q', 'qid:' + Util.makeQid(v))
+        }
     }
 
     // attach final log, message and outputs to a task

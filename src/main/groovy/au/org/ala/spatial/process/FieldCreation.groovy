@@ -76,7 +76,7 @@ class FieldCreation extends SlaveProcess {
                 task.message = 'cleanup scripts'
                 String fname = 'fixNullNamedObjects.sql'
                 FileUtils.writeStringToFile(new File(taskService.getBasePath(task) + fname),
-                        "DELETE FROM objects WHERE name IS NULL; " +
+                        "UPDATE objects SET name = '' WHERE name IS NULL; " +
                                 "DELETE FROM objects WHERE fid = '" + sqlEscapeString(field.id) + "';")
                 addOutput("sql", fname)
 

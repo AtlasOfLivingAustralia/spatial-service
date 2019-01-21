@@ -272,20 +272,17 @@ class TabulationCreateOne extends SlaveProcess {
                 }
             } else {
                 // comparisons when at least one contextual layer is a grid file
-                def sql = TabulationGenerator.gridToGrid(fieldId1, fieldId2, null)
-
-                // sql statements to put pairs into tabulation
+                // TODO: copy the files necessary for gridToGrid to operate on 'grid as shapefile' layers
                 int counter = 0
+                def fname = 'import' + counter + '.sql'
+                TabulationGenerator.gridToGrid(fieldId1, fieldId2, null, getTaskPath() + "/" + fname)
+                addOutput('sql', fname)
+                counter++
+
                 // init sql
-                String fname = 'import' + counter + '.sql'
+                fname = 'import' + counter + '.sql'
                 FileUtils.writeStringToFile(new File(getTaskPath() + fname), "DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
                 addOutput('sql', fname)
-                counter++
-
-                fname = 'import' + counter + '.sql'
-                FileUtils.writeStringToFile(new File(getTaskPath() + fname), sql)
-                addOutput('sql', fname)
-                counter++
             }
         } catch (err) {
             task.history.put(System.currentTimeMillis(), 'unknown error')

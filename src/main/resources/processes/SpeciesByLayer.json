@@ -1,0 +1,43 @@
+{
+  "name": "SpeciesByLayer",
+  "description": "Species x Layer",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "species": {
+      "description": "Restrict species to use.",
+      "type": "species",
+      "constraints": {
+        "min": 1,
+        "max": 1000
+      }
+    },
+    "layer": {
+      "description": "Layer",
+      "type": "layer",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    }
+  },
+  "output": {
+    "csv": {
+      "description": "Output as CSV."
+    },
+    "files": {
+      "description": "Output files."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

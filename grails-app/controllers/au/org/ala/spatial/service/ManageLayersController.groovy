@@ -16,6 +16,9 @@
 package au.org.ala.spatial.service
 
 import au.org.ala.layers.dao.FieldDAO
+import au.org.ala.layers.dao.LayerDAO
+import au.org.ala.layers.dto.Field
+import au.org.ala.layers.dto.Layer
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.converters.XML
@@ -32,6 +35,7 @@ class ManageLayersController {
 
     ManageLayersService manageLayersService
     FieldDAO fieldDao
+    LayerDAO layerDao
     FileService fileService
     TasksService tasksService
     GrailsApplication grailsApplication
@@ -572,5 +576,20 @@ class ManageLayersController {
             Map err = [error: 'not authorised']
             render err as JSON
         }
+    }
+
+
+    def enable() {
+        if (params.id.isNumber()) {
+            Layer layer = layerDao.getLayerById(params.id.toInteger(), false)
+            layer.enabled = true
+            layerDao.updateLayer(layer)
+        } else {
+            Field field = fieldDao.getFieldById(params.id, false)
+            field.enabled = true
+            fieldDao.updateField(field)
+        }
+
+        render ''
     }
 }

@@ -40,6 +40,9 @@ import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+
 @Slf4j
 class SlaveProcess {
 
@@ -1020,6 +1023,91 @@ class SlaveProcess {
 
     def taskLog(String msg) {
         task.history.put(System.currentTimeMillis(), msg)
+    }
+
+    def getOccurrencesCsv(query, server, fields) {
+        int pageSize = 1000000;
+
+        int start = 0;
+
+        StringBuilder output = new StringBuilder();
+
+        //TODO: use info from the original analysis request instead of doing this
+        boolean isUserData = server.contains("spatial");
+        log.info("isUserData=" + isUserData + ", server=" + server);
+
+        if (isUserData) {
+            String url = server + "/userdata/sample?q=" + q + "&fl=" + fields;
+            log.info("getting occurrences from : " + url);
+            InputStream is = null;
+            try {
+                is = getUrlStream(url);
+                ZipInputStream zis = new ZipInputStream(is);
+                ZipEntry ze = zis.getNextEntry();
+
+                return zis
+//
+//                ByteArrayBuilder bab = new ByteArrayBuilder();
+//                byte[] b = new byte[1024];
+//                int n;
+//                while ((n = zis.read(b, 0, 1024)) > 0) {
+//                    bab.write(b, 0, n);
+//                }
+//
+//                String csv = IOUtils.toString(bab.toByteArray(), "UTF-8");
+//
+//                output.append(csv);
+            } catch (Exception e) {
+                log.error("failed to get userdata as csv for url: " + url, e);
+            } finally {
+//                if (is != null) {
+//                    try {
+//                        is.close();
+//                    } catch (Exception e) {
+//                        log.error(e.getMessage(), e);
+//                    }
+//                }
+            }
+
+        } else {
+            String url = server + "/occurrences/index/download?q=" + query + "&reasonTypeId=10&qa=none&fields=" + fields;
+            log.info("retrieving from biocache : " + url);
+            InputStream is = null;
+            String csv = null;
+            try {
+                is = getUrlStream(url)
+                ZipInputStream zip = new ZipInputStream(is)
+                // first entry is data.csv
+                zip.getNextEntry()
+                return zip
+//                csv = IOUtils.toString(zip);
+            } catch (Exception e) {
+                log.warn("failed try: " + url, e);
+            } finally {
+//                if (is != null) {
+//                    try {
+//                        is.close();
+//                    } catch (Exception e) {
+//                        log.error(e.getMessage(), e);
+//                    }
+//                }
+            }
+
+            if (csv == null) {
+//                throw new IOException("failed to get records from biocache.");
+            }
+
+//            return csv;
+        }
+
+//        return output.toString();
+    }
+
+    static InputStream getUrlStream(String url) throws IOException {
+        long start = System.currentTimeMillis();
+        URLConnection c = new URL(url).openConnection();
+        InputStream is = c.getInputStream();
+        return is;
     }
 
 }

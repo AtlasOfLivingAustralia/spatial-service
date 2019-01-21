@@ -157,7 +157,11 @@ class LayerController {
 
     def index(String id) {
         if (id == null)
-            render layerDao.getLayers() as JSON
+            if (params?.all?.toBoolean()) {
+                render layerDao.getLayersForAdmin() as JSON
+            } else {
+                render layerDao.getLayers() as JSON
+            }
         else
             show(id)
     }

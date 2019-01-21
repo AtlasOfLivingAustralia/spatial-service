@@ -55,7 +55,7 @@ class StandardizeLayers extends SlaveProcess {
 
                         shpResolutions.each { res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (true || !slaveService.peekFile(path)[0].exists) {
+                            if (!slaveService.peekFile(path)[0].exists) {
                                 task.message = 'running: making for field ' + f.id + ' and resolution ' + res
 
                                 // standardized file is missing, make for this shapefile

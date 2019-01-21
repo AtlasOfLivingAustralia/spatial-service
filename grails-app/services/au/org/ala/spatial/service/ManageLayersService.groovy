@@ -366,7 +366,7 @@ class ManageLayersService {
         } else {
             try {
                 layers = []
-                JSON.parse(Util.getUrl("${url}/layers")).each {
+                JSON.parse(Util.getUrl("${url}/layers?all=true")).each {
                     def layer = new ObjectMapper().readValue(it.toString(), Map.class)
                     layers.push(layer)
                 }
@@ -375,7 +375,7 @@ class ManageLayersService {
             }
             try {
                 fields = []
-                JSON.parse(Util.getUrl("${url}/fields")).each {
+                JSON.parse(Util.getUrl("${url}/fields?all=true")).each {
                     def field = new ObjectMapper().readValue(it.toString(), Field.class)
                     fields.push(field)
                 }
