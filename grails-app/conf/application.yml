@@ -173,7 +173,7 @@ security:
     bypass: false # set to true for non-ALA deployment
     gateway: false
     uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
-    uriFilterPattern: '/manageLayers,/manageLayers/.*,/admin,/admin/.*'
+    uriFilterPattern: '/manageLayers,/manageLayers/.*,/admin,/admin/.*,/alaAdmin.*'
     authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/tasks,/tasks/.*'
     disableCAS: false
 

@@ -1488,6 +1488,16 @@ public class Scatterplot {
                     scatterplotDataDTO.data[i][1] = Double.MIN_VALUE;
                 }
             }
+            for (int i = 0; i < scatterplotDataDTO.backgroundData.length; i++) {
+                double d1 = scatterplotDataDTO.backgroundData[i][0];
+                double d2 = scatterplotDataDTO.backgroundData[i][1];
+                if (Double.isNaN(d1) || Double.isInfinite(d1)) {
+                    scatterplotDataDTO.backgroundData[i][0] = Double.MIN_VALUE;
+                }
+                if (Double.isNaN(d2) || Double.isInfinite(d2)) {
+                    scatterplotDataDTO.backgroundData[i][1] = Double.MIN_VALUE;
+                }
+            }
 
             FileUtils.write(new File(file.getPath() + ".dto"), JSONObject.fromObject(scatterplotDTO).toString());
             FileUtils.write(new File(file.getPath() + ".style"), JSONObject.fromObject(scatterplotStyleDTO).toString());
@@ -1516,6 +1526,12 @@ public class Scatterplot {
                     data.data[i][0] = Double.NaN;
                 if (data.data[i][1] == Double.MIN_VALUE)
                     data.data[i][1] = Double.NaN;
+            }
+            for (int i = 0; i < data.backgroundData.length; i++) {
+                if (data.backgroundData[i][0] == Double.MIN_VALUE)
+                    data.backgroundData[i][0] = Double.NaN;
+                if (data.backgroundData[i][1] == Double.MIN_VALUE)
+                    data.backgroundData[i][1] = Double.NaN;
             }
 
             Scatterplot scatterplot = new Scatterplot(dto, style, data, jo.get(0).toString(), jo.get(1).toString(), jo.get(2).toString());
