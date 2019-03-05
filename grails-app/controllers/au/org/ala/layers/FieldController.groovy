@@ -53,6 +53,7 @@ class FieldController {
     def show(String id) {
         Integer start = params.containsKey('start') ? Integer.parseInt(params.start.toString()) : 0
         Integer pageSize = params.containsKey('pageSize') ? Integer.parseInt(params.pageSize.toString()) : -1
+        String q = params.containsKey('q') ? params.q : null;
 
         //test field id value
         Field field = fieldDao.getFieldById(id, false)
@@ -66,7 +67,7 @@ class FieldController {
 
             //include field objects
             log.error('field id: ' + id)
-            List objects = objectDao.getObjectsById(id, start, pageSize)
+            List objects = objectDao.getObjectsById(id, start, pageSize, q)
             List list = objects.collect { Objects it ->
                 [name  : it.name, id: it.id, description: it.description, pid: it.pid,
                  wmsurl: it.wmsurl, area_km: it.area_km, fieldname: it.fieldname,

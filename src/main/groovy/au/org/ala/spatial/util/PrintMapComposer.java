@@ -176,6 +176,9 @@ public class PrintMapComposer {
         if ("normal".equalsIgnoreCase(baseMap)) {
             //google
             urls.addAll(drawGoogle(g, "roadmap", drawTiles));
+        } else if ("satellite".equalsIgnoreCase(baseMap)) {
+            //google satellite
+            urls.addAll(drawGoogle(g, "satellite", drawTiles));
         } else if ("hybrid".equalsIgnoreCase(baseMap)) {
             //google hybrid
             urls.addAll(drawGoogle(g, "hybrid", drawTiles));

@@ -58,7 +58,7 @@
       "description": "Produce a shapefile.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "default": true
       }
     }
   },

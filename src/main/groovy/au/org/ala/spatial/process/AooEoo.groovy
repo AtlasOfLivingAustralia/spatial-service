@@ -17,7 +17,10 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.util.SpatialUtil
 import com.vividsolutions.jts.geom.Geometry
+import com.vividsolutions.jts.geom.GeometryFactory
+import com.vividsolutions.jts.geom.LineSegment
 import com.vividsolutions.jts.io.WKTReader
+import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
@@ -41,6 +44,9 @@ class AooEoo extends SlaveProcess {
         //number of target species
         def species = JSON.parse(task.input.species.toString())
 
+        // concave hull coverage parameter
+        def alpha = task.input.coverage
+
         def speciesArea = getSpeciesArea(species, area[0])
 
         new File(getTaskPath().toString()).mkdirs()
@@ -62,6 +68,7 @@ class AooEoo extends SlaveProcess {
         String metadata
         try {
             Geometry g = reader.read(eWkt.toString())
+
             Geometry convexHull = g.convexHull()
             String wkt = convexHull.toText().replace(" (", "(").replace(", ", ",")
 
@@ -71,6 +78,11 @@ class AooEoo extends SlaveProcess {
             Geometry a = reader.read(aooWkt)
             Geometry aUnion = a.union()
             String aWkt = aUnion.toText().replace(" (", "(").replace(", ", ",")
+
+            //concave hull
+            Geometry concaveHull = buildConcaveHull(g, Double.parseDouble(alpha))
+            String concaveWkt = concaveHull.toText().replace(" (", "(").replace(", ", ",")
+            double alphaHull = SpatialUtil.calculateArea(concaveWkt)
 
             if (eoo > 0) {
 
@@ -88,6 +100,13 @@ class AooEoo extends SlaveProcess {
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
 
+                filename = "Alpha Hull.wkt"
+                FileUtils.writeStringToFile(new File(getTaskPath() + filename), concaveWkt)
+                values = [file       : "Alpha Hull.wkt", name: "Alpha Hull: " + species.name,
+                          description: "Created by AOO and EOO Tool"]
+                addOutput("areas", (values as JSON).toString(), true)
+                addOutput("files", filename, true)
+
                 metadata = "<html><body>" +
                         "<div class='aooeoo'>" +
                         "<div>The Sensitive Data Service may have changed the location of taxa that have a sensitive status." +
@@ -97,7 +116,9 @@ class AooEoo extends SlaveProcess {
                         "<tr><td>Number of records used for the calculations</td><td>" + occurrenceCount + "</td></tr>" +
                         "<tr><td>Species</td><td>" + species.name + "</td></tr>" +
                         "<tr><td>Area of Occupancy (AOO: 0.02 degree grid)</td><td>" + String.format("%.0f", aoo) + " sq km</td></tr>" +
-                        "<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>" + (String.format("%.2f", eoo / 1000.0 / 1000.0)) + " sq km</td></tr></table></body></html>" +
+                        "<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>" + (String.format("%.2f", eoo / 1000.0 / 1000.0)) + " sq km</td></tr>" +
+                        "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format("%.0f", alphaHull / 1000.0 / 1000.0) + " sq km</td></tr>" +
+                        "</table></body></html>" +
                         "</div>"
 
                 FileUtils.writeStringToFile(new File(getTaskPath() + "Calculated AOO and EOO.html"), metadata)
@@ -199,6 +220,50 @@ class AooEoo extends SlaveProcess {
         sb.append(")")
 
         return sb.toString()
+    }
+
+    /**
+     * Alpha hull
+     * 1. Connect all points with Delaunay Triangulation
+     * 2. Calculate mean edge length
+     * 3. Remove all triangles that have an edge with length > mean length * alpha
+     * 4. Return geometry
+     *
+     * @param geometry
+     * @param alpha
+     * @return
+     */
+    static Geometry buildConcaveHull(Geometry geometry, Double alpha) {
+        def triangulation = new DelaunayTriangulationBuilder()
+        triangulation.setSites(geometry)
+        def triangles = triangulation.getTriangles(new GeometryFactory())
+        def edges = triangulation.getEdges(new GeometryFactory())
+
+        //get mean edge length
+        def sum = 0;
+        for (int i = 0; i < edges.numGeometries; i++) {
+            sum += edges.getGeometryN(i).length
+        }
+        def meanByAlpha = sum / (edges.numGeometries) * alpha
+
+        //remove triangles with at least one edge length > meanByAlpha
+        def union = null
+        for (int i = 0; i < triangles.numGeometries; i++) {
+            def triangle = triangles.getGeometryN(i)
+            def valid = true
+            for (int j = 1; j < 3 && valid; j++) {
+                if (new LineSegment(triangle.coordinates[j], triangle.coordinates[j - 1]).length > meanByAlpha) {
+                    valid = false
+                }
+            }
+            if (valid) {
+                if (union == null) union = triangle
+                else union = union.union(triangle)
+            }
+        }
+
+        //return geometry
+        return union
     }
 
 }
