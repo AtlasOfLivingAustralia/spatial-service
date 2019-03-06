@@ -54,6 +54,10 @@ class TaxonFrequency extends SlaveProcess {
         def species1Area = getSpeciesArea(species1, area[0])
 
         def facets1 = facetOccurenceCount('year', species1Area)
+        if (facets1.size() == 0) {
+            taskLog("No occurrences found in the selected area.")
+            return
+        }
         List years1 = facets1.find { it.fieldName == "year" }.fieldResult
 
         TimeSeries cumulative1 = new TimeSeries(species1Name, "Year", "Count");
