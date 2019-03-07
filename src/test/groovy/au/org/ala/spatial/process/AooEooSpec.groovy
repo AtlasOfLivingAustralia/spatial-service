@@ -56,8 +56,8 @@ class AooEooSpec extends Specification implements GrailsUnitTest {
             return 'other'
         }
 
-        proc.task = [spec: Mock(TaskService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
-                     input: [area: "[{}]", species: "{\"q\": \"\", \"name\": \"test species\"}", resolution: 0.02]]
+        proc.task = [spec : Mock(TaskService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
+                     input: [area: "[{}]", species: "{\"q\": \"\", \"name\": \"test species\"}", resolution: "0.02", coverage: "2"]]
 
         proc.start()
 

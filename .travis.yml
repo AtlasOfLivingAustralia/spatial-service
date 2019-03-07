@@ -17,7 +17,7 @@ cache:
   - $HOME/.gradle/caches/
   - $HOME/.gradle/wrapper/
 after_success:
-  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && travis_retry ./gradlew publish'
+  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && travis_retry ./gradlew publish -x test'
 env:
   global:
   - secure: JcvWOzXzehX6zAzzsa7zTaQS4Bmq+DwkdbIOhLda7pRw8u8UQrgEl9daAafmgWdKKP/bEsm5K23n2ln7TrHFfMKWjoZODSs8qAfiVo0wwWojNuDi75R4vfAf2hOW0/PfhLXqHjY3pCT5KDl3QCPDKvcSgzB5YjAV5gjOhs44aUkq3asra6+68ngbpnGseEJUgq12ah5hi2bSy8+r642x98gkpjW+wq0H1uV5Sj8cnowU+0oOvx3BYEFQSZzKpbsupVG2rDeU/2z32q9WYqbcsCRMAl2YVRaDQMev2bbj/u2rMHtPi4aaPyNQSUgCBoOe9WbMCSTs0ZEJNwRfYGBdtPkC1TjUGJAZ9AviLRqwF8W2e6E2yRFYaxaQkegnPN9YVxWEirfxEpgZtFrTG9oRCvMQ6rLW49ZfRPQJ0SqSoYlCgPLdXIV9L0aO1MD7jfsFeHyVXr7LVrzvy4+VC+r/h48RXpjmK4WM70l2YLZdTkbMbzm7onvTcG3TNfOa827KWxo+nHrUOc883zJxoqpzaDNGVoWtkHJpLUJHK3jC9YlStM4y1e3+rJE4fDoVMXDcWtGpqCwWtBZG4p5Q4Q71RH7NXLzjrI7iYgvHFYWpcNWZomsFHPOa+I5KEug89A8gRw/Q9i++njZRvj6hLyFXZx4X9hHBkTnjrB5uCKzj0gE=

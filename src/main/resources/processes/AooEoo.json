@@ -1,6 +1,6 @@
 {
   "name": "AooEoo",
-  "description": "Area and Extent of Occupancy.",
+  "description": "Area of Extent, Extent of Occupancy and Alpha Hull.",
   "isBackground": false,
   "version": 1.0,
   "private": {

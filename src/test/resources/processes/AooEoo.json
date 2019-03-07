@@ -1,6 +1,6 @@
 {
   "name": "AooEoo",
-  "description": "Area and Extent of Occupancy.",
+  "description": "Area of Extent, Extent of Occupancy and Alpha Hull.",
   "isBackground": false,
   "version": 1.0,
   "private": {
@@ -32,23 +32,31 @@
       }
     },
     "species": {
-      "description": "Occurrences to use in the prediction.",
+      "description": "Occurrences to use.",
       "type": "species",
       "constraints": {
         "min": 1,
         "max": 1
       }
+    },
+    "coverage": {
+      "description": "Alpha value for alpha hull",
+      "type": "double",
+      "constraints": {
+        "min": 0.01,
+        "default": 2
+      }
     }
   },
   "output": {
+    "metadata": {
+      "description": "Output summary."
+    },
     "areas": {
       "description": "Output areas."
     },
     "files": {
       "description": "Output files."
-    },
-    "metadata": {
-      "description": "Prediction metadata."
     },
     "download": {
       "description": "Files in the download zip."
