@@ -32,16 +32,7 @@ class TaskController {
             return
         }
 
-        Task task = taskService.newTask(request.getJSON())
-
-        // TODO: check for failed validation
-        tasksService.validateInput(task)
-
-        // start
-        taskService.start(task)
-
-        // save
-        def map = [status: taskService.getStatus(task), id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + params.api_key]
+        def map = taskService.create(request.getJSON(), params.api_key)
         render map as JSON
     }
 
@@ -58,7 +49,7 @@ class TaskController {
 
         if (task == null) {
             map.put('error', 'no task: ' + id)
-        } else if (taskService.cancel(task)) {
+        } else if (taskService.cancel(id)) {
             map.put('status', 'cancelled task: ' + id)
         } else {
             map.put('error', 'failed to cancel task: ' + id)
@@ -75,18 +66,7 @@ class TaskController {
             return
         }
 
-        if (id == null) {
-            render slaveService.statusUpdates as JSON
-        } else {
-            def t = taskService.tasks.get(id)
-            if (t == null) {
-                def m = [error: "no task for id: " + id]
-                render m as JSON
-            } else {
-                def m = [status: taskService.getStatus(t)]
-                render m as JSON
-            }
-        }
+        render taskService.status(id) as JSON
     }
 
     // get task details

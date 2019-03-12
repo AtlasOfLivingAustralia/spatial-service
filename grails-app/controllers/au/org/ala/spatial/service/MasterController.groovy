@@ -17,7 +17,6 @@ package au.org.ala.spatial.service
 
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
 import org.grails.web.json.JSONObject
 
 @Transactional(readOnly = true)
@@ -62,58 +61,8 @@ class MasterController {
             return
         }
 
-        Map map = [:]
-
-        //Task task = Task.get(params.id as Integer)
         Boolean isPublic = params?.isPublic ? params.isPublic : false
-
-        String pth = grailsApplication.config.data.dir + "/" + (isPublic ? 'public' : 'private') + "/" + params.id + "/"
-
-        String file = "${pth}${params.id}.zip"
-        File f = new File(file)
-        f.getParentFile().mkdirs()
-
-        try {
-            // save steam as a zip
-            def out
-            try {
-                if (request instanceof MultipartRequestEntity)
-                    out = request.getFile('file')
-            } catch (e) {
-                log.error(e.getMessage(), e)
-                //ignore, may not exist when slave is local to master service
-            }
-
-            if (out != null) {
-                out.transferTo(f)
-            }
-        } catch (err) {
-            log.error 'failed to receive published files', err
-            map.put('status', 'failed')
-        }
-
-        if (map.size() == 0) {
-            try {
-                // save stream as a zip
-                if (!f.exists()) {
-                    //May need to swap public/private if slave is local to master service
-                    pth = grailsApplication.config.data.dir + "/" + (!isPublic ? 'public' : 'private') + "/" + params.id + "/"
-                    file = "${pth}${params.id}.zip"
-                    f = new File(file)
-                }
-
-                // do publishing
-                Map spec = publishService.publish(f)
-
-                map.put('status', 'successful')
-
-                //update log and outputs
-                tasksService.afterPublish(params.id, spec)
-            } catch (err) {
-                log.error 'failed process published files', err
-                map.put('status', 'failed')
-            }
-        }
+        def map = masterService.publish(isPublic, params.id, request)
 
         render map as JSON
     }
@@ -182,38 +131,7 @@ class MasterController {
 
         JSONObject json = (JSONObject) request.getJSON()
 
-        def cap = [:]
-        json.capabilities.each { k ->
-            cap.put(k.name, k)
-        }
-
-        def limits = [:]
-        json.limits.queue.each { name, lim ->
-            def pool = [:]
-            if (lim.containsKey('pool') != null) {
-                lim.pool.each { pk, pv ->
-                    pool.put(pk, pv)
-                }
-            }
-
-            limits.put(name, [total: lim.total, pool: pool, tasks: [:]])
-        }
-
-
-        Slave slave = masterService.slaves.get(json.url)
-
-        if (slave == null) {
-            slave = new Slave([url         : json.url,
-                               capabilities: cap,
-                               limits      : [queue: limits, priority: json.limits?.priority ?: [:]],
-                               key         : json.key,
-                               created     : new Date()])
-        } else {
-            slave.capabilities = cap
-            slave.created = new Date()
-        }
-
-        masterService.slaves.put(json.url.toString(), slave)
+        def slave = masterService.register(json)
 
         render slave as JSON
     }
@@ -238,11 +156,7 @@ class MasterController {
         if (json.task?.message) newValues.put('message', json.task.message)
         if (json.task?.history) newValues.put('history', json.task.history as Map)
         if (json.task?.finished && json.task.finished) {
-            if (json.task?.additionalMessage && json.task.additionalMessage) {
-                newValues.put('status', 3)
-            } else {
-                newValues.put('status', 4)
-            }
+            newValues.put('status', 4)
         } else {
             newValues.put('status', json.task.status)
         }

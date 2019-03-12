@@ -103,7 +103,7 @@ class ManageLayersController {
         map.put("layersRemoteOnly", layersRemoteOnly)
         map.put("layersBoth", layersBoth)
         map.put("spatialServiceUrl", params.remoteUrl)
-        map.put("localUrl", grailsApplication.config.serverURL)
+        map.put("localUrl", grailsApplication.config.grails.serverURL)
 
         map
     }

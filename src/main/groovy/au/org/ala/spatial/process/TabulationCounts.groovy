@@ -79,7 +79,7 @@ class TabulationCounts extends SlaveProcess {
         fields.eachWithIndex { field1, idx1 ->
             Object[] o1 = null
             fields.eachWithIndex { field2, idx2 ->
-                if (idx1 < idx2 && (field1.id.equals('cl2125') || field2.id.equals('cl2125'))) {
+                if (idx1 < idx2 /*&& (field1.id.equals('cl1052') || field2.id.equals('cl1058'))*/) {
                     task.message = 'tabulating ' + field1.id + ' and ' + field2.id
                     try {
                         if (o1 == null) o1 = loadFile(pidFiles[idx1], (allPoints.length / 2).intValue())

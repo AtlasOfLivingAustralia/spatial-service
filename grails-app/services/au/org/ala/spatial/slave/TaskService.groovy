@@ -186,15 +186,22 @@ class TaskService {
 
     def getStatus(task) {
         def map = [history: task.history, message: task.message]
-        if (task.additionalMessage) map.put('additionalMessage', task.additionalMessage)
         if (task.finished) map.put('finished', true)
 
         map
     }
 
     //TODO: implement
-    def cancel(task) {
+    def cancel(taskId) {
         //tasks.remove(task.id)
+        def info = running.get(task.id)
+        if (info) {
+            try {
+                info.thread.interrupt();
+            } catch (Exception e) {
+                log.error("problem cancelling task: " + taskId, e)
+            }
+        }
 
         true
     }
@@ -213,6 +220,32 @@ class TaskService {
         }
 
         task
+    }
+
+    def status(id) {
+        if (id == null) {
+            slaveService.statusUpdates
+        } else {
+            def t = tasks.get(id)
+            if (t == null) {
+                [error: "no task for id: " + id]
+            } else {
+                [status: getStatus(t)]
+            }
+        }
+    }
+
+    Object create(json, api_key) {
+        Task task = newTask(json)
+
+        // TODO: check for failed validation
+        tasksService.validateInput(task)
+
+        // start
+        start(task)
+
+        // save
+        [status: getStatus(task), id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
     }
 
     class TaskThread extends Thread {
@@ -266,9 +299,6 @@ class TaskService {
                 operator.start()
                 operator.taskLog("finished")
 
-                if (request.additionalMessage) {
-                    request.history.put(System.currentTimeMillis(), request.additionalMessage)
-                }
                 request.message = 'publishing'
                 log.debug "task:${request.id} publishing"
                 taskService.slaveService.publishResults(request)
@@ -284,11 +314,15 @@ class TaskService {
 
                 //taskService.tasks.remove(request.id)
             } catch (err) {
-                log.error "error running request: ${request.id}", err
+                if (!(err instanceof InterruptedException)) {
+                    log.error "error running request: ${request.id}", err
+                    request.history.put(System.currentTimeMillis(), "failed (id:${request.id})")
+                } else {
+                    request.history.put(System.currentTimeMillis(), "cancelled (id:${request.id})")
+                }
 
                 request.finished = true
                 request.message = 'finished'
-                request.history.put(System.currentTimeMillis(), "failed (id:${request.id})")
 
                 taskService.slaveService.signalMasterImmediately(request)
 

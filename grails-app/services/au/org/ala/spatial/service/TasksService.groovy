@@ -30,13 +30,20 @@ class TasksService {
     def fieldDao
     def layerIntersectDao
 
+    def taskService
+
     def cancel(task) {
         try {
             def response = null
 
             if (task?.slave) {
-                def url = task.slave + "/task/cancel"
-                response = grails.converters.JSON.parse(Util.getUrl(url))
+                if (task.slave.equals(grailsApplication.config.grails.serverURL)) {
+                    taskService.cancel(task.id)
+                    response = true
+                } else {
+                    def url = task.slave + "/task/cancel/" + task.id
+                    response = grails.converters.JSON.parse(Util.getUrl(url))
+                }
             }
 
             // TODO: confirm the task is not finished before setting as cancelled
@@ -83,12 +90,12 @@ class TasksService {
         Task t = Task.get(id)
         if (t != null) {
             newValues.each { k, v ->
-                if ('status'.equals(k)) t.status = v
+                if ('status'.equals(k)) t.status = Integer.parseInt("" + v)
                 else if ('message'.equals(k)) t.message = v
                 else if ('url'.equals(k)) t.url = v
                 else if ('history'.equals(k)) {
                     v.each { k1, v1 ->
-                        t.history.put(k1, trimString(v1, 254))
+                        t.history.put("" + k1, trimString(v1, 254))
                     }
                 } else if ('slave'.equals(k)) t.slave = v
                 else if ('output'.equals(k)) t.output = v

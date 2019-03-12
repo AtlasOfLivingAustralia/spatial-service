@@ -31,6 +31,9 @@ class SlaveService {
 
     def grailsApplication
     def taskService
+    def masterService
+    def tasksService
+    def fileService
 
     // task for pushing status updates to the master
     def statusUpdateThread
@@ -44,6 +47,7 @@ class SlaveService {
     def retryTime = 30000;//grailsApplication.config.retryTime
     def monitorTask
     def monitorLock = new Object()
+
 
     def monitor() {
 
@@ -90,23 +94,29 @@ class SlaveService {
             String url = grailsApplication.config.spatialService.url + "/master/register?api_key=" + grailsApplication.config.serviceKey
 
             JsonOutput jsonOutput = new JsonOutput()
-            String json = jsonOutput.toJson([url         : grailsApplication.config.grails.serverURL,
-                                          capabilities: taskService.getAllSpec(),
-                                          limits      : getLimits(),
-                                          key         : grailsApplication.config.slaveKey])
+            def map = [url         : grailsApplication.config.grails.serverURL,
+                       capabilities: taskService.getAllSpec(),
+                       limits      : getLimits(),
+                       key         : grailsApplication.config.slaveKey]
+            String json = jsonOutput.toJson(map)
 
-            def response = Util.urlResponse("POST", url, null,
-                    ["Content-Type": "application/json; charset=UTF-8"],
-                    new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
-
-            log.debug('master register url: ' + url + ', json: ' + json)
-
-            if (response && response?.text && response?.statusCode >= 200 && response?.statusCode < 300) {
-                if (JSON.parse(response.text) != null) {
-                    return true
-                }
+            if (grailsApplication.config.service.enable) {
+                masterService.register(map)
+                return true
             } else {
-                error = "invalid master response, statusCode: " + response?.statusCode
+                def response = Util.urlResponse("POST", url, null,
+                        ["Content-Type": "application/json; charset=UTF-8"],
+                        new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
+
+                log.debug('master register url: ' + url + ', json: ' + json)
+
+                if (response && response?.text && response?.statusCode >= 200 && response?.statusCode < 300) {
+                    if (JSON.parse(response.text) != null) {
+                        return true
+                    }
+                } else {
+                    error = "invalid master response, statusCode: " + response?.statusCode
+                }
             }
         } catch (err) {
             error = err.message
@@ -135,23 +145,36 @@ class SlaveService {
         def error = ''
 
         try {
-            String url = grailsApplication.config.spatialService.url + '/master/task?id=' + task.taskId + "&api_key=" + grailsApplication.config.serviceKey
-
-            JsonOutput jsonOutput = new JsonOutput()
-            String json = jsonOutput.toJson([task: task])
-
-            def response = Util.urlResponse("POST", url, null,
-                    ["Content-Type": "application/json; charset=UTF-8"],
-                    new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
-
-            if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
-                if (JSON.parse(response?.text) != null) {
-                    return true
+            if (grailsApplication.config.service.enable) {
+                def newValues = [:]
+                if (task?.message) newValues.put('message', task.message)
+                if (task?.history) newValues.put('history', task.history as Map)
+                if (task?.finished && task.finished) {
+                    newValues.put('status', 4)
+                } else {
+                    newValues.put('status', task.status)
                 }
+                tasksService.update(task.taskId, newValues)
+                return true
             } else {
-                error = "invalid master response, statusCode: " + response?.statusCode
-            }
+                def data = [task: task]
+                String url = grailsApplication.config.spatialService.url + '/master/task?id=' + task.taskId + "&api_key=" + grailsApplication.config.serviceKey
 
+                JsonOutput jsonOutput = new JsonOutput()
+                String json = jsonOutput.toJson(data)
+
+                def response = Util.urlResponse("POST", url, null,
+                        ["Content-Type": "application/json; charset=UTF-8"],
+                        new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
+
+                if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
+                    if (JSON.parse(response?.text) != null) {
+                        return true
+                    }
+                } else {
+                    error = "invalid master response, statusCode: " + response?.statusCode
+                }
+            }
         } catch (err) {
             error = err.message
         }
@@ -162,6 +185,10 @@ class SlaveService {
     }
 
     def getResources(task) {
+        if (grailsApplication.config.service.enable) {
+            return true;
+        }
+
         if (!verifyMaster()) {
             return false
         }
@@ -211,6 +238,10 @@ class SlaveService {
     }
 
     def getFile(path, String spatialServiceUrl = grailsApplication.config.spatialService.url) {
+        if (spatialServiceUrl.equals(grailsApplication.config.grails.serverURL)) {
+            return true
+        }
+
         def remote = peekFile(path, spatialServiceUrl)
 
         //compare p list with local files
@@ -297,10 +328,15 @@ class SlaveService {
     }
 
     List peekFile(String path, String spatialServiceUrl = grailsApplication.config.spatialService.url) {
+        String shortpath = path.replace(grailsApplication.config.data.dir.toString(), '')
+
+        if (spatialServiceUrl.equals(grailsApplication.config.grails.serverURL)) {
+            return fileService.info(shortpath.toString()) as JSON
+        }
+
         List map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]]
 
         try {
-            String shortpath = path.replace(grailsApplication.config.data.dir.toString(), '')
             String url = spatialServiceUrl + "/master/resourcePeek?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
                     "&api_key=" + grailsApplication.config.serviceKey
 
@@ -317,9 +353,10 @@ class SlaveService {
             return false
         }
 
+        def isPublic = task.spec?.public ? task.spec.public : 'false'
         try {
             String url = grailsApplication.config.spatialService.url + '/master/publish?id=' + task.taskId + '&public=' +
-                    (task.spec?.public ? task.spec.public : 'false') + "&api_key=" + grailsApplication.config.serviceKey
+                    isPublic + "&api_key=" + grailsApplication.config.serviceKey
 
             def file = taskService.getZip(task)
 
@@ -331,19 +368,22 @@ class SlaveService {
 
                 Part[] parts = [new FilePart('file', f)]
                 requestEntity = new MultipartRequestEntity(parts, null)
-            }
 
-            def response = Util.urlResponse("POST", url, null, [:], requestEntity)
+                def response = Util.urlResponse("POST", url, null, [:], requestEntity)
 
-            if (response) {
-                def j = JSON.parse(response.text)
-                if (j != null && 'successful'.equalsIgnoreCase(j.status)) {
-                    return true
-                } else if (j) {
-                    j.each { k, v ->
-                        task.history.put(k as String, v as String)
+                if (response) {
+                    def j = JSON.parse(response.text)
+                    if (j != null && 'successful'.equalsIgnoreCase(j.status)) {
+                        return true
+                    } else if (j) {
+                        j.each { k, v ->
+                            task.history.put(k as String, v as String)
+                        }
                     }
                 }
+            } else {
+                def map = masterService.publish(isPublic, task.taskId, null)
+                return map.status != 'failed'
             }
         } catch (err) {
             log.error "", err
@@ -355,6 +395,10 @@ class SlaveService {
     }
 
     def verifyMaster() {
+        if (grailsApplication.config.service.enable) {
+            return true
+        }
+
         def verified = false
         for (int i = 0; i < retryCount; i++) {
             try {

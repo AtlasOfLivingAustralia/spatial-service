@@ -89,7 +89,7 @@ class MonitorService {
 
                     //make this task available for another slave
                     try {
-                        log.warn "making available to another slave" + task.id
+                        log.warn "making task available to another slave: " + task.id
                         def newValues = [status: 0, url: null, slave: null]
                         tasksService.update(task.id, newValues)
                     } catch (StaleObjectStateException err) {

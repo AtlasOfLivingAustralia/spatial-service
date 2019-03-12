@@ -222,14 +222,14 @@
     });
 
     function copy(id) {
-        $.post("${layersUrl}/manageLayers/copy?fieldId=" + id + "&spatialServiceUrl=" + encodeURIComponent("${spatialServiceUrl}"))
+        $.post("${localUrl}/manageLayers/copy?fieldId=" + id + "&spatialServiceUrl=" + encodeURIComponent("${spatialServiceUrl}"))
         $('#copy' + id)[0].remove();
         $('#txtcopy' + id)[0].innerText = 'copying';
     }
 
     function enable(id) {
-        $.post("${layersUrl}/manageLayers/enable?id=" + id);
-        $.post("${layersUrl}/manageLayers/enable?id=" + id.substr(2));
+        $.post("${localUrl}/manageLayers/enable?id=" + id);
+        $.post("${localUrl}/manageLayers/enable?id=" + id.substr(2));
         while ($('#enable' + id).length > 0) {
             $('#enable' + id)[0].remove();
             $('#txtenable' + id)[0].innerText = 'true';
