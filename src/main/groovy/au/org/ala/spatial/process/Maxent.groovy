@@ -175,8 +175,7 @@ class Maxent extends SlaveProcess {
             //writeProjectionFile(getTaskPath());
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "species.asc", getTaskPath() + task.id + "_species")
-
+            convertAsc(getTaskPath() + "species.asc", "${grailsApplication.config.data.dir}/layer/${task.id}_species")
         }
         writeMaxentsld(grailsApplication.config.data.dir + "/layer/" + task.id + "_species.sld")
         addOutput("layers", "/layer/" + task.id + "_species.sld")
