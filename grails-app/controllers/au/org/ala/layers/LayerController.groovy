@@ -28,6 +28,8 @@ class LayerController {
 
     def layerDao
     def fieldDao
+    def fileService
+    def authService
 
     def list() {
         def fields = fieldDao.getFieldsByCriteria('')
@@ -158,6 +160,46 @@ class LayerController {
 
     }
 
+    def download(String id) {
+        Layer l = layerDao.getLayerByDisplayName(id)
+        if (downloadAllowed(l)) {
+            OutputStream outputStream = null
+            try {
+                outputStream = response.outputStream as OutputStream
+                //write resource
+                response.setContentType("application/octet-stream")
+                response.setHeader("Content-disposition", "attachment;filename=${id}.zip")
+
+                // When a geotiff exists, only download the geotiff
+                def path = "/layer/${l.name}"
+                def geotiff = new File(grailsApplication.config.data.dir + path + ".tif")
+                if (geotiff.exists()) {
+                    path += ".tif"
+                }
+
+                fileService.write(outputStream, path)
+                outputStream.flush()
+            } catch (err) {
+                log.error(err.getMessage(), err)
+            } finally {
+                if (outputStream != null) {
+                    try {
+                        outputStream.close()
+                    } catch (err) {
+                        log.error(err.getMessage(), err)
+                    }
+                }
+            }
+        } else {
+            response.sendError(404, "$id not available")
+        }
+    }
+
+    private downloadAllowed(layer) {
+        return grailsApplication.config.download.layer.licence_levels.contains(layer.licence_level) ||
+                authService.userInRole(grailsApplication.config.auth.admin_role)
+    }
+
     def more(String id) {
         Layer l = layerDao.getLayerByName(id)
 
@@ -169,7 +211,9 @@ class LayerController {
                 log.error 'failed to get layer: ' + id, err
             }
         }
-        render(view: "show.gsp", model: [layer: l.toMap()])
+
+
+        render(view: "show.gsp", model: [layer: l.toMap(), downloadAllowed: downloadAllowed(l)])
     }
 
     def index(String id) {

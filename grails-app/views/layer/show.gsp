@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>${layer.displayname}</title>
-    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink( controller: 'manageLayers', action: 'layers')}, Layers"/>
+    <meta name="breadcrumbs"
+          content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink(controller: 'layer', action: 'list')}, Layers"/>
     <meta name="layout" content="main"/>
 </head>
 
@@ -10,12 +11,24 @@
 <div class="container-fluid">
     <table class="table table-bordered">
         <tr>
+            <td>ID</td>
+            <td>${layer.id}</td>
+        </tr>
+        <tr>
             <td>Description</td>
             <td>${layer.description}</td>
         </tr>
         <tr>
+            <td>Name</td>
+            <td>${layer.displayname}</td>
+        </tr>
+        <tr>
             <td>Short name</td>
             <td>${layer.name}</td>
+        </tr>
+        <tr>
+            <td>Domain</td>
+            <td>${layer.domain}</td>
         </tr>
         <tr>
             <td>Date added</td>
@@ -56,13 +69,22 @@
                 <g:if test="${layer.type == 'Contextual'}">Contextual (polygon) ${layer.scale}</g:if>
             </td>
         </tr>
+        <g:if test="${layer.type == 'Environmental'}">
+            <tr>
+                <td>Environmental range</td>
+                <td>${layer.environmentalvaluemin} to ${layer.environmentalvaluemax} (${layer.environmentalvalueunits})</td>
+            </tr>
+        </g:if>
+
+        <tr>
+            <td>Extents</td>
+            <td>Longitude: ${layer.minlongitude} to ${layer.maxlongitude}<br/>
+                Latitude: ${layer.minlatitude} to ${layer.maxlatitude}</td>
+        </tr>
+
         <tr>
             <td>Classification</td>
             <td>${layer.classification1 + ' => ' + layer.classification2}</td>
-        </tr>
-        <tr>
-            <td>Units</td>
-            <td>${layer.environmentalvalueunits}</td>
         </tr>
         <tr>
             <td>Data language</td>
@@ -77,6 +99,10 @@
             <td>${layer.keywords}</td>
         </tr>
         <tr>
+            <td>Source</td>
+            <td>${layer.source_link}</td>
+        </tr>
+        <tr>
             <td>More information</td>
             <td>
                 <g:each var="u" in="${layer.metadatapath.split('\\|')}">
@@ -84,6 +110,13 @@
                 </g:each>
             </td>
         </tr>
+        <g:if test="${downloadAllowed}">
+            <tr>
+                <td>Download</td>
+                <td><a href="${grailsApplication.config.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname)}.zip">${layer.displayname}.zip</a>
+                </td>
+            </tr>
+        </g:if>
         <tr>
             <td>View in spatial portal</td>
             <td><a href="${grailsApplication.config.spatialHubUrl}?layers=${layer.name}">Click to view this layer</a></td>
