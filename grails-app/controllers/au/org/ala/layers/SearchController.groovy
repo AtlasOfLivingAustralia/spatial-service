@@ -16,6 +16,7 @@
 package au.org.ala.layers
 
 import grails.converters.JSON
+import org.apache.commons.lang3.StringUtils
 
 class SearchController {
 
@@ -29,6 +30,9 @@ class SearchController {
         def q = params.get('q', null)
         def limit = params.int('limit', 20)
 
+        def includeFieldIds = params.get('include', '');
+        def excludeFieldIds = params.get('exclude', '');
+
         if (q == null) {
             render status: 404, text: 'No search parameter q.'
         }
@@ -39,6 +43,23 @@ class SearchController {
             render status: 404, text: 'Failed to parse search parameter q'
         }
 
-        render searchDao.findByCriteria(q, limit) as JSON
+        // Results can differ greatly between the old and new search methods.
+        if (StringUtils.isEmpty(includeFieldIds) && StringUtils.isEmpty(excludeFieldIds)) {
+            render searchDao.findByCriteria(q, limit) as JSON
+        } else {
+            List<String> includeIds;
+            List<String> excludeIds;
+            if (StringUtils.isNotEmpty(includeFieldIds)) {
+                includeIds = Arrays.asList(includeFieldIds.split(","));
+            } else {
+                includeIds = new ArrayList();
+            }
+            if (StringUtils.isNotEmpty(excludeFieldIds)) {
+                excludeIds = Arrays.asList(excludeFieldIds.split(","));
+            } else {
+                excludeIds = new ArrayList();
+            }
+            render searchDao.findByCriteria(q, limit, (List<String>) includeIds, (List<String>) excludeIds) as JSON
+        }
     }
 }

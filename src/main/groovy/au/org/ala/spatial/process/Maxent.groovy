@@ -120,9 +120,9 @@ class Maxent extends SlaveProcess {
             }
 
             replaceMap.put("end of this page.<br>", "end of this page.<br><p>" + paramlist + "</p>")
-            replaceMap.put("This page contains some analysis of the Maxent model for", "This <a href='http://www.cs.princeton.edu/~schapire/maxent/'>Maxent</a> v3.3.3e predictive model for")
-            replaceMap.put(", created", " was created")
-            replaceMap.put(" using Maxent version 3.3.3e.", ".")
+            //replaceMap.put("This page contains some analysis of the Maxent model for", "This <a href='http://www.cs.princeton.edu/~schapire/maxent/'>Maxent</a> v3.3.3e predictive model for")
+            //replaceMap.put(", created", " was created")
+            //replaceMap.put(" using Maxent version 3.3.3e.", ".")
             replaceMap.put("If you would like to do further analyses, the raw data used here is linked to at the end of this page", "Links at the bottom of this page to the raw data may be used for further analysis")
             replaceMap.put(getTaskPath(), "")
 

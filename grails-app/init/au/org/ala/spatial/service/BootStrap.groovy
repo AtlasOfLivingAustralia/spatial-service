@@ -15,6 +15,7 @@ class BootStrap {
 
     def monitorService
     def slaveService
+    def slaveConnectService
     def grailsApplication
     def masterService
     def tasksService
@@ -23,8 +24,6 @@ class BootStrap {
     def groovySql
 
     def init = { servletContext ->
-
-        log.error("TEST")
 
         layersStoreConfig(grailsApplication.config)
 
@@ -59,6 +58,9 @@ class BootStrap {
         if (grailsApplication.config.slave.enable) {
             slaveService.monitor()
         }
+        if (grailsApplication.config.slave.socket.enable) {
+            slaveConnectService.start()
+        }
 
         //create database required by layers-store
         try {
@@ -91,6 +93,17 @@ class BootStrap {
             groovySql.execute('CREATE OR REPLACE FUNCTION azimuth (anyelement, anyelement) returns double precision language sql as $$ select st_azimuth($1, $2) $$')
         } catch (Exception e) {
             log.error("Error creating missing azimuth function frmo st_azimuth", e)
+        }
+
+        //create objects name idx if it is missing
+        try {
+            def rs = groovySql.executeQuery("SELECT * FROM pg_class WHERE relname = 'objects_name_idx';")
+            if (rs.isClosed() || rs.getRow() == 0) {
+                groovySql.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
+                groovySql.execute("CREATE INDEX objects_name_idx ON objects USING gin (name gin_trgm_ops) WHERE namesearch is true;")
+            }
+        } catch (Exception e) {
+            log.error("Error ", e)
         }
     }
 
