@@ -62,10 +62,10 @@ class PointsToGrid extends SlaveProcess {
         }
 
         double[] bbox = new double[4]
-        bbox[0] = area.bbox[0][0]
-        bbox[1] = area.bbox[0][1]
-        bbox[2] = area.bbox[0][2]
-        bbox[3] = area.bbox[0][3]
+        bbox[0] = -180
+        bbox[1] = -90
+        bbox[2] = 180
+        bbox[3] = 90
 
         // dump the species data to a file
         task.message = "getting species data"
