@@ -322,7 +322,7 @@
                         <label for="licence_level">Licence level</label></td><td>
                         <select class="form-control" id="licence_level" name="licence_level">
                             <option value="1"
-                                    <g:if test="${licence_level == 1}">selected</g:if>>permission to distribute, see Licence notes
+                                    <g:if test="${licence_level == 1}">selected</g:if>>Permission to distribute, see Licence notes
                             </option>
                             <option value="2"
                                     <g:if test="${licence_level == 2}">selected</g:if>>Varies, see Licence notes

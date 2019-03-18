@@ -74,7 +74,7 @@
     });
 
     function downloadCSV() {
-        var downloadurl = "${grailsApplication.config.grails.serverURL}/layers/csv";
+        var downloadurl = "${grailsApplication.config.grails.serverURL}/layers/layers.csv";
         location.href = downloadurl;
     }
 </script>
