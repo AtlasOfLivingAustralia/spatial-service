@@ -28,12 +28,11 @@ class AreaReport extends SlaveProcess {
 
         def area = JSON.parse(task.input.area.toString())
 
+        def allSpecies = [bs: grailsApplication.config.biocacheServiceUrl.toString(), q: ["*:*"]]
+        def speciesQuery = getSpeciesArea(allSpecies, task.input.area)
+
         //qid for this area
-        def q = "qid:" + Util.makeQid([
-                bs: grailsApplication.config.biocacheServiceUrl.toString(),
-                q : area[0].q,
-                fq: area[0].q.size() > 1 ? area[0].q.toList().subList(1, area[0].q.size()) : []
-        ])
+        def q = "qid:" + Util.makeQid(speciesQuery)
 
         //test for pid
         new AreaReportPDF(grailsApplication.config.geoserver.url.toString(),

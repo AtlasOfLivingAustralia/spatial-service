@@ -21,6 +21,7 @@ import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
+import org.apache.commons.lang3.StringUtils
 
 class TasksService {
 
@@ -380,7 +381,7 @@ class TasksService {
                         //TODO: update getObjectByPid to support envelope areas
                         if (i.containsKey("pid") && objectDao.getObjectByPid(i.pid) == null) {
                             errors.put(k, "Input parameter $k=${i.pid} has an invalid pid value.")
-                        } else if (i.containsKey("wkt") && SpatialUtil.calculateArea(i.wkt) <= 0 /* TODO: validateInput WKT */) {
+                        } else if (i.containsKey("wkt") && !StringUtils.isEmpty(i.wkt) && SpatialUtil.calculateArea(i.wkt) <= 0 /* TODO: validateInput WKT */) {
                             errors.put(k, "Input parameter $k has invalid WKT.")
                         } else {
                             //area size constraints
@@ -388,7 +389,7 @@ class TasksService {
                                 //calc area
                                 double areaKm = 0
                                 for (Object area : i) {
-                                    if (i.containsKey("pid")) {
+                                    if (i.containsKey("pid") && objectDao.getObjectByPid(i.pid) != null) {
                                         areaKm += objectDao.getObjectByPid(i.pid).getArea_km()
                                     } else if (i.containsKey("wkt")) {
                                         areaKm += SpatialUtil.calculateArea(i.wkt)
