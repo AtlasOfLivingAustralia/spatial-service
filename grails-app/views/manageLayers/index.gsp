@@ -3,9 +3,9 @@
 <head>
     <title></title>
     <meta name="layout" content="main"/>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
-
-<body>
+<body class="fluid">
 <ul class="breadcrumb">
     <li><g:link controller="main" action="index">Home</g:link></li>
     <br/>

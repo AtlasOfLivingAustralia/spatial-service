@@ -12,9 +12,8 @@ conversionRule 'wex', WhitespaceThrowableProxyConverter
 appender('STDOUT', ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
         charset = Charset.forName('UTF-8')
-
         pattern =
-                '%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} ' + // Date
+                '[SPATIAL-SERVICE] %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} ' + // Date
                         '%clr(%5p) ' + // Log level
                         '%clr(---){faint} %clr([%15.15t]){faint} ' + // Thread
                         '%clr(%-40.40logger{39}){cyan} %clr(:){faint} ' + // Logger
@@ -23,7 +22,7 @@ appender('STDOUT', ConsoleAppender) {
 }
 
 def targetDir = BuildSettings.TARGET_DIR
-if (Environment.isDevelopmentMode() && targetDir != null) {
+if (true || (Environment.isDevelopmentMode() && targetDir != null)) {
     appender("FULL_STACKTRACE", FileAppender) {
         file = "${targetDir}/stacktrace.log"
         append = true
@@ -35,4 +34,4 @@ if (Environment.isDevelopmentMode() && targetDir != null) {
     logger("au.org.ala.layers", DEBUG, ['STDOUT'], false)
     logger("au.org.ala.spatial", DEBUG, ['STDOUT'], false)
 }
-root(ERROR, ['STDOUT'])
+root(INFO, ['STDOUT'])

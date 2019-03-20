@@ -443,7 +443,9 @@ class ManageLayersService {
         if (map.containsKey("layer_id")) {
             Layer layer = layerDao.getLayerById(Integer.parseInt(map.layer_id), false)
 
-            map.putAll(layer.toMap())
+            if(layer) {
+                map.putAll(layer.toMap())
+            }
 
             List<Field> fieldList = fieldDao.getFields()
             def fields = []
@@ -606,13 +608,17 @@ class ManageLayersService {
 //                null,null,
 //                "text/plain");
 
-        //TODO: need a process to remove uploaded files (manually added to upload dir or not)
-//        File dir = new File(layersDir + "/uploads/" + id + "/");
-//        if (dir.exists()) {
-//            try {
-//                FileUtils.deleteDirectory(dir);
-//            } catch (Exception e) {}
-//        }
+        //Soft deletes
+        File dir = new File(layersDir + "/uploads/" + id + "/");
+        if (dir.exists()) {
+            try {
+                def deletedUploadsDir = new File(layersDir + "/uploads-deleted/")
+                FileUtils.forceMkdir(deletedUploadsDir)
+                FileUtils.moveDirectory(dir, new File(layersDir + "/uploads-deleted/" + id ));
+            } catch (Exception e) {
+                log.error("Problem moving directory. Unable to move", e.getMessage())
+            }
+        }
     }
 
     def deleteField(String fieldId) {
@@ -1330,8 +1336,6 @@ class ManageLayersService {
     def deleteDistribution(String id) {
 
         def m = getUpload(id)
-
-
 
         try {
             if (m.containsKey('data_resource_uid')) {

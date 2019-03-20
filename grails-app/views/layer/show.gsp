@@ -8,7 +8,10 @@
 </head>
 
 <body>
-<div class="container-fluid">
+
+<h1>Layer metadata: ${layer.name}</h1>
+
+<div class="containerXX">
     <table class="table table-bordered">
         <tr>
             <td>ID</td>
