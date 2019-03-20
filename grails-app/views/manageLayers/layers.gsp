@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Layers</title>
+    <title>Layer Administration</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
@@ -12,7 +12,7 @@
 <body class="fluid">
 
 <div class="col-lg-8">
-    <h1>Layers</h1>
+    <h1>Layer Administration</h1>
 </div>
 
 <div class="col-lg-4">
@@ -64,10 +64,17 @@
                                 id="${field.id}">${field.id}: ${field.name}</g:link>, type:${field.type}<br/>
                     </g:each>
                 </td>
-                <td><g:link controller="manageLayers" action="field" id="${item.id}">add field</g:link><br/>
+                <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default" id="${item.id}">
+                    <i class="glyphicon-plus"></i>
+                    add field
+                </g:link><br/>
                 </td>
-                <td><g:link controller="manageLayers" action="layer" id="${item.id}">edit</g:link></td>
-                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');">delete</a></td>
+                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"id="${item.id}">
+                    <i class="glyphicon-edit"></i>
+                    edit
+                    </g:link>
+                </td>
+                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');" class="btn btn-sm btn-danger">delete</a></td>
             </tr>
         </g:each>
         </tbody>
@@ -77,7 +84,7 @@
 <script>
     function confirmDelete(id, name) {
         if (confirm("Permanently delete layer " + name + "?")) {
-            var url = '${createLink(action: "delete", controller:"manageLayers")}/' + id
+            var url = '${createLink(action: "deleteLayer", controller:"manageLayers")}/' + id
             $(location).attr('href', url);
         }
     }

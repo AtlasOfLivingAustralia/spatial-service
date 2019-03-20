@@ -305,9 +305,9 @@ environments:
             logSql: false
             dbCreate: update
         grails:
-            serverURL: http://dev.ala.org.au:8080/spatial-service
+            serverURL: http://dev.ala.org.au:8080
             app:
-                context: /spatial-service
+                context: ''
 
     test:
         dataSource:

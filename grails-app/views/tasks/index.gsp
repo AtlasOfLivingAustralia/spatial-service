@@ -125,7 +125,7 @@
 
                 <td>${fieldValue(bean: taskInstance, field: "name")}</td>
 
-                <td>${fieldValue(bean: taskInstance, field: "tag")}</td>
+                <td>${fieldValue(bean: taskInstance, field: "tag") && fieldValue(bean: taskInstance, field: "tag") != 'null' ?  fieldValue(bean: taskInstance, field: "tag") : ''}</td>
 
                 <td><g:formatDate date="${taskInstance.created}"/></td>
 
@@ -133,8 +133,8 @@
 
                 <td>${fieldValue(bean: taskInstance, field: "history")}</td>
 
-                <td><g:link action="reRun" id="${taskInstance.id}" params="${params}">re-run task</g:link></td>
-                <td><g:link action="cancel" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
+                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link></td>
+                <td><g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
 
             </tr>
         </g:each>

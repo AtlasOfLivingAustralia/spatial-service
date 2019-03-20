@@ -107,7 +107,7 @@
 <script>
     function confirmDelete(id, name) {
         if (confirm("Permanently delete layer " + name + "?")) {
-            var url = "delete/" + id
+            var url = "deleteUpload/" + id
             $(location).attr('href', url);
         }
     }
