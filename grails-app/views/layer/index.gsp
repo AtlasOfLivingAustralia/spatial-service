@@ -9,19 +9,19 @@
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
     <style>
-        #layersTable { font-size: 11px; }
+    #layersTable { font-size: 11px; }
     </style>
 </head>
 <body class="fluid">
-    <div class="pull-right">
-        <button onclick="downloadCSV()" class="btn btn-sm btn-default">
-            <i class="glyphicon glyphicon-download-alt"></i> Download as CSV
-        </button>
-        <g:link controller="layer" action="index" class="btn btn-sm btn-default">
-            <i class="glyphicon glyphicon-"></i> JSON
-        </g:link>
-    </div>
-    <h1>Available Spatial Layers</h1>
+<div class="pull-right">
+    <button onclick="downloadCSV()" class="btn btn-sm btn-default">
+        <i class="glyphicon glyphicon-download-alt"></i> Download as CSV
+    </button>
+    <g:link controller="layer" action="index" class="btn btn-sm btn-default">
+        <i class="glyphicon glyphicon-"></i> JSON
+    </g:link>
+</div>
+<h1>Available Spatial Layers</h1>
     <table id="layersTable" name="layersTable" class="table table-bordered table-striped table-condensed">
         <thead>
         <tr>

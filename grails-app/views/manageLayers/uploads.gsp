@@ -48,9 +48,6 @@
 </g:if>
 
 <div class="container-fluid">
-
-
-
     <table class="table table-bordered" id="uploadTable">
         <thead>
         <tr>
@@ -134,11 +131,8 @@
 
         jQuery("div.dataTables_filter input").addClass("form-control");
         jQuery("div.dataTables_filter input").attr("placeholder", "Filter within results");
-
-
     });
 
 </script>
-</div>
 </body>
 </html>
