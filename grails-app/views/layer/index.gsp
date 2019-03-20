@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Layers</title>
+    <title>Available Spatial Layers</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
@@ -14,7 +14,7 @@
     </style>
 </head>
 <body class="fluid">
-    <h1>Layers</h1>
+    <h1>Available Spatial Layers</h1>
     <div style="float:right">
         <button onclick="downloadCSV()" class="btn btn-sm btn-default"><i class="glyphicon-download-alt"></i> download as CSV</button>
     </div>

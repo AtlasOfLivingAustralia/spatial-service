@@ -343,7 +343,25 @@ class ManageLayersController {
      * @param id
      * @return
      */
-    def delete(String id) {
+    def deleteUpload(String id) {
+        delete(id, "uploads")
+    }
+
+    /**
+     * delete field with fieldId, layer with layerId, distribution with data_resource_uid
+     * @param id
+     * @return
+     */
+    def deleteLayer(String id) {
+        delete(id, "layers")
+    }
+
+    /**
+     * delete field with fieldId, layer with layerId, distribution with data_resource_uid
+     * @param id
+     * @return
+     */
+    def delete(String id, String action) {
         login()
 
         if (fieldDao.getFieldById(id, false) == null) {
@@ -355,14 +373,15 @@ class ManageLayersController {
             } else {
                 manageLayersService.deleteChecklist(id)
             }
-            redirect(action: 'layers')
+            redirect(action: action)
         } else {
             def layerId = fieldDao.getFieldById(id, false).spid
             manageLayersService.deleteField(id)
 
-            redirect(action: 'layers', id: layerId)
+            redirect(action: action, id: layerId)
         }
     }
+
 
     /**
      * create/update (POST) or get (GET) field

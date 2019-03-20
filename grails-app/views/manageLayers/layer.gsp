@@ -18,6 +18,17 @@
 <div>
     <div class="col-lg-8">
         <h1>Edit Layer</h1>
+        <div>
+            <g:if test="${error != null}">
+                <b class="alert alert-danger">${error}</b>
+            </g:if>
+            <g:if test="${message != null}">
+                <b class="alert alert-success">${message}</b>
+            </g:if>
+
+            <g:if test="${layer_creation != null && !has_layer}"><h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
+                <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
+        </div>
     </div>
     <div class="col-lg-4">
         <div class="panel panel-default">
@@ -32,18 +43,6 @@
             </div>
         </div>
     </div>
-</div>
-
-<div class="col-lg-12">
-    <g:if test="${error != null}">
-        <b class="alert alert-danger">${error}</b>
-    </g:if>
-    <g:if test="${message != null}">
-        <b class="alert alert-success">${message}</b>
-    </g:if>
-
-    <g:if test="${layer_creation != null && !has_layer}"><h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
-        <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
 </div>
 
 <div class="row">
@@ -104,7 +103,7 @@
                 <script>
                     function confirmDelete(id, name) {
                         if (confirm("Permanently delete field " + name + "?")) {
-                            var url = '${createLink(action: "delete", controller:"manageLayers")}/' + id
+                            var url = '${createLink(action: "deleteLayer", controller:"manageLayers")}/' + id
                             $(location).attr('href', url);
                         }
                     }
@@ -134,34 +133,42 @@
 
                     <table class="table table-condensed">
 
-                        <tr><td class="col-md-2">
+                        <tr>
+                            <td class="col-md-4">
                             <label for="name"
                                    style="color:red">Name (lowercase, characters a-z, 0-9, _ only, as short as possible, used internally)
                             <g:if test="${layer_creation != null || has_layer}">[readonly because layer is created]</g:if>
-                            [cannot be changed after layer is created]:</label></td><td class="col-md-1">
+                            [cannot be changed after layer is created]:</label>
+                            </td><td class="col-md-8">
                             <input class="form-control" type="text" id="name" name="name" value="${name}"
                                    maxlength="150"
                                    <g:if test="${layer_creation != null || has_layer}">readonly="true"</g:if>/>
-                        </td></tr><tr><td>
-
-                        <label for="displayname">Display name:</label></td><td>
-                        <input class="form-control" type="text" id="displayname" name="displayname"
-                               value="${displayname}" maxlength="150"/>
-                    </td></tr>
-
-                        <tr><td>
-
-                            <label for="description">Description (A short description of this layer):</label></td><td>
-                            <textarea class="form-control" id="description" name="description" cols="150"
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="displayname">Display name:</label></td><td>
+                                <input class="form-control" type="text" id="displayname" name="displayname"
+                                   value="${displayname}" maxlength="150"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="description">Description (A short description of this layer):</label></td><td>
+                                <textarea class="form-control" id="description" name="description" cols="150"
                                       rows="10">${description}</textarea>
-                        </td></tr>
-                        <tr><td>
-
-                            <label for="requestedId">requestedId (optional):</label></td><td>
-                            <input type="text" class="form-control" id="requestedId" name="requestedId"
-                                   value="${requestedId}"
-                                   maxlength="15"/>
-                        </td></tr><tr><td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="requestedId">requestedId (optional):</label></td><td>
+                                <input type="text" class="form-control" id="requestedId" name="requestedId"
+                                       value="${requestedId}"
+                                       maxlength="15"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
 
                         <label for="type" style="color:red">Type
                         <g:if test="${layer_creation != null || has_layer}">[readonly because layer is created]</g:if>
@@ -352,15 +359,18 @@
 
                         <label for="notes">Notes (any other information about the layer):</label></td><td>
                         <textarea class="form-control" id="notes" name="notes" cols="150" rows="10">${notes}</textarea>
-                    </td></tr><tr><td>
+                    </td></tr>
+                        <tr><td>
 
                         <label for="enabled">Enabled (makes the layer available for use, disable to remove layers from use)</label>
                     </td><td>
                         <input class="form-control" type="checkbox" id="enabled" name="enabled"
                                <g:if test="${enabled}">checked</g:if>/>
 
-                    </td></tr><tr><td>
+                    </td></tr>
                     </table>
+
+
                     <input type="submit" class="btn btn-default"
                            value='${has_layer ? "Update Layer" : "Create Layer"}'/>
 
