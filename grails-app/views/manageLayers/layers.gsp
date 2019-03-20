@@ -7,9 +7,9 @@
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
-
-<body>
+<body class="fluid">
 
 <div class="col-lg-8">
     <h1>Layers</h1>
@@ -100,7 +100,7 @@
         });
 
         jQuery("div.dataTables_filter input").attr("placeholder", "Filter within results");
-
+        jQuery("div.dataTables_filter input").addClass("form-control");
 
     });
 

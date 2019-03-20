@@ -1,0 +1,2 @@
+body.fluid { max-width: none; width:auto; }
+body.fluid .container.container-navbar, body.fluid #breadcrumb .container, body.fluid footer .container { max-width: none; width:auto; }

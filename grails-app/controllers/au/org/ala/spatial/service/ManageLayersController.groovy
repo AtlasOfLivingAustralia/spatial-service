@@ -567,11 +567,21 @@ class ManageLayersController {
     }
 
     private def login() {
+
+        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()){
+            return
+        }
+
         if (serviceAuthService.isValid(params['api_key'])) {
+            log.info("API key is valid")
             return
         } else if (!authService.getUserId()) {
-            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                    grailsApplication.config.serverName + createLink(controller: 'manageLayers', action: 'index'))
+//            log.info("Unable to get userID - redirecting - should path be in CAS config ? " )
+//            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+//                    grailsApplication.config.grails.serverURL + createLink(controller: 'manageLayers', action: 'index'))
+
+            Map err = [error: 'not logged in']
+            render err as JSON
         } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
             Map err = [error: 'not authorised']
             render err as JSON

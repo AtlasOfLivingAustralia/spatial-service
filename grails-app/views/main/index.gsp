@@ -3,8 +3,9 @@
 <head>
     <meta name="layout" content="main"/>
     <title>Spatial Service</title>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
-<body>
+<body class="fluid">
 <h1>Spatial service</h1>
 <p>
     This is an administration interface for managing the layers available in the system.

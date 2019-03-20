@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Edit Layer</title>
+    <title>Edit Field</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink( controller: 'manageLayers', action: 'layers')}, Layers"/>
 
     <meta name="layout" content="main"/>
@@ -12,12 +12,14 @@
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <script src="${resource(dir: 'js', file: 'leaflet.js')}"></script>
     <script src="${resource(dir: 'js', file: 'BetterWMS.js')}"></script>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+<body class="fluid">
 
-<body>
 <div class="col-lg-8">
-    <h1>Edit Layer</h1>
+    <h1>Edit Field</h1>
 </div>
+
 <div class=" col-lg-4">
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -100,7 +102,10 @@
                                 </tr>
                             </g:each>
                             <tr><td colspan="5"><g:link controller="manageLayers" action="field"
-                                                        id="${raw_id}">Add new Field</g:link></td></tr>
+                                                        class="btn btn-sm btn-default"
+                                                        id="${raw_id}">
+                                <i class="glyphicon-plus"></i>
+                                Add new Field</g:link></td></tr>
                         </table>
                     </div>
 

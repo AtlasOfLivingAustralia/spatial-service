@@ -4,24 +4,19 @@
     <title>Layers</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
-
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
+    <style>
+        #layersTable { font-size: 11px; }
+
+    </style>
 </head>
-
-<body>
-<style>
-    #layersTable {
-        font-size: 11px;
-    }
-</style>
-
-<div class="container-fluid">
-
+<body class="fluid">
     <h1>Layers</h1>
     <div style="float:right">
-        <button onclick="downloadCSV()">download as CSV</button>
+        <button onclick="downloadCSV()" class="btn btn-sm btn-default"><i class="glyphicon-download-alt"></i> download as CSV</button>
     </div>
     <table id="layersTable" name="layersTable" class="table table-bordered table-striped table-condensed">
         <thead>
@@ -59,7 +54,6 @@
         </g:each>
         </tbody>
     </table>
-</div>
 <script>
     $(document).ready(function(){
         var imgs = $("img")

@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Manage Layers</title>
+    <title>Edit Layers</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
@@ -11,25 +11,25 @@
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <script src="${resource(dir: 'js', file: 'leaflet.js')}"></script>
     <script src="${resource(dir: 'js', file: 'BetterWMS.js')}"></script>
-
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+<body class="fluid">
 
-<body>
-
-<div class="col-lg-8">
-    <h1>Manage Layers</h1>
-</div>
-
-<div class="col-lg-4">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">Navigation</h4>
-        </div>
-        <div class="panel-body">
-            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+<div>
+    <div class="col-lg-8">
+        <h1>Edit Layer</h1>
+    </div>
+    <div class="col-lg-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">Navigation</h4>
+            </div>
+            <div class="panel-body">
+                <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+                <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+                <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+                <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+            </div>
         </div>
     </div>
 </div>
@@ -46,8 +46,9 @@
         <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
 </div>
 
-<div class="row-fluid">
-    <div role="tabpanel">
+<div class="row">
+    <div class="col-lg-12">
+        <div role="tabpanel">
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a href="#settings" aria-controls="settings" role="tab"
                                                       data-toggle="tab">Layer</a></li>
@@ -86,8 +87,8 @@
                                 <td><a onclick="return confirmDelete('${item.id}');">delete</a></td>
                             </tr>
                         </g:each>
-                        <tr><td colspan="5"><g:link controller="manageLayers" action="field"
-                                                    id="${id}">Add new Field</g:link></td></tr>
+                        <tr><td colspan="5"><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default"
+                                                    id="${id}"><i class="glyphicon-plus"></i> Add new Field</g:link></td></tr>
                     </table>
                 </div>
             </g:if>
@@ -393,6 +394,8 @@
             </div>
         </div>
     </div>
+    </div>
+</div>
 </body>
 </html>
 

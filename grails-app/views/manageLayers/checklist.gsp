@@ -1,11 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title></title>
+    <title>Checklist</title>
     <meta name="layout" content="main"/>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
-
-<body>
+<body class="fluid">
 <ul class="breadcrumb">
     <li><g:link controller="main" action="index">Home</g:link></li>
     <li><g:link controller="manageLayers" action="layers">Layers</g:link></li>

@@ -3,19 +3,17 @@
 <head>
     <title>Uploads</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
-
     <meta name="layout" content="main"/>
-
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+<body class="fluid">
 
-<body>
 <div class="col-lg-8">
     <h1>Uploads</h1>
 </div>
-
 <div class="col-lg-4">
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -59,7 +57,7 @@
             <th>Filename</th>
             <th>Layer Id</th>
             <th>Fields</th>
-            <th></th>
+            <th>Actions</th>
             <th></th>
         </tr>
         </thead>
@@ -76,30 +74,30 @@
                                 id="${field.id}">${field.id}</g:link>, type:${field.type}<br/>
                     </g:each>
                 </td>
-                <td><g:link controller="manageLayers" action="layer"
+                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"
                             id="${item.containsKey('layer_id') ? item.layer_id : item.raw_id}">
                     <g:if test="${!item.containsKey('layer_id')}">create layer</g:if>
                     <g:if test="${item.containsKey('layer_id')}">edit layer</g:if>
                 </g:link>
                     <g:if test="${!item.containsKey('layer_id')}">
                         <br/>
-                        <g:link controller="manageLayers" action="distribution"
+                        <g:link controller="manageLayers" action="distribution" class="btn btn-sm btn-default"
                                 id="${item.containsKey('data_resource_uid') ? item.data_resource_uid : item.raw_id}">
                             <g:if test="${!item.containsKey('data_resource_uid')}">import as expert distribution</g:if>
                         </g:link><g:if
                             test="${item.containsKey('data_resource_uid')}">Expert distribution exists: ${item.data_resource_uid}
-                        <g:link controller="manageLayers" action="delete"
+                        <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-danger"
                                 id="${item.raw_id}">delete distribution</g:link></g:if>
                         <br/>
-                        <g:link controller="manageLayers" action="checklist"
+                        <g:link controller="manageLayers" action="checklist" class="btn btn-sm btn-default"
                                 id="${item.containsKey('checklist') ? item.checklist : item.raw_id}">
                             <g:if test="${!item.containsKey('checklist')}">import as checklist</g:if>
                         </g:link><g:if
                             test="${item.containsKey('checklist')}">Checklist exists: ${item.checklist}
-                        <g:link controller="manageLayers" action="delete"
+                        <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-default btn-danger"
                                 id="${item.raw_id}">delete checklist</g:link></g:if>
                     </g:if></td>
-                <td><a onclick="return confirmDelete(${item.raw_id}, '${item.filename}');">delete</a></td>
+                <td><a onclick="return confirmDelete(${item.raw_id}, '${item.filename}');" class="btn btn-sm btn-danger">delete</a></td>
             </tr>
         </g:each>
         </tbody>
@@ -132,6 +130,7 @@
             }
         });
 
+        jQuery("div.dataTables_filter input").addClass("form-control");
         jQuery("div.dataTables_filter input").attr("placeholder", "Filter within results");
 
 
