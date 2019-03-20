@@ -331,7 +331,7 @@ class SlaveService {
         String shortpath = path.replace(grailsApplication.config.data.dir.toString(), '')
 
         if (spatialServiceUrl.equals(grailsApplication.config.grails.serverURL)) {
-            return fileService.info(shortpath.toString()) as JSON
+            return fileService.info(shortpath.toString())
         }
 
         List map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]]

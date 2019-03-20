@@ -21,6 +21,7 @@ import au.org.ala.layers.util.Bil2diva
 import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.GeomMakeValid
+import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -167,5 +168,7 @@ class LayerCreation extends SlaveProcess {
         if (!grailsApplication.config.service.enable) {
             FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
         }
+        addOutput("process", "Thumbnails " + ([] as JSON))
+
     }
 }

@@ -103,7 +103,9 @@ class BootStrap {
                 groovySql.execute("CREATE INDEX objects_name_idx ON objects USING gin (name gin_trgm_ops) WHERE namesearch is true;")
             }
         } catch (Exception e) {
-            log.error("Error ", e)
+            if (!e.getMessage().contains("already exists")) {
+                log.error("Error ", e)
+            }
         }
     }
 

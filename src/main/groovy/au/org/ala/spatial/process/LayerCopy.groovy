@@ -79,5 +79,6 @@ class LayerCopy extends SlaveProcess {
 
         def m = [fieldId: String.valueOf(field.id), uploadId: layer.id, skipSLDCreation: true]
         addOutput("process", "FieldCreation " + (m as JSON))
+        addOutput("process", "Thumbnails " + ([] as JSON))
     }
 }
