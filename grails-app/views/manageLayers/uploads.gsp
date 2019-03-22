@@ -13,6 +13,19 @@
 
 <div class="col-lg-8">
     <h1>Uploads</h1>
+
+    <p>Upload a new grid file (zipped bil, hdr with prj) or a new shape file (zipped shape file with prj)</p>
+    <g:form method="POST" enctype="multipart/form-data"
+            action="upload">
+        <div class="input-group">
+            <input class="form-control" type="file" name="file">
+            <span class="input-group-btn">
+                <input class="form-control btn-primary" type="submit" value="Upload">
+            </span>
+        </div>
+        <br/>
+        <br/>
+    </g:form>
 </div>
 <div class="col-lg-4">
         <div class="panel panel-default">
@@ -36,18 +49,7 @@
 
 <div class="container-fluid">
 
-    <p>Upload a new grid file (zipped bil, hdr with prj) or a new shape file (zipped shape file with prj)</p>
-    <g:form method="POST" enctype="multipart/form-data"
-            action="upload">
-        <div class="input-group">
-            <input class="form-control" type="file" name="file">
-            <span class="input-group-btn">
-                <input class="form-control btn-primary" type="submit" value="Upload">
-            </span>
-        </div>
-        <br/>
-        <br/>
-    </g:form>
+
 
     <table class="table table-bordered" id="uploadTable">
         <thead>
@@ -76,8 +78,8 @@
                 </td>
                 <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"
                             id="${item.containsKey('layer_id') ? item.layer_id : item.raw_id}">
-                    <g:if test="${!item.containsKey('layer_id')}">create layer</g:if>
-                    <g:if test="${item.containsKey('layer_id')}">edit layer</g:if>
+                    <g:if test="${!item.containsKey('layer_id')}"><i class="glyphicon glyphicon-plus"></i>create layer</g:if>
+                    <g:if test="${item.containsKey('layer_id')}"><i class="glyphicon glyphicon-edit"></i> edit layer</g:if>
                 </g:link>
                     <g:if test="${!item.containsKey('layer_id')}">
                         <br/>
@@ -87,7 +89,7 @@
                         </g:link><g:if
                             test="${item.containsKey('data_resource_uid')}">Expert distribution exists: ${item.data_resource_uid}
                         <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-danger"
-                                id="${item.raw_id}">delete distribution</g:link></g:if>
+                                id="${item.raw_id}"> <i class="glyphicon glyphicon-remove"></i> delete distribution</g:link></g:if>
                         <br/>
                         <g:link controller="manageLayers" action="checklist" class="btn btn-sm btn-default"
                                 id="${item.containsKey('checklist') ? item.checklist : item.raw_id}">
@@ -95,9 +97,9 @@
                         </g:link><g:if
                             test="${item.containsKey('checklist')}">Checklist exists: ${item.checklist}
                         <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-default btn-danger"
-                                id="${item.raw_id}">delete checklist</g:link></g:if>
+                                id="${item.raw_id}"> <i class="glyphicon glyphicon-remove"></i> delete checklist</g:link></g:if>
                     </g:if></td>
-                <td><a onclick="return confirmDelete(${item.raw_id}, '${item.filename}');" class="btn btn-sm btn-danger">delete</a></td>
+                <td><a onclick="return confirmDelete(${item.raw_id}, '${item.filename}');" class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-remove"></i> delete</a></td>
             </tr>
         </g:each>
         </tbody>

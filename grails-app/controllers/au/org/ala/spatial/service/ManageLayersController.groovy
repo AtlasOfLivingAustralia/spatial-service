@@ -302,6 +302,7 @@ class ManageLayersController {
             } else {
                 map.putAll manageLayersService.createOrUpdateLayer(request.JSON as Map, layerId)
             }
+            redirect( action: 'layers', params: map )
         }
 
         //show
@@ -610,11 +611,11 @@ class ManageLayersController {
 
     def enable() {
         if (params.id.isNumber()) {
-            Layer layer = layerDao.getLayerById(params.id.toInteger(), false)
+            def layer = layerDao.getLayerById(params.id.toInteger(), false)
             layer.enabled = true
             layerDao.updateLayer(layer)
         } else {
-            Field field = fieldDao.getFieldById(params.id, false)
+            def field = fieldDao.getFieldById(params.id, false)
             field.enabled = true
             fieldDao.updateField(field)
         }

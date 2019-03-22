@@ -14,9 +14,7 @@ appender('STDOUT', ConsoleAppender) {
         charset = Charset.forName('UTF-8')
         pattern =
                 '[SPATIAL-SERVICE] %clr(%d{HH:mm:ss.SSS}){faint} ' + // Date
-//                        '%clr(%5p) ' + // Log level
-//                        '%clr(---){faint} %clr([%15.15t]){faint} ' + // Thread
-                        '%clr(%-40.40logger{39}){cyan} %clr(:){faint} ' + // Logger
+                        '%clr(%-20.20logger{39}){cyan} %clr(:){faint} ' + // Logger
                         '%m%n%wex' // Message
     }
 }
