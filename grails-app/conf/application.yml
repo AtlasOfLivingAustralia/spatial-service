@@ -109,6 +109,8 @@ geoserver:
   username: ''
   password: ''
   canDeploy: true
+  spatialservice:
+    colocated: true
 # To use a remote geoserver instance, set geoserver.remote.geoserver_data_dir to the geoserver_data_dir path on the
 # remote server. This will cause layer files to be copied to geoserver_data_dir/data/
 #  remote:

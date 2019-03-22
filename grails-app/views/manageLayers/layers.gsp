@@ -65,16 +65,16 @@
                     </g:each>
                 </td>
                 <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default" id="${item.id}">
-                    <i class="glyphicon-plus"></i>
+                    <i class="glyphicon glyphicon-plus"></i>
                     add field
                 </g:link><br/>
                 </td>
                 <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"id="${item.id}">
-                    <i class="glyphicon-edit"></i>
+                    <i class="glyphicon glyphicon-edit"></i>
                     edit
                     </g:link>
                 </td>
-                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');" class="btn btn-sm btn-danger">delete</a></td>
+                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');" class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-remove"></i> delete</a></td>
             </tr>
         </g:each>
         </tbody>
