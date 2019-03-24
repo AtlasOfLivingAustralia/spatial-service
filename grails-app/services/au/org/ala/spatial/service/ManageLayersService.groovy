@@ -258,6 +258,7 @@ class ManageLayersService {
                 } else {
                     map.put("raw_id", name)
                     map.put("columns", columns)
+                    map.put("test_id", newName)
                     map.put("test_url",
                             grailsApplication.config.geoserver.url.toString() +
                                     "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + newName +
@@ -431,10 +432,9 @@ class ManageLayersService {
                 map.put("test_url",
                         grailsApplication.config.geoserver.url +
                                 "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
-
                                 "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
             } catch (Exception e2) {
-                //log.error("failed to find layer for rawId: " + layerId, e2);
+                log.error("failed to find layer for rawId: " + layerId, e2);
             }
 
         }

@@ -439,13 +439,13 @@ class PublishService {
                                 null, "file://" + shp.getPath())
                     } else {
 
-                        if (grailsApplication.config.geoserver.spatialservice.colocated) {
+                        if (grailsApplication.config.geoserver.spatialservice.colocated.toBoolean()) {
 
                             String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
                                     null, "file://" + shp.getPath())
                             if (!"201".equals(result[0])) {
                                 errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
-                                log.error 'failed to upload shp to geoserver: ' + shp.getPath()
+                                log.error 'Failed to upload shp to geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
                             }
 
                         } else {
@@ -457,14 +457,9 @@ class PublishService {
                                             uploadFile.getPath(), null, "application/octet-stream")
                                     if (!"201".equals(result[0])) {
                                         errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload file to geoserver: ' + uploadFile.getPath())
-                                        log.error 'failed to upload shp to geoserver: ' + shp.getPath()
+                                        log.error 'Failed to load shp into co-located geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
                                     }
                                 }
-                            }
-
-                            if (!"201".equals(result[0])) {
-                                errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
-                                log.error 'failed to upload shp to geoserver: ' + shp.getPath()
                             }
                         }
                     }
