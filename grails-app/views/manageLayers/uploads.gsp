@@ -78,7 +78,7 @@
                 </td>
                 <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"
                             id="${item.containsKey('layer_id') ? item.layer_id : item.raw_id}">
-                    <g:if test="${!item.containsKey('layer_id')}"><i class="glyphicon glyphicon-plus"></i>create layer</g:if>
+                    <g:if test="${!item.containsKey('layer_id')}"><i class="glyphicon glyphicon-plus"></i> create layer</g:if>
                     <g:if test="${item.containsKey('layer_id')}"><i class="glyphicon glyphicon-edit"></i> edit layer</g:if>
                 </g:link>
                     <g:if test="${!item.containsKey('layer_id')}">

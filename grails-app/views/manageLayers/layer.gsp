@@ -5,7 +5,6 @@
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'manage.css')}" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
@@ -68,13 +67,16 @@
             <g:if test="${has_layer}">
                 <div role="tabpanel" class="tab-pane" id="existingFields">
                     <table class="table table-condensed">
-                        <tr>
-                            <td>Id</td>
-                            <td>name</td>
-                            <td>description</td>
-                            <td>sid</td>
-                            <td>sname</td>
-                        </tr>
+                        <thead>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>sid</th>
+                            <th>sname</th>
+                            <th></th>
+                            <th></th>
+                        </thead>
+                        <tbody>
                         <g:each in="${fields}" var="item">
                             <tr>
                                 <td>${item.id}</td>
@@ -82,12 +84,26 @@
                                 <td>${item.desc}</td>
                                 <td>${item.sid}</td>
                                 <td>${item.sname}</td>
-                                <td><g:link controller="manageLayers" action="field" id="${item.id}">edit</g:link></td>
-                                <td><a onclick="return confirmDelete('${item.id}');">delete</a></td>
+                                <td><g:link controller="manageLayers" action="field" id="${item.id}">
+                                    <i class="glyphicon glyphicon-edit"></i>
+                                    edit
+                                </g:link>
+                                </td>
+                                <td><g:link controller="object" action="fieldObjects" id="${item.id}">
+                                    <i class="glyphicon glyphicon-list"></i>
+                                    list objects
+                                </g:link>
+                                </td>
+                                <td><a onclick="return confirmDelete('${item.id}');">
+                                    <i class="glyphicon glyphicon-remove"></i>
+                                    delete
+                                </a>
+                                </td>
                             </tr>
                         </g:each>
-                        <tr><td colspan="5"><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default"
+                        <tr><td colspan="7"><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default"
                                                     id="${id}"><i class="glyphicon-plus"></i> Add new Field</g:link></td></tr>
+                        </tbody>
                     </table>
                 </div>
             </g:if>
@@ -98,7 +114,7 @@
                     height: 500px;
                 }
                 </style>
-                Click on map to get values/columns.
+                <p>Click on map to get values/columns. (layer_id = ${layer_id}, raw_id = ${raw_id}, test_id = ${test_id})</p>
                 <div id="map"></div>
                 <script>
                     function confirmDelete(id, name) {
@@ -114,12 +130,27 @@
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     }).addTo(map);
 
-                    var wmsLayer = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {
-                        layers: '${name}',
+                    var wmsLayer2 = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {
+                        layers: '${test_id ? test_id : name}',
                         format: 'image/png',
                         version: '1.1.0',
                         transparent: true
                     }).addTo(map);
+
+                    // http://spatial.vagrant1.ala.org.au/geoserver/ALA/wms?SERVICE=WMS
+//                    var wmsLayer = L.tileLayer.betterWms("http://spatial.vagrant1.ala.org.au/geoserver/ALA/wms", {
+//                        layers: 'australian_states',
+//                        format: 'image/png',
+//                        version: '1.1.1',
+//                        transparent: true
+//                    }).addTo(map);
+
+//                    L.tileLayer.wms("http://spatial.vagrant1.ala.org.au/geoserver/ALA/wms", {
+//                        layers: 'ALA:1553275781012',
+//                        format: 'image/png',
+//                        version: '1.1.1',
+//                        transparent: true
+//                    }).addTo(map);
 
                     setTimeout(function () {
                         map.invalidateSize()
