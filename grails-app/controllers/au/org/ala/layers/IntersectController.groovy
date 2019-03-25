@@ -49,10 +49,7 @@ class IntersectController {
         String gridcache = params.containsKey('gridcache') ? params.gridcache : '0'
         try {
             if ("POST".equalsIgnoreCase(request.getMethod()) && !params.containsKey('fids') && !params.containsKey('points')) {
-                Scanner s = new Scanner(request.getInputStream(), "UTF-8").useDelimiter("\\A")
-                String body = s.hasNext() ? ++s : ""
-
-                for (String param : body.split("&")) {
+                for (String param : request.reader.text.split("&")) {
                     if (param.startsWith("fids=")) {
                         fids = param.substring(5)
                     } else if (param.startsWith("points=")) {
