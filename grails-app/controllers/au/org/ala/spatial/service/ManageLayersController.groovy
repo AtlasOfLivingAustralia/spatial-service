@@ -404,6 +404,7 @@ class ManageLayersController {
                 } else {
                     map.putAll manageLayersService.createOrUpdateField(request.JSON as Map, id)
                 }
+                redirect(action: 'layers')
             }
 
             map.putAll(manageLayersService.fieldMap(id))
@@ -419,7 +420,8 @@ class ManageLayersController {
                 }
 
                 //redirect to this newly created field
-                redirect(action: 'field', id: map.id)
+//                redirect(action: 'field', id: map.id)
+                redirect(action: 'layers')
 
             } else {
                 map.putAll(manageLayersService.fieldMapDefault(id))
