@@ -1,25 +1,31 @@
 {
   "queue": {
-    "group1": {
-      "total": 4
-    },
-    "group2": {
-      "minPriority": 50,
-      "total": 100,
+    "user": {
+      "total": 4,
       "pool": {
-        "LongProcess": 90,
-        "CalculatorProcess": 2
+        "admin": 1000
+      }
+    },
+    "adminLowPriority": {
+      "total": 4,
+      "pool": {
+        "user": 1000
+      }
+    },
+    "admin": {
+      "total": 4,
+      "pool": {
+        "user": 1000,
+        "LayerDistancesCreate": 1000,
+        "LayerDistancesCreateOne": 1000,
+        "DownloadRecords": 1000,
+        "JournalMapHarvest": 1000,
+        "StandardizeLayers": 1000,
+        "TabulationCounts": 1000,
+        "TabulationCountsCreate": 1000,
+        "TabulationCountsCreateOne": 1000,
+        "Thumbnails": 1000
       }
     }
-  },
-  "priority": {
-    "LayerCopy": 50,
-    "LayerDistancesCreate": 0,
-    "LayerDistancesCreateOne": 0,
-    "TabulationCounts": 0,
-    "TabulationCreate": 0,
-    "TabulationCreateOne": 0,
-    "StandardizeLayers": 0,
-    "DownloadRecords": 0
   }
 }
