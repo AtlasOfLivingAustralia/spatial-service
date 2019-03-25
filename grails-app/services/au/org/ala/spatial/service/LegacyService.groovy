@@ -38,7 +38,7 @@ class LegacyService {
     def layerDao
 
     def apply() {
-        if (!grailsApplication.config.legacy.enabled) return
+        if (!grailsApplication.config.legacy.enabled.toBoolean()) return
 
         //copy layer distances file
         File f1 = new File(grailsApplication.config.legacy.ALASPATIAL_OUTPUT_PATH + '/layerDistances.properties')

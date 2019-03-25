@@ -41,7 +41,7 @@ class IntersectController {
     def batch() {
         File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads)
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads.toInteger())
 
         //help get params when they don't pick up automatically from a POST
         String fids = params.containsKey('fids') ? params.fids : ''
@@ -73,8 +73,8 @@ class IntersectController {
             int pointsLimit, fieldsLimit
 
             String[] passwords = grailsApplication.config.batch_sampling_passwords.toString().split(',')
-            pointsLimit = Integer.parseInt(grailsApplication.config.batch_sampling_points_limit.toString())
-            fieldsLimit = Integer.parseInt(grailsApplication.config.batch_sampling_fields_limit.toString())
+            pointsLimit = grailsApplication.config.batch_sampling_points_limit.toInteger()
+            fieldsLimit = grailsApplication.config.batch_sampling_fields_limit.toInteger()
 
             String password = params.containsKey('pw') ? params.pw : null
             for (int i = 0; password != null && i < passwords.length; i++) {
@@ -121,7 +121,7 @@ class IntersectController {
     def batchStatus(String id) {
         File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads)
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads.toInteger())
 
         Map map = new HashMap()
         try {
@@ -141,7 +141,7 @@ class IntersectController {
 
         File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads)
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads.toInteger())
 
         OutputStream os = null
         BufferedInputStream bis = null

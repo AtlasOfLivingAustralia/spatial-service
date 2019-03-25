@@ -100,7 +100,7 @@ class SlaveService {
                        key         : grailsApplication.config.slaveKey]
             String json = jsonOutput.toJson(map)
 
-            if (grailsApplication.config.service.enable) {
+            if (grailsApplication.config.service.enable.toBoolean()) {
                 masterService.register(map)
                 return true
             } else {
@@ -145,7 +145,7 @@ class SlaveService {
         def error = ''
 
         try {
-            if (grailsApplication.config.service.enable) {
+            if (grailsApplication.config.service.enable.toBoolean()) {
                 def newValues = [:]
                 if (task?.message) newValues.put('message', task.message)
                 if (task?.history) newValues.put('history', task.history as Map)
@@ -185,7 +185,7 @@ class SlaveService {
     }
 
     def getResources(task) {
-        if (grailsApplication.config.service.enable) {
+        if (grailsApplication.config.service.enable.toBoolean()) {
             return true;
         }
 
@@ -363,7 +363,7 @@ class SlaveService {
             // POST the analysis bundle to spatial-service
             //do not post if master service is local
             MultipartRequestEntity requestEntity = null
-            if (!grailsApplication.config.service.enable) {
+            if (!grailsApplication.config.service.enable.toBoolean()) {
                 def f = new File(file)
 
                 Part[] parts = [new FilePart('file', f)]
@@ -395,7 +395,7 @@ class SlaveService {
     }
 
     def verifyMaster() {
-        if (grailsApplication.config.service.enable) {
+        if (grailsApplication.config.service.enable.toBoolean()) {
             return true
         }
 

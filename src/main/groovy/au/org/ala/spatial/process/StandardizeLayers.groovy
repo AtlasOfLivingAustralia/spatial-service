@@ -276,11 +276,12 @@ class StandardizeLayers extends SlaveProcess {
                     transaction.close()
                 }
             } catch (err) {
-                log.error 'failed building txt file; shapefile.id=layerdb.objects.id', err
+                log.error 'failed building txt file; shapefile.id=layerdb.objects.id, fid:' + fid + ", path:" + path, err
                 ret = false
             } finally {
                 if (fw != null) {
                     try {
+                        fw.flush()
                         fw.close()
                     } catch (err) {
                         ret = false
@@ -291,7 +292,7 @@ class StandardizeLayers extends SlaveProcess {
             }
         } catch (err) {
             ret = false
-            log.error 'failed building txt file; shapefile.id=layerdb.objects.id', err
+            log.error 'failed building txt file; shapefile.id=layerdb.objects.id, fid:' + fid + ", path:" + path, err
         }
 
         ret

@@ -53,6 +53,15 @@ class LayerCopy extends SlaveProcess {
         def resolutions
         if (layer.type == 'Contextual') resolutions = grailsApplication.config.shpResolutions
         else resolutions = grailsApplication.config.grdResolutions
+        if (!(resolutions instanceof List)) {
+            // comma separated or JSON list
+            if (resolutions.toString().startsWith("[")) {
+                resolutions = new org.json.simple.parser.JSONParser().parse(resolutions.toString())
+            } else {
+                resolutions = Arrays.asList(resolutions.toString().split(","))
+            }
+        }
+
         resolutions.each { res ->
             slaveService.getFile("/standard_layer/${res}/${field.id}", sourceUrl)
             addOutputFiles("/standard_layer/${res}/${field.id}")

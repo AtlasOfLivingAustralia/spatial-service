@@ -146,7 +146,7 @@ class PublishService {
     def addStyle(output, path) {
         def errors = [:]
         try {
-            if (grailsApplication.config.geoserver.canDeploy) {
+            if (grailsApplication.config.geoserver.canDeploy.toBoolean()) {
 
                 def geoserverUrl = grailsApplication.config.geoserver.url
                 def geoserverUsername = grailsApplication.config.geoserver.username
@@ -306,7 +306,7 @@ class PublishService {
 
     def layerToGeoserver(output, path) {
         def errors = [:]
-        if (grailsApplication.config.geoserver.canDeploy) {
+        if (grailsApplication.config.geoserver.canDeploy.toBoolean()) {
 
             def geoserverUrl = grailsApplication.config.geoserver.url
             def geoserverUsername = grailsApplication.config.geoserver.username

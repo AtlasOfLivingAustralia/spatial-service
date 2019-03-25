@@ -157,7 +157,7 @@ class DistributionCreation extends SlaveProcess {
         addOutput('sql', 'finish.sql')
 
         //delete from uploads dir if master service is remote
-        if (!grailsApplication.config.service.enable) {
+        if (!grailsApplication.config.service.enable.toBoolean()) {
             FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
         }
 

@@ -87,7 +87,7 @@ class TaskService {
         task.output.each { name, files ->
             files.each { file ->
                 //skip zipping when this is the master service and the file does not need to be moved
-                if (!grailsApplication.config.service.enable) {
+                if (!grailsApplication.config.service.enable.toBoolean()) {
                     //it is a task dir file if it does not start with '/'
                     def inputFile = file.startsWith('/') ? grailsApplication.config.data.dir + file : "${getBasePath(task)}${file}"
                     def flist = [:]
@@ -335,7 +335,7 @@ class TaskService {
             taskService.running.remove(request.id)
 
             //delete from public dir if master service is remote
-            if (!grailsApplication.config.service.enable) {
+            if (!grailsApplication.config.service.enable.toBoolean()) {
                 FileUtils.deleteDirectory(new File("${grailsApplication.config.data.dir.toString()}/public/${request.id}"))
             }
         }

@@ -165,7 +165,7 @@ class LayerCreation extends SlaveProcess {
         }
 
         //delete from uploads dir if master service is remote
-        if (!grailsApplication.config.service.enable) {
+        if (!grailsApplication.config.service.enable.toBoolean()) {
             FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
         }
         addOutput("process", "Thumbnails " + ([] as JSON))
