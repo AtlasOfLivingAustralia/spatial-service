@@ -130,5 +130,6 @@ class UrlMappings {
 
         "/"(controller: "main", action: "index")
         "500"(view: '/error')
+        "404"(view: '/blank')
     }
 }

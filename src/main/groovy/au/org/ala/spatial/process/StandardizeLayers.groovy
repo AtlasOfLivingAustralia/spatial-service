@@ -48,15 +48,22 @@ class StandardizeLayers extends SlaveProcess {
 
                     if ('c'.equals(f.type) && slaveService.peekFile('/layer/' + l.name + '.shp')[0].exists) {
 
-                        File shpFile = File.createTempFile(f.id.toString(), '')
-
-                        task.message = 'running: getting field ' + f.id
-                        boolean hasTxt = fieldToShapeFile(f.id.toString(), shpFile.getPath())
+                        boolean shpFileRetrieved = false
+                        boolean hasTxt = false
+                        def shpFile
 
                         shpResolutions.each { res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
                             if (!slaveService.peekFile(path)[0].exists) {
                                 task.message = 'running: making for field ' + f.id + ' and resolution ' + res
+
+                                if (!shpFileRetrieved) {
+                                    shpFile = File.createTempFile(f.id.toString(), '')
+
+                                    task.message = 'running: getting field ' + f.id
+                                    hasTxt = fieldToShapeFile(f.id.toString(), shpFile.getPath())
+                                    shpFileRetrieved = true
+                                }
 
                                 // standardized file is missing, make for this shapefile
                                 if (hasTxt && shp2Analysis(shpFile.getPath(),

@@ -290,11 +290,11 @@ class DistributionController {
 
         try {
             if (spcode != null) {
-                geomIdx = distributionDao.getDistributionBySpcode(spcode, Distribution.EXPERT_DISTRIBUTION, true).getGeom_idx()
+                geomIdx = distributionDao.getDistributionBySpcode(spcode, Distribution.EXPERT_DISTRIBUTION, true)?.getGeom_idx()
             } else if (lsid != null) {
-                geomIdx = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true).get(0).getGeom_idx()
+                geomIdx = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)?.get(0)?.getGeom_idx()
             } else if (scientificName != null) {
-                geomIdx = distributionDao.findDistributionByLSIDOrName(scientificName, Distribution.EXPERT_DISTRIBUTION).getGeom_idx()
+                geomIdx = distributionDao.findDistributionByLSIDOrName(scientificName, Distribution.EXPERT_DISTRIBUTION)?.getGeom_idx()
             }
         } catch (err) {
             log.error 'no distribution found:' + lsid + ',' + spcode + ',' + scientificName, err
