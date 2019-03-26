@@ -45,7 +45,10 @@ class Slave {
 
                 // is there a user or admin size?
                 if (tsize == null) {
-                    tsize = lim.pool.get(task.private.public ? "user" : "admin")
+                    def spec = capabilities.get(task.name)
+                    if (spec != null) {
+                        tsize = lim.pool.get(spec?.private?.public != false ? "user" : "admin")
+                    }
                 }
 
                 // use default size

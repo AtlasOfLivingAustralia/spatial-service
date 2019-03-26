@@ -34,11 +34,11 @@ class Maxent extends SlaveProcess {
         def contextualLayers = []
         layers.each { layer ->
             if (layer.endsWith('_aloc')) {
-                contextualLayers.add(l)
+                contextualLayers.add(layer)
             } else {
                 def l = getField(layer)
                 if (l != null && l.type == 'c') {
-                    contextualLayers.add(l)
+                    contextualLayers.add(l.name)
                 }
             }
         }
