@@ -58,9 +58,6 @@ class BootStrap {
         if (grailsApplication.config.slave.enable.toBoolean()) {
             slaveService.monitor()
         }
-        if (grailsApplication.config.slave.socket.enable.toBoolean()) {
-            slaveConnectService.start()
-        }
 
         //create database required by layers-store
         try {
