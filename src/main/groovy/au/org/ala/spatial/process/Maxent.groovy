@@ -38,7 +38,7 @@ class Maxent extends SlaveProcess {
             } else {
                 def l = getField(layer)
                 if (l != null && l.type == 'c') {
-                    contextualLayers.add(l.name)
+                    contextualLayers.add(l.id)
                 }
             }
         }
