@@ -202,8 +202,8 @@ class IntersectController {
         render map as JSON
     }
 
-    def pointRadius(String fid, Double lat, Double lng, Double radiusKm) {
-        render objectDao.getObjectsWithinRadius(fid, lat, lng, radiusKm) as JSON
+    def pointRadius(String fid, Double lat, Double lng, Double radius) {
+        render objectDao.getObjectsWithinRadius(fid, lat, lng, radius) as JSON
     }
 
     def wktGeometryIntersect(String fid) {
@@ -231,8 +231,8 @@ class IntersectController {
         render objectDao.getObjectsIntersectingWithObject(fid, pid) as JSON
     }
 
-    def poiPointRadiusIntersect(Double lat, Double lng, Double radiusKm) {
-        render objectDao.getPointsOfInterestWithinRadius(lat, lng, radiusKm) as JSON
+    def poiPointRadiusIntersect(Double lat, Double lng, Double radius) {
+        render objectDao.getPointsOfInterestWithinRadius(lat, lng, radius) as JSON
     }
 
     def wktPoiIntersectGet() {
