@@ -165,34 +165,37 @@ class ManageLayersController {
      */
     def upload() {
         login()
-
+        log.info("Receiving upload of zip file")
         String id = String.valueOf(System.currentTimeMillis())
 
         def file
         try {
             file = request.getFile('file')
-
+            log.info("Receiving upload of zip file: " + file)
             File uploadPath = new File((grailsApplication.config.data.dir + '/uploads/' + id) as String)
             File uploadFile = new File((grailsApplication.config.data.dir + '/uploads/' + id + '/id.zip') as String)
             uploadPath.mkdirs()
             file.transferTo(uploadFile)
 
+            log.info("Unzipping upload of zip file...")
             fileService.unzip(uploadFile.getPath(), uploadFile.getParent(), true)
+            log.info("Unzipped upload of zip file.")
 
             //delete uploaded zip now that it has been unzipped
             uploadFile.delete()
+            log.info("Deleting original zip. File moved to: " + grailsApplication.config.data.dir + '/uploads/' + id )
 
             def result = manageLayersService.processUpload(uploadFile.getParentFile(), id)
-
             if (result.error){
-                return redirect(action: 'uploads')
+                log.error("Problem processing upload. " + result.error)
+                return redirect(action: 'uploads', params: [error: result.error])
             }
         } catch (err) {
-            err.printStackTrace()
-            log.error 'upload failed', err
+            log.error 'upload failed - ' + err.getMessage(), err
+            return redirect(action: 'uploads', params: [error: err.getMessage() + " - see logs for details"])
         }
 
-        redirect action: 'layer', id: id
+        redirect(action: 'layer', id: id, params: [message: 'Upload successful'])
     }
 
     /**
