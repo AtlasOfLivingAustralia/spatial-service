@@ -45,7 +45,8 @@ class Slave {
 
                 // is there a user or admin size?
                 if (tsize == null) {
-                    tsize = lim.pool.get(task.private.public ? "user" : "admin")
+//                    tsize = lim.pool.get(task.private.public ? "user" : "admin")
+                    tsize = lim.pool.get( "admin")
                 }
 
                 // use default size
