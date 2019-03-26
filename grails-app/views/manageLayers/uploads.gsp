@@ -14,6 +14,17 @@
 <div class="col-lg-8">
     <h1>Uploads</h1>
 
+    <g:if test="${error || message}">
+        <div class="col-lg-12">
+            <g:if test="${error != null}">
+                <b class="alert alert-danger">${error}</b>
+            </g:if>
+            <g:if test="${message != null}">
+                <b class="alert alert-success">${message}</b>
+            </g:if>
+        </div>
+    </g:if>
+
     <p>Upload a new grid file (zipped bil, hdr with prj) or a new shape file (zipped shape file with prj)</p>
     <g:form method="POST" enctype="multipart/form-data"
             action="upload">
@@ -40,12 +51,6 @@
         </div>
     </div>
 </div>
-
-<g:if test="${error != null}">
-    <b class="error">${error}</b>
-    <br/>
-    <br/>
-</g:if>
 
 <div class="container-fluid">
     <table class="table table-bordered" id="uploadTable">
@@ -132,7 +137,6 @@
         jQuery("div.dataTables_filter input").addClass("form-control");
         jQuery("div.dataTables_filter input").attr("placeholder", "Filter within results");
     });
-
 </script>
 </body>
 </html>
