@@ -1,18 +1,18 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Layers</title>
+    <title>Layer Administration</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
-
-<body>
+<body class="fluid">
 
 <div class="col-lg-8">
-    <h1>Layers</h1>
+    <h1>Layer Administration</h1>
 </div>
 
 <div class="col-lg-4">
@@ -64,10 +64,17 @@
                                 id="${field.id}">${field.id}: ${field.name}</g:link>, type:${field.type}<br/>
                     </g:each>
                 </td>
-                <td><g:link controller="manageLayers" action="field" id="${item.id}">add field</g:link><br/>
+                <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default" id="${item.id}">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    add field
+                </g:link><br/>
                 </td>
-                <td><g:link controller="manageLayers" action="layer" id="${item.id}">edit</g:link></td>
-                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');">delete</a></td>
+                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"id="${item.id}">
+                    <i class="glyphicon glyphicon-edit"></i>
+                    edit
+                    </g:link>
+                </td>
+                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');" class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-remove"></i> delete</a></td>
             </tr>
         </g:each>
         </tbody>
@@ -77,7 +84,7 @@
 <script>
     function confirmDelete(id, name) {
         if (confirm("Permanently delete layer " + name + "?")) {
-            var url = '${createLink(action: "delete", controller:"manageLayers")}/' + id
+            var url = '${createLink(action: "deleteLayer", controller:"manageLayers")}/' + id
             $(location).attr('href', url);
         }
     }
@@ -100,7 +107,7 @@
         });
 
         jQuery("div.dataTables_filter input").attr("placeholder", "Filter within results");
-
+        jQuery("div.dataTables_filter input").addClass("form-control");
 
     });
 

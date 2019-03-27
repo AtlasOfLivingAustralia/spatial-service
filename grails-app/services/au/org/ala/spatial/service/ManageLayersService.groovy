@@ -258,6 +258,7 @@ class ManageLayersService {
                 } else {
                     map.put("raw_id", name)
                     map.put("columns", columns)
+                    map.put("test_id", newName)
                     map.put("test_url",
                             grailsApplication.config.geoserver.url.toString() +
                                     "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + newName +
@@ -431,10 +432,9 @@ class ManageLayersService {
                 map.put("test_url",
                         grailsApplication.config.geoserver.url +
                                 "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
-
                                 "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
             } catch (Exception e2) {
-                //log.error("failed to find layer for rawId: " + layerId, e2);
+                log.error("failed to find layer for rawId: " + layerId, e2);
             }
 
         }
@@ -443,7 +443,9 @@ class ManageLayersService {
         if (map.containsKey("layer_id")) {
             Layer layer = layerDao.getLayerById(Integer.parseInt(map.layer_id), false)
 
-            map.putAll(layer.toMap())
+            if(layer) {
+                map.putAll(layer.toMap())
+            }
 
             List<Field> fieldList = fieldDao.getFields()
             def fields = []
@@ -606,13 +608,17 @@ class ManageLayersService {
 //                null,null,
 //                "text/plain");
 
-        //TODO: need a process to remove uploaded files (manually added to upload dir or not)
-//        File dir = new File(layersDir + "/uploads/" + id + "/");
-//        if (dir.exists()) {
-//            try {
-//                FileUtils.deleteDirectory(dir);
-//            } catch (Exception e) {}
-//        }
+        //Soft deletes
+        File dir = new File(layersDir + "/uploads/" + id + "/");
+        if (dir.exists()) {
+            try {
+                def deletedUploadsDir = new File(layersDir + "/uploads-deleted/")
+                FileUtils.forceMkdir(deletedUploadsDir)
+                FileUtils.moveDirectory(dir, new File(layersDir + "/uploads-deleted/" + id ));
+            } catch (Exception e) {
+                log.error("Problem moving directory. Unable to move", e.getMessage())
+            }
+        }
     }
 
     def deleteField(String fieldId) {
@@ -1330,8 +1336,6 @@ class ManageLayersService {
     def deleteDistribution(String id) {
 
         def m = getUpload(id)
-
-
 
         try {
             if (m.containsKey('data_resource_uid')) {

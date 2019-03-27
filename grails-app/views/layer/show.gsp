@@ -8,8 +8,16 @@
 </head>
 
 <body>
-<div class="container-fluid">
-    <table class="table table-bordered">
+
+<h1>Layer metadata: ${layer.name}</h1>
+<p class="lead">Layer metadata for the layer${layer.name}</p>
+<div>
+    <table class="table table-bordered table-condensed">
+        <thead>
+            <th>Field</th>
+            <th>Value</th>
+        </thead>
+        <tbody>
         <tr>
             <td>ID</td>
             <td>${layer.id}</td>
@@ -84,7 +92,11 @@
 
         <tr>
             <td>Classification</td>
-            <td>${layer.classification1 + ' => ' + layer.classification2}</td>
+            <td>
+                <g:if test="${layer.classification1 || layer.classification2}">
+                ${layer.classification1 + ' => ' + layer.classification2}
+                </g:if>
+            </td>
         </tr>
         <tr>
             <td>Data language</td>
@@ -121,6 +133,7 @@
             <td>View in spatial portal</td>
             <td><a href="${grailsApplication.config.spatialHubUrl}?layers=${layer.name}">Click to view this layer</a></td>
         </tr>
+        </tbody>
     </table>
 </div>
 </body>

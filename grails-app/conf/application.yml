@@ -95,6 +95,9 @@ grails:
 endpoints:
     jmx:
         unique-names: true
+
+skin:
+  fluidLayout: true
 ---
 #
 # au.org.ala.spatial.service config
@@ -106,6 +109,8 @@ geoserver:
   username: ''
   password: ''
   canDeploy: true
+  spatialservice:
+    colocated: true
 # To use a remote geoserver instance, set geoserver.remote.geoserver_data_dir to the geoserver_data_dir path on the
 # remote server. This will cause layer files to be copied to geoserver_data_dir/data/
 #  remote:
@@ -139,7 +144,7 @@ batch_sampling_fields_limit: 1000
 #
 # au.org.ala.spatial.slave config
 #
-spatialService.url: "http://localhost:8080"
+spatialService.url: "http://dev.ala.org.au:8080/spatial-service"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"
@@ -222,7 +227,11 @@ legacy.ALASPATIAL_OUTPUT_PATH: '/data/ala/runtime/output'
 
 grails.plugin.elfinder.rootDir: '/data/spatial-service'
 
-i18n.override.dir: '/data/spatial-service/config/i81n/'
+i18n.override.dir: '/data/spatial-service/config/i18n/'
+
+
+skin.orgNameLong: 'Atlas of Living Australia'
+skin.orgNameShort: 'ALA'
 
 
 #layers-store config
@@ -298,7 +307,9 @@ environments:
             logSql: false
             dbCreate: update
         grails:
-            serverURL: http://localhost:8080
+            serverURL: http://dev.ala.org.au:8080
+            app:
+                context: ''
 
     test:
         dataSource:

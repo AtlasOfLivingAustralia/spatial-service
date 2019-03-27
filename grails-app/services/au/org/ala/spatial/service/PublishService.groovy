@@ -293,6 +293,14 @@ class PublishService {
                 file, resource, "text/plain")
     }
 
+    def callGeoserver(String type, String urlPath, String file, String resource, String contentType) {
+        return manageLayersService.httpCall(type,
+                grailsApplication.config.geoserver.url + urlPath,
+                grailsApplication.config.geoserver.username,
+                grailsApplication.config.geoserver.password,
+                file, resource, contentType)
+    }
+
     def callGeoserverDelete(String urlPath) {
         def getResponse = callGeoserver("GET", urlPath, null, null)
 
@@ -430,12 +438,29 @@ class PublishService {
                         callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
                                 null, "file://" + shp.getPath())
                     } else {
-                        String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
-                                null, "file://" + shp.getPath())
 
-                        if (!"201".equals(result[0])) {
-                            errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
-                            log.error 'failed to upload shp to geoserver: ' + shp.getPath()
+                        if (grailsApplication.config.geoserver.spatialservice.colocated.toBoolean()) {
+
+                            String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
+                                    null, "file://" + shp.getPath())
+                            if (!"201".equals(result[0])) {
+                                errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
+                                log.error 'Failed to upload shp to geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
+                            }
+
+                        } else {
+                            for (String filetype : ["shp", "prj", "shx", "dbf", "fix", "sbn", "sbx", "fbn", "fbx", "qix", "cpg", "shp.xml", "atx", "mxs", "ixs", "ain", "aih"]) {
+                                // upload the file
+                                File uploadFile = new File(shp.getPath().replace(".shp", "." + filetype))
+                                if (uploadFile.exists()) {
+                                    String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/file.shp",
+                                            uploadFile.getPath(), null, "application/octet-stream")
+                                    if (!"201".equals(result[0])) {
+                                        errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload file to geoserver: ' + uploadFile.getPath())
+                                        log.error 'Failed to load shp into co-located geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
+                                    }
+                                }
+                            }
                         }
                     }
 

@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Edit Layer</title>
+    <title>Edit Field</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink( controller: 'manageLayers', action: 'layers')}, Layers"/>
 
     <meta name="layout" content="main"/>
@@ -12,12 +12,26 @@
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <script src="${resource(dir: 'js', file: 'leaflet.js')}"></script>
     <script src="${resource(dir: 'js', file: 'BetterWMS.js')}"></script>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+<body class="fluid">
 
-<body>
 <div class="col-lg-8">
-    <h1>Edit Layer</h1>
+    <h1>Edit Field ${item && item.id ? ' : ' + item.id : ''}</h1>
+    <div class="col-lg-12">
+        <g:if test="${error != null}">
+            <b class="alert alert-danger">${error}</b>
+        </g:if>
+        <g:if test="${message != null}">
+            <b class="alert alert-success">${message}</b>
+        </g:if>
+        <g:if test="${layer_creation != null && !has_layer}">
+            <h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
+            <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/>
+        </g:if>
+    </div>
 </div>
+
 <div class=" col-lg-4">
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -30,18 +44,6 @@
             <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
         </div>
     </div>
-</div>
-
-<div class="col-lg-12">
-    <g:if test="${error != null}">
-        <b class="alert alert-danger">${error}</b>
-    </g:if>
-    <g:if test="${message != null}">
-        <b class="alert alert-success">${message}</b>
-    </g:if>
-
-    <g:if test="${layer_creation != null && !has_layer}"><h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
-        <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
 </div>
 
 <div class="row-fluid">
@@ -80,13 +82,16 @@
                     <div role="tabpanel" class="tab-pane" id="existingFields">
 
                         <table class="table table-condensed">
-                            <tr>
-                                <td>Id</td>
-                                <td>name</td>
-                                <td>description</td>
-                                <td>sid</td>
-                                <td>sname</td>
-                            </tr>
+                            <thead>
+                                <th>Id</th>
+                                <th>name</th>
+                                <th>description</th>
+                                <th>sid</th>
+                                <th>sname</th>
+                                <th></th>
+                                <th></th>
+                            </thead>
+                            <tbody>
                             <g:each in="${fields}" var="item">
                                 <tr>
                                     <td>${item.id}</td>
@@ -94,13 +99,31 @@
                                     <td>${item.desc}</td>
                                     <td>${item.sid}</td>
                                     <td>${item.sname}</td>
-                                    <td><g:link controller="manageLayers" action="field"
-                                                id="${item.id}">edit</g:link></td>
-                                    <td><a onclick="return confirmDelete('${item.id}');">delete</a></td>
+                                    <td>
+                                        <g:link controller="manageLayers" action="field"
+                                                class="btn btn-sm btn-default"
+                                                id="${item.id}">
+                                            <i class="glyphicon glyphicon-edit"></i>
+                                            edit</g:link>
+                                    </td>
+                                    <td>
+                                        <a onclick="return confirmDelete('${item.id}');"
+                                           class="btn btn-sm btn-default">
+                                            <i class="glyphicon glyphicon-remove"></i>
+                                            delete
+                                        </a>
+                                    </td>
                                 </tr>
                             </g:each>
-                            <tr><td colspan="5"><g:link controller="manageLayers" action="field"
-                                                        id="${raw_id}">Add new Field</g:link></td></tr>
+                                <tr>
+                                    <td colspan="7"><g:link controller="manageLayers" action="field"
+                                                            class="btn btn-sm btn-default"
+                                                            id="${raw_id}">
+                                     <i class="glyphicon-plus"></i>
+                                        Add new Field</g:link>
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
 

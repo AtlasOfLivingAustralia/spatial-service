@@ -62,21 +62,21 @@ class LayerController {
                 is = new BufferedInputStream(new FileInputStream(f))
                 IOUtils.copy(is, os)
                 os.flush()
-            } catch (err) {
+            } catch (Exception err) {
                 log.debug 'failed to write layer image : ' + id, err
             } finally {
                 if (os != null) {
                     try {
                         os.close()
-                    } catch (err) {
-                        log.trace(err.getMessage(), err)
+                    } catch (Exception err1) {
+                        log.trace(err1.getMessage(), err1)
                     }
                 }
                 if (is != null) {
                     try {
                         is.close()
-                    } catch (err) {
-                        log.trace(err.getMessage(), err)
+                    } catch (Exception err2) {
+                        log.trace(err2.getMessage(), err2)
                     }
                 }
             }

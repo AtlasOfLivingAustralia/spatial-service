@@ -1,53 +1,52 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Manage Layers</title>
+    <title>Edit Layers</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'manage.css')}" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <script src="${resource(dir: 'js', file: 'leaflet.js')}"></script>
     <script src="${resource(dir: 'js', file: 'BetterWMS.js')}"></script>
-
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+<body class="fluid">
 
-<body>
+<div>
+    <div class="col-lg-8">
+        <h1>Edit Layer</h1>
+        <div>
+            <g:if test="${error != null}">
+                <b class="alert alert-danger">${error}</b>
+            </g:if>
+            <g:if test="${message != null}">
+                <b class="alert alert-success">${message}</b>
+            </g:if>
 
-<div class="col-lg-8">
-    <h1>Manage Layers</h1>
-</div>
-
-<div class="col-lg-4">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">Navigation</h4>
+            <g:if test="${layer_creation != null && !has_layer}"><h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
+                <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
         </div>
-        <div class="panel-body">
-            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    </div>
+    <div class="col-lg-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">Navigation</h4>
+            </div>
+            <div class="panel-body">
+                <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+                <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+                <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+                <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="col-lg-12">
-    <g:if test="${error != null}">
-        <b class="alert alert-danger">${error}</b>
-    </g:if>
-    <g:if test="${message != null}">
-        <b class="alert alert-success">${message}</b>
-    </g:if>
-
-    <g:if test="${layer_creation != null && !has_layer}"><h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
-        <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
-</div>
-
-<div class="row-fluid">
-    <div role="tabpanel">
+<div class="row">
+    <div class="col-lg-12">
+        <div role="tabpanel">
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a href="#settings" aria-controls="settings" role="tab"
                                                       data-toggle="tab">Layer</a></li>
@@ -68,13 +67,16 @@
             <g:if test="${has_layer}">
                 <div role="tabpanel" class="tab-pane" id="existingFields">
                     <table class="table table-condensed">
-                        <tr>
-                            <td>Id</td>
-                            <td>name</td>
-                            <td>description</td>
-                            <td>sid</td>
-                            <td>sname</td>
-                        </tr>
+                        <thead>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>sid</th>
+                            <th>sname</th>
+                            <th></th>
+                            <th></th>
+                        </thead>
+                        <tbody>
                         <g:each in="${fields}" var="item">
                             <tr>
                                 <td>${item.id}</td>
@@ -82,12 +84,26 @@
                                 <td>${item.desc}</td>
                                 <td>${item.sid}</td>
                                 <td>${item.sname}</td>
-                                <td><g:link controller="manageLayers" action="field" id="${item.id}">edit</g:link></td>
-                                <td><a onclick="return confirmDelete('${item.id}');">delete</a></td>
+                                <td><g:link controller="manageLayers" action="field" id="${item.id}">
+                                    <i class="glyphicon glyphicon-edit"></i>
+                                    edit
+                                </g:link>
+                                </td>
+                                <td><g:link controller="object" action="fieldObjects" id="${item.id}">
+                                    <i class="glyphicon glyphicon-list"></i>
+                                    list objects
+                                </g:link>
+                                </td>
+                                <td><a onclick="return confirmDelete('${item.id}');">
+                                    <i class="glyphicon glyphicon-remove"></i>
+                                    delete
+                                </a>
+                                </td>
                             </tr>
                         </g:each>
-                        <tr><td colspan="5"><g:link controller="manageLayers" action="field"
-                                                    id="${id}">Add new Field</g:link></td></tr>
+                        <tr><td colspan="7"><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default"
+                                                    id="${id}"><i class="glyphicon-plus"></i> Add new Field</g:link></td></tr>
+                        </tbody>
                     </table>
                 </div>
             </g:if>
@@ -98,12 +114,12 @@
                     height: 500px;
                 }
                 </style>
-                Click on map to get values/columns.
+                <p>Click on map to get values/columns. (layer_id = ${layer_id}, raw_id = ${raw_id}, test_id = ${test_id})</p>
                 <div id="map"></div>
                 <script>
                     function confirmDelete(id, name) {
                         if (confirm("Permanently delete field " + name + "?")) {
-                            var url = '${createLink(action: "delete", controller:"manageLayers")}/' + id
+                            var url = '${createLink(action: "deleteLayer", controller:"manageLayers")}/' + id
                             $(location).attr('href', url);
                         }
                     }
@@ -114,12 +130,27 @@
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     }).addTo(map);
 
-                    var wmsLayer = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {
-                        layers: '${name}',
+                    var wmsLayer2 = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {
+                        layers: '${test_id ? test_id : name}',
                         format: 'image/png',
                         version: '1.1.0',
                         transparent: true
                     }).addTo(map);
+
+                    // http://spatial.vagrant1.ala.org.au/geoserver/ALA/wms?SERVICE=WMS
+//                    var wmsLayer = L.tileLayer.betterWms("http://spatial.vagrant1.ala.org.au/geoserver/ALA/wms", {
+//                        layers: 'australian_states',
+//                        format: 'image/png',
+//                        version: '1.1.1',
+//                        transparent: true
+//                    }).addTo(map);
+
+//                    L.tileLayer.wms("http://spatial.vagrant1.ala.org.au/geoserver/ALA/wms", {
+//                        layers: 'ALA:1553275781012',
+//                        format: 'image/png',
+//                        version: '1.1.1',
+//                        transparent: true
+//                    }).addTo(map);
 
                     setTimeout(function () {
                         map.invalidateSize()
@@ -133,34 +164,42 @@
 
                     <table class="table table-condensed">
 
-                        <tr><td class="col-md-2">
+                        <tr>
+                            <td class="col-md-4">
                             <label for="name"
                                    style="color:red">Name (lowercase, characters a-z, 0-9, _ only, as short as possible, used internally)
                             <g:if test="${layer_creation != null || has_layer}">[readonly because layer is created]</g:if>
-                            [cannot be changed after layer is created]:</label></td><td class="col-md-1">
+                            [cannot be changed after layer is created]:</label>
+                            </td><td class="col-md-8">
                             <input class="form-control" type="text" id="name" name="name" value="${name}"
                                    maxlength="150"
                                    <g:if test="${layer_creation != null || has_layer}">readonly="true"</g:if>/>
-                        </td></tr><tr><td>
-
-                        <label for="displayname">Display name:</label></td><td>
-                        <input class="form-control" type="text" id="displayname" name="displayname"
-                               value="${displayname}" maxlength="150"/>
-                    </td></tr>
-
-                        <tr><td>
-
-                            <label for="description">Description (A short description of this layer):</label></td><td>
-                            <textarea class="form-control" id="description" name="description" cols="150"
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="displayname">Display name:</label></td><td>
+                                <input class="form-control" type="text" id="displayname" name="displayname"
+                                   value="${displayname}" maxlength="150"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="description">Description (A short description of this layer):</label></td><td>
+                                <textarea class="form-control" id="description" name="description" cols="150"
                                       rows="10">${description}</textarea>
-                        </td></tr>
-                        <tr><td>
-
-                            <label for="requestedId">requestedId (optional):</label></td><td>
-                            <input type="text" class="form-control" id="requestedId" name="requestedId"
-                                   value="${requestedId}"
-                                   maxlength="15"/>
-                        </td></tr><tr><td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="requestedId">requestedId (optional):</label></td><td>
+                                <input type="text" class="form-control" id="requestedId" name="requestedId"
+                                       value="${requestedId}"
+                                       maxlength="15"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
 
                         <label for="type" style="color:red">Type
                         <g:if test="${layer_creation != null || has_layer}">[readonly because layer is created]</g:if>
@@ -351,15 +390,18 @@
 
                         <label for="notes">Notes (any other information about the layer):</label></td><td>
                         <textarea class="form-control" id="notes" name="notes" cols="150" rows="10">${notes}</textarea>
-                    </td></tr><tr><td>
+                    </td></tr>
+                        <tr><td>
 
                         <label for="enabled">Enabled (makes the layer available for use, disable to remove layers from use)</label>
                     </td><td>
                         <input class="form-control" type="checkbox" id="enabled" name="enabled"
                                <g:if test="${enabled}">checked</g:if>/>
 
-                    </td></tr><tr><td>
+                    </td></tr>
                     </table>
+
+
                     <input type="submit" class="btn btn-default"
                            value='${has_layer ? "Update Layer" : "Create Layer"}'/>
 
@@ -393,6 +435,8 @@
             </div>
         </div>
     </div>
+    </div>
+</div>
 </body>
 </html>
 

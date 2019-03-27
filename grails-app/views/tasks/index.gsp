@@ -9,9 +9,9 @@
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
-
-<body>
+<body class="fluid">
 <script type="text/javascript">
     $(document).ready(function () {
         // make table header cells clickable
@@ -125,7 +125,7 @@
 
                 <td>${fieldValue(bean: taskInstance, field: "name")}</td>
 
-                <td>${fieldValue(bean: taskInstance, field: "tag")}</td>
+                <td>${fieldValue(bean: taskInstance, field: "tag") && fieldValue(bean: taskInstance, field: "tag") != 'null' ?  fieldValue(bean: taskInstance, field: "tag") : ''}</td>
 
                 <td><g:formatDate date="${taskInstance.created}"/></td>
 
@@ -133,8 +133,8 @@
 
                 <td>${fieldValue(bean: taskInstance, field: "history")}</td>
 
-                <td><g:link action="reRun" id="${taskInstance.id}" params="${params}">re-run task</g:link></td>
-                <td><g:link action="cancel" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
+                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link></td>
+                <td><g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
 
             </tr>
         </g:each>

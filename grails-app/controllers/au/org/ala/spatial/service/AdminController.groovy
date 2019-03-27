@@ -23,6 +23,10 @@ class AdminController {
     def authService
     def serviceAuthService
 
+    def index(){
+
+    }
+
     /**
      * get collated capabilities specs from all registered slaves
      * @return
@@ -81,14 +85,25 @@ class AdminController {
     }
 
     private login(service) {
+
+        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {
+            return
+        }
+
         if (!serviceAuthService.isValid(params['api_key'])) {
-            if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
-                redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                        grailsApplication.config.serverName + createLink(controller: 'admin', action: service))
-            } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
-                Map err = [error: 'not authorised']
-                render err as JSON
-            }
+            return
+        }
+
+        if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
+//                redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+//                        grailsApplication.config.serverName + createLink(controller: 'admin', action: service))
+
+            Map err = [error: 'not logged in']
+            render err as JSON
+
+        } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
+            Map err = [error: 'not authorised']
+            render err as JSON
         }
     }
 }

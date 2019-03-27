@@ -165,34 +165,37 @@ class ManageLayersController {
      */
     def upload() {
         login()
-
+        log.info("Receiving upload of zip file")
         String id = String.valueOf(System.currentTimeMillis())
 
         def file
         try {
             file = request.getFile('file')
-
+            log.info("Receiving upload of zip file: " + file)
             File uploadPath = new File((grailsApplication.config.data.dir + '/uploads/' + id) as String)
             File uploadFile = new File((grailsApplication.config.data.dir + '/uploads/' + id + '/id.zip') as String)
             uploadPath.mkdirs()
             file.transferTo(uploadFile)
 
+            log.info("Unzipping upload of zip file...")
             fileService.unzip(uploadFile.getPath(), uploadFile.getParent(), true)
+            log.info("Unzipped upload of zip file.")
 
             //delete uploaded zip now that it has been unzipped
             uploadFile.delete()
+            log.info("Deleting original zip. File moved to: " + grailsApplication.config.data.dir + '/uploads/' + id )
 
             def result = manageLayersService.processUpload(uploadFile.getParentFile(), id)
-
             if (result.error){
-                return redirect(action: 'uploads')
+                log.error("Problem processing upload. " + result.error)
+                return redirect(action: 'uploads', params: [error: result.error])
             }
         } catch (err) {
-            err.printStackTrace()
-            log.error 'upload failed', err
+            log.error 'upload failed - ' + err.getMessage(), err
+            return redirect(action: 'uploads', params: [error: err.getMessage() + " - see logs for details"])
         }
 
-        redirect action: 'layer', id: id
+        redirect(action: 'layer', id: id, params: [message: 'Upload successful'])
     }
 
     /**
@@ -302,6 +305,7 @@ class ManageLayersController {
             } else {
                 map.putAll manageLayersService.createOrUpdateLayer(request.JSON as Map, layerId)
             }
+            redirect( action: 'layers', params: map )
         }
 
         //show
@@ -343,7 +347,25 @@ class ManageLayersController {
      * @param id
      * @return
      */
-    def delete(String id) {
+    def deleteUpload(String id) {
+        delete(id, "uploads")
+    }
+
+    /**
+     * delete field with fieldId, layer with layerId, distribution with data_resource_uid
+     * @param id
+     * @return
+     */
+    def deleteLayer(String id) {
+        delete(id, "layers")
+    }
+
+    /**
+     * delete field with fieldId, layer with layerId, distribution with data_resource_uid
+     * @param id
+     * @return
+     */
+    def delete(String id, String action) {
         login()
 
         if (fieldDao.getFieldById(id, false) == null) {
@@ -355,14 +377,15 @@ class ManageLayersController {
             } else {
                 manageLayersService.deleteChecklist(id)
             }
-            redirect(action: 'layers')
+            redirect(action: action)
         } else {
             def layerId = fieldDao.getFieldById(id, false).spid
             manageLayersService.deleteField(id)
 
-            redirect(action: 'layers', id: layerId)
+            redirect(action: action, id: layerId)
         }
     }
+
 
     /**
      * create/update (POST) or get (GET) field
@@ -384,6 +407,7 @@ class ManageLayersController {
                 } else {
                     map.putAll manageLayersService.createOrUpdateField(request.JSON as Map, id)
                 }
+                redirect(action: 'layers')
             }
 
             map.putAll(manageLayersService.fieldMap(id))
@@ -399,7 +423,8 @@ class ManageLayersController {
                 }
 
                 //redirect to this newly created field
-                redirect(action: 'field', id: map.id)
+//                redirect(action: 'field', id: map.id)
+                redirect(action: 'layers')
 
             } else {
                 map.putAll(manageLayersService.fieldMapDefault(id))
@@ -567,11 +592,21 @@ class ManageLayersController {
     }
 
     private def login() {
+
+        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()){
+            return
+        }
+
         if (serviceAuthService.isValid(params['api_key'])) {
+            log.info("API key is valid")
             return
         } else if (!authService.getUserId()) {
-            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                    grailsApplication.config.serverName + createLink(controller: 'manageLayers', action: 'index'))
+//            log.info("Unable to get userID - redirecting - should path be in CAS config ? " )
+//            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+//                    grailsApplication.config.grails.serverURL + createLink(controller: 'manageLayers', action: 'index'))
+
+            Map err = [error: 'not logged in']
+            render err as JSON
         } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
             Map err = [error: 'not authorised']
             render err as JSON
@@ -581,11 +616,11 @@ class ManageLayersController {
 
     def enable() {
         if (params.id.isNumber()) {
-            Layer layer = layerDao.getLayerById(params.id.toInteger(), false)
+            def layer = layerDao.getLayerById(params.id.toInteger(), false)
             layer.enabled = true
             layerDao.updateLayer(layer)
         } else {
-            Field field = fieldDao.getFieldById(params.id, false)
+            def field = fieldDao.getFieldById(params.id, false)
             field.enabled = true
             fieldDao.updateField(field)
         }
