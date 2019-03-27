@@ -16,15 +16,8 @@
       "total": 4,
       "pool": {
         "user": 1000,
-        "LayerDistancesCreate": 1000,
         "LayerDistancesCreateOne": 1000,
-        "DownloadRecords": 1000,
-        "JournalMapHarvest": 1000,
-        "StandardizeLayers": 1000,
-        "TabulationCounts": 1000,
-        "TabulationCountsCreate": 1000,
-        "TabulationCountsCreateOne": 1000,
-        "Thumbnails": 1000
+        "TabulationCreateOne": 1000
       }
     }
   }

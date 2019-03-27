@@ -138,7 +138,7 @@ class Maxent extends SlaveProcess {
                     sbTable.append("<pre>")
                     if (!ctx.endsWith("_aloc")) {
                         sbTable.append("<span style='font-weight: bold; text-decoration: underline'>" + ctx + " legend</span><br />")
-                        sbTable.append(IOUtils.toString(new FileInputStream(GridCutter.getLayerPath(resolution.toString(), ctx, "c", ctx) + ".txt")))
+                        sbTable.append(IOUtils.toString(new FileInputStream(GridCutter.getLayerPath(resolution.toString(), ctx, ctx) + ".txt")))
                         sbTable.append("<br /><br />")
                         sbTable.append("</pre>")
                     }
