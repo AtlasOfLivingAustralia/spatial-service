@@ -136,6 +136,7 @@
                     }
                     </style>
                     Click on map to get values/columns.
+                    (layer_id = ${layer_id}, raw_id = ${raw_id}, test_id = ${test_id}, name = ${name})
                     <div id="map"></div>
                     <script>
 
@@ -145,7 +146,6 @@
                                 $(location).attr('href', url);
                             }
                         }
-
 
                         var map = L.map('map').setView([-22, 122], 4);
 

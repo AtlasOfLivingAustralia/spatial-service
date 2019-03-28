@@ -684,8 +684,12 @@ class ManageLayersService {
 
         //fix default layer name
         if (layerMap.containsKey("displayname")) {
-            fieldMap.put("name", layerMap.get("displayname"))
+            fieldMap.put("displayname", layerMap.get("displayname"))
         }
+        if (layerMap.containsKey("name")) {
+            fieldMap.put("name", layerMap.get("name"))
+        }
+
         //fix default layer description
         if (layerMap.containsKey("description")) {
             fieldMap.put("desc", layerMap.get("displayname"))
