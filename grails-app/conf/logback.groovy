@@ -11,11 +11,11 @@ appender('STDOUT', ConsoleAppender) {
         charset = Charset.forName('UTF-8')
         pattern =
                 '[SPATIAL-SERVICE] %clr(%d{HH:mm:ss.SSS}){faint} ' + // Date
-                        '%clr(logger{5}){cyan} %clr(:){faint} ' + // Logger
+                        '%clr(%logger{5}){cyan} %clr(:){faint} ' + // Logger
                         '%m%n%wex' // Message
     }
 }
-
+logger("au.org.ala.spatial.service.MonitorService", INFO, ['STDOUT'], false)
 logger("au.org.ala.layers", DEBUG, ['STDOUT'], false)
 logger("au.org.ala.spatial", DEBUG, ['STDOUT'], false)
 root(WARN, ['STDOUT'])
