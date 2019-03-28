@@ -201,8 +201,8 @@ class TasksService {
     }
 
     def registerSpeciesQid(v) {
-        if (v instanceof Map && v.containsKey('q') && v.containsKey('bs') && v.q instanceof List &&
-                v.containsKey('bs') && v.q.size() > 0) {
+        if (v instanceof Map && v.containsKey('q') && v.containsKey('bs') &&
+                v.q instanceof List && v.q.size() > 0) {
             v.put('q', 'qid:' + Util.makeQid(v))
         }
     }

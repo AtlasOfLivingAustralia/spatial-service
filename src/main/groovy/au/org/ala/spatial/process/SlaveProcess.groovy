@@ -1001,7 +1001,7 @@ class SlaveProcess {
             }
         }
 
-        if (q.size()) q.remove("*:*")
+        if (q.size() > 1) q.remove("*:*")
 
         species.q = q[0]
         if (q.size() > 1) species.fq = q.toList().subList(1, q.size())

@@ -28,7 +28,7 @@ class AreaReport extends SlaveProcess {
 
         def area = JSON.parse(task.input.area.toString())
 
-        def allSpecies = [bs: grailsApplication.config.biocacheServiceUrl.toString(), q: ["*:*"]]
+        def allSpecies = [bs: grailsApplication.config.biocacheServiceUrl.toString(), q: "*:*"]
         def speciesQuery = getSpeciesArea(allSpecies, task.input.area)
 
         //qid for this area
