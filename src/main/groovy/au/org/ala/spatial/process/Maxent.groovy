@@ -217,34 +217,8 @@ class Maxent extends SlaveProcess {
     }
 
     def writeMaxentsld(filename) {
-        FileUtils.writeStringToFile(new File(filename), "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
-                "        <StyledLayerDescriptor version=\"1.0.0\" xmlns=\"http://www.opengis.net/sld\" xmlns:ogc=\"http://www.opengis.net/ogc\"\n" +
-                "        xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                "        xsi:schemaLocation=\"http://www.opengis.net/sld http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd\">\n" +
-                "        <NamedLayer>\n" +
-                "        <Name>alastyles</Name>\n" +
-                "    <UserStyle>\n" +
-                "      <Name>alastyles</Name>\n" +
-                "        <Title>ALA MaxEnt distribution</Title>\n" +
-                "      <FeatureTypeStyle>\n" +
-                "        <Rule>\n" +
-                "          <RasterSymbolizer>\n" +
-                "            <ColorMap type=\"intervals\" extended=\"true\">\n" +
-                "              <ColorMapEntry color=\"#FFFFFF\" quantity=\"-9999\" opacity=\"0.0\" />\n" +
-                "        <ColorMapEntry color=\"#FFFFFF\" quantity=\"0.0000\" opacity=\"0.0\" />\n" +
-                "        <ColorMapEntry color=\"#CCFF00\" quantity=\"0.0001\" opacity=\"1\"/>\n" +
-                "        <ColorMapEntry color=\"#CCCC00\" quantity=\"0.2\" opacity=\"1\" />\n" +
-                "        <ColorMapEntry color=\"#CC9900\" quantity=\"0.4\" opacity=\"1\" />\n" +
-                "        <ColorMapEntry color=\"#CC6600\" quantity=\"0.6\" opacity=\"1\" />\n" +
-                "        <ColorMapEntry color=\"#CC3300\" quantity=\"0.8\" opacity=\"1\" />\n" +
-                "        <ColorMapEntry color=\"#0000FF\" quantity=\"1.0\" opacity=\"1\"/>\n" +
-                "        </ColorMap>\n" +
-                "          </RasterSymbolizer>\n" +
-                "        </Rule>\n" +
-                "      </FeatureTypeStyle>\n" +
-                "        </UserStyle>\n" +
-                "  </NamedLayer>\n" +
-                "        </StyledLayerDescriptor>")
+        def resource = Maxent.class.getResource("/maxent/maxent.sld")
+        FileUtils.writeStringToFile(new File(filename), resource.text)
     }
 
     private void writeProjectionFile(String outputpath) {
