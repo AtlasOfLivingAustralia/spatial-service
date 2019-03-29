@@ -40,6 +40,7 @@ import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
 import org.geotools.geometry.jts.FactoryFinder
+import org.geotools.geometry.jts.JTS
 import org.geotools.geometry.jts.ReferencedEnvelope
 import org.geotools.map.FeatureLayer
 import org.geotools.map.MapContent
@@ -508,8 +509,6 @@ class SpatialUtils {
             } catch (Exception e) {
             }
 
-            List<SimpleFeature> features = new ArrayList<SimpleFeature>();
-
             int i = 0;
             boolean all = "all".equalsIgnoreCase(featureIndexes)
             def indexes = []
@@ -522,14 +521,17 @@ class SpatialUtils {
                 i++;
             }
 
-            GeometryFactory factory = FactoryFinder.getGeometryFactory(null);
+            GeometryFactory factory = FactoryFinder.getGeometryFactory(null)
+            GeometryCollection geometryCollection = (GeometryCollection) factory.buildGeometry(geometries)
 
             // note the following geometry collection may be invalid (say with overlapping polygons)
-            GeometryCollection geometryCollection =
-                    (GeometryCollection) factory.buildGeometry(geometries);
+            Geometry mergedGeometry = geometryCollection.union()
 
-            return geometryCollection.union().toString()
-
+            try {
+                return JTS.transform(mergedGeometry, CRS.findMathTransform(crs, DefaultGeographicCRS.WGS84, true)).toString()
+            } catch (Exception e) {
+                return mergedGeometry.toString()
+            }
         } catch (Exception e) {
             throw e
         } finally {
