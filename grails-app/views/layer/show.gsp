@@ -125,7 +125,9 @@
         <g:if test="${downloadAllowed}">
             <tr>
                 <td>Download</td>
-                <td><a href="${grailsApplication.config.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname)}.zip">${layer.displayname}.zip</a>
+                <td><a class="btn btn-default" href="${grailsApplication.config.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname)}.zip">
+                    <i class="glyphicon glyphicon-download"></i>
+                    ${layer.displayname}.zip</a>
                 </td>
             </tr>
         </g:if>

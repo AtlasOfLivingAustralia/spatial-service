@@ -95,6 +95,9 @@ class AdminController {
         }
 
         if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
+                redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                        grailsApplication.config.security.cas.appServerName + createLink(controller: 'admin', action: service))
+
             Map err = [error: 'not logged in']
             render err as JSON
 

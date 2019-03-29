@@ -144,7 +144,7 @@ batch_sampling_fields_limit: 1000
 #
 # au.org.ala.spatial.slave config
 #
-spatialService.url: "http://dev.ala.org.au:8080/spatial-service"
+spatialService.url: "http://dev.ala.org.au:8080"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"

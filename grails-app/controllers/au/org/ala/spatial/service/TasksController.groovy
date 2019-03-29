@@ -100,10 +100,19 @@ class TasksController {
     }
 
     private login() {
+
+        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {
+            return
+        }
+
+        if (serviceAuthService.isValid(params['api_key'])) {
+            return
+        }
+
         if (!serviceAuthService.isValid(params['api_key'])) {
             if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
                 redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                        grailsApplication.config.serverName + createLink(controller: 'tasks', action: 'index'))
+                        grailsApplication.config.security.cas.appServerName + createLink(controller: 'tasks', action: 'index'))
             } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
                 Map err = [error: 'not authorised']
                 render err as JSON

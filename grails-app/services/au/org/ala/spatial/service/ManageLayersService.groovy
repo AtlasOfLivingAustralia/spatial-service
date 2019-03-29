@@ -184,6 +184,7 @@ class ManageLayersService {
             def columns = []
             def name = ''
             def shp = null
+            def hdr = null
             def bil = null
             def grd = null
             def count = 0
@@ -215,10 +216,12 @@ class ManageLayersService {
                 } else if (f.getPath().toLowerCase().endsWith(".grd")) {
                     grd = f
                 }
+                log.info("Files found..." + f.getName())
             }
 
             //diva to bil
             if (grd != null && bil == null) {
+                log.info("Converting DIVA to BIL")
                 def n = grd.getPath().substring(0, grd.getPath().length() - 4)
                 Diva2bil.diva2bil(n, n)
                 bil = n + '.hdr'
@@ -228,32 +231,43 @@ class ManageLayersService {
 
             //rename the file
             if (count == 1) {
-                pth.listFiles().each { f ->
-                    if (!name.equals(newName) && f.getName().length() > 4 &&
-                            f.getName().substring(0, f.getName().length() - 4).equals(name)) {
-                        def newF = new File(f.getParent() + "/" + f.getName().replace(name, newName))
-                        if (!newF.getPath().equals(f.getPath())) FileUtils.moveFile(f, newF)
+            pth.listFiles().each { f ->
+                if (!name.equals(newName) && f.getName().length() > 4 &&
+                        f.getName().substring(0, f.getName().length() - 4).equals(name)) {
+                    def newF = new File(f.getParent() + "/" + f.getName().replace(name, newName))
+                    if (!newF.getPath().equals(f.getPath())) {
+                        FileUtils.moveFile(f, newF)
+                        log.info("Moving file ${f.getName()} to ${newF.getName()}")
                     }
                 }
+            }
 
-                //store name
-                FileUtils.write(new File(pth.getPath() + "/original.name"), name)
+            //store name
+            FileUtils.write(new File(pth.getPath() + "/original.name"), name)
+            log.info("Original file name stored..." + name)
             }
 
             shp = new File(pth.getPath() + "/" + newName + ".shp")
             bil = new File(pth.getPath() + "/" + newName + ".bil")
             def tif = new File(pth.getPath() + "/" + newName + ".tif")
-            if (!shp.exists() && bil.exists() && !tif.exists())
+            if (!shp.exists() && bil.exists() && !tif.exists()) {
+                log.info("BIL detected...")
                 bilToGTif(bil, tif)
+            } else {
+                log.info("SHP: ${shp.getPath()}, TIF: ${tif.getPath()}, BIL: ${bil.getPath()}")
+                log.info("SHP available: ${shp.exists()}, TIF available: ${tif.exists()}, BIL available: ${bil.exists()}")
+            }
 
             def map = [:]
 
             if (!shp.exists() && !tif.exists()) {
+                log.error("No SHP or TIF available....")
                 map.put("error", "no layer files")
             } else {
                 def errors = publishService.layerToGeoserver([files: [shp.exists() ? shp.getPath() : bil.getPath()]], null)
 
                 if (errors) {
+                    log.error("Errors uploading to geoserver...." + errors.inspect())
                     map.put("error", errors.inspect())
                 } else {
                     map.put("raw_id", name)
@@ -269,9 +283,11 @@ class ManageLayersService {
             }
 
             return map
+        } else {
+            log.error("Path does not exist..." + pth)
         }
 
-        return [error: pth +" does not exist!" ]
+        return [error: pth + " does not exist!" ]
     }
 
     /**
@@ -327,6 +343,8 @@ class ManageLayersService {
     }
 
     def bilToGTif(bil, geotiff) {
+
+        log.info("BIL conversion to GeoTIFF with gdal_translate...")
         //bil 2 geotiff (?)
         String[] cmd = [grailsApplication.config.gdal.dir.toString() + "/gdal_translate", "-of", "GTiff",
                         "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
@@ -666,8 +684,12 @@ class ManageLayersService {
 
         //fix default layer name
         if (layerMap.containsKey("displayname")) {
-            fieldMap.put("name", layerMap.get("displayname"))
+            fieldMap.put("displayname", layerMap.get("displayname"))
         }
+        if (layerMap.containsKey("name")) {
+            fieldMap.put("name", layerMap.get("name"))
+        }
+
         //fix default layer description
         if (layerMap.containsKey("description")) {
             fieldMap.put("desc", layerMap.get("displayname"))
