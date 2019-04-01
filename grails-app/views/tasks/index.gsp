@@ -108,7 +108,8 @@
 
             <g:sortableColumn property="status" title="${message(code: 'task.status.label', default: 'Status')}"/>
 
-            <g:sortableColumn property="history" title="${message(code: 'task.history.label', default: 'History')}"/>
+            <g:sortableColumn property="history"
+                              title="${message(code: 'task.history.label', default: 'History (last 4 entries)')}"/>
 
             <th></th>
 
@@ -127,11 +128,13 @@
 
                 <td>${fieldValue(bean: taskInstance, field: "tag") && fieldValue(bean: taskInstance, field: "tag") != 'null' ?  fieldValue(bean: taskInstance, field: "tag") : ''}</td>
 
-                <td><g:formatDate date="${taskInstance.created}"/></td>
+                <td><g:formatDate date="${taskInstance.created}" format="dd/MM/yy hh:mm:ss"/></td>
 
                 <td>${fieldValue(bean: taskInstance, field: "status")}</td>
 
-                <td>${fieldValue(bean: taskInstance, field: "history")}</td>
+                <td><g:each in="${taskInstance.history}" var="h">
+                    <g:formatDate date="${h.key}" format="dd/MM/yy hh:mm:ss"/>=${h.value}<br/>
+                </g:each></td>
 
                 <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link></td>
                 <td><g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">cancel</g:link></td>

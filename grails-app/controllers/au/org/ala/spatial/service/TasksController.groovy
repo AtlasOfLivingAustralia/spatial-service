@@ -50,6 +50,7 @@ class TasksController {
                     eq("status", params.status.toInteger())
                 }
             }
+            readOnly(true)
         }
         def count = Task.createCriteria().count() {
             and {
@@ -65,6 +66,18 @@ class TasksController {
                 }
             }
         }
+
+        // limit history and format time
+        list.each { item ->
+            def hist = [:]
+            item.history.keySet().sort().each { key ->
+                if (hist.size() < 4) {
+                    hist.put(new Date(Long.parseLong(key)), item.history.get(key))
+                }
+            }
+            item.history = hist
+        }
+
         [taskInstanceList: list, taskInstanceCount: count]
     }
 
@@ -72,18 +85,21 @@ class TasksController {
         def status = tasksService.getStatus(task)
 
         if (params.containsKey('last')) {
-            def lg = status.history.findAll { k, v ->
+            def hist = [:]
+            status.history.findAll { k, v ->
                 try {
                     if (Long.parseLong(k.toString()) > Long.parseLong(params?.last?.toString())) {
-                        [k: v]
-                    } else {
-                        null
+                        hist.put(k, v)
                     }
                 } catch (Exception e) {
-                    null
+                    e.printStackTrace()
                 }
             }
-            status.history = lg
+            status.history = hist
+        }
+
+        status.history = status.history.sort { a, b ->
+            a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
         }
 
         render status as JSON
@@ -91,6 +107,10 @@ class TasksController {
 
     def show(Task task) {
         login()
+
+        task.history = task.history.sort { a, b ->
+            a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
+        }
 
         if (task) {
             render task as JSON

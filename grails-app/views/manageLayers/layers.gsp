@@ -64,6 +64,8 @@
                                 id="${field.id}">${field.id}: ${field.name}</g:link>,
                                 ${field.type == 'c' ? 'contextual (polygon)' : ''}
                                 ${field.type == 'e' ? 'environmental (raster)' : ''}
+                        ${field.type == 'a' ? 'contextual (raster with classes)' : ''}
+                        ${field.type == 'b' ? 'contextual (raster with polygons)' : ''}
                     </g:each>
                 </td>
                 <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default" id="${item.id}">
