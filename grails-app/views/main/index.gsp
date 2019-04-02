@@ -32,6 +32,7 @@
 </h4>
 <ul>
     <li><g:link controller="tasks" action="create" params="${[name:'Thumbnails']}">Regenerate thumbnails</g:link> - Regenerate thumbnails for the layers</li>
+    <li><g:link controller="intersect" action="reloadConfig">Reload intersect configuration</g:link> - Reload intersect configuration (run after adding new layers)</li>    
 </ul>
 </div>
 </body>
