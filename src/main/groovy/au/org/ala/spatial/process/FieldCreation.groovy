@@ -28,6 +28,7 @@ import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.JTSFactoryFinder
 
+import java.nio.charset.Charset
 import java.text.MessageFormat
 
 @Slf4j
@@ -277,6 +278,7 @@ class FieldCreation extends SlaveProcess {
 
             File file = new File(grailsApplication.config.data.dir.toString() + '/layer/' + layername + '.shp')
             ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
+            sds.setCharset(Charset.forName("UTF-8"))
             FeatureReader reader = sds.featureReader
 
             Map map = [:]
@@ -319,6 +321,7 @@ class FieldCreation extends SlaveProcess {
 
                 if (i != null && i.trim().length() > 0) {
                     if (!map.containsKey(i)) {
+
                         map.put(i, [sid: i, sname: name, sdesc: desc, geom: []])
                     }
                     map.get(i).geom.add(f.getDefaultGeometry())
