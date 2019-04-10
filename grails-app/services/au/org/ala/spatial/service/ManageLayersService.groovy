@@ -196,7 +196,17 @@ class ManageLayersService {
                 pth.listFiles().each { f ->
                     if (f.isDirectory()) {
                         f.listFiles().each { sf ->
-                            FileUtils.moveToDirectory(sf, f.getParentFile(), false)
+                            try {
+                                FileUtils.moveToDirectory(sf, f.getParentFile(), false)
+                            } catch (IOException e) {
+                                // try a copy + delete
+                                if (sf.isFile()) {
+                                    FileUtils.copyFileToDirectory(sf, f.getParentFile())
+                                } else if (sf.isDirectory()) {
+                                    FileUtils.copyDirectoryToDirectory(sf, f.getParentFile())
+                                }
+                                sf.delete()
+                            }
                         }
                         f.delete()
                         moved = true
