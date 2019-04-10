@@ -15,12 +15,17 @@
 
 package au.org.ala.spatial.service
 
+import au.org.ala.web.AuthService
+import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
 
 class LogController {
 
     final Logger logger = Logger.getLogger(LogController.class)
+
+    def logService
+    AuthService authService
 
     @Transactional
     def index() {
@@ -34,6 +39,21 @@ class LogController {
         }
 
         render status: 200
+    }
+
+    def search() {
+        def searchResult = logService.search(params, authService.getUserId(),
+                authService.userInRole(grailsApplication.config.auth.admin_role))
+
+        def totalCount = logService.searchCount(params, authService.getUserId(),
+                authService.userInRole(grailsApplication.config.auth.admin_role))
+
+        if ("application/json".equals(request.getHeader("accept"))) {
+            def map = [records: searchResult, totalCount: totalCount]
+            render map as JSON
+        } else {
+            [searchResult: searchResult, totalCount: totalCount]
+        }
     }
 
 }
