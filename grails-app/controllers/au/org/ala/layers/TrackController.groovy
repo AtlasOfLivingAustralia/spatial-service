@@ -70,6 +70,11 @@ class TrackController {
     }
 
     def show(Long id) {
+        if (id == null) {
+            render status: 400, text: "Path parameter `id` is not an integer."
+            return
+        }
+
         def distribution = distributionsService.show(params, id, 't')
 
         if (distribution instanceof String) {
@@ -216,6 +221,10 @@ class TrackController {
     }
 
     def overviewMapPngSpcode(Long spcode) {
+        if (spcode == null) {
+            render status: 400, text: "Path parameter `spcode` is not an integer."
+            return
+        }
         image(response, null, spcode, null)
     }
 

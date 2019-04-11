@@ -61,6 +61,15 @@ class ObjectController {
      */
 
     def listByLocation(String id, Double lat, Double lng) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
+
         def limit = params.containsKey('limit') ? params.limit : 40
 
         def field = fieldDao.getFieldById(id)
@@ -165,11 +174,28 @@ class ObjectController {
     }
 
     def fieldObjectsPoint(String id, Double lat, Double lng) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
+
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
         render objectDao.getNearestObjectByIdAndLocation(id, limit, lng, lat) as JSON
     }
 
     def intersectObject(String pid, Double lat, Double lng) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
         def obj = objectDao.intersectObject(pid, lat, lng) ?: [:]
         render obj as JSON
     }

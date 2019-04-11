@@ -34,6 +34,14 @@ class IntersectController {
     GrailsApplication grailsApplication
 
     def intersect(String ids, Double lat, Double lng) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
         render layerIntersectDao.samplingFull(ids, lng, lat) as JSON
     }
 
@@ -203,6 +211,18 @@ class IntersectController {
     }
 
     def pointRadius(String fid, Double lat, Double lng, Double radius) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
+        if (radius == null) {
+            render status: 400, text: "Path parameter `radius` is not a number."
+            return
+        }
         render objectDao.getObjectsWithinRadius(fid, lat, lng, radius) as JSON
     }
 
@@ -232,6 +252,18 @@ class IntersectController {
     }
 
     def poiPointRadiusIntersect(Double lat, Double lng, Double radius) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
+        if (radius == null) {
+            render status: 400, text: "Path parameter `radius` is not a number."
+            return
+        }
         render objectDao.getPointsOfInterestWithinRadius(lat, lng, radius) as JSON
     }
 
@@ -250,10 +282,26 @@ class IntersectController {
     }
 
     def objectPoiIntersect(Integer pid) {
+        if (pid == null) {
+            render status: 400, text: "Path parameter `pid` is not an integer."
+            return
+        }
         render objectDao.pointsOfInterestObjectIntersect(Integer.toString(pid)) as JSON
     }
 
     def poiPointRadiusIntersectCount(Double lat, Double lng, Double radiusKm) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
+        if (radiusKm == null) {
+            render status: 400, text: "Path parameter `radiusKm` is not a number."
+            return
+        }
         Map map = new HashMap()
         map.put("count", objectDao.getPointsOfInterestWithinRadiusCount(lat, lng, radiusKm))
 
@@ -276,6 +324,11 @@ class IntersectController {
     }
 
     def objectPoiIntersectCount(Integer pid) {
+        if (pid == null) {
+            render status: 400, text: "Path parameter `pid` is not an integer."
+            return
+        }
+
         Map map = new HashMap()
         map.put("count", objectDao.pointsOfInterestObjectIntersectCount(Integer.toString(pid)))
 

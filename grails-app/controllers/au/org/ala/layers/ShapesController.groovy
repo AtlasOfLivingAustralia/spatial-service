@@ -273,10 +273,18 @@ class ShapesController {
     }
 
     def updateWithGeojson(Integer pid) {
+        if (pid == null) {
+            render status: 400, text: "Path parameter `pid` is not an integer."
+            return
+        }
         render processGeoJSONRequest(request.JSON, pid) as JSON
     }
 
     def updateWithWKT(Integer pid) {
+        if (pid == null) {
+            render status: 400, text: "Path parameter `pid` is not an integer."
+            return
+        }
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
         render processWKTRequest(request.JSON, pid, namesearch) as JSON
     }
@@ -473,14 +481,42 @@ class ShapesController {
     }
 
     def updateFromShapeFileFeature(Integer objectPid, String shapeId, String featureIndex) throws Exception {
+        if (objectPid == null) {
+            render status: 400, text: "Path parameter `objectPid` is not an integer."
+            return
+        }
         render processShapeFileFeatureRequest(request.reader.text, objectPid, shapeId, featureIndex) as JSON
     }
 
     def createPointRadius(Double latitude, Double longitude, Double radius) {
+        if (latitude == null) {
+            render status: 400, text: "Path parameter `latitude` is not a number."
+            return
+        }
+        if (longitude == null) {
+            render status: 400, text: "Path parameter `longitude` is not a number."
+            return
+        }
+        if (radius == null) {
+            render status: 400, text: "Path parameter `radius` is not a number."
+            return
+        }
         render processPointRadiusRequest(request.reader.text, null, latitude, longitude, radius) as JSON
     }
 
     def updateWithPointRadius(Double latitude, Double longitude, Double radius, Integer objectPid) {
+        if (latitude == null) {
+            render status: 400, text: "Path parameter `latitude` is not a number."
+            return
+        }
+        if (longitude == null) {
+            render status: 400, text: "Path parameter `longitude` is not a number."
+            return
+        }
+        if (radius == null) {
+            render status: 400, text: "Path parameter `radius` is not a number."
+            return
+        }
         render processPointRadiusRequest(request.reader.text, objectPid, latitude, longitude, radius) as JSON
     }
 
@@ -549,6 +585,10 @@ class ShapesController {
     }
 
     def deleteShape(Integer pid) {
+        if (pid == null) {
+            render status: 400, text: "Path parameter `pid` is not an integer."
+            return
+        }
         if (request.method == "DELETE") {
             Map<String, Object> retMap = new HashMap<String, Object>()
             try {
@@ -609,6 +649,10 @@ class ShapesController {
     }
 
     def poiRequest(Integer id) {
+        if (id == null) {
+            render status: 400, text: "Path parameter `id` is not an integer."
+            return
+        }
         if (request.method == "DELETE") {
             String apiKey = params.containsKey("api_key") ? params.api_key : null
 

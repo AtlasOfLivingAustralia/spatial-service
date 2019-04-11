@@ -48,6 +48,11 @@ class ChecklistController {
     }
 
     def show(Long id) {
+        if (id == null) {
+            render status: 400, text: "Path parameter `id` is not an integer."
+            return
+        }
+
         boolean noWkt = params.containsKey('nowkt') ? params.nowkt.toString().toBoolean() : false
         Distribution distribution = distributionDao.getDistributionBySpcode(id, Distribution.SPECIES_CHECKLIST, noWkt)
 
