@@ -521,11 +521,17 @@ class SpatialUtils {
                 i++;
             }
 
-            GeometryFactory factory = FactoryFinder.getGeometryFactory(null)
-            GeometryCollection geometryCollection = (GeometryCollection) factory.buildGeometry(geometries)
+            Geometry mergedGeometry
 
-            // note the following geometry collection may be invalid (say with overlapping polygons)
-            Geometry mergedGeometry = geometryCollection.union()
+            if (geometries.size() == 1) {
+                mergedGeometry = geometries.get(0)
+            } else {
+                GeometryFactory factory = FactoryFinder.getGeometryFactory(null)
+                GeometryCollection geometryCollection = (GeometryCollection) factory.buildGeometry(geometries)
+
+                // note the following geometry collection may be invalid (say with overlapping polygons)
+                mergedGeometry = geometryCollection.union()
+            }
 
             try {
                 return JTS.transform(mergedGeometry, CRS.findMathTransform(crs, DefaultGeographicCRS.WGS84, true)).toString()
