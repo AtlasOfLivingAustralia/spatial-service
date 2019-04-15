@@ -387,10 +387,10 @@ public class PrintMapComposer {
 
         //square tiles
         int srcWidth = (int) (destWidth / (extents[2] - extents[0]) * (tileWidth * resolutions[res]));
-        int srcHeight = srcWidth;
+        int srcHeight = (int) (height / (extents[3] - extents[1]) * (tileHeight * resolutions[res]));
 
         int xOffset = (int) ((sx - ((extents[0] - origin[0]) / resolutions[res] / tileWidth)) * srcWidth);
-        int yOffset = (int) ((sy - (((-1 * origin[1]) - extents[3]) / resolutions[res] / tileHeight)) * srcHeight);
+        int yOffset = (int) ((sy - (tiles - ((extents[3] - origin[1]) / resolutions[res] / tileHeight))) * srcHeight);
 
         RescaleOp op = new RescaleOp(new float[]{1f, 1f, 1f, 1f}, new float[]{0f, 0f, 0f, 0f}, null);
 
@@ -665,6 +665,10 @@ public class PrintMapComposer {
                         return ImageIO.read(file);
                     } catch (IOException e) {
                         LOGGER.error("failed to read cache image: " + filename, e);
+                        try {
+                            file.delete();
+                        } catch (Exception ex) {
+                        }
                     }
                 }
             }

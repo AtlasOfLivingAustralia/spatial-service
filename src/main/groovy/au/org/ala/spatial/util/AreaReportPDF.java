@@ -91,9 +91,6 @@ public class AreaReportPDF {
         try {
             FileUtils.forceMkdir(new File(filePath + "/"));
 
-            DecimalFormat df = new DecimalFormat("###,###.##");
-            area_km = df.format(Double.parseDouble(area_km));
-
             JSONParser jp = new JSONParser();
             pages = (JSONArray) jp.parse(new String(getFileAsBytes("AreaReportDetails.json"), "UTF-8"));
 
@@ -101,6 +98,9 @@ public class AreaReportPDF {
             FileUtils.writeByteArrayToFile(styleFile, getFileAsBytes("areaReport.css"));
 
             mlArea = addObjectByPid(pid);
+            DecimalFormat df = new DecimalFormat("###,###.##");
+            area_km = df.format(Double.parseDouble(area_km));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -374,14 +374,32 @@ public class AreaReportPDF {
         bbox.add(Math.max(Double.parseDouble(p1[0]), Double.parseDouble(p2[0])));
         bbox.add(Math.max(Double.parseDouble(p1[1]), Double.parseDouble(p2[1])));
 
-        double step = (bbox.get(2) - bbox.get(0)) * buffer;
+        double stepx = (bbox.get(2) - bbox.get(0)) * buffer;
+        double stepy = (bbox.get(3) - bbox.get(1)) * buffer;
         double[] extents = new double[]{
-                Math.max(-180, bbox.get(0) - step),
-                Math.max(-85, bbox.get(1) - step),
-                Math.min(180, bbox.get(2) + step),
-                Math.min(85, bbox.get(3) + step)};
+                Math.max(-180, bbox.get(0) - stepx),
+                Math.max(-85, bbox.get(1) - stepy),
+                Math.min(180, bbox.get(2) + stepx),
+                Math.min(85, bbox.get(3) + stepy)};
+
+        // increase extents to match EPSG:3857
+        int[] windowSize = new int[2];
+        windowSize[0] = SpatialUtils.convertLngToPixel(extents[2]) - SpatialUtils.convertLngToPixel(extents[0]);
+        windowSize[1] = SpatialUtils.convertLatToPixel(extents[1]) - SpatialUtils.convertLatToPixel(extents[3]);
 
         double aspectRatio = 1.6;
+
+        if (windowSize[0] / (double) windowSize[1] < aspectRatio) {
+            // increase width
+            int width = (int) (windowSize[1] * aspectRatio);
+            extents[0] = SpatialUtils.convertPixelToLng(SpatialUtils.convertLngToPixel(extents[0]) - (width - windowSize[0]) / 2);
+            extents[2] = SpatialUtils.convertPixelToLng(SpatialUtils.convertLngToPixel(extents[2]) + (width - windowSize[0]) / 2);
+        } else if (windowSize[0] / (double) windowSize[1] > aspectRatio) {
+            // increase height
+            int height = (int) (windowSize[0] / aspectRatio);
+            extents[1] = SpatialUtils.convertPixelToLat(SpatialUtils.convertLatToPixel(extents[1]) - (height - windowSize[1]) / 2);
+            extents[3] = SpatialUtils.convertPixelToLat(SpatialUtils.convertLatToPixel(extents[3]) + (height - windowSize[1]) / 2);
+        }
 
         String ml = null;
         if (layer != null) {
@@ -735,16 +753,16 @@ public class AreaReportPDF {
                 String filter = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><StyledLayerDescriptor version=\"1.0.0\" xmlns=\"http://www.opengis.net/sld\">"
                         + "<NamedLayer><Name>ALA:Objects</Name>"
                         + "<UserStyle><FeatureTypeStyle><Rule><Title>Polygon</Title><PolygonSymbolizer>"
-                        + "<Stroke>"
-                        + "<CssParameter name=\"stroke\">#FF0000</CssParameter>"
-                        + "<CssParameter name=\"stroke-width\">4</CssParameter>"
-                        + "</Stroke>"
                         + "<Fill>"
                         + "<GraphicFill><Graphic><Mark><WellKnownName>shape://times</WellKnownName><Stroke>"
                         + "<CssParameter name=\"stroke\">#FF0000</CssParameter>"
                         + "<CssParameter name=\"stroke-width\">1</CssParameter>"
                         + "</Stroke></Mark></Graphic></GraphicFill>"
                         + "</Fill>"
+                        + "<Stroke>"
+                        + "<CssParameter name=\"stroke\">#FF0000</CssParameter>"
+                        + "<CssParameter name=\"stroke-width\">4</CssParameter>"
+                        + "</Stroke>"
                         + "</PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>";
                 mapLayer = addWMSLayer("Objects&viewparams=s:" + pid + "&sld_body=" + filter + "&opacity=0.6");
             }
@@ -752,6 +770,7 @@ public class AreaReportPDF {
         }
         //if the layer is a point create a radius
         bbox = obj.get("bbox").toString();
+        area_km = obj.get("area_km").toString();
 
         return mapLayer;
     }
