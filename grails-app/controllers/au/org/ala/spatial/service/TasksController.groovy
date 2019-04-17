@@ -70,7 +70,8 @@ class TasksController {
         // limit history and format time
         list.each { item ->
             def hist = [:]
-            item.history.keySet().sort().each { key ->
+
+            item.history.keySet().sort().reverse().each { key ->
                 if (hist.size() < 4) {
                     hist.put(new Date(Long.parseLong(key)), item.history.get(key))
                 }
