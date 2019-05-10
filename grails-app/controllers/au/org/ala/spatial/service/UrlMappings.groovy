@@ -119,6 +119,9 @@ class UrlMappings {
         "/capabilities(.$format)?"(controller: "admin", action: "capabilities")
 
         "/tasks/output/$p1/$p2?/$p3?(.$format)?"(controller: "tasks", action: "output")
+        "/tasks/output/$p1/$p2?"(controller: "tasks", action: "output")
+
+
 
 
         "/$controller/$action?/$id?(.$format)?" {

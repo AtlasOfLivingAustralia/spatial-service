@@ -208,6 +208,7 @@ class TasksController {
     }
 
     def output() {
+
         def path = "${grailsApplication.config.data.dir}/public"
         def p1 = params.p1
         def p2 = params.p2
@@ -270,7 +271,8 @@ class TasksController {
                 response.setContentType("text/plain")
                 ok = true
             } else if (file.endsWith('.html')) {
-                render(text: IOUtils.toString(new FileInputStream(f)), contentType: "text/html", encoding: "UTF-8")
+                def htmlContent = f.text
+                render(text: htmlContent, contentType: "text/html", encoding: "UTF-8")
                 return
             } else if (file.endsWith('.jpg') || file.endsWith('jpeg')) {
                 response.setContentType("image/jpeg")
@@ -281,6 +283,9 @@ class TasksController {
             } else if (file.endsWith('.csv')) {
                 response.setContentType("text/plain")
                 ok = true
+            }else{
+                render(text: 'Unknow format of ' + file, contentType: "text/html", encoding: "UTF-8" )
+                return
             }
 
             if (ok) {
@@ -297,6 +302,9 @@ class TasksController {
                     os.close()
                 }
             }
+        }else{
+            render('File does not exist: ' + file, contentType: "text/html", encoding: "UTF-8" )
+            return
         }
     }
 
