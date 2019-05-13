@@ -227,6 +227,8 @@ class TasksController {
         if (p2) file += "/${p2}"
         if (p3) file += "/${p3}"
 
+        if (params.format) file+= ".${params.format}"
+
         def f = new File(file)
 
         if (!f.canonicalPath.startsWith(new File(path).canonicalPath)) {
