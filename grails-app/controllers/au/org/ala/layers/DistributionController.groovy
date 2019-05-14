@@ -78,7 +78,7 @@ class DistributionController {
             return
         }
 
-        def distribution = distributionsService.show(params, id, Distribution.EXPERT_DISTRIBUTION)
+        def distribution = distributionsService.show(id, params, Distribution.EXPERT_DISTRIBUTION)
 
         if (distribution instanceof String) {
             render(status: 404, text: distribution)
@@ -88,7 +88,8 @@ class DistributionController {
     }
 
     def lsidFirst(String lsid) {
-        List distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
+        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
+        List distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
         if (distributions != null && !distributions.isEmpty()) {
             Distribution d = distributions.get(0)
             distributionsService.addImageUrl(d)
@@ -102,7 +103,8 @@ class DistributionController {
 
 
     def lsid(String lsid) {
-        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
+        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
+        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrls(distributions)
             render distributions.collect {
@@ -116,7 +118,7 @@ class DistributionController {
     }
 
     def lsids(String lsid) {
-        Boolean noWkt = params.containsKey('nowkt') ? params.nowkt : false
+        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrls(distributions)
