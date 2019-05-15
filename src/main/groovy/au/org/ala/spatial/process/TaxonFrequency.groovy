@@ -90,8 +90,8 @@ class TaxonFrequency extends SlaveProcess {
             createRatio(count1, count2, ratio, cumulativeRatio)
 
             //cumulative count
-            files.push(generateRatioChart(cumulativeRatio, 'Cumulative Ratio: ' + species1Name + " / " + species2Name, 'cumulative_ratio', true, true))
             files.push(generateRatioChart(ratio, 'Frequency Ratio: ' + species1Name + " / " + species2Name, 'frequency_ratio', true, true))
+            files.push(generateRatioChart(cumulativeRatio, 'Cumulative Ratio: ' + species1Name + " / " + species2Name, 'cumulative_ratio', true, true))
             files.push(createCSV(count1, count2, ratio, species1Name, species2Name, "data.csv"))
         } else {
             files.push(createCSV(count1, null, null, species1Name, null, "data.csv"))
@@ -174,7 +174,7 @@ class TaxonFrequency extends SlaveProcess {
             chart = ChartFactory.createTimeSeriesChart(
                     title,
                     "Year",
-                    "Count",
+                    "Ratio",
                     series,
                     false, true, false);
 
