@@ -48,11 +48,11 @@ class CompareAreas extends SlaveProcess {
         def speciesBoth = []
 
         taskLog("sort species lists")
-        if (area1.speciesList.length == 0) {
+        if (area1.speciesList.size == 0) {
             taskLog("no species in area: " + area1.name)
             return
         }
-        if (area2.speciesList.length == 0) {
+        if (area2.speciesList.size == 0) {
             taskLog("no species in area: " + area2.name)
             return
         }
