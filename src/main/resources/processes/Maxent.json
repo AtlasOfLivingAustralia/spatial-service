@@ -23,11 +23,11 @@
       }
     },
     "layer": {
-      "description": "Layers to use in the prediction. 1 to 10.",
+      "description": "Layers to use in the prediction. 1 to 20.",
       "type": "layer",
       "constraints": {
         "min": 1,
-        "max": 10,
+        "max": 20,
         "contextual": true,
         "environmental": true,
         "analysis": true
