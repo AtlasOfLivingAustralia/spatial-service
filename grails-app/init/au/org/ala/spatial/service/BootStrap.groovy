@@ -61,21 +61,8 @@ class BootStrap {
 
         //create database required by layers-store
         try {
-            def rs = groovySql.executeQuery("SELECT * FROM fields WHERE id = '${grailsApplication.config.userObjectsField}'")
-            if (rs.isClosed() || rs.getRow() == 0) {
-                groovySql.execute("INSERT INTO fields (id, name, \"desc\", type, indb, enabled, namesearch) VALUES " +
-                        "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, false, false);")
-            }
-        } catch (Exception e) {
-            if (!e.getMessage().contains("duplicate key value")) {
-                log.error("Error ", e)
-            }
-        }
-
-        //create user objects field if it is missing
-        try {
-            def rs = groovySql.executeQuery("SELECT * FROM fields WHERE id = '${grailsApplication.config.userObjectsField;}'")
-            if (rs.isClosed() || rs.getRow() == 0) {
+            def rs = groovySql.rows("SELECT * FROM fields WHERE id = ?", [grailsApplication.config.userObjectsField])
+            if (rs.size() == 0) {
                 groovySql.execute("INSERT INTO fields (id, name, \"desc\", type, indb, enabled, namesearch) VALUES " +
                         "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, false, false);")
             }
@@ -94,8 +81,8 @@ class BootStrap {
 
         //create objects name idx if it is missing
         try {
-            def rs = groovySql.executeQuery("SELECT * FROM pg_class WHERE relname = 'objects_name_idx';")
-            if (rs.isClosed() || rs.getRow() == 0) {
+            def rs = groovySql.rows("SELECT * FROM pg_class WHERE relname = 'objects_name_idx';")
+            if (rs.size() == 0) {
                 groovySql.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
                 groovySql.execute("CREATE INDEX objects_name_idx ON objects USING gin (name gin_trgm_ops) WHERE namesearch is true;")
             }
