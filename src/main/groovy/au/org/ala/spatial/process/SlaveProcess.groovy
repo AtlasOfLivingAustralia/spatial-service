@@ -986,7 +986,12 @@ class SlaveProcess {
                 Geometry g2 = wktReader.read(wkt)
 
                 try {
-                    Geometry intersection = g1.intersection(g2)
+                    Geometry tmp = g1.intersection(g2)
+
+                    // Use CCW for exterior rings. Normalizing will use the JTS default (CW). Reverse makes it CCW.
+                    tmp.normalize()
+                    Geometry intersection = tmp.reverse()
+
                     if (intersection.area > 0) {
                         species.wkt = intersection.toText()
                     } else {

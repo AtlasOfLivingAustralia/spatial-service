@@ -72,7 +72,8 @@ dependencies {
     compile 'org.grails.plugins:quartz:2.0.12'
 
     // plugins needed at runtime but not for compilation
-    compile "org.grails.plugins:ala-admin-plugin:2.0"
+    compile 'org.grails.plugins:ala-cors-plugin:1.0-SNAPSHOT'
+    compile "org.grails.plugins:ala-admin-plugin:2.1"
     compile "org.grails.plugins:ala-auth:3.0.2"
     compile "org.grails.plugins:ala-bootstrap3:3.0.6"
     compile 'org.grails.plugins:rendering:2.0.3'
@@ -83,7 +84,7 @@ dependencies {
     compile "org.codehaus.jackson:jackson-core-asl:1.8.6"
     compile "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
-    compile("au.org.ala:layers-store:2.0.1") {
+    compile("au.org.ala:layers-store:2.0.2-SNAPSHOT") {
         exclude module: "spring-context"
         exclude module: "spring-jdbc"
         exclude module: "spring-orm"
