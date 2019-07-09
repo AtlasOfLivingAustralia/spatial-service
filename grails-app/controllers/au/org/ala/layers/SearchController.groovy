@@ -29,6 +29,7 @@ class SearchController {
     def search() {
         def q = params.get('q', null)
         def limit = params.int('limit', 20)
+        def offset = params.int('start', 0)
 
         def includeFieldIds = params.get('include', '');
         def excludeFieldIds = params.get('exclude', '');
@@ -45,7 +46,7 @@ class SearchController {
 
         // Results can differ greatly between the old and new search methods.
         if (StringUtils.isEmpty(includeFieldIds) && StringUtils.isEmpty(excludeFieldIds)) {
-            render searchDao.findByCriteria(q, limit) as JSON
+            render searchDao.findByCriteria(q,offset,limit) as JSON
         } else {
             List<String> includeIds;
             List<String> excludeIds;
@@ -59,7 +60,7 @@ class SearchController {
             } else {
                 excludeIds = new ArrayList();
             }
-            render searchDao.findByCriteria(q, limit, (List<String>) includeIds, (List<String>) excludeIds) as JSON
+            render searchDao.findByCriteria(q,offset,limit, (List<String>) includeIds, (List<String>) excludeIds) as JSON
         }
     }
 }

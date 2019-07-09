@@ -83,7 +83,7 @@ dependencies {
     compile "org.codehaus.jackson:jackson-core-asl:1.8.6"
     compile "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
-    compile("au.org.ala:layers-store:2.0.1") {
+    compile("au.org.ala:layers-store:2.0.2-SNAPSHOT") {
         exclude module: "spring-context"
         exclude module: "spring-jdbc"
         exclude module: "spring-orm"
@@ -91,6 +91,8 @@ dependencies {
         exclude module: "ands-pid-client"
         exclude module: "xalan"
     }
+
+
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
