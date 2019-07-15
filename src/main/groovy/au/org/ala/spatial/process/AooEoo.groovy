@@ -115,7 +115,7 @@ class AooEoo extends SlaveProcess {
                         "<table >" +
                         "<tr><td>Number of records used for the calculations</td><td>" + occurrenceCount + "</td></tr>" +
                         "<tr><td>Species</td><td>" + species.name + "</td></tr>" +
-                        "<tr><td>Area of Occupancy (AOO: 0.02 degree grid)</td><td>" + String.format("%.0f", aoo) + " sq km</td></tr>" +
+                        "<tr><td>Area of Occupancy (AOO: ${gridSize} degree grid)</td><td>" + String.format("%.0f", aoo) + " sq km</td></tr>" +
                         "<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>" + (String.format("%.2f", eoo / 1000.0 / 1000.0)) + " sq km</td></tr>" +
                         "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format("%.0f", alphaHull / 1000.0 / 1000.0) + " sq km</td></tr>" +
                         "</table></body></html>" +
