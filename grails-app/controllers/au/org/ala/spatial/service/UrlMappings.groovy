@@ -81,6 +81,7 @@ class UrlMappings {
         "/layers/view/more/$id(.$format)?"(controller: "layer", action: "more")
         "/layers/csv(.$format)?"(controller: "layer", action: "csvlist")
         "/layers/layers.csv"(controller: "layer", action: "csvlist")
+        "/layers/layerUsage"(controller: "layer", action: "layerUsage")
 
         "/object/$pid(.$format)?"(controller: "object", action: "show")
         "/objects/$id(.$format)?"(controller: "object", action: "fieldObjects")
