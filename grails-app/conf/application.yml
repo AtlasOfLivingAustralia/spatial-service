@@ -1,7 +1,8 @@
 ---
 grails:
     cors:
-        enabled: true
+        # using ala-cors-plugin instead of grailsCorsFilter
+        enabled: false
     profile: web
     codegen:
         defaultPackage: au.org.ala.spatial.service

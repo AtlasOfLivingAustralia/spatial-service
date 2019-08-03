@@ -19,7 +19,6 @@ import au.org.ala.spatial.Util
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
-import org.apache.commons.io.IOUtils
 import org.grails.web.json.JSONObject
 
 @Transactional(readOnly = true)
@@ -99,8 +98,10 @@ class TasksController {
             status.history = hist
         }
 
-        status.history = status.history.sort { a, b ->
-            a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
+        if (status.history) {
+            status.history = status.history.sort { a, b ->
+                a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
+            }
         }
 
         render status as JSON

@@ -55,7 +55,8 @@ class TaxonFrequency extends SlaveProcess {
 
         def facets1 = facetOccurenceCount('year', species1Area)
         if (facets1.size() == 0) {
-            taskLog("No occurrences found in the selected area.")
+            def error = "No 'year' values found in the selected area for the species '" + species1Name + "'."
+            taskLog(error)
             return
         }
         List years1 = facets1.find { it.fieldName == "year" }.fieldResult
@@ -77,6 +78,11 @@ class TaxonFrequency extends SlaveProcess {
             def species2Area = getSpeciesArea(species2, area[0])
 
             def facets2 = facetOccurenceCount('year', species2Area)
+            if (facets2.size() == 0) {
+                def error = "No 'year' values found in the selected area for the species '" + species2Name + "'."
+                taskLog(error)
+                return
+            }
             def years2 = facets2.find { it.fieldName == "year" }.fieldResult
 
             TimeSeries cumulative2 = new TimeSeries(species2Name, "Year", "Count");
@@ -90,8 +96,8 @@ class TaxonFrequency extends SlaveProcess {
             createRatio(count1, count2, ratio, cumulativeRatio)
 
             //cumulative count
-            files.push(generateRatioChart(cumulativeRatio, 'Cumulative Ratio: ' + species1Name + " / " + species2Name, 'cumulative_ratio', true, true))
             files.push(generateRatioChart(ratio, 'Frequency Ratio: ' + species1Name + " / " + species2Name, 'frequency_ratio', true, true))
+            files.push(generateRatioChart(cumulativeRatio, 'Cumulative Ratio: ' + species1Name + " / " + species2Name, 'cumulative_ratio', true, true))
             files.push(createCSV(count1, count2, ratio, species1Name, species2Name, "data.csv"))
         } else {
             files.push(createCSV(count1, null, null, species1Name, null, "data.csv"))
@@ -119,7 +125,7 @@ class TaxonFrequency extends SlaveProcess {
 
     //return  Files of csv and jpeg
     String generateChart(ds, String title, String outputfile, isLineChart, isPercent) {
-        JFreeChart chart = createChartInstance(ds, title, isLineChart, isPercent)
+        JFreeChart chart = createChartInstance(ds, title, isLineChart, isPercent, "Count")
 
         new File(getTaskPath().toString()).mkdirs()
         File chart_file = new File(getTaskPath() + outputfile + ".jpeg");
@@ -156,7 +162,7 @@ class TaxonFrequency extends SlaveProcess {
     //return  Files of csv and jpeg
     String generateRatioChart(ratio_ds, String title, String outputfile, isLineChart, isPercent) {
 
-        def ratio_chart = createChartInstance(ratio_ds, title, isLineChart, isPercent);
+        def ratio_chart = createChartInstance(ratio_ds, title, isLineChart, isPercent, 'Ratio');
 
         new File(getTaskPath().toString()).mkdirs()
         File ratio_chart_file = new File(getTaskPath() + outputfile + ".jpeg");
@@ -165,7 +171,7 @@ class TaxonFrequency extends SlaveProcess {
         outputfile + '.jpeg'
     }
 
-    JFreeChart createChartInstance(ds, String title, boolean isLineChart, boolean isPercent) {
+    JFreeChart createChartInstance(ds, String title, boolean isLineChart, boolean isPercent, String yLabel) {
         // Ratio chart
         def series = new TimeSeriesCollection(ds)
         def chart, plot
@@ -174,7 +180,7 @@ class TaxonFrequency extends SlaveProcess {
             chart = ChartFactory.createTimeSeriesChart(
                     title,
                     "Year",
-                    "Count",
+                    yLabel,
                     series,
                     false, true, false);
 
@@ -193,7 +199,7 @@ class TaxonFrequency extends SlaveProcess {
                     title,
                     "Year",
                     true,
-                    "Count",
+                    yLabel,
                     series, PlotOrientation.VERTICAL,
                     false, true, false);
 

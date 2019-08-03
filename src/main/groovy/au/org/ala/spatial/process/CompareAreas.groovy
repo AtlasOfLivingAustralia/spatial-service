@@ -48,6 +48,14 @@ class CompareAreas extends SlaveProcess {
         def speciesBoth = []
 
         taskLog("sort species lists")
+        if (area1.speciesList.size == 0) {
+            taskLog("no species in area: " + area1.name)
+            return
+        }
+        if (area2.speciesList.size == 0) {
+            taskLog("no species in area: " + area2.name)
+            return
+        }
         def header = appendStrings(area1.speciesList[0], "Number of occurrences - " + area1.name, "Number of occurrences - " + area2.name)
         def sorted1 = area1.speciesList.subList(1, area1.speciesList.size)
         sorted1.sort(new StringArrayComparator())
@@ -72,7 +80,7 @@ class CompareAreas extends SlaveProcess {
                 i1++
             } else if (sorted1[i1][0] == sorted2[i2][0]) {
                 speciesBoth.push(sorted1[i1][0])
-                csv.writeNext(appendStrings(sorted2[i2], sorted1[i1][11], sorted1[i2][11]))
+                csv.writeNext(appendStrings(sorted2[i2], sorted1[i1][11], sorted2[i2][11]))
                 i1++
                 i2++
             }
