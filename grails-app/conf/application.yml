@@ -179,14 +179,15 @@ security:
     bypass: false # set to true for non-ALA deployment
     gateway: false
     uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
-    uriFilterPattern: '/manageLayers,/manageLayers/.*,/admin,/admin/.*,/alaAdmin.*,/log.*'
-    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/tasks,/tasks/.*,/layers/view/more/.*,/layer/download/.*'
+    uriFilterPattern: '/alaAdmin.*,/log.*'
+    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/tasks,/tasks/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
     disableCAS: false
 
 auth.admin_role: "ROLE_ADMIN"
 app.http.header.userId: "X-ALA-userId"
 
-headerAndFooter.baseURL: 'https://www.ala.org.au/commonui-bs3'
+headerAndFooter.baseURL: 'https://www.ala.org.au/commonui-bs3-2019'
+headerAndFooter.version: '2'
 ala.baseURL: 'https://www.ala.org.au'
 bie.baseURL: 'https://bie.ala.org.au'
 bie.searchPath: '/search'
