@@ -95,9 +95,7 @@ class DistributionRematchLsid extends SlaveProcess {
         } catch (e) {
             log.error 'failed to search lsid', e
         } finally {
-            if (get != null) {
-                get.releaseConnection()
-            }
+
         }
 
         lsid
@@ -108,7 +106,7 @@ class DistributionRematchLsid extends SlaveProcess {
         String genusLsid = null
 
         try {
-            URL wsUrl = new URL(task.input.bieUrl.toString() + "/search.json?fq=rank:genus&q=" + id)
+            URL wsUrl = new URL(task.input.bieUrl.toString() + "/ws/search.json?fq=rank:genus&q=" + id)
             URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef())
 
             def response = Util.urlResponse("GET", uri.toURL().toString())
