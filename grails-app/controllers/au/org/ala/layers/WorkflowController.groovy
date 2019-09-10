@@ -16,7 +16,6 @@
 package au.org.ala.layers
 
 import au.org.ala.layers.dao.UserDataDAO
-import au.org.ala.layers.dto.Ud_header
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 
@@ -48,7 +47,7 @@ class WorkflowController {
         def description = data.description?.toString()
         def metadata = data.metadata?.toString()
 
-        Ud_header header;
+        def header;
 
         String errorMsg;
         if (data.doi?.asBoolean) {
@@ -56,14 +55,17 @@ class WorkflowController {
             errorMsg = getErrorForDoi(data)
 
             if (!errorMsg) {
-                String doi = mintDoi(data);
-                if (doi) {
-                    header = userDataDao.put(user_id, RECORD_TYPE, description, metadata, isPublic, doi)
+                // analysis_id is used to hold the minted value. This makes it readonly.
+                header = userDataDao.put(user_id, RECORD_TYPE, description, metadata, isPublic, null)
+                if (header?.ud_header_id) {
+                    userDataDao.update(header.ud_header_id, user_id, RECORD_TYPE, description, metadata, isPublic, header.ud_header_id)
                 }
             }
         } else {
             header = userDataDao.put(user_id, RECORD_TYPE, description, metadata, isPublic, null)
         }
+
+        header = mapping(header)
 
         def result
         if (errorMsg) {
@@ -95,17 +97,32 @@ class WorkflowController {
     def show(Long id) {
         String user_id = authService.getUserId()
 
-        def header = userDataDao.get(id)
+        def item = userDataDao.get(id)
+
+        if (!item) {
+            render status: 404
+            return
+        }
+
+        def header = mapping(item)
 
         // check authorisation
-        if (header.user_id == user_id ||
-                header.data_path == PUBLIC ||
+        if (header.userId == user_id ||
+                !header.isPrivate ||
                 authService.userInRole(grailsApplication.config.auth.admin_role)) {
-
-            render(header as JSON)
+            // keep metadata details
         } else {
             header.metadata = null
+        }
+
+        if (header.metadata && 'true'.equalsIgnoreCase(params.open)) {
+            def hub = params.hub ? '/hub/' + params.hub : ''
+
+            redirect url: grailsApplication.config.spatialHubUrl + hub + '?workflow=' + header.id
+        } else if (request.getHeader('accept')?.contains('application/json')) {
             render header as JSON
+        } else {
+            render view: 'show', model: [workflowInstance: header]
         }
     }
 
@@ -114,9 +131,10 @@ class WorkflowController {
 
         def metadata = userDataDao.get(id)
 
-        // check authorisation
-        if (metadata.user_id == user_id ||
-                authService.userInRole(grailsApplication.config.auth.admin_role)) {
+        // check authorisation and that it is not minted (no analysis_id)
+        if ((metadata.user_id == user_id ||
+                authService.userInRole(grailsApplication.config.auth.admin_role)) &&
+                metadata.analysis_id == null) {
 
             userDataDao.delete(id)
 
@@ -133,14 +151,22 @@ class WorkflowController {
 
         String isPublic = authService.userInRole(grailsApplication.config.auth.admin_role) ? null : PUBLIC;
 
-        def list = userDataDao.searchDescAndTypeOr('%' + params.q + '%', RECORD_TYPE, user_id, isPublic, null, Integer.parseInt(params.start), Integer.parseInt(params.limit))
+        def list = userDataDao.searchDescAndTypeOr('%' + params.q + '%', RECORD_TYPE, user_id, isPublic, null, Integer.parseInt(params.start ?: '0'), Integer.parseInt(params.limit ?: '10'))
 
-        list.each { item -> item.metadata = null }
+        def formattedList = []
+        list.each { item -> item.metadata = null; formattedList.push(mapping(item)) }
 
-        render list as JSON
+        render formattedList as JSON
     }
 
     private def getErrorForDoi(data) {
         return ""
+    }
+
+    private def mapping(header) {
+        return [id     : header.ud_header_id, mintId: header.analysis_id, name: header.description,
+                userId : header.user_id, isPrivate: !PUBLIC.equalsIgnoreCase(header.data_path),
+                created: header.upload_dt, metadata: header.metadata,
+                url    : grailsApplication.config.grails.serverURL + '/workflow/show/' + header.ud_header_id]
     }
 }
