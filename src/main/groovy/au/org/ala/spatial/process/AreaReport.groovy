@@ -20,9 +20,62 @@ import au.org.ala.spatial.util.AreaReportPDF
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
+import org.json.simple.JSONArray
+import org.json.simple.parser.JSONParser
+import org.springframework.util.StreamUtils
 
 @Slf4j
 class AreaReport extends SlaveProcess {
+
+    @Override
+    void updateSpec(spec) {
+        // get path to config
+        def configPath = spec.private.configPath ?: '/data/spatial-service/config'
+
+        // get AreaReportDetails.json
+        JSONParser jp = new JSONParser()
+        def pages = (JSONArray) jp.parse(new String(getFileAsBytes("AreaReportDetails.json", configPath), "UTF-8"))
+
+        // get page names
+        def headers = []
+        def pageIdx = 0
+        for (def page : pages) {
+            // only general pages can be excluded
+            if (pageIdx > 0 && 'general'.equals(page.type)) {
+                if (page.text0) {
+                    // add names of all subpages
+                    headers.addAll(page.text0)
+                } else if (page.items && page.items.size() > 0) {
+                    def bookmarks = false
+                    for (def item : page.items) {
+                        if ('bookmarks'.equals(item.type)) {
+                            bookmarks = true
+                        }
+                    }
+                    if (!bookmarks && page.items[0].text) {
+                        // add name of this page
+                        headers.add(page.items[0].text)
+                    }
+                }
+            }
+            pageIdx++
+        }
+
+        // add page names to list of available pages
+        spec.input.ignoredPages.constraints.content = headers
+    }
+
+    byte[] getFileAsBytes(String file, String configPath) throws Exception {
+        File overrideFile = new File(configPath + "/" + file)
+        byte[] bytes = null
+        if (overrideFile.exists()) {
+            bytes = FileUtils.readFileToByteArray(overrideFile)
+        } else {
+            bytes = StreamUtils.copyToByteArray(AreaReportPDF.class.getResourceAsStream("/areareport/" + file))
+        }
+
+        return bytes
+    }
 
     void start() {
 
@@ -33,6 +86,19 @@ class AreaReport extends SlaveProcess {
 
         //qid for this area
         def q = "qid:" + Util.makeQid(speciesQuery)
+
+        //override config path
+        def configPath = task.spec.private.configPath ?: '/data/spatial-service/config'
+        if (task.spec.private.configPath && !'/data/spatial-service/config'.equals(task.spec.private.configPath)) {
+            //copy resources to task dir when using a custom config
+            for (File file : new File(task.spec.private.configPath).listFiles()) {
+                if (file.isFile() && !file.getName().endsWith(".json")) {
+                    FileUtils.copyFileToDirectory(file, new File(getTaskPath()))
+                }
+            }
+        }
+
+        def ignoredPages = JSON.parse(task.input.ignoredPages)
 
         //test for pid
         new AreaReportPDF(grailsApplication.config.geoserver.url.toString(),
@@ -47,7 +113,8 @@ class AreaReport extends SlaveProcess {
                 grailsApplication.config.spatialService.url.toString(),
                 getTaskPath(),
                 grailsApplication.config.journalmap.url.toString(),
-                grailsApplication.config.data.dir.toString())
+                grailsApplication.config.data.dir.toString(),
+                configPath, ignoredPages)
 
         File pdf = new File(getTaskPath() + "areaReport" + task.id + ".pdf")
         def outputStream = FileUtils.openOutputStream(pdf)

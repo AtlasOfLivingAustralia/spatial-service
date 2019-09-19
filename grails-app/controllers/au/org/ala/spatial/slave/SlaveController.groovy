@@ -93,32 +93,94 @@ class SlaveController {
     def areaReport(Long id) {
         def pages = []
 
+        def bookmarkStart = 0
+        def bookmarks = false
+
         File file
         def isStream = params.stream ? params.stream: true
         def i = params.start?.toInteger() ?: 1
         def end = params.end?.toInteger() ?: 500
+        def pageHeader
 
         while (i <= end &&
                 ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
                         (file = new File(grailsApplication.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists())) {
-            pages.add(cleanPageText(file.text, i, file))
-            i = i + 1
+
+            if (file.text.contains("page-header")) {
+                pageHeader = cleanPageText(file.text, i, file)
+                i = i + 1
+            } else {
+                pages.add(cleanPageText(file.text, i, file))
+                i = i + 1
+
+                if (file.text.contains("bookmarks")) {
+                    bookmarkStart = i
+                    bookmarks = true
+                }
+            }
+        }
+
+        if (pageHeader) {
+            // insert into page with bookmarks
+            pageHeader = "<div class='pageheader'></div>" + pageHeader
+            for (i = 1; i < pages.size(); i++) {
+                if (!pages[i].contains("page-header")) {
+                    def insertPos = pages[i].indexOf("<div class='content")
+                    while (insertPos >= 0) {
+                        pages[i] = pages[i].substring(0, insertPos) +
+                                pageHeader +
+                                pages[i].substring(insertPos)
+                        insertPos = pages[i].indexOf("<div class='content", insertPos + pageHeader.length() + 1)
+                    }
+                }
+            }
         }
 
         //find class='title' for table of contents
         StringBuilder sb = new StringBuilder()
-        sb.append("<div class='tableOfContents'><h1>Table of Contents</h1><ol class='toc'>")
-        for (String page : pages) {
+        sb.append("<ol class='toc'>")
+        for (def page : pages) {
             page.findAll(" class='title' id='([^']*)'") { match, bookmark ->
-                sb.append("<li><a href='#").append(bookmark).append("'>").append(bookmark).append("</a></li>")
+                def a1 = page.indexOf("<tr class='bookmarks")
+                def a2 = page.indexOf(" class='title' id='" + bookmark + "'")
+                if (page.indexOf("<tr class='bookmarks") < page.indexOf(" class='title' id='" + bookmark + "'")) {
+                    sb.append("<li><a href='#").append(bookmark).append("'>").append(bookmark).append("</a></li>")
+                }
             }
         }
-        sb.append("</ol></div>")
-        pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
+        String s;
+        sb.append("</ol>")
 
-        def cssFile = SlaveController.class.getResource('/areareport/areaReport.css')
+        if (!bookmarks && pages.size() > 0) {
+            // insert bookmarks page
+            def part1 = [pages[0]]
+            def part2 = pages.size() > 1 ? pages.subList(1, pages.size()) : []
+            pages = part1 +
+                    ["<div id='tableOfContents'><h1>Table of Contents</h1>" + sb.toString() + "</div>"] +
+                    part2
+        } else {
+            // insert into page with bookmarks
+            for (i = 0; i < pages.size(); i++) {
+                def pos = pages[i].indexOf("<tr class='bookmarks")
+                if (pos >= 0) {
+                    def insertPos = pages[i].indexOf("</td>", pos)
+                    if (insertPos >= 0) {
+                        pages[i] = pages[i].substring(0, insertPos) +
+                                sb.toString() +
+                                pages[i].substring(insertPos)
+                    }
+                }
+            }
+        }
 
-        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id, cssFile: cssFile], filename: "areaReport" + id + ".pdf", stream: isStream)
+        def css
+        if (new File(grailsApplication.config.data.dir + '/public/' + id).exists()) {
+            css = new File(grailsApplication.config.data.dir + '/public/' + id + '/areaReport.css').text
+        } else {
+            css = new File(grailsApplication.config.data.dir + '/private/' + id + '/areaReport.css').text
+        }
+
+        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id, css: css], filename: "areaReport" + id + ".pdf", stream: isStream)
     }
 
     private def cleanPageText(text, i, file) {
@@ -157,29 +219,81 @@ class SlaveController {
 
         } else {
             //area report
+            def bookmarkStart = 0
+            def bookmarks = false
             File file
             def i = 1
+            def pageHeader
             while ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
                     (file = new File(grailsApplication.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists()) {
                 pages.add(file.text.replaceAll("^.*<body>", "").//<div style='page-break-before: always;'>").
                         replaceAll("</body>.*\$", "").//</div>").
                         replaceAll("<tr></tr>", "").
-                        replaceAll(" src='([^/']*)'", " src='file://${grailsApplication.config.data.dir}/task/${id}/\$1'"))
+                        replaceAll(" src='([^/']*)'", " src='/tasks/output/1/\$1'"))
                 i = i + 1
+
+                if (file.text.contains("page-header")) {
+                    pageHeader = cleanPageText(file.text, i, file)
+                } else {
+                    if (file.text.contains("bookmarks")) {
+                        bookmarkStart = i
+                        bookmarks = true
+                    }
+                }
+            }
+
+            if (pageHeader) {
+                // insert into page with bookmarks
+                pageHeader = "<div class='pageheader'></div>" + pageHeader
+                for (i = 1; i < pages.size(); i++) {
+                    if (!pages[i].contains("page-header")) {
+                        def insertPos = pages[i].indexOf("<div class='content")
+                        while (insertPos >= 0) {
+                            pages[i] = pages[i].substring(0, insertPos) +
+                                    pageHeader +
+                                    pages[i].substring(insertPos)
+                            insertPos = pages[i].indexOf("<div class='content", insertPos + pageHeader.length() + 1)
+                        }
+                    }
+                }
             }
 
             //find class='title' for table of contents
             StringBuilder sb = new StringBuilder()
-            sb.append("<div id='tableOfContents'><h1>Table of Contents</h1><ol class='toc'>")
-            for (String page : pages) {
+            sb.append("<ol class='toc'>")
+            for (def page : pages) {
                 page.findAll(" class='title' id='([^']*)'") { match, bookmark ->
-                    sb.append("<li><a href='#").append(bookmark).append("'>").append(bookmark).append("</a></li>")
+                    def a1 = page.indexOf("<tr class='bookmarks")
+                    def a2 = page.indexOf(" class='title' id='" + bookmark + "'")
+                    if (page.indexOf("<tr class='bookmarks") < page.indexOf(" class='title' id='" + bookmark + "'")) {
+                        sb.append("<li><a href='#").append(bookmark).append("'>").append(bookmark).append("</a></li>")
+                    }
                 }
             }
-            sb.append("</ol></div>")
-            pages = [pages[0]] + [sb.toString()] + pages.subList(1, pages.size())
+            String s;
+            sb.append("</ol>")
 
-            [pages: pages, id: id]
+            if (!bookmarks) {
+                // insert bookmarks page
+                pages = [pages[0]] +
+                        ["<div id='tableOfContents'><h1>Table of Contents</h1>" + sb.toString() + "</div>"] +
+                        pages.subList(1, pages.size())
+            } else {
+                // insert into page with bookmarks
+                for (i = 0; i < pages.size(); i++) {
+                    def pos = pages[i].indexOf("<tr class='bookmarks")
+                    if (pos >= 0) {
+                        def insertPos = pages[i].indexOf("</td>", pos)
+                        if (insertPos >= 0) {
+                            pages[i] = pages[i].substring(0, insertPos) +
+                                    sb.toString() +
+                                    pages[i].substring(insertPos)
+                        }
+                    }
+                }
+            }
+
+            [pages: pages, id: id, cssFile: "/tasks/output/1/areaReport.css"]
         }
     }
 }

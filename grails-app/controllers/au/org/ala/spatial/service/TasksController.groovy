@@ -287,8 +287,7 @@ class TasksController {
                 response.setContentType("text/plain")
                 ok = true
             }else{
-                render(text: 'Unknow format of ' + file, contentType: "text/html", encoding: "UTF-8" )
-                return
+                ok = true
             }
 
             if (ok) {

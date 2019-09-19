@@ -6,7 +6,11 @@
 <head>
     <title>Area Report</title>
 
-    <link rel="stylesheet" href="${cssFile}" type="text/css"></link>
+    <style type="text/css">
+    ${
+    raw(css)
+    }
+    </style>
 </head>
 
 <body>

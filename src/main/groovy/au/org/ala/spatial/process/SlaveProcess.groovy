@@ -59,14 +59,21 @@ class SlaveProcess {
     void stop() {}
 
     // define inputs and outputs
-    Map spec() {
-        Map s = JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text) as Map
+    Map spec(Map config) {
+        Map s
+        if (config == null) {
+            s = JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text) as Map
+        } else {
+            s = config
+        }
 
         if (!s.containsKey('private')) {
             s.put('private', [:])
         }
 
         s.private.put('classname', this.class.getCanonicalName())
+
+        updateSpec(s)
 
         s
     }
@@ -1114,5 +1121,12 @@ class SlaveProcess {
         InputStream is = c.getInputStream();
         return is;
     }
+
+    /**
+     * Update spec based on local configuration.
+     *
+     * @param spec
+     */
+    void updateSpec(spec) {}
 
 }
