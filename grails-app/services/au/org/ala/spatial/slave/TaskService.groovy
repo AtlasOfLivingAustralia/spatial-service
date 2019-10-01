@@ -319,6 +319,7 @@ class TaskService {
                 operator.fileLockService = taskService.fileLockService
 
                 //start
+                request.history.put(System.currentTimeMillis(), "running (id:${request.id})")
                 request.message = 'running'
                 log.debug "task:${request.id} running"
                 operator.start()
