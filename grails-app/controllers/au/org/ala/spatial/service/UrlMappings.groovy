@@ -123,7 +123,7 @@ class UrlMappings {
         "/tasks/output/$p1/$p2?"(controller: "tasks", action: "output")
 
 
-
+        "/files/inter_layer_association.csv"(controller: "layerDistances", action: "csv")
 
         "/$controller/$action?/$id?(.$format)?" {
             constraints {
