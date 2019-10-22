@@ -198,7 +198,7 @@ api_key: ''
 lists.url: 'https://lists.ala.org.au'
 collections.url: 'https://collections.ala.org.au'
 sandboxHubUrl: 'http://sandbox.ala.org.au/ala-hub'
-sandboxBiocacheServiceUrl: 'http://sandbox.ala.org.au/ws'
+sandboxBiocacheServiceUrl: 'http://sandbox.ala.org.au/biocache-service'
 phyloServiceUrl: 'https://phylolink.ala.org.au'
 
 spatialHubUrl: 'https://spatial.ala.org.au'

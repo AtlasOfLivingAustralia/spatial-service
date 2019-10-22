@@ -17,124 +17,88 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
 import groovy.util.logging.Slf4j
+import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
-import org.json.simple.JSONArray
 import org.json.simple.JSONObject
-import org.json.simple.parser.JSONParser
 
 @Slf4j
 class DistributionRematchLsid extends SlaveProcess {
 
     void start() {
-        String updateAll = task.input.updateAll
+        String updateAll = 'true'.equalsIgnoreCase(task.input.updateAll)
 
         List distributions = getDistributions()
         distributions.addAll(getChecklists())
 
         //unique by spcode
         int sqlCount = 0
+        int count = 0
         distributions.each { d ->
+            count = count + 1
+            task.message = "Processing ${count} of ${distributions.size()}"
+
             String spcode = d.spcode
 
-            boolean hasFamilyLsid = d.containsKey('family_lsid') && d.family_lsid != null && d.family_lsid.length() > 0
-            boolean hasGenusLsid = d.containsKey('genus_lsid') && d.genus_lsid != null && d.genus_lsid.length() > 0
-            boolean hasLsid = d.containsKey('lsid') && d.lsid != null && d.lsid.length() > 0
+            String familyLsid = d.optString('family_lsid', '')
+            String genusLsid = d.optString('genus_lsid', '')
+            String taxonLsid = d.optString('lsid', '')
 
-            String newFamilyLsid = (updateAll || !hasFamilyLsid) && d.family_lsid != d.containsKey('family') && d.family != null && d.family.length() > 0 ? lookupSpeciesOrFamilyLsid(d.family) : null
-            String newGenusLsid = (updateAll || !hasGenusLsid) && d.containsKey('genus_name') && d.genus_name != null && d.genus_name.length() > 0 ? lookupGenusLsid(d.genus_name) : null
-            String newLsid = (updateAll || !hasLsid) && d.containsKey('scientific') && d.scientific != null && d.scientific.length() > 0 ? lookupSpeciesOrFamilyLsid(d.scientific) : null
+            if (updateAll || (familyLsid + genusLsid + taxonLsid).isEmpty()) {
 
-            String sqlf = "UPDATE distributions SET family_lsid = '" + newFamilyLsid + "' WHERE spcode='" + spcode + "';"
-            String sqlg = "UPDATE distributions SET genus_lsid = '" + newGenusLsid + "' WHERE spcode='" + spcode + "';"
-            String sqll = "UPDATE distributions SET lsid = '" + newLsid + "' WHERE spcode='" + spcode + "';"
+                String sql = ''
+                def match = processRecord([family: d.optString('family', ''), genus: d.optString('genus_name', ''), scientificName: d.optString('scientific', '')])
 
-            String sql = ''
-            if (newFamilyLsid != null && (!hasFamilyLsid || !newFamilyLsid.equals(d.family_lsid))) {
-                sql += sqlf
-            }
-            if (newGenusLsid != null && (!hasGenusLsid || !newGenusLsid.equals(d.genus_lsid))) {
-                sql += sqlg
-            }
-            if (newLsid != null && (!hasLsid || !newLsid.equals(d.lsid))) {
-                sql += sqll
-            }
-
-            if (sql.length() > 0) {
-                File sqlFile = new File(getTaskPath() + 'objects' + sqlCount + '.sql')
-                boolean append = sqlFile.exists() && sqlFile.length() < 5 * 1024 * 1024
-                if (!append) {
-                    sqlCount++
-                    sqlFile = new File(getTaskPath() + 'objects' + sqlCount + '.sql')
-                    addOutput('sql', 'objects' + sqlCount + '.sql')
+                if (!familyLsid.equals(match.familyID)) {
+                    sql += "UPDATE distributions SET family_lsid = '" + match.familyID + "' WHERE spcode='" + spcode + "';"
                 }
-                FileUtils.writeStringToFile(sqlFile, sql, append)
-            }
-        }
-    }
+                if (!genusLsid.equals(match.genusID)) {
+                    sql += "UPDATE distributions SET genus_lsid = '" + match.genusID + "' WHERE spcode='" + spcode + "';"
+                }
+                if (!taxonLsid.equals(match.taxonConceptID)) {
+                    sql += "UPDATE distributions SET lsid = '" + match.taxonConceptID + "' WHERE spcode='" + spcode + "';"
+                }
 
-    String lookupSpeciesOrFamilyLsid(id) {
-        String lsid = null
-
-        try {
-            URL wsUrl = new URL(task.input.bieUrl.toString() + "/ws/guid/" + id)
-            URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef())
-
-            def response = Util.urlResponse("GET", uri.toURL().toString())
-
-            if (!response || !response?.text || response?.statusCode != 200) {
-                log.error("Fetching of species or family LSID failed :" + response + ", " + id)
-                return null
-            }
-
-            JSONArray jsonArr = (JSONArray) new JSONParser().parse(response.text)
-            if (jsonArr.size() > 0) {
-                JSONObject jsonObj = (JSONObject) jsonArr.get(0)
-
-                lsid = (String) jsonObj.get("acceptedIdentifier")
-            }
-        } catch (e) {
-            log.error 'failed to search lsid', e
-        } finally {
-
-        }
-
-        lsid
-    }
-
-    // Need to use a different web service to lookup genus lsids
-    String lookupGenusLsid(id) {
-        String genusLsid = null
-
-        try {
-            URL wsUrl = new URL(task.input.bieUrl.toString() + "/ws/search.json?fq=rank:genus&q=" + id)
-            URI uri = new URI(wsUrl.getProtocol(), wsUrl.getAuthority(), wsUrl.getPath(), wsUrl.getQuery(), wsUrl.getRef())
-
-            def response = Util.urlResponse("GET", uri.toURL().toString())
-
-            if (!response || response?.statusCode != 200) {
-                throw new IllegalStateException("Fetching of species or family LSID failed")
-            }
-
-            String responseContent = response.text
-
-            JSONObject jsonObj = (JSONObject) new JSONParser().parse(responseContent)
-
-            if (jsonObj.containsKey("searchResults")) {
-                JSONObject searchResultsObj = (JSONObject) jsonObj.get("searchResults")
-                if (searchResultsObj.containsKey("results")) {
-                    JSONArray resultsArray = (JSONArray) searchResultsObj.get("results")
-                    if (resultsArray.size() > 0) {
-                        JSONObject firstResult = (JSONObject) resultsArray.get(0)
-                        if (firstResult.containsKey("guid")) {
-                            genusLsid = (String) firstResult.get("guid")
-                        }
+                if (sql.length() > 0) {
+                    File sqlFile = new File(getTaskPath() + 'objects' + sqlCount + '.sql')
+                    boolean append = sqlFile.exists() && sqlFile.length() < 5 * 1024 * 1024
+                    if (!append) {
+                        sqlCount++
+                        sqlFile = new File(getTaskPath() + 'objects' + sqlCount + '.sql')
+                        addOutput('sql', 'objects' + sqlCount + '.sql')
                     }
+                    FileUtils.writeStringToFile(sqlFile, sql, append)
                 }
             }
-        } catch (err) {
-            log.error 'failed to search lsid', err
+        }
+    }
+
+    public def processRecord(def data) {
+        def input = net.sf.json.JSONObject.fromObject(data)
+        StringRequestEntity requestEntity = new StringRequestEntity(input.toString())
+
+        // use sandbox biocache-service before biocache-service
+        def url = task.input.sandboxBiocacheServiceUrl ?: task.input.biocacheServiceUrl
+
+        def response = Util.urlResponse("POST", url + "/process/adhoc", null, null, requestEntity)
+
+        def output = net.sf.json.JSONObject.fromObject(response.text)
+
+        def taxonConceptID = ''
+        def familyID = ''
+        def genusID = ''
+
+        for (def c : output.getJSONArray('values')) {
+            def name = ((JSONObject) c).get('name')
+            def value = ((JSONObject) c).get('processed')
+            if ('taxonConceptID'.equalsIgnoreCase(name)) {
+                taxonConceptID = value
+            } else if ('familyID'.equalsIgnoreCase(name)) {
+                familyID = value
+            } else if ('genusID'.equalsIgnoreCase(name)) {
+                genusID = value
+            }
         }
 
-        genusLsid
+        [taxonConceptID: taxonConceptID, familyID: familyID, genusID: genusID]
     }
 }
