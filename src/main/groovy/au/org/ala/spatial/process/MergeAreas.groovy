@@ -30,6 +30,7 @@ class MergeAreas extends SlaveProcess {
         def areas = JSON.parse(task.input.area.toString())
         def name = task.input.name
         def description = task.input.description
+        def type = task.input.type
 
         new File(getTaskPath()).mkdirs()
 
@@ -42,8 +43,17 @@ class MergeAreas extends SlaveProcess {
                 if (geometry == null) {
                     geometry = g
                 } else {
-                    Geometry union = geometry.union(g)
-                    geometry = union
+                    if ("Union".equalsIgnoreCase(type)) {
+                        Geometry union = geometry.union(g)
+                        geometry = union
+                    } else if ("Intersection".equalsIgnoreCase(type)) {
+                        if (!geometry.intersects(g)) {
+                            taskLog("ERROR: Areas do not intersect.")
+                            throw new Exception("ERROR: Areas do not intersect.")
+                        }
+                        Geometry intersection = geometry.intersection(g)
+                        geometry = intersection
+                    }
                 }
             } catch (Exception e) {
 
@@ -54,7 +64,7 @@ class MergeAreas extends SlaveProcess {
             String wkt = geometry.toString()
             FileUtils.writeStringToFile(new File(getTaskPath() + "area.wkt"), wkt)
 
-            def values = [file: "area.wkt", name: name ?: "Merged area", description: description ?: "Created by Merge Areas Tool"]
+            def values = [file: "area.wkt", name: name ?: "Merged area", description: description ?: "Created by Merge Areas Tool (" + type + ')']
             addOutput("areas", (values as JSON).toString(), true)
         }
     }

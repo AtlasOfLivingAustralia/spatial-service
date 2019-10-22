@@ -28,6 +28,18 @@
       "constraints": {
         "mandatory": false
       }
+    },
+    "type": {
+      "description": "Merge type",
+      "type": "list",
+      "constraints": {
+        "selection": "single",
+        "content": [
+          "Union",
+          "Intersection"
+        ],
+        "default": "Union"
+      }
     }
   },
   "output": {
