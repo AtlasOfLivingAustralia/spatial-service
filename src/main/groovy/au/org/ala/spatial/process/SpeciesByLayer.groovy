@@ -15,10 +15,12 @@
 
 package au.org.ala.spatial.process
 
-import au.com.bytecode.opencsv.CSVReader
 import au.com.bytecode.opencsv.CSVWriter
+import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
+import org.json.simple.JSONArray
+import org.json.simple.parser.JSONParser
 
 @Slf4j
 class SpeciesByLayer extends SlaveProcess {
@@ -31,57 +33,72 @@ class SpeciesByLayer extends SlaveProcess {
         HashMap<String, Integer> speciesMap = new HashMap()
 
         def field = getField(fields[0])
+        def layer = getLayer(field.spid)
 
-        def fieldObjects = getObjects(fields[0])
-        HashMap<String, SpeciesByLayerCount> counts = new HashMap();
+        if (field.type != 'e') {
+            // indexed only fields - contextual or grid as contextual layers
 
-        // added encoding fix
-        for (def fieldObject : fieldObjects) {
-            counts.put(new String(fieldObject.name.getBytes("US-ASCII"), "UTF-8"), new SpeciesByLayerCount(fieldObject.area_km))
-        }
+            def fieldObjects = getObjects(fields[0])
+            HashMap<String, SpeciesByLayerCount> counts = new HashMap();
 
-        HashSet<String> occurrenceIds = new HashSet();
+            HashSet<String> occurrenceIds = new HashSet();
 
-        def firstSpecies = true;
-        def speciesNames = []
-        for (def species : speciesList) {
-            speciesNames.push(species.name)
+            def firstSpecies = true;
+            def speciesNames = []
+            for (def species : speciesList) {
+                speciesNames.push(species.name)
 
-            // csv contains a header and the columns [id, names_and_lsid, field value]
-            def stream = getOccurrencesCsv(species.q + "&fq=" + fields[0] + ":*", species.bs, 'id,names_and_lsid,' + fields[0])
-            def reader = new CSVReader(new InputStreamReader(stream))
+                int n = 0
+                for (def fieldObject : fieldObjects) {
+                    def areaName = new String(fieldObject.name.getBytes("US-ASCII"), "UTF-8")
+                    if (speciesList.size > 1) areaName + ", " + species.name
 
-            // ignore csv header
-            def row = reader.readNext()
+                    def count = new SpeciesByLayerCount(fieldObject.area_km)
 
-            while ((row = reader.readNext()) != null) {
-                // only read each occurrence once
-                if (row.length == 3 && (firstSpecies || !occurrenceIds.contains(row[0]))) {
-                    SpeciesByLayerCount count = counts.get(new String(row[2].getBytes("US-ASCII"), "UTF-8"))
+                    n = n + 1
+                    task.message = "Getting species for \"" + fieldObject.name + "\" (area " + n + " of " + fieldObjects.size + ", group " + speciesNames.size + " of " + speciesList.size + ")"
 
-                    // ignore species without a valid field value
-                    if (count != null) {
-                        count.occurrences++
+                    def fq = fields[0] + ":" + fieldObject.name
+                    count.species = facetCount('names_and_lsid', species, fq)
+                    count.occurrences = occurrenceCount(species, fq)
 
-                        Integer speciesId = speciesMap.get(row[1]);
-                        if (speciesId == null) {
-                            speciesId = speciesMap.size()
-                            speciesMap.put(row[1], speciesId)
-                        }
-                        count.species.set(speciesId)
-                    }
-
-                    occurrenceIds.add(row[0])
+                    // added encoding fix
+                    counts.put(areaName, count)
                 }
             }
+        } else {
+            // indexed only - environmental fields
 
-            try {
-                stream.close()
-            } catch (Exception e) {
-                e.printStackTrace()
+            String url = species.bs + "/chart?x=" + fields[0] + "&q=" + species.q
+            String response = Util.getUrl(url)
+
+            JSONParser jp = new JSONParser()
+            def fieldObjects = ((JSONArray) jp.parse(response)).getAt("data").get(0).getAt("data")
+
+            def firstSpecies = true;
+            def speciesNames = []
+            for (def species : speciesList) {
+                speciesNames.push(species.name)
+
+                int n = 0
+                for (def fieldObject : fieldObjects) {
+                    def areaName = fieldObject.label
+                    if (speciesList.size > 1) fields[0].name + ':' + areaName + " " + layer.environmentalvalueunits + ", " + species.name
+
+                    // no area_km
+                    def count = new SpeciesByLayerCount(-1)
+
+                    n = n + 1
+                    task.message = "Getting species for \"" + fieldObject.label + "\" (area " + n + " of " + fieldObjects.size + ", group " + speciesNames.size + " of " + speciesList.size + ")"
+
+                    def fq = fieldObject.fq
+                    count.species = facetCount('names_and_lsid', species, fq)
+                    count.occurrences = occurrenceCount(species, fq)
+
+                    // added encoding fix
+                    counts.put(areaName, count)
+                }
             }
-
-            firstSpecies = false;
         }
 
         // produce csv from counts
@@ -93,10 +110,18 @@ class SpeciesByLayer extends SlaveProcess {
         writer.writeNext((String[]) ['layer', field.name])
 
         //header
-        writer.writeNext((String[]) ['area name', 'area (sq km)', 'number of species', 'number of occurrences'])
+        if (field.type != 'e') {
+            writer.writeNext((String[]) ['area name', 'area (sq km)', 'number of species', 'number of occurrences'])
+        } else {
+            writer.writeNext((String[]) ['area name', 'number of species', 'number of occurrences'])
+        }
 
         for (def entry : counts.entrySet()) {
-            writer.writeNext([entry.key, entry.value.area, entry.value.species.cardinality(), entry.value.occurrences] as String[])
+            if (field.type != 'e') {
+                writer.writeNext([entry.key, entry.value.area, entry.value.species.cardinality(), entry.value.occurrences] as String[])
+            } else {
+                writer.writeNext([entry.key, entry.value.species.cardinality(), entry.value.occurrences] as String[])
+            }
         }
 
         writer.flush()

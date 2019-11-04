@@ -106,11 +106,9 @@ class DistributionController {
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
         if (distributions != null && !distributions.isEmpty()) {
-            distributionsService.addImageUrls(distributions)
-            render distributions.collect {
-                it.toMap().findAll {
+            distributionsService.addImageUrl(distributions.get(0))
+            render distributions.get(0).toMap().findAll {
                     i -> i.value != null && "class" != i.key
-                }
             } as JSON
         } else {
             render(status: 404, text: 'no records for this lsid')
@@ -128,8 +126,7 @@ class DistributionController {
                 }
             } as JSON
         } else {
-            response.sendError(404)
-            return null
+            render(status: 404, text: 'no records for this lsid')
         }
     }
 

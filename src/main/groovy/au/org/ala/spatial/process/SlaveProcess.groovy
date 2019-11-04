@@ -294,7 +294,14 @@ class SlaveProcess {
     }
 
     def facetCount(facet, species) {
-        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q
+        return facetCount(facet, species, null)
+    }
+
+    def facetCount(facet, species, extraFq) {
+        String fq = ''
+        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
+
+        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q + fq
         String response = Util.getUrl(url)
 
         JSONParser jp = new JSONParser()
@@ -302,7 +309,14 @@ class SlaveProcess {
     }
 
     def occurrenceCount(species) {
-        String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q
+        return occurrenceCount(species, null)
+    }
+
+    def occurrenceCount(species, extraFq) {
+        String fq = ''
+        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
+
+        String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q + fq
         String response = Util.getUrl(url)
 
         JSONParser jp = new JSONParser()
@@ -891,10 +905,16 @@ class SlaveProcess {
     }
 
     String getSpeciesList(species) {
+        return getSpeciesList(species, null, true, true)
+    }
+
+    String getSpeciesList(species, extraFq, lookup, count) {
         String speciesList = null
 
         try {
-            String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=true&count=true&q=" + species.q
+            String fq = ''
+            if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
+            String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q + fq
             speciesList = Util.getUrl(url)
         } catch (err) {
             log.error 'failed to get species list', err

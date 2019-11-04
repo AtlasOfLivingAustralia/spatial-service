@@ -101,11 +101,9 @@ class TrackController {
     def lsid(String lsid) {
         List distributions = distributionDao.getDistributionByLSID([lsid] as String[], 't', true)
         if (distributions != null && !distributions.isEmpty()) {
-            distributionsService.addImageUrls(distributions)
-            render distributions.collect {
-                it.toMap().findAll {
-                    i -> i.value != null && "class" != i.key
-                }
+            distributionsService.addImageUrl(distributions.get(0))
+            render distributions.get(0).toMap().findAll {
+                i -> i.value != null && "class" != i.key
             } as JSON
         } else {
             render(status: 404, text: 'no records for this lsid')
@@ -123,8 +121,7 @@ class TrackController {
                 }
             } as JSON
         } else {
-            response.sendError(404)
-            return null
+            render(status: 404, text: 'no records for this lsid')
         }
     }
 
