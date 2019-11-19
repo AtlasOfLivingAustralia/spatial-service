@@ -106,9 +106,10 @@ skin:
 data:
   dir: '/data/spatial-data'
 geoserver:
-  url: 'http://local.ala.org.au:8079/geoserver'
-  username: ''
-  password: ''
+  # use localhost to play nice with locally running geoserver docker instance.
+  url: 'http://localhost:8079/geoserver'
+  username: 'admin'
+  password: 'geoserver'
   canDeploy: true
   spatialservice:
     colocated: true
@@ -311,6 +312,8 @@ environments:
             serverURL: http://dev.ala.org.au:8080
             app:
                 context: ''
+        gdal:
+            dir: "/usr/local/bin/"
 
     test:
         dataSource:

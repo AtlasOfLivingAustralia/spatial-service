@@ -448,7 +448,9 @@ class ManageLayersService {
             map.putAll(jo)
         } catch (Exception e) {
             try {
-                Layer l = layerDao.getLayerById(Integer.parseInt(layerId.replaceAll("[ec]l", "")), false)
+                Integer parsedLayerId = Integer.parseInt(layerId.replaceAll("[ec]l", ""))
+                Layer l = layerDao.getLayerById(parsedLayerId
+                )
                 if (upload.size() == 0) map.putAll(l.toMap())
                 //try to get from layer info
                 map.put("raw_id", l.getId())
@@ -461,6 +463,7 @@ class ManageLayersService {
                         grailsApplication.config.geoserver.url +
                                 "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
                                 "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
+
             } catch (Exception e2) {
                 log.error("failed to find layer for rawId: " + layerId, e2);
             }

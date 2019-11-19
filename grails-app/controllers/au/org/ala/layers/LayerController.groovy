@@ -245,7 +245,11 @@ class LayerController {
             if (l == null) {
                 l = layerDao.getLayerByName(id, false)
             }
-            render l as JSON
+            if (l){
+                render l as JSON
+            } else {
+                response.sendError(404, "Layer not found")
+            }
         }
     }
 

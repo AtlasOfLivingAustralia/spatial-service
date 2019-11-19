@@ -12,7 +12,7 @@ buildscript {
     }
 }
 
-version "0.3"
+version "0.3.1-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -39,7 +39,7 @@ dependencies {
     compile "org.springframework:spring-test:4.3.9.RELEASE"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
+    provided "org.springframework.boot:spring-boot-starter-tomcat"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"
