@@ -5,6 +5,7 @@ sudo: false
 branches:
   only:
   - master
+  - feature/docker-and-encoding-fixes
 addons:
   apt:
     packages:
