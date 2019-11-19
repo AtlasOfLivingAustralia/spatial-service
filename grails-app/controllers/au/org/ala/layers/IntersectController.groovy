@@ -160,7 +160,7 @@ class IntersectController {
             if (map.get("finished") != null) {
                 os = response.getOutputStream()
 
-                bis = new BufferedInputStream(new FileInputStream(dir.getPath() + File.separator + id + File.separator + "sample.csv"), "UTF-8")
+                bis = new BufferedInputStream(new FileInputStream(dir.getPath() + File.separator + id + File.separator + "sample.csv"))
 
                 if (!csv) {
                     zip = new ZipOutputStream(os)

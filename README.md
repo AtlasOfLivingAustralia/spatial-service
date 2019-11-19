@@ -7,8 +7,14 @@ data in Shape or Grid format.
 
 It includes:
  
-* A management console Ingestion of Shape and Grid files
-* TODO complete list....
+* A management console ingestion of Shape and Grid files
+* Flexible field mapping capability allowing grouping of multipolygons by different fields provided in the DBF
+* Maxent modelling 
+* Tabulation
+* Species polygon distributions
+* Intersection services
+* Track...
+
 
 # Architecture
 
