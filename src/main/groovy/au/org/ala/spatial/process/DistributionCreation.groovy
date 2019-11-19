@@ -16,7 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.GeomMakeValid
-import org.locationtech.jts.geom.Geometry
+import com.vividsolutions.jts.geom.Geometry
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.geotools.data.FeatureReader

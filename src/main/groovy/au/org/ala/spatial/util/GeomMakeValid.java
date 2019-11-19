@@ -14,6 +14,12 @@
  */
 
 package au.org.ala.spatial.util;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.operation.polygonize.Polygonizer;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Transaction;
@@ -24,11 +30,6 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.geometry.jts.JTSFactoryFinder;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.operation.polygonize.Polygonizer;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -39,6 +40,18 @@ import java.util.*;
 public class GeomMakeValid {
 
     public static void main(String[] args) {
+//        try {
+//            String wkt = FileUtils.readFileToString(new File("/data/wkt.txt"));
+//            WKTReader r = new WKTReader();
+//            Geometry g = r.read(wkt);
+//            System.out.println(g.isValid());
+//            Geometry g2 = makeValid(g);
+//            System.out.println(g2.isValid());
+//            System.out.println(g2.toText());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return;
         //testing all shapefiles
         File d = new File("/data/spatial/layer");
         boolean ok = false;

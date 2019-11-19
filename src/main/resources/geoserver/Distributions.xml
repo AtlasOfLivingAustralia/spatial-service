@@ -216,7 +216,7 @@
             <minOccurs>0</minOccurs>
             <maxOccurs>1</maxOccurs>
             <nillable>true</nillable>
-            <binding>org.locationtech.jts.geom.Geometry</binding>
+            <binding>com.vividsolutions.jts.geom.Geometry</binding>
         </attribute>
         <attribute>
             <name>area_name</name>
@@ -307,7 +307,7 @@
             <minOccurs>0</minOccurs>
             <maxOccurs>1</maxOccurs>
             <nillable>true</nillable>
-            <binding>org.locationtech.jts.geom.Geometry</binding>
+            <binding>com.vividsolutions.jts.geom.Geometry</binding>
         </attribute>
         <attribute>
             <name>endemic</name>

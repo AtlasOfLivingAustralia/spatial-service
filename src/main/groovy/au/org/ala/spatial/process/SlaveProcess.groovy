@@ -28,7 +28,7 @@ import au.org.ala.spatial.slave.SlaveService
 import au.org.ala.spatial.slave.Task
 import au.org.ala.spatial.slave.TaskService
 import au.org.ala.spatial.util.OccurrenceData
-import org.locationtech.jts.geom.Geometry
+import com.vividsolutions.jts.geom.Geometry
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j

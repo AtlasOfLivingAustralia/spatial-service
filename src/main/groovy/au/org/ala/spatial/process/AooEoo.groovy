@@ -16,11 +16,11 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.layers.util.SpatialUtil
-import org.locationtech.jts.geom.Geometry
-import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.LineSegment
-import org.locationtech.jts.io.WKTReader
-import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder
+import com.vividsolutions.jts.geom.Geometry
+import com.vividsolutions.jts.geom.GeometryFactory
+import com.vividsolutions.jts.geom.LineSegment
+import com.vividsolutions.jts.io.WKTReader
+import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils

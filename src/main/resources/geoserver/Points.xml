@@ -104,7 +104,7 @@
             <minOccurs>0</minOccurs>
             <maxOccurs>1</maxOccurs>
             <nillable>true</nillable>
-            <binding>org.locationtech.jts.geom.Geometry</binding>
+            <binding>com.vividsolutions.jts.geom.Geometry</binding>
         </attribute>
         <attribute>
             <name>name_id</name>

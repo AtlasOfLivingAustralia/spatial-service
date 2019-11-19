@@ -3,8 +3,8 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.AnalysisLayerUtil
 import au.org.ala.layers.util.Bil2diva
-import org.locationtech.jts.geom.Geometry
-import org.locationtech.jts.io.WKTReader
+import com.vividsolutions.jts.geom.Geometry
+import com.vividsolutions.jts.io.WKTReader
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataUtilities

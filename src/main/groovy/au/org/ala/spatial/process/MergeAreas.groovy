@@ -15,8 +15,8 @@
 
 package au.org.ala.spatial.process
 
-import org.locationtech.jts.geom.Geometry
-import org.locationtech.jts.io.WKTReader
+import com.vividsolutions.jts.geom.Geometry
+import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
