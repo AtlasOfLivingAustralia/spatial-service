@@ -19,7 +19,7 @@ import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
 import au.org.ala.spatial.util.BatchConsumer
 import au.org.ala.spatial.util.BatchProducer
-import com.vividsolutions.jts.geom.Geometry
+import org.locationtech.jts.geom.Geometry
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.geotools.geojson.geom.GeometryJSON
