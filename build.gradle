@@ -39,7 +39,7 @@ dependencies {
     compile "org.springframework:spring-test:4.3.9.RELEASE"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
-    provided "org.springframework.boot:spring-boot-starter-tomcat"
+    compile "org.springframework.boot:spring-boot-starter-tomcat"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"
@@ -103,7 +103,7 @@ dependencies {
     compile "org.geotools:gt-jts-wrapper:11.1"
     testCompile "org.apache.ant:ant:1.8.4"
 
-    compile 'com.github.ziplet:ziplet:2.0.0'
+    compile('com.github.ziplet:ziplet:2.0.0')
 }
 
 springBoot {
