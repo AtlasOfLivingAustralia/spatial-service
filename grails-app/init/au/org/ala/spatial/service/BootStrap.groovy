@@ -22,8 +22,15 @@ class BootStrap {
     def legacyService
     def fieldDao
     def groovySql
+    def messageSource
 
     def init = { servletContext ->
+        messageSource.setBasenames(
+                "file:///var/opt/atlas/i18n/spatial-service/messages",
+                "file:///opt/atlas/i18n/spatial-service/messages",
+                "WEB-INF/grails-app/i18n/messages",
+                "classpath:messages"
+        )
 
         layersStoreConfig(grailsApplication.config)
 
