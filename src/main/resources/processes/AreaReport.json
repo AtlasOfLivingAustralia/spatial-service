@@ -25,6 +25,15 @@
         "minArea": -1,
         "maxArea": -1
       }
+    },
+    "ignoredPages": {
+      "description": "Pages to exclude.",
+      "type": "list",
+      "constraints": {
+        "optional": true,
+        "selection": "multiple",
+        "content": []
+      }
     }
   },
   "output": {

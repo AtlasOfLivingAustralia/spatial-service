@@ -140,6 +140,23 @@ class ChecklistCreation extends SlaveProcess {
 
         String wmsurl = "<COMMON_GEOSERVER_URL>/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:Distributions&format=image/png&viewparams=s:"
         String sql = "UPDATE distributions SET bounding_box = st_envelope(the_geom), geom_idx = spcode, wmsurl = '" + wmsurl + "' || spcode;"
+
+        // put distributions into objects table
+        sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and distributions.pid is null;"
+        sql += "\nINSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch, area_km, bbox) " +
+                "(select nextval('objects_id_seq'), max(spcode), max(area_name), '', '" +
+                grailsApplication.config.userObjectsField + "', the_geom, false, " +
+                "(st_area(ST_GeogFromWKB(st_asbinary(the_geom)), true)/1000000), ST_ASTEXT(ST_EXTENT(the_geom)) " +
+                "from distributions where pid is null group by the_geom);"
+        sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
+                "distributions.pid is null and fid = '" + grailsApplication.config.userObjectsField + "' and " +
+                "o.id = '' || distributions.spcode;"
+        sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
+                "distributions.pid is null and fid = '" + grailsApplication.config.userObjectsField + "' and " +
+                "o.name = distributions.area_name;"
+        sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
+                "distributions.pid is null and o.fid = '" + grailsApplication.config.userObjectsField + "';"
+
         FileUtils.writeStringToFile(new File(getTaskPath() + 'finish.sql'), sql)
         addOutput('sql', 'finish.sql')
 

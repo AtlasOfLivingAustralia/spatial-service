@@ -22,6 +22,7 @@ import grails.converters.JSON
 
 class ChecklistController {
 
+    def distributionsService
     DistributionDAO distributionDao
     ObjectDAO objectDao
 
@@ -68,7 +69,7 @@ class ChecklistController {
         d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
     }
 
-    def lsids() {
+    def uniqueLsids() {
         List distributions = distributionDao.queryDistributions(null, -1, -1,
                 null, null, null, null, null, null, null, null, null,
                 null, null, Distribution.SPECIES_CHECKLIST, null, null)
@@ -82,5 +83,33 @@ class ChecklistController {
         }
 
         render lsids as JSON
+    }
+
+    def lsid(String lsid) {
+        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
+        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
+        if (distributions != null && !distributions.isEmpty()) {
+            distributionsService.addImageUrl(distributions.get(0))
+            render distributions.get(0).toMap().findAll {
+                i -> i.value != null && "class" != i.key
+            } as JSON
+        } else {
+            render(status: 404, text: 'no records for this lsid')
+        }
+    }
+
+    def lsids(String lsid) {
+        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
+        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
+        if (distributions != null && !distributions.isEmpty()) {
+            distributionsService.addImageUrls(distributions)
+            render distributions.collect {
+                it.toMap().findAll {
+                    i -> i.value != null && "class" != i.key
+                }
+            } as JSON
+        } else {
+            render(status: 404, text: 'no records for this lsid')
+        }
     }
 }

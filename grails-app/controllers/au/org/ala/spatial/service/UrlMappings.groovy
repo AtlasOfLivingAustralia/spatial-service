@@ -8,22 +8,23 @@ class UrlMappings {
         //
         "/checklists(.$format)?"(controller: "checklist", action: "index")
         "/checklist/$id(.$format)?"(controller: "checklist", action: "show")
-        "/checklists/lsids(.$format)?"(controller: "checklist", action: "lsids")
-        "/checklist/lsid(.$format)?"(controller: "checklist", action: "lsids")
+        "/checklists/lsids(.$format)?"(controller: "checklist", action: "uniqueLsids")
+        "/checklist/lsid/$lsid**"(controller: "checklist", action: "lsid")
+        "/checklist/lsids/$lsid**"(controller: "checklist", action: "lsids")
 
         "/distributions/counts(.$format)?"(controller: "distribution", action: "count")
         "/distributions/radius/counts(.$format)?"(controller: "distribution", action: "pointRadiusCount")
         "/distributions/radius(.$format)?"(controller: "distribution", action: "pointRadius")
         "/distribution/lsid/$lsid**"(controller: "distribution", action: "lsid")
         "/distribution/lsids/$lsid**"(controller: "distribution", action: "lsids")
-        "/distribution/map/$lsid**(.$format)?"(controller: "distribution", action: "lsidMapFirst")
+        "/distribution/map/$lsid**?"(controller: "distribution", action: "lsidMapFirst")
         "/distribution/map/png/$geomIdx(.$format)?"(controller: "distribution", action: "overviewMapPng")
         "/distribution/map/seed(.$format)?"(controller: "distribution", action: "overviewMapSeed")
         "/distribution/outliers/$outliers(.$format)?"(controller: "distribution", action: "outliers")
-        "/distribution/map/lsid/$lsid**(.$format)?"(controller: "distribution", action: "overviewMapPngLsid")
+        "/distribution/map/lsid/$lsid**?"(controller: "distribution", action: "overviewMapPngLsid")
         "/distribution/map/spcode/$spcode(.$format)?"(controller: "distribution", action: "overviewMapPngSpcode")
         "/distribution/map/name/$name(.$format)?"(controller: "distribution", action: "overviewMapPngName")
-        "/distribution/map/lsids/$lsid**(.$format)?"(controller: "distribution", action: "lsidMaps")
+        "/distribution/map/lsids/$lsid**?"(controller: "distribution", action: "lsidMaps")
         "/distribution/$id(.$format)?"(controller: "distribution", action: "show")
         "/distributions(.$format)?"(controller: "distribution", action: "index")
         "/distributions/lsids(.$format)?"(controller: "distribution", action: "listLsids")
@@ -33,7 +34,7 @@ class UrlMappings {
         "/tracks/radius(.$format)?"(controller: "track", action: "pointRadius")
         "/track/lsid/$lsid**"(controller: "track", action: "lsid")
         "/track/lsids/$lsid**"(controller: "track", action: "lsids")
-        "/track/map/$lsid**(.$format)?"(controller: "track", action: "lsidMapFirst")
+        "/track/map/$lsid**?"(controller: "track", action: "lsidMapFirst")
         "/track/map/png/$geomIdx(.$format)?"(controller: "track", action: "overviewMapPng")
         "/track/map/seed(.$format)?"(controller: "track", action: "overviewMapSeed")
         "/track/outliers/$outliers(.$format)?"(controller: "track", action: "outliers")
@@ -81,6 +82,7 @@ class UrlMappings {
         "/layers/view/more/$id(.$format)?"(controller: "layer", action: "more")
         "/layers/csv(.$format)?"(controller: "layer", action: "csvlist")
         "/layers/layers.csv"(controller: "layer", action: "csvlist")
+        "/layers/layerUsage"(controller: "layer", action: "layerUsage")
 
         "/object/$pid(.$format)?"(controller: "object", action: "show")
         "/objects/$id(.$format)?"(controller: "object", action: "fieldObjects")
@@ -122,7 +124,7 @@ class UrlMappings {
         "/tasks/output/$p1/$p2?"(controller: "tasks", action: "output")
 
 
-
+        "/files/inter_layer_association.csv"(controller: "layerDistances", action: "csv")
 
         "/$controller/$action?/$id?(.$format)?" {
             constraints {

@@ -284,11 +284,10 @@ class TasksController {
                 response.setContentType("image/png")
                 ok = true
             } else if (file.endsWith('.csv')) {
-                response.setContentType("text/plain")
+                response.setContentType("application/csv")
                 ok = true
             }else{
-                render(text: 'Unknow format of ' + file, contentType: "text/html", encoding: "UTF-8" )
-                return
+                ok = true
             }
 
             if (ok) {
