@@ -11,6 +11,8 @@ services:
     volumes:
       - /data/geoserver_data_dir:/data/geoserver_data_dir
       - /data/spatial-data:/data/spatial-data
+    networks:
+      - geoserver_postgis
     ports:
       - "8079:8080"
   postgis:

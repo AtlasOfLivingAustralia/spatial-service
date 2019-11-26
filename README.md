@@ -58,6 +58,14 @@ brew install gdal
 
 Note: On Mac OSX, GGDAL tools are installed here `/usr/local/bin/`. You can use the `gdal.dir` configuration property to specify the location if different.
 
+Configure geoserver with the required postgis layers using spatial-service: 
+```
+http://localhost:8080/tasks/create?name=InitGeoserver&input=%7B%22postgresqlPath%22:%22postgis%22%7D
+```
 
-
+Disable authentication when running locally by creating the configuration file `/data/spatial-service/config/spatial-service-config.properties` with the contents:
+```
+security.cas.bypass=true
+security.cas.disableCAS=true
+```
 
