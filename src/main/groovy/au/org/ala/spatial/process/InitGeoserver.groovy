@@ -30,31 +30,15 @@ class InitGeoserver extends SlaveProcess {
     String postgresqlUser
     String postgresqlPassword
 
-//    static void main(String [] args) {
-//        def ig = new InitGeoserver()
-//        ig.task = new Task()
-//        ig.task.input["geoserverUrl"] = "http://localhost:8077/geoserver"
-//        ig.task.input["geoserverUser"] = "admin"
-//        ig.task.input["geoserverPassword"] = "geoserver1"
-//        ig.task.input["postgresqlPath"] = "localhost"
-//        ig.task.input["postgresqlUser"] = "postgres"
-//        ig.task.input["postgresqlPassword"] = "postgres"
-//
-//        ig.start()
-//
-//        for (Long key : ig.task.history.keySet()) {
-//            System.out.println(ig.task.history.get(key))
-//        }
-//    }
-
     void start() {
-        geoserverUrl = task.input.geoserverUrl
-        username = task.input.geoserverUser
-        password = task.input.geoserverPassword
+        geoserverUrl = task.input.geoserverUrl ?: grailsApplication.config.geoserver.url
+        username = task.input.geoserverUser ?: grailsApplication.config.geoserver.username
+        password = task.input.geoserverPassword ?: grailsApplication.config.geoserver.password
 
-        postgresqlPath = task.input.postgresqlPath
-        postgresqlUser = task.input.postgresqlUser
-        postgresqlPassword = task.input.postgresqlPassword
+        // default url is jdbc:postgres://localhost/layersdb, get the path
+        postgresqlPath = task.input.postgresqlPath ?: grailsApplication.config.dataSource.url.split("/")[2]
+        postgresqlUser = task.input.postgresqlUser ?: grailsApplication.config.dataSource.username
+        postgresqlPassword = task.input.postgresqlPassword ?: grailsApplication.config.dataSource.password
 
         changeGeoserverPassword()
 
