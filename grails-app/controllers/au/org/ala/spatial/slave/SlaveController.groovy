@@ -293,7 +293,7 @@ class SlaveController {
                 }
             }
 
-            [pages: pages, id: id, cssFile: "/tasks/output/1/areaReport.css"]
+            [pages: pages, id: id, cssFile: "/tasks/output/" + id + "/areaReport.css"]
         }
     }
 }
