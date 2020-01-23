@@ -55,6 +55,7 @@ class UrlMappings {
         "/fields/layers/search(.$format)?"(controller: "field", action: "searchLayers")
 
         "/intersect/$ids/$lat/$lng"(controller: "intersect", action: "intersect")
+        "/intersect/$lat/$lng"(controller: "intersect", action: "intersectAll")
         "/intersect/batch(.$format)?"(controller: "intersect", action: "batch")
         "/intersect/batch/$id(.$format)?"(controller: "intersect", action: "batchStatus")
         "/intersect/batch/download/$id(.$format)?"(controller: "intersect", action: "batchDownload")

@@ -15,6 +15,7 @@
 
 package au.org.ala.layers
 
+import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
 import au.org.ala.spatial.util.BatchConsumer
@@ -32,6 +33,7 @@ class IntersectController {
     ObjectDAO objectDao
     LayerIntersectDAO layerIntersectDao
     GrailsApplication grailsApplication
+    FieldDAO fieldDao
 
     def intersect(String ids, Double lat, Double lng) {
         if (lat == null) {
@@ -42,7 +44,27 @@ class IntersectController {
             render status: 400, text: "Path parameter `lng` is not a number."
             return
         }
+
         render layerIntersectDao.samplingFull(ids, lng, lat) as JSON
+    }
+
+    def intersectAll(Double lat, Double lng) {
+        if (lat == null) {
+            render status: 400, text: "Path parameter `lat` is not a number."
+            return
+        }
+        if (lng == null) {
+            render status: 400, text: "Path parameter `lng` is not a number."
+            return
+        }
+
+        String fields = fieldDao.getFields(true).collect { it.id }.join(",")
+        def result = layerIntersectDao.samplingFull(fields, lng, lat)
+        def values = [:]
+        result.each {
+            values[it["field"]]  = it["value"]
+        }
+        render (values as JSON)
     }
 
     def batch() {

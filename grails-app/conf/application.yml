@@ -76,6 +76,9 @@ grails:
             maxsize: 1000
     controllers:
         defaultScope: singleton
+        upload:
+            maxFileSize: 524288000
+            maxRequestSize: 524288000
     converters:
         encoding: UTF-8
     views:
@@ -282,6 +285,8 @@ distributions.geoserver.image.url: "/ALA/wms?service=WMS&version=1.1.0&request=G
 
 #download.layer.licence_levels: ["1"]
 download.layer.licence_levels: []
+
+
 
 ---
 
