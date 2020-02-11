@@ -16,11 +16,15 @@
 package au.org.ala.layers
 
 import au.com.bytecode.opencsv.CSVWriter
+import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Layer
+import au.org.ala.spatial.service.Log
+import au.org.ala.spatial.service.Task
 import grails.converters.JSON
 import grails.io.IOUtils
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.ArrayUtils
 
 import java.text.SimpleDateFormat
 
@@ -28,8 +32,11 @@ class LayerController {
 
     def layerDao
     def fieldDao
+    def objectDao
     def fileService
     def authService
+    def logService
+    def tasksService
 
     def list() {
         def fields = fieldDao.getFieldsByCriteria('')
@@ -109,6 +116,12 @@ class LayerController {
                            "More information",
                            "Keywords", "Date Added"]
 
+        def usage
+        if (params.usage?.asBoolean) {
+            header = ArrayUtils.addAll(header, "Usage")
+            usage = layerUsage().get("Total")
+        }
+
         response.setContentType("text/csv charset=UTF-8")
         response.setHeader("Content-Disposition", "inlinefilename=ALA_Spatial_Layers.csv")
         CSVWriter cw = null
@@ -125,7 +138,7 @@ class LayerController {
                         String.valueOf(lyr.id),
                         String.valueOf(lyr.name),
                         String.valueOf(lyr.displayname),
-                        String.valueOf(lyr.description.replaceAll("\n", " ")),
+                        String.valueOf(lyr.description?.replaceAll("\n", " ")),
                         String.valueOf(lyr.source),
                         String.valueOf(lyr.source_link),
                         String.valueOf(lyr.respparty_role),
@@ -133,15 +146,19 @@ class LayerController {
                         String.valueOf(lyr.citation_date),
                         String.valueOf(lyr.licence_level),
                         String.valueOf(lyr.licence_link),
-                        String.valueOf(lyr.licence_notes.replaceAll("\n", " ")),
+                        String.valueOf(lyr.licence_notes?.replaceAll("\n", " ")),
                         String.valueOf(lyr.type),
                         String.valueOf(lyr.classification1),
                         String.valueOf(lyr.classification2),
                         String.valueOf(lyr.environmentalvalueunits),
-                        String.valueOf(lyr.notes.replaceAll("\n", " ")),
+                        String.valueOf(lyr.notes?.replaceAll("\n", " ")),
                         String.valueOf(lyr.metadatapath),
                         String.valueOf(lyr.keywords),
                         String.valueOf(lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added()))]
+
+                if (params.usage?.asBoolean) {
+                    row = ArrayUtils.add(row, String.valueOf(usage.getOrDefault(String.valueOf(lyr.id), 0)))
+                }
 
                 cw.writeNext(row)
             }
@@ -157,6 +174,184 @@ class LayerController {
                 }
             }
         }
+
+    }
+
+    /**
+     * Get layer usage count by usage type. Includes 'Total' for all usage.
+     *
+     * Layer usage is determined from specific Log and Task records created by spatial-hub.
+     *
+     * spatial-hub use of a layer
+     *
+     *         Add to Map | Layer
+     *         log search
+     *         category2=ToolAddLayerService
+     *         data.0 -> array of fieldIds
+     *
+     *         Add to Map | Area | Environmental envelope
+     *         task search
+     *         name=Envelope
+     *         input[name=envelope].value -> array of string -> split(':')[0] for fieldIds
+     *
+     *         Tools | Scatterplot - single
+     *         task search
+     *         name=ScatterplotCreate
+     *         input[name=layer].value -> array of fieldIds
+     *
+     *         Tools | Scatterplot - multiple
+     *         task search
+     *         name=ScatterplotList
+     *         input[name=layer].value -> array of fieldIds
+     *
+     *         Tools | Tabulate
+     *         task search
+     *         category2=Tabulation
+     *         data.layer1 and data.layer2
+     *
+     *         Tools | Predict
+     *         task search
+     *         name=Maxent
+     *         input[name=layer].value -> array of fieldIds
+     *
+     *         Tools | Classify
+     *         task search
+     *         name=Classification
+     *         input[name=layer].value -> array of fieldIds
+     *
+     *         Tools | Classify
+     *         task search
+     *         name=SpeciesByLayer
+     *         input[name=layer].value -> array of fieldIds
+     *
+     *  spatial-hub use of an area
+     *
+     *         Add to Map | Area | Select area from polygonal layer
+     *         Add to Map | Area | Gazetteer polygon
+     *         log search
+     *         category2=Area
+     *         data.pid -> select fid from objects where pid=data.pid
+     *
+     * @return
+     */
+    def layerUsage() {
+        def layerUsage = [:]
+
+        def c = Calendar.getInstance()
+        c.add(Calendar.MONTH, params.ageInMonths ?: -6)
+
+        // Use as layer
+        def fields = fieldDao.getFields()
+
+        def layers = [:]
+        Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='ToolAddLayerService'").each {
+            JSON.parse(it).getAt("0")?.each {
+                layers.put(it, layers.getOrDefault(it, 0) + 1)
+            }
+        }
+        layerUsage.put("Add to Map | Layer", layers)
+
+        layers = [:]
+        Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='Tabulation'").each {
+            def layer1 = JSON.parse(it).getAt("layer1")
+            layers.put(layer1, layers.getOrDefault(layer1, 0) + 1)
+            def layer2 = JSON.parse(it).getAt("layer2")
+            layers.put(layer2, layers.getOrDefault(layer2, 0) + 1)
+        }
+        layerUsage.put("Tools | Tabulate", layers)
+
+        layers = [:]
+        Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='Area'").each {
+            def pid = JSON.parse(it).getAt("pid")
+            if (pid != null) {
+                for (String p : pid.split("~")) {
+                    def obj = objectDao.getObjectByPid(p)
+                    if (obj) {
+                        if (obj.fid != grailsApplication.config.userObjectsField) {
+                            layers.put(obj.fid, layers.getOrDefault(obj.fid, 0) + 1)
+                        }
+                    }
+                }
+            }
+        }
+        layerUsage.put("Add to map | Area | Gaz or Area from polygonal layer", layers)
+
+        layers = [:]
+        Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'Envelope'").each {
+            if (it.name == 'envelope') {
+                JSON.parse(it.value).each {
+                    def layer = it.split(':')[0]
+                    layers.put(layer, layers.getOrDefault(layer, 0) + 1)
+                }
+            }
+        }
+        layerUsage.put("Add to Map | Area | Environmental envelope", layers)
+
+        layers = [:]
+        Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'ScatterplotCreate'").each {
+            if (it.name == 'layer') {
+                JSON.parse(it.value).each {
+                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+                }
+            }
+        }
+        layerUsage.put("Tools | Scatterplot - single", layers)
+
+        layers = [:]
+        Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'ScatterplotList'").each {
+            if (it.name == 'layer') {
+                JSON.parse(it.value).each {
+                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+                }
+            }
+        }
+        layerUsage.put("Tools | Scatterplot - multiple", layers)
+
+        layers = [:]
+        Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'Maxent'").each {
+            if (it.name == 'layer') {
+                JSON.parse(it.value).each {
+                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+                }
+            }
+        }
+        layerUsage.put("Tools | Predict", layers)
+
+        layers = [:]
+        Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'Classification'").each {
+            if (it.name == 'layer') {
+                JSON.parse(it.value).each {
+                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+                }
+            }
+        }
+        layerUsage.put("Tools | Classify", layers)
+
+        layers = [:]
+        Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'SpeciesByLayer'").each {
+            if (it.name == 'layer') {
+                JSON.parse(it.value).each {
+                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+                }
+            }
+        }
+        layerUsage.put("Tools | Species By Layer", layers)
+
+        // convert to fieldIds to layerIds and aggregate.
+        layers = [:]
+
+        layerUsage.each { k1, v1 ->
+            v1.each { k2, v2 ->
+                for (Field f : fields) {
+                    if (f.id == k2) {
+                        layers.put(f.spid, layers.getOrDefault(f.spid, 0) + v2)
+                    }
+                }
+            }
+        }
+        layerUsage.put("Total", layers)
+
+        return layerUsage
 
     }
 
@@ -245,7 +440,19 @@ class LayerController {
             if (l == null) {
                 l = layerDao.getLayerByName(id, false)
             }
-            render l as JSON
+
+            if (l == null) {
+                Field f = fieldDao.getFieldById(id, false)
+                if (f != null) {
+                    l = layerDao.getLayerById(Integer.parseInt(f.spid), false)
+                }
+            }
+
+            if (l){
+                render l as JSON
+            } else {
+                response.sendError(404, "Layer not found")
+            }
         }
     }
 

@@ -169,6 +169,19 @@ class MonitorService {
                                 }
                             }
 
+                            //clear history
+                            Task.withTransaction {
+                                def task = Task.get(nextTask.id)
+                                if (task.history) {
+                                    task.history.clear()
+                                    if (!task.save()) {
+                                        it.errors.each {
+                                            log.error it
+                                        }
+                                    }
+                                }
+                            }
+
                             //insert default inputs
 
                             //format inputs

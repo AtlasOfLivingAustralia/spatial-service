@@ -117,8 +117,11 @@ public class UploadSpatialResource {
             logger.error(data, e);
         }
 
+        // When adding a style to a layer use POST. When assigning a default style use PUT.
+        String method = url.endsWith("/styles") ? "POST" : "PUT";
+
         // Execute the request
-        return processResponse(Util.urlResponse("PUT", url, null, null, entity,
+        return processResponse(Util.urlResponse(method, url, null, null, entity,
                 true, username, password));
     }
 

@@ -1,0 +1,75 @@
+{
+  "name": "DoubleGridding",
+  "description": "Double gridding sites by species",
+  "isBackground": false,
+  "version": 1.0,
+  "private": {
+    "unique": false,
+    "public": true
+  },
+  "input": {
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl",
+      "type": "auto"
+    },
+    "area": {
+      "description": "Area to restrict the points.",
+      "type": "area",
+      "constraints": {
+        "min": 1,
+        "max": 1,
+        "minArea": -1,
+        "maxArea": -1
+      }
+    },
+    "species": {
+      "description": "Taxa to use (usually a genus or higher)",
+      "type": "species",
+      "constraints": {
+        "min": 1,
+        "max": 1
+      }
+    },
+    "gridCellSize": {
+      "description": "Primary grid size (decimal degrees)",
+      "type": "double",
+      "constraints": {
+        "min": 0.001,
+        "max": 10,
+        "default": 1
+      }
+    },
+    "innerGridCellSize": {
+      "description": "Secondary grid size (decimal degrees)",
+      "type": "double",
+      "constraints": {
+        "min": 0.0001,
+        "max": 10,
+        "default": 0.1
+      }
+    },
+    "yearSize": {
+      "description": "Temporal bin range (years)",
+      "type": "int",
+      "constraints": {
+        "min": 1,
+        "max": 300,
+        "default": 10
+      }
+    }
+  },
+  "output": {
+    "layers": {
+      "description": "Output layers."
+    },
+    "files": {
+      "description": "Output files."
+    },
+    "metadata": {
+      "description": "Double gridding metadata."
+    },
+    "download": {
+      "description": "Files in the download zip."
+    }
+  }
+}

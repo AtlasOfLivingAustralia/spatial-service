@@ -106,9 +106,10 @@ skin:
 data:
   dir: '/data/spatial-data'
 geoserver:
-  url: 'http://local.ala.org.au:8079/geoserver'
-  username: ''
-  password: ''
+  # use localhost to play nice with locally running geoserver docker instance.
+  url: 'http://localhost:8079/geoserver'
+  username: 'admin'
+  password: 'geoserver'
   canDeploy: true
   spatialservice:
     colocated: true
@@ -179,14 +180,15 @@ security:
     bypass: false # set to true for non-ALA deployment
     gateway: false
     uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
-    uriFilterPattern: '/manageLayers,/manageLayers/.*,/admin,/admin/.*,/alaAdmin.*,/log.*'
-    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/tasks,/tasks/.*,/layers/view/more/.*,/layer/download/.*'
+    uriFilterPattern: '/alaAdmin.*,/log.*'
+    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/tasks,/tasks/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
     disableCAS: false
 
 auth.admin_role: "ROLE_ADMIN"
 app.http.header.userId: "X-ALA-userId"
 
-headerAndFooter.baseURL: 'https://www.ala.org.au/commonui-bs3'
+headerAndFooter.baseURL: 'https://www.ala.org.au/commonui-bs3-2019'
+headerAndFooter.version: '2'
 ala.baseURL: 'https://www.ala.org.au'
 bie.baseURL: 'https://bie.ala.org.au'
 bie.searchPath: '/search'
@@ -197,7 +199,7 @@ api_key: ''
 lists.url: 'https://lists.ala.org.au'
 collections.url: 'https://collections.ala.org.au'
 sandboxHubUrl: 'http://sandbox.ala.org.au/ala-hub'
-sandboxBiocacheServiceUrl: 'http://sandbox.ala.org.au/ws'
+sandboxBiocacheServiceUrl: 'http://sandbox.ala.org.au/biocache-service'
 phyloServiceUrl: 'https://phylolink.ala.org.au'
 
 spatialHubUrl: 'https://spatial.ala.org.au'
@@ -302,6 +304,15 @@ dataSource:
     username: postgres
     password: 'postgres'
 
+# spring-session config
+spring:
+  session:
+    store-type: "none" # "redis"
+#  redis:
+#    host: "localhost"
+#    port: 6379
+#    password: ""
+
 environments:
     development:
         dataSource:
@@ -311,6 +322,8 @@ environments:
             serverURL: http://dev.ala.org.au:8080
             app:
                 context: ''
+        gdal:
+            dir: "/usr/local/bin/"
 
     test:
         dataSource:

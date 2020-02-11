@@ -63,12 +63,37 @@ class TaskService {
         def resource = TaskService.class.getResource("/processes/")
         def dir = new File(resource.getPath())
 
+        // default processes
         for (File f : dir.listFiles()) {
             if (f.getName().endsWith(".json") && !f.getName().equals("limits.json")) {
                 String name = "au.org.ala.spatial.process." + f.getName().substring(0, f.getName().length() - 5)
                 try {
                     Class clazz = Class.forName(name)
-                    list.add(((SlaveProcess) clazz.newInstance()).spec())
+                    list.add(((SlaveProcess) clazz.newInstance()).spec(null))
+                } catch (err) {
+                    log.error("unable to instantiate $name. ${err.getMessage()}", err)
+                }
+            }
+        }
+
+        // Additional SlaveProcesses can be initialized with an external spec with a unique filename:
+        // - /data/spatial-service/config/processes/n.ProcessName.json
+        // Where:
+        // - `n` is a value that makes the filename unique
+        // - `ProcessName` is a valid class that extends SlaveProcess
+        for (File f : new File('/data/spatial-service/config/processes').listFiles()) {
+            // `ProcessName`
+            def fname = f.getName().substring(f.getName().indexOf('.') + 1)
+
+            // `n`
+            def funqiue = f.getName().substring(0, f.getName().indexOf('.'))
+
+            // add process class with this spec file
+            if (f.getName().endsWith(".json") && !f.getName().equals("limits.json")) {
+                String name = "au.org.ala.spatial.process." + fname.substring(0, fname.length() - 5)
+                try {
+                    Class clazz = Class.forName(name)
+                    list.add(((SlaveProcess) clazz.newInstance()).spec(JSON.parse(f.text) as Map))
                 } catch (err) {
                     log.error("unable to instantiate $name. ${err.getMessage()}", err)
                 }
@@ -294,6 +319,7 @@ class TaskService {
                 operator.fileLockService = taskService.fileLockService
 
                 //start
+                request.history.put(System.currentTimeMillis(), "running (id:${request.id})")
                 request.message = 'running'
                 log.debug "task:${request.id} running"
                 operator.start()

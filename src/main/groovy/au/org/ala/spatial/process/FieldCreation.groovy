@@ -28,7 +28,7 @@ import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.JTSFactoryFinder
 
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.text.MessageFormat
 
 @Slf4j
@@ -267,6 +267,21 @@ class FieldCreation extends SlaveProcess {
         }
     }
 
+    String convertToUtf8(String rawDbfString){
+        try {
+//            Charset dbfCharset = (Charset) ShapefileDataStoreFactory.DBFCHARSET.getDefaultValue()
+//            if (dbfCharset != null && dbfCharset != StandardCharsets.UTF_8 && rawDbfString != null) {
+//                return new String(rawDbfString.getBytes(dbfCharset), StandardCharsets.UTF_8)
+//                return new String(rawDbfString.getBytes(), StandardCharsets.UTF_8)
+//            }
+            return new String(rawDbfString.getBytes(), StandardCharsets.UTF_8)
+        } catch (Exception e){
+            log.debug("Unable to convert " + rawDbfString + " to UTF8")
+            //ignore - this is a best effort service
+        }
+        return rawDbfString
+    }
+
     void aggregateShapes(String layername, String sid, String sname, String sdesc, String id, String namesearch,
                          Boolean ignoreNullObjects) {
         //open shapefile
@@ -278,10 +293,9 @@ class FieldCreation extends SlaveProcess {
 
             File file = new File(grailsApplication.config.data.dir.toString() + '/layer/' + layername + '.shp')
             ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
-            sds.setCharset(Charset.forName("UTF-8"))
             FeatureReader reader = sds.featureReader
 
-            Map map = [:]
+            Map retrievedFieldValues = [:]
 
             def defaultType = null
 
@@ -320,11 +334,10 @@ class FieldCreation extends SlaveProcess {
                 }
 
                 if (i != null && i.trim().length() > 0) {
-                    if (!map.containsKey(i)) {
-
-                        map.put(i, [sid: i, sname: name, sdesc: desc, geom: []])
+                    if (!retrievedFieldValues.containsKey(i)) {
+                        retrievedFieldValues.put(i, [sid: i, sname: convertToUtf8(name), sdesc: convertToUtf8(desc), geom: []])
                     }
-                    map.get(i).geom.add(f.getDefaultGeometry())
+                    retrievedFieldValues.get(i).geom.add(f.getDefaultGeometry())
                 } else {
                     countMissing++
 
@@ -335,7 +348,7 @@ class FieldCreation extends SlaveProcess {
             }
             reader.close()
             sds.dispose()
-            if (map.size() == 0) {
+            if (retrievedFieldValues.size() == 0) {
                 log.error 'task:' + task.id + ', no valid objects found for sid:' + confirmedSid
                 task.err.put(System.currentTimeMillis(), 'no valid objects found for sid:' + confirmedSid)
                 return
@@ -344,8 +357,8 @@ class FieldCreation extends SlaveProcess {
             //aggregate default geometry while creating INSERT statements
             int sqlCount = 0
             int count = 1
-            map.each { k, v ->
-                task.message = "aggregating shapes: " + k + ", " + count + " of " + map.size()
+            retrievedFieldValues.each { k, v ->
+                task.message = "aggregating shapes: " + k + ", " + count + " of " + retrievedFieldValues.size()
                 count++
 
                 List<Polygon> union = new ArrayList();
@@ -380,7 +393,7 @@ class FieldCreation extends SlaveProcess {
                     if (union.get(0) instanceof Polygon) {
                         Polygon[] gs = new Polygon[union.size()]
                         union.toArray(gs)
-                        newg = JTSFactoryFinder.getGeometryFactory().createMultiPolygon(gs);
+                        newg = JTSFactoryFinder.getGeometryFactory().createMultiPolygon(gs)
                     } else if (union.size() == 1) {
                         newg = union.get(0)
                     } else {

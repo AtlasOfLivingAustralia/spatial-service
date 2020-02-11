@@ -32,7 +32,7 @@
       "type": "list",
       "constraints": {
         "selection": "single",
-        "contents": [
+        "content": [
           "outline",
           "normal",
           "hybrid",

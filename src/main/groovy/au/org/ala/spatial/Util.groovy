@@ -220,18 +220,56 @@ class Util {
                 String areaName = jo.containsKey('area_name') ? jo.get('area_name').toString() : ""
                 String areaKm = jo.containsKey('area_km') ? jo.get('area_km').toString() : ""
                 String dataResourceUid = jo.containsKey('data_resouce_uid') ? jo.get('data_resouce_uid').toString() : ""
+                String intersectArea = jo.containsKey('intersectArea') ? String.valueOf(Math.round(jo.get('intersectArea') / 1000000)) : ""
 
                 lines[i + 1] = spcode + "," + wrap(scientific) + "," + wrap(auth) + "," + wrap(common) + "," +
                     wrap(family) + "," + wrap(genus) + "," + wrap(name) + "," + min + "," + max +
                     "," + wrap(md) + "," + wrap(lsid) + "," + wrap(areaName) + "," + wrap(areaKm) +
-                    "," + wrap(dataResourceUid)
+                        "," + wrap(dataResourceUid) + "," + wrap(intersectArea)
             }
 
             return lines
         }
     }
 
-    static JSONArray getDistributionsOrChecklistsData(String type, String wkt, String lsids, String geomIdx, String layersUrl) throws Exception {
+    static String[] getDistributionsOrChecklistsRollup(JSONArray ja) {
+        if (ja == null || ja.isEmpty()) {
+            return new String[0]
+        } else {
+            Map<String, List<String>> likely = new HashMap()
+            Map<String, List<String>> maybe = new HashMap()
+            Set<String> keys = new HashSet()
+
+            for (int i = 0; i < ja.size(); i++) {
+                JSONObject jo = (JSONObject) ja.get(i)
+                String scientific = jo.containsKey('scientific') ? jo.get('scientific').toString() : ""
+                String common = jo.containsKey('common_nam') ? jo.get('common_nam').toString() : ""
+                String lsid = jo.containsKey('lsid') ? jo.get('lsid').toString() : ""
+                String family = jo.containsKey('family') ? jo.get('family').toString() : ""
+
+                String areaName = jo.containsKey('area_name') ? jo.get('area_name').toString() : ""
+                String intersectArea = jo.containsKey('intersectArea') ? String.valueOf(Math.round(jo.get('intersectArea') / 1000000)) : ""
+
+                String key = wrap(family) + "," + wrap(scientific) + "," + wrap(common) + "," + wrap(lsid)
+
+                if (areaName.contains("likely")) likely.put(key, intersectArea)
+                if (areaName.contains("maybe")) maybe.put(key, intersectArea)
+                keys.add(key)
+            }
+
+            String[] lines = new String[keys.size() + 1]
+            lines[0] = "FAMILY,SCIENTIFIC_NAME,COMMON_NAME,LSID,LIKELY_AREA,MAYBE_AREA"
+            int i = 1
+            for (String key : keys) {
+                lines[i] = key + "," + wrap(likely.get(key)) + "," + wrap(maybe.get(key))
+                i++
+            }
+
+            return lines
+        }
+    }
+
+    static JSONArray getDistributionsOrChecklistsData(String type, String wkt, String lsids, String geomIdx, String layersUrl, List<String> familyLsids, dataResourceId) throws Exception {
         StringBuilder sbProcessUrl = new StringBuilder()
         sbProcessUrl.append("/").append(type)
 
@@ -246,6 +284,14 @@ class Util {
         if (geomIdx != null) {
             params.add(new NameValuePair('geom_idx', geomIdx))
         }
+        if (dataResourceId != null) {
+            params.add(new NameValuePair('dataResourceUid', dataResourceId))
+        }
+        if (familyLsids != null) {
+            for (String f : familyLsids) {
+                params.add(new NameValuePair('familyLsid', f))
+            }
+        }
 
         String response = postUrl(layersUrl + sbProcessUrl.toString(), (NameValuePair[]) params.toArray(new NameValuePair[0]),
                 [Accept: "application/json, text/javascript, */*"])
@@ -254,6 +300,14 @@ class Util {
             try {
                 JSONParser jp = new JSONParser()
                 JSONArray ja = (JSONArray) jp.parse(response)
+
+                for (Object o : ja) {
+                    JSONObject jo = (JSONObject) o;
+                    if (familyLsids != null && !familyLsids.contains(jo.getOrDefault("family_lsid", null))) {
+                        jo.remove(o);
+                    }
+                }
+
                 return ja
             } catch (Exception e) {
                 log.error(layersUrl + sbProcessUrl.toString() + " failed", e)
@@ -264,6 +318,9 @@ class Util {
     }
 
     static String wrap(String s) {
+        if (s == null) {
+            return ""
+        }
         return "\"" + s.replace("\"", "\"\"").replace("\\", "\\\\") + "\""
     }
 

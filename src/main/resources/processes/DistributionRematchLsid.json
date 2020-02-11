@@ -8,7 +8,12 @@
     "public": false
   },
   "input": {
-    "bieUrl": {
+    "sandboxBiocacheServiceUrl": {
+      "description": "sandbox biocacheServiceUrl for name matching",
+      "type": "auto"
+    },
+    "biocacheServiceUrl": {
+      "description": "biocacheServiceUrl for name matching when there is no sandboxBiocacheServiceUrl",
       "type": "auto"
     },
     "updateAll": {

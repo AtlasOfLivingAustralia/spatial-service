@@ -4,7 +4,9 @@ jdk:
 sudo: false
 branches:
   only:
+  - develop
   - master
+  - feature/docker-and-encoding-fixes
 addons:
   apt:
     packages:

@@ -75,8 +75,8 @@ class CompareAreas extends SlaveProcess {
                 csv.writeNext(appendStrings(sorted2[i2], "0", sorted2[i2][11]))
                 i2++
             } else if (i2 >= sorted2.size || sorted1[i1][0] < sorted2[i2][0]) {
-                speciesOnly1.push(sorted2[i2][0])
-                csv.writeNext(appendStrings(sorted2[i2], sorted1[i1][11], "0"))
+                speciesOnly1.push(sorted1[i1][0])
+                csv.writeNext(appendStrings(sorted1[i1], sorted1[i1][11], "0"))
                 i1++
             } else if (sorted1[i1][0] == sorted2[i2][0]) {
                 speciesBoth.push(sorted1[i1][0])
@@ -90,17 +90,17 @@ class CompareAreas extends SlaveProcess {
         File csvFile = new File(taskPath + '/comparison.csv')
         def csvTop = new CSVWriter(new FileWriter(csvFile))
         csvTop.writeNext(["Species", "Area name", "Sq km", "Occurrences", "Species"].toArray(new String[0]))
-        csvTop.writeNext([species.name, area1.name, area1.area_km, area1.numberOfOccurrences, area1.speciesList.size].collect {
+        csvTop.writeNext([species.name, area1.name, area1.area_km, area1.numberOfOccurrences, sorted1.size].collect {
             it.toString()
-        }.toArray(new String[0]))
-        csvTop.writeNext([species.name, area2.name, area2.area_km, area2.numberOfOccurrences, area2.speciesList.size].collect {
+        }.toArray(new String[0]))// adjust speciesList.size for header row
+        csvTop.writeNext([species.name, area2.name, area2.area_km, area2.numberOfOccurrences, sorted2.size].collect {
             it.toString()
         }.toArray(new String[0]))
         csvTop.writeNext([""].toArray(new String[0]))
-        csvTop.writeNext(["Species found only in ${area1.name}", speciesOnly1.size].collect {
+        csvTop.writeNext(["Species found only in ${area1.name}", sorted1.size].collect {
             it.toString()
         }.toArray(new String[0]))
-        csvTop.writeNext(["Species found only in ${area2.name}", speciesOnly2.size].collect {
+        csvTop.writeNext(["Species found only in ${area2.name}", sorted2.size].collect {
             it.toString()
         }.toArray(new String[0]))
         csvTop.writeNext(["Species found in both areas", speciesBoth.size].collect {
@@ -117,8 +117,8 @@ class CompareAreas extends SlaveProcess {
         taskLog("build summary")
         def html = "<div><div>Report for: ${species.name}<br>${area1.name}<br>${area2.name}</div><br>" +
                 "<table><tbody><tr><td>Area name</td><td>Sq km</td><td>Occurrences</td><td>Species</td></tr>" +
-                "<tr><td>${area1.name}</td><td>${area1.area_km}</td><td>${area1.numberOfOccurrences}</td><td>${area1.speciesList.size}</td></tr>" +
-                "<tr><td>${area2.name}</td><td>${area2.area_km}</td><td>${area2.numberOfOccurrences}</td><td>${area2.speciesList.size}</td></tr>" +
+                "<tr><td>${area1.name}</td><td>${area1.area_km}</td><td>${area1.numberOfOccurrences}</td><td>${sorted1.size}</td></tr>" +
+                "<tr><td>${area2.name}</td><td>${area2.area_km}</td><td>${area2.numberOfOccurrences}</td><td>${sorted2.size}</td></tr>" +
                 "<tr><td>&nbsp;</td></tr><tr><td>Species found only in ${area1.name}</td><td>${speciesOnly1.size}</td></tr>" +
                 "<tr><td>Species found only in ${area2.name}</td><td>${speciesOnly2.size}</td></tr>" +
                 "<tr><td>Species found in both areas</td><td>${speciesBoth.size}</td></tr></tbody></table></div>"
@@ -128,10 +128,13 @@ class CompareAreas extends SlaveProcess {
     }
 
     private String[] appendStrings(String[] list, String append1, String append2) {
-        String[] join = new String[list.length + 2]
+        // replace the last column in list (number of records) with append1 (number of records in area 1)
+
+        String[] join = new String[list.length + 1]
         System.arraycopy(list, 0, join, 0, list.length)
-        join[list.length] = append1
-        join[list.length + 1] = append2
+
+        join[list.length - 1] = append1
+        join[list.length] = append2
         return join
     }
 

@@ -25,7 +25,12 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
         //set CAS appServerName from grails.serverURL when it is not defined
         if (!environment.getProperty("security.cas.appServerName")) {
-            def url = new URL(environment.getProperty("grails.serverURL"))
+            def serverURL = environment.getProperty("grails.serverURL")
+            if (!serverURL){
+                serverURL = "http://dev.ala.org.au"
+                println("WARNING: Unable to retrieve 'grails.serverURL' - using "+ serverURL)
+            }
+            def url = new URL(serverURL)
             StringBuilder result = new StringBuilder()
             result.append(url.protocol)
             result.append(":")
@@ -34,9 +39,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
                 result.append(url.authority)
             }
 
-            if (url.file != null) {
-                result.append(url.file)
-            }
+            // ala-cas-client in ala-auth:3.1.1 needs appServerName to exclude 'url.file'
 
             Properties properties = new Properties()
             properties.put('security.cas.appServerName', result.toString())

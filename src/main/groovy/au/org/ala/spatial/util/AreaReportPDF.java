@@ -2,6 +2,7 @@ package au.org.ala.spatial.util;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.spatial.Util;
+import com.vividsolutions.jts.io.WKTReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -17,10 +18,9 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class AreaReportPDF {
     private static final Logger LOGGER = Logger.getLogger(AreaReportPDF.class);
@@ -34,6 +34,8 @@ public class AreaReportPDF {
     private String filePath;
     private String query;
     private String bbox;
+    private String date;
+    private String datetime;
     String geoserverUrl;
     String openstreetmapUrl;
     String biocacheServiceUrl;
@@ -51,9 +53,12 @@ public class AreaReportPDF {
 
     private Map progress;
     private String serverUrl;
+    String configPath;
 
     String pid;
     String dataDir;
+
+    List<String> excludedPages;
 
     public AreaReportPDF(String geoserverUrl, String openstreetmapUrl, String biocacheServiceUrl, String biocacheHubUrl,
                          String q, String pid,
@@ -61,7 +66,7 @@ public class AreaReportPDF {
                          String area_km,
                          Map progress, String serverUrl,
                          String outputPath,
-                         String journalMapUrl, String dataDir) {
+                         String journalMapUrl, String dataDir, String configPath, List<String> excludedPages) {
         this.dataDir = dataDir;
         this.journalMapUrl = journalMapUrl;
         this.name = areaName;
@@ -74,7 +79,12 @@ public class AreaReportPDF {
         this.pid = pid;
         this.query = q;
         this.area_km = area_km;
-        filePath = outputPath;
+        this.filePath = outputPath;
+        this.configPath = configPath;
+        this.excludedPages = excludedPages;
+
+        this.date = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+        this.datetime = new SimpleDateFormat("dd/MM/yyyy hh:mm").format(new Date());
 
         setProgress("preparing");
 
@@ -129,16 +139,18 @@ public class AreaReportPDF {
             sb.append(makeFilePage(pageDefinition));
         } else if ("general".equals(pageDefinition.get("type"))) {
             sb.append(makeGeneralPage(pageDefinition));
+        } else if ("page-header".equals(pageDefinition.get("type"))) {
+            sb.append(makeHeader(pageDefinition));
         }
 
         FileUtils.writeStringToFile(outputFile, sb.toString());
     }
 
     byte[] getFileAsBytes(String file) throws Exception {
-        File overrideFile = new File("/data/spatial-service/config/" + file);
+        File overrideFile = new File(this.configPath + "/" + file);
         byte[] bytes = null;
         if (overrideFile.exists()) {
-            FileUtils.readFileToByteArray(overrideFile);
+            bytes = FileUtils.readFileToByteArray(overrideFile);
         } else {
             bytes = StreamUtils.copyToByteArray(AreaReportPDF.class.getResourceAsStream("/areareport/" + file));
         }
@@ -149,7 +161,15 @@ public class AreaReportPDF {
     int reportItem = 0;
     String reportItemLabel = "";
 
+    String makeHeader(JSONObject pageDefinition) throws Exception {
+        return makePage(pageDefinition, true);
+    }
+
     String makeGeneralPage(JSONObject pageDefinition) throws Exception {
+        return makePage(pageDefinition, false);
+    }
+
+    String makePage(JSONObject pageDefinition, boolean pageFragment) throws Exception {
         StringBuilder sb = new StringBuilder();
 
         JSONArray pageItems = (JSONArray) pageDefinition.get("items");
@@ -159,12 +179,19 @@ public class AreaReportPDF {
             children = (Long) pageDefinition.get("subpages");
 
         for (int i = 0; i < children; i++) {
-            sb.append("<div class='content'><table>");
+            StringBuilder currentPage = new StringBuilder();
+            currentPage.append("<div class='content'><table>");
 
             int itemIdx = 0;
             String title = null;
 
+            boolean excludePage = false;
+
             for (Object o : pageItems) {
+                if (excludePage) {
+                    continue;
+                }
+
                 setProgress("report item: " + reportItemLabel + " (" + reportItem + ")");
                 reportItem++;
 
@@ -173,21 +200,31 @@ public class AreaReportPDF {
                 String value = getValue(jo, itemIdx, pageDefinition, i, title);
 
                 // title
-                if (itemIdx == 0) {
+                if (itemIdx == 0 && !pageFragment) {
                     title = value;
-                    value = "<h1 class='title' id='" + value + "'>" + value + "</h1>";
+                    if (!value.contains("<")) {
+                        value = "<h1 class='title' id='" + value + "'>" + value + "</h1>";
+                    } else {
+                        value = "<h1 class='title'>" + value + "</h1>";
+                    }
+
+                    excludePage = excludedPages.contains(title);
                 }
 
                 reportItemLabel = title;
 
-                value = "<tr class='" + jo.get("type") + "'><td>" + value + "</td></tr>";
+                value = "<tr class='" + jo.get("type") + " " + jo.get("class") + "'><td>" + value + "</td></tr>";
 
-                sb.append(value);
+                currentPage.append(value);
 
                 itemIdx++;
             }
 
-            sb.append("</table></div>");
+            currentPage.append("</table></div>");
+
+            if (!excludePage) {
+                sb.append(currentPage);
+            }
         }
 
         return sb.toString();
@@ -195,7 +232,7 @@ public class AreaReportPDF {
 
     String makeFilePage(JSONObject pageDefinition) throws Exception {
         String pageFile = (String) pageDefinition.get("file");
-        File overrideFile = new File("/data/spatial-service/config/" + pageFile);
+        File overrideFile = new File(configPath + "/" + pageFile);
         if (overrideFile.exists()) {
             return FileUtils.readFileToString(overrideFile);
         } else {
@@ -272,6 +309,15 @@ public class AreaReportPDF {
             String text = getValueForKey("text", item, itemIdx, parent, parentIdx);
             String label = getValueForKey("label", item, itemIdx, parent, parentIdx);
             String fq = getValueForKey("fq", item, itemIdx, parent, parentIdx);
+            String conservationListsString = getValueForKey("conservationLists", item, itemIdx, parent, parentIdx);
+            String kingdom = getValueForKey("kingdom", item, itemIdx, parent, parentIdx);
+            String area = getValueForKey("area", item, itemIdx, parent, parentIdx);
+            String dataResourceId = getValueForKey("dataResourceId", item, itemIdx, parent, parentIdx);
+
+            String[] conservationLists = null;
+            if (conservationListsString != null) {
+                conservationLists = conservationListsString.split(",");
+            }
 
             String value = "";
             if (type.equals("species")) {
@@ -284,16 +330,18 @@ public class AreaReportPDF {
             } else if (type.equals("occurrences")) {
                 value = getOccurrenceCount(queryAndFq(fq));
             } else if (type.equals("checklists")) {
-                initDistributionsCsv("checklists");
-                value = distributionCounts.get("checklists").toString();
+                initDistributionsCsv("checklists", pid, null, null);
+                value = distributionCounts.get("checklists" + pid + null + null).toString();
             } else if (type.equals("expertdistributions")) {
-                initDistributionsCsv("expertdistributions");
-                value = distributionCounts.get("expertdistributions").toString();
+                initDistributionsCsv("expertdistributions", pid, null, null);
+                value = distributionCounts.get("expertdistributions" + pid + null + null).toString();
             } else if (type.equals("attribute")) {
                 value = this.getClass().getDeclaredField((String) item.get("name")).get(this).toString();
             } else if (type.equals("journalmap")) {
                 initJournalmapCsv();
                 value = journalMapCount;
+            } else if (type.equals("image")) {
+                value = "<img src='" + text + "' width='100%' ></img>";
             } else if (type.equals("text")) {
                 value = text;
             } else if (type.equals("table")) {
@@ -302,7 +350,7 @@ public class AreaReportPDF {
                 String tableValue = (String) item.get("value");
                 String endemic = String.valueOf(item.get("endemic"));
 
-                value = makeTable(fq, table, title, tableValue, endemic);
+                value = makeTable(fq, table, title, tableValue, endemic, conservationLists, area, kingdom, dataResourceId);
             } else if (type.equals("map")) {
                 Double buffer = (Double) item.get("buffer");
 
@@ -422,7 +470,11 @@ public class AreaReportPDF {
     }
 
     private void setProgress(String label) {
-        progress.put(String.valueOf(System.currentTimeMillis()), label);
+        if (progress != null) {
+            progress.put(String.valueOf(System.currentTimeMillis()), label);
+        } else {
+            LOGGER.error(label);
+        }
     }
 
     private FileWriter startHtmlOut(int fileNumber, String filename) throws Exception {
@@ -435,7 +487,7 @@ public class AreaReportPDF {
 
     int tableNumber = 1;
 
-    String makeTable(String fq, String table, String title, String value, String endemic) throws Exception {
+    String makeTable(String fq, String table, String title, String value, String endemic, String[] conservationLists, String area, String kingdom, String dataResourceId) throws Exception {
         StringBuilder str = new StringBuilder();
 
         // table title
@@ -450,6 +502,7 @@ public class AreaReportPDF {
         str.append("<table>");
 
         int[] columnOrder = null;
+        int[] columnOrder2 = new int[0];
         String csv = null;
         boolean header = false;
         if ("species".equals(table)) {
@@ -473,21 +526,46 @@ public class AreaReportPDF {
             // expert distributions
             columnOrder = new int[]{4, 1, 3, 7, 8, 11, 12};
             str.append("<tr><td>Family</td><td class='scientificName' >Scientific Name</td><td>Common Name</td><td>Min Depth</td><td>Max Depth</td><td>Area Name</td><td>Area sq km</td></tr>");
-            initDistributionsCsv(table);
-            csv = distributions.get(table);
+            csv = initDistributionsCsv(table, pid, null, null);
             header = true;
         } else if ("checklists".equals(table)) {
             // checklist
             columnOrder = new int[]{4, 1, 3, 11, 12};
             str.append("<tr><td>Family</td><td class='scientificName' >Scientific Name</td><td>Common Name</td><td>Area Name</td><td>Area sq km</td></tr>");
-            initDistributionsCsv(table);
-            csv = distributions.get(table);
+            csv = initDistributionsCsv(table, pid, null, null);
             header = true;
         } else if ("tabulation".equals(table)) {
             // checklist
             columnOrder = new int[]{0, 1, 2};
             str.append("<tr><td>Class/Region</td><td>Area (sq km)</td><td>% of total area</td></tr>");
             csv = getTabulationCSV(value);
+        } else if ("distributions".equals(table)) {
+            columnOrder = new int[]{1, 2};
+            columnOrder2 = new int[]{4, 5};
+            str.append("<tr><td>Class</td><td class='scientificName'>Scientific Name</td><td>Common Name</td>");
+            if (conservationLists != null) {
+                for (String conservationList : conservationLists) {
+                    str.append("<td>").append(getSpeciesListName(conservationList)).append("</td>");
+                }
+            }
+            str.append("<td>Likely (km2)</td><td>Maybe (km2)</td></tr>");
+            String wkt = pid;
+            if (StringUtils.trimToNull(area) != null) {
+                WKTReader reader = new WKTReader();
+                com.vividsolutions.jts.geom.Geometry g1 = reader.read(getWkt(pid));
+                com.vividsolutions.jts.geom.Geometry g2 = reader.read(getWkt(area));
+                com.vividsolutions.jts.geom.Geometry g3 = g1.intersection(g2);
+                if (g3.getArea() > 0) {
+                    wkt = g3.toString();
+                    csv = initDistributionsCsv(table, wkt, dataResourceId, StringUtils.trimToNull(kingdom));
+                } else {
+                    csv = "";
+                }
+            } else {
+                csv = initDistributionsCsv(table, wkt, dataResourceId, StringUtils.trimToNull(kingdom));
+            }
+
+            header = true;
         }
 
         CSVReader r = new CSVReader(new StringReader(csv));
@@ -501,12 +579,29 @@ public class AreaReportPDF {
             } else {
                 str.append("<tr class='even'>");
             }
+            if (conservationLists != null) {
+                str.append("<td><div>").append(StringEscapeUtils.escapeHtml(familyToClass.get(line[0].toLowerCase()))).append("</div></td>");
+            }
             for (int i = 0; i < columnOrder.length && columnOrder[i] < line.length; i++) {
                 // permit unencoded <a>
                 if (line[columnOrder[i]] != null && line[columnOrder[i]].startsWith("<a ")) {
                     str.append("<td><div>").append((line[columnOrder[i]])).append("</div></td>");
                 } else {
                     str.append("<td><div>").append(StringEscapeUtils.escapeHtml(line[columnOrder[i]])).append("</div></td>");
+                }
+            }
+            if (conservationLists != null) {
+                for (String conservationList : conservationLists) {
+                    String v = getSpeciesListValue(conservationList, line[3], "status");
+                    str.append("<td><div>").append(StringEscapeUtils.escapeHtml(v)).append("</div></td>");
+                }
+            }
+            for (int i = 0; i < columnOrder2.length && columnOrder2[i] < line.length; i++) {
+                // permit unencoded <a>
+                if (line[columnOrder2[i]] != null && line[columnOrder2[i]].startsWith("<a ")) {
+                    str.append("<td><div>").append((line[columnOrder2[i]])).append("</div></td>");
+                } else {
+                    str.append("<td><div>").append(StringEscapeUtils.escapeHtml(line[columnOrder2[i]])).append("</div></td>");
                 }
             }
             str.append("</tr>");
@@ -517,6 +612,57 @@ public class AreaReportPDF {
         str.append("</table>");
 
         return str.toString();
+    }
+
+    private String getSpeciesListName(String dr) {
+        try {
+            String txt = (String) Util.urlResponse("GET", "https://lists.ala.org.au/ws/speciesList/" + dr).get("text");
+
+            JSONParser jp = new JSONParser();
+            JSONObject jo = (JSONObject) jp.parse(txt);
+
+            return (String) jo.get("listName");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private Map<String, JSONArray> speciesListValues = new HashMap();
+
+    private String getSpeciesListValue(String dr, String lsid, String key) {
+        JSONArray values = speciesListValues.get(dr);
+
+        try {
+            if (values == null) {
+                String txt = (String) Util.urlResponse("GET", "https://lists.ala.org.au/ws/speciesListItems/" + dr + "?includeKVP=true").get("text");
+
+                JSONParser jp = new JSONParser();
+                values = (JSONArray) jp.parse(txt);
+
+                speciesListValues.put(dr, values);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        for (Object o : values) {
+            JSONObject jo = (JSONObject) o;
+            if (lsid.equalsIgnoreCase((String) jo.getOrDefault("lsid", null))) {
+                JSONArray kvp = (JSONArray) jo.get("kvpValues");
+                for (Object o2 : kvp) {
+                    JSONObject jo2 = (JSONObject) o2;
+                    if (key.equals(jo2.getOrDefault("key", null))) {
+                        String s = (String) jo2.getOrDefault("value", null);
+
+                        // keep initials only
+                        return s.replaceAll("[a-z]", "");
+                    }
+                }
+            }
+        }
+
+        return "";
     }
 
     String mlArea;
@@ -563,15 +709,65 @@ public class AreaReportPDF {
         }
     }
 
-    private void initDistributionsCsv(String type) throws Exception {
-        if (distributions.get(type) == null) {
+    private Map<String, List<String>> kingdomFamilies = new HashMap();
+    private Map<String, String> familyToClass = new HashMap();
+
+    private List<String> getFamilyLsids(String kingdom) {
+        if (kingdom == null) {
+            return null;
+        } else if (kingdomFamilies.size() == 0) {
+            // init kingdomFamilies
+            try {
+                JSONParser jp = new JSONParser();
+                String text = (String) Util.urlResponse("GET", "https://bie.ala.org.au/ws/search.json?fq=rank:family&pageSize=100000").get("text");
+                JSONObject jo = (JSONObject) jp.parse(text);
+                JSONArray ja = (JSONArray) ((JSONObject) jo.get("searchResults")).get("results");
+
+                for (Object o : ja) {
+                    JSONObject jo1 = (JSONObject) o;
+                    String k = (String) jo1.getOrDefault("kingdom", null);
+                    String f = (String) jo1.getOrDefault("familyGuid", null);
+
+                    if (k != null && f != null) {
+                        List<String> l = kingdomFamilies.get(k.toLowerCase());
+                        if (l == null) {
+                            l = new ArrayList();
+                            kingdomFamilies.put(k.toLowerCase(), l);
+                        }
+                        l.add(f);
+                    }
+
+                    String fn = (String) jo1.getOrDefault("family", null);
+                    String cn = (String) jo1.getOrDefault("class", null);
+                    if (fn != null && cn != null) {
+                        familyToClass.put(fn.toLowerCase(), cn);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return kingdomFamilies.get(kingdom.toLowerCase());
+    }
+
+    private String initDistributionsCsv(String type, String pid, String dataResourceId, String kingdom) throws Exception {
+        String key = type + pid + dataResourceId + kingdom;
+        String result = distributions.get(key);
+        if (result == null) {
             StringBuilder sb = new StringBuilder();
             String[] list = new String[0];
 
             String[] csv = null;
 
-            JSONArray data = Util.getDistributionsOrChecklistsData(type.equals("checklists") ? "checklists" : "distributions", "5724983", null, null, serverUrl);
-            csv = Util.getDistributionsOrChecklists(data);
+            List<String> familyLsids = getFamilyLsids(kingdom);
+
+            JSONArray data = Util.getDistributionsOrChecklistsData(type.equals("checklists") ? "checklists" : "distributions", pid, null, null, serverUrl, familyLsids, dataResourceId);
+            if (dataResourceId != null) {
+                csv = Util.getDistributionsOrChecklistsRollup(data);
+            } else {
+                csv = Util.getDistributionsOrChecklists(data);
+            }
             int count = 0;
 
             if (csv.length <= 0) {
@@ -584,8 +780,20 @@ public class AreaReportPDF {
                 count = csv.length - 1;
             }
 
-            distributions.put(type, StringUtils.join(csv, "\n"));
-            distributionCounts.put(type, count);
+            distributions.put(key, StringUtils.join(csv, "\n"));
+            distributionCounts.put(key, count);
+
+            result = distributions.get(key);
+        }
+
+        return result;
+    }
+
+    private String getWkt(String wkt) {
+        if (StringUtils.isNumeric(wkt)) {
+            return (String) Util.urlResponse("GET", serverUrl + "/shape/wkt/" + wkt).get("text");
+        } else {
+            return wkt;
         }
     }
 

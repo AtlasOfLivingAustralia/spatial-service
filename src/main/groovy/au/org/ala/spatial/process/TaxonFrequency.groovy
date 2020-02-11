@@ -55,7 +55,8 @@ class TaxonFrequency extends SlaveProcess {
 
         def facets1 = facetOccurenceCount('year', species1Area)
         if (facets1.size() == 0) {
-            taskLog("No occurrences found in the selected area.")
+            def error = "No 'year' values found in the selected area for the species '" + species1Name + "'."
+            taskLog(error)
             return
         }
         List years1 = facets1.find { it.fieldName == "year" }.fieldResult
@@ -77,6 +78,11 @@ class TaxonFrequency extends SlaveProcess {
             def species2Area = getSpeciesArea(species2, area[0])
 
             def facets2 = facetOccurenceCount('year', species2Area)
+            if (facets2.size() == 0) {
+                def error = "No 'year' values found in the selected area for the species '" + species2Name + "'."
+                taskLog(error)
+                return
+            }
             def years2 = facets2.find { it.fieldName == "year" }.fieldResult
 
             TimeSeries cumulative2 = new TimeSeries(species2Name, "Year", "Count");
