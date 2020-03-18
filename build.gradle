@@ -84,7 +84,7 @@ dependencies {
     compile "org.codehaus.jackson:jackson-core-asl:1.8.6"
     compile "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
-    compile("au.org.ala:layers-store:2.0.3-SNAPSHOT") {
+    compile("au.org.ala:layers-store:2.0.3") {
         exclude module: "spring-context"
         exclude module: "spring-jdbc"
         exclude module: "spring-orm"

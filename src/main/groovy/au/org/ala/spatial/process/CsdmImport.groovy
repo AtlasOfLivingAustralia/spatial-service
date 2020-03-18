@@ -94,7 +94,7 @@ class CsdmImport extends SlaveProcess {
                                 , reprojected.path]
 
                         try {
-                            abc(cmd)
+                            runCmd(cmd)
                         } catch (Exception e) {
                             log.error("error running gdalwarp (1)", e)
                         }
@@ -103,7 +103,7 @@ class CsdmImport extends SlaveProcess {
                                , reprojected.path
                                , geojson.path]
                         try {
-                            abc(cmd)
+                            runCmd(cmd)
                         } catch (Exception e) {
                             log.error("error running gdal_polygonize (2)", e)
                         }

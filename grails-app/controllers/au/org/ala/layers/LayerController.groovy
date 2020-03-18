@@ -117,7 +117,7 @@ class LayerController {
                            "Keywords", "Date Added"]
 
         def usage
-        if (params.usage?.asBoolean) {
+        if ("true".equalsIgnoreCase(params.usage)) {
             header = ArrayUtils.addAll(header, "Usage")
             usage = layerUsage().get("Total")
         }
@@ -156,7 +156,7 @@ class LayerController {
                         String.valueOf(lyr.keywords),
                         String.valueOf(lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added()))]
 
-                if (params.usage?.asBoolean) {
+                if ("true".equalsIgnoreCase(params.usage)) {
                     row = ArrayUtils.add(row, String.valueOf(usage.getOrDefault(String.valueOf(lyr.id), 0)))
                 }
 
