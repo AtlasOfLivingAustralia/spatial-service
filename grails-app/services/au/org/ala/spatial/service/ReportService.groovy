@@ -22,7 +22,7 @@ class ReportService {
         //Git a list of userId
         def usersInfoResp = authService.getUserDetailsById(userIds)
         Map users = [:]
-        if(usersInfoResp.success){
+        if(usersInfoResp?.success){
             users = usersInfoResp.users
         }
 

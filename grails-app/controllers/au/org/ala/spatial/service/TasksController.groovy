@@ -202,9 +202,12 @@ class TasksController {
     def downloadReport(String taskId) {
         login()
 
-        String file = grailsApplication.config.publish.dir + "/" + taskId + "/download.zip"
+        def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
 
-        render file: file, contentType: 'application/zip'
+        response.setHeader("Content-Type", "application/octet-stream")
+        response.setHeader("Content-disposition", "attachment;filename=${file.name}")
+        response.outputStream << file.bytes
+
     }
 
     @Transactional(readOnly = false)
