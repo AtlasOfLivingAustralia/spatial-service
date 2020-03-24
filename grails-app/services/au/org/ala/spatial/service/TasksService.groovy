@@ -321,7 +321,7 @@ class TasksService {
         def errors = [:]
 
         //input init from spec
-        spec.input.each { k, v ->
+        spec?.input.each { k, v ->
 
             if (v.containsKey('constraints')) {
                 def i = !input.containsKey(k) ? null : input.get(k)
