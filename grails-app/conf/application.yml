@@ -320,6 +320,8 @@ environments:
             dbCreate: update
         grails:
             serverURL: http://dev.ala.org.au:8080
+            #ssh user@nectar-spatial-test.ala.org.au -L 5432:localhost:5432  //tunnel to test
+            #ssh user@aws-spatial-prod.ala.org.au -L 5432:localhost:5432
             app:
                 context: ''
         gdal:
@@ -331,6 +333,7 @@ environments:
             url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
     production:
         dataSource:
+            #aws-spatial-prod.ala.org.au
             dbCreate: update
             logSql: false
             properties:

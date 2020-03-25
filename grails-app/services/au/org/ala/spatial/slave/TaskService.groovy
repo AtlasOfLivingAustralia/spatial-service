@@ -16,9 +16,11 @@
 package au.org.ala.spatial.slave
 
 import au.org.ala.spatial.process.SlaveProcess
+import au.org.ala.web.UserDetails
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.apache.commons.io.FileUtils
+import au.org.ala.spatial.service.Task
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
@@ -29,6 +31,9 @@ class TaskService {
     GrailsApplication grailsApplication
     FileLockService fileLockService
     def tasksService
+    def authService
+
+
 
     private getSlaveService() {
         grailsApplication.mainContext.slaveService
@@ -230,6 +235,8 @@ class TaskService {
 
         true
     }
+
+
 
     def newTask(params) {
         def task
