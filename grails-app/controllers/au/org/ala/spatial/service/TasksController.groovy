@@ -200,12 +200,12 @@ class TasksController {
      * @return
      */
     def downloadReport(String taskId) {
-        login()
 
         def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
 
         response.setHeader("Content-Type", "application/octet-stream")
         response.setHeader("Content-disposition", "attachment;filename=${file.name}")
+        response.setContentLengthLong(file.size())
         response.outputStream << file.bytes
 
     }

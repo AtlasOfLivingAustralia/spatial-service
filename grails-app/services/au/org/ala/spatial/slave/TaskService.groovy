@@ -246,6 +246,7 @@ class TaskService {
             task = new Task(taskId: params.taskId, input: params.input, name: params.name, id: Long.parseLong(params.taskId.toString()))
 
             // don't add if already running
+            //Task will never have taskId ?
             if (!tasks.containsKey(task.taskId)) {
                 tasks.put(task.id, task)
             }
