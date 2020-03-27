@@ -20,7 +20,6 @@ import au.org.ala.web.UserDetails
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.apache.commons.io.FileUtils
-import au.org.ala.spatial.service.Task
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
@@ -246,7 +245,6 @@ class TaskService {
             task = new Task(taskId: params.taskId, input: params.input, name: params.name, id: Long.parseLong(params.taskId.toString()))
 
             // don't add if already running
-            //Task will never have taskId ?
             if (!tasks.containsKey(task.taskId)) {
                 tasks.put(task.id, task)
             }
