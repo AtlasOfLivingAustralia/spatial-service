@@ -94,7 +94,7 @@ class CsdmImport extends SlaveProcess {
                                 , reprojected.path]
 
                         try {
-                            runCmd(cmd)
+                            runCmd(cmd, false)
                         } catch (Exception e) {
                             log.error("error running gdalwarp (1)", e)
                         }
@@ -103,7 +103,7 @@ class CsdmImport extends SlaveProcess {
                                , reprojected.path
                                , geojson.path]
                         try {
-                            runCmd(cmd)
+                            runCmd(cmd, false)
                         } catch (Exception e) {
                             log.error("error running gdal_polygonize (2)", e)
                         }
@@ -159,7 +159,7 @@ class CsdmImport extends SlaveProcess {
                     String spcode = startIdx;
 
                     String sql = MessageFormat.format("INSERT INTO distributions (data_resource_uid,spcode,group_name, the_geom, type, metadata_u, gid, scientific, specific_n, area_name)" +
-                            " VALUES (''{1}'', {2}, ''{3}'', ST_GEOMFROMTEXT(''{4}'', 4326), ''e'', ''{5}'', {6}, ''{7}'', ''{8}'', ''{9}'');\n",
+                            " VALUES (''{1}'', ''{2}'', ''{3}'', ST_GEOMFROMTEXT(''{4}'', 4326), ''e'', ''{5}'', ''{6}'', ''{7}'', ''{8}'', ''{9}'');\n",
                             sqlEscapeString(data_resource_uid),
                             '' + spcode,
                             organisation,
