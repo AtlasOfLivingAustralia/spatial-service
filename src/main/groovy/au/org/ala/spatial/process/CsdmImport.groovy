@@ -99,7 +99,7 @@ class CsdmImport extends SlaveProcess {
                             log.error("error running gdalwarp (1)", e)
                         }
                         cmd = [grailsApplication.config.gdal.dir + "gdal_polygonize.py",
-                               "-f", "\"GeoJSON\""
+                                "-f","GeoJSON"
                                , reprojected.path
                                , geojson.path]
                         try {
