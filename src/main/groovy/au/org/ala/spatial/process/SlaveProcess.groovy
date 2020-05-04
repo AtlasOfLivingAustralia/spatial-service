@@ -305,7 +305,12 @@ class SlaveProcess {
         String response = Util.getUrl(url)
 
         JSONParser jp = new JSONParser()
-        ((JSONArray) jp.parse(response)).get(0).getAt("count")
+        def results = ((JSONArray) jp.parse(response))
+        if (results) {
+            results.get(0).getAt("count")
+        } else {
+            0
+        }
     }
 
     def occurrenceCount(species) {
