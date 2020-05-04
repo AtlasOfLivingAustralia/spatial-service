@@ -27,16 +27,21 @@
     <li><g:link controller="manageLayers" action="remote">Copy layers from remote servers</g:link> - transfer layers from test environment to production</li>
 </ul>
 
-<h4>
-    Tools
-</h4>
-<ul>
-    <li><g:link controller="tasks" action="create" params="${[name:'Thumbnails']}">Regenerate thumbnails</g:link> - Regenerate thumbnails for the layers</li>
-    <li><g:link controller="intersect"
-                action="reloadConfig">Reload intersect configuration</g:link> - Reload intersect configuration (run after adding new layers)</li>
-    <li><g:link controller="tasks" action="create"
-                params="${[name: 'DistributionRematchLsid', input: '{"updateAll":true}']}">Rematch checklist and expert distribution LSIDs</g:link> - Rematch expert distribution and checklist LSIDs (using sandbox if configured, otherwise biocache-service)</li>
-</ul>
+    <h4>
+        Tools
+    </h4>
+    <ul>
+        <li><g:link controller="tasks" action="create"
+                    params="${[name: 'Thumbnails']}">Regenerate thumbnails</g:link> - Regenerate thumbnails for the layers</li>
+        <li><g:link controller="intersect"
+                    action="reloadConfig">Reload intersect configuration</g:link> - Reload intersect configuration (run after adding new layers)</li>
+        <li><g:link controller="tasks" action="create"
+                    params="${[name: 'DistributionRematchLsid', input: '{"updateAll":true}']}">Rematch checklist and expert distribution LSIDs</g:link> - Rematch expert distribution and checklist LSIDs (using sandbox if configured, otherwise biocache-service)</li>
+        <li><g:link controller="log" action="search"
+                    params="${[admin: true, accept: 'application/csv', max: -1, groupBy: 'category1,category2', countBy: 'record,user,session', excludeRoles: 'ROLE_ADMIN', startDate: (java.time.LocalDate.now().minusMonths(6).toString()), endDate: (java.time.LocalDate.now().toString())]}">spatial-hub usage report - last 6 months (csv)</g:link> - Excludes ROLE_ADMIN users</li>
+        <li><g:link controller="layer" action="csvlist"
+                    params="${[usage: true, months: 6]}">layer usage report - last 6 months (csv)</g:link></li>
+    </ul>
 </div>
 </body>
 </html>

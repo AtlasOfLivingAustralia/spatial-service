@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.service
 
+import au.com.bytecode.opencsv.CSVWriter
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
@@ -26,6 +27,7 @@ class LogController {
 
     def logService
     AuthService authService
+    def serviceAuthService
 
     @Transactional
     def index() {
@@ -42,15 +44,38 @@ class LogController {
     }
 
     def search() {
-        def searchResult = logService.search(params, authService.getUserId(),
-                authService.userInRole(grailsApplication.config.auth.admin_role))
+        def isAdmin = authService.userInRole(grailsApplication.config.auth.admin_role) || serviceAuthService.isValid(params['api_key']) ||
+                grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()
+        def userId = authService.getUserId()
+
+        if (!isAdmin && !userId) {
+            render status: 401
+            return
+        }
+
+        def searchResult = logService.search(params, authService.getUserId(), isAdmin)
 
         def totalCount = logService.searchCount(params, authService.getUserId(),
                 authService.userInRole(grailsApplication.config.auth.admin_role))
 
-        if ("application/json".equals(request.getHeader("accept"))) {
+        if ("application/json".equals(request.getHeader("accept")) || "application/json".equals(params.accept)) {
             def map = [records: searchResult, totalCount: totalCount]
             render map as JSON
+        } else if ("application/csv".equals(request.getHeader("accept")) || "application/csv".equals(params.accept)) {
+            response.contentType = 'application/csv'
+            response.setHeader("Content-disposition", "filename=\"search.csv\"")
+
+            CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.outputStream))
+            def firstRow = true
+            searchResult.each { row ->
+                if (firstRow) {
+                    writer.writeNext(row.keySet() as String[])
+                    firstRow = false
+                }
+                writer.writeNext(row.values() as String[])
+            }
+            writer.flush()
+            writer.close()
         } else {
             [searchResult: searchResult, totalCount: totalCount]
         }

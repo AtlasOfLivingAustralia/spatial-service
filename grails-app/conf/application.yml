@@ -174,14 +174,14 @@ retryTime: 30000
 security:
   cas:
 #    casServerName: 'https://auth.ala.org.au'
-#    loginUrl: 'https://auth.ala.org.au/cas/login'
-#    logoutUrl: 'https://auth.ala.org.au/cas/logout'
-#    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
+    #    loginUrl: 'https://auth.ala.org.au/cas/login'
+    #    logoutUrl: 'https://auth.ala.org.au/cas/logout'
+    #    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
     bypass: false # set to true for non-ALA deployment
     gateway: false
     uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
-    uriFilterPattern: '/alaAdmin.*,/log.*'
-    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/tasks,/tasks/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
+    uriFilterPattern: '/alaAdmin.*,/log/,/log'
+    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/tasks,/tasks/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*,/log/search.*'
     disableCAS: false
 
 auth.admin_role: "ROLE_ADMIN"
