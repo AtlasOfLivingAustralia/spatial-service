@@ -27,7 +27,7 @@ class SpeciesByLayer extends SlaveProcess {
 
     void start() {
 
-        def speciesList = JSON.parse(task.input.species.toString())
+        def species = JSON.parse(task.input.species.toString())
         def fields = JSON.parse(task.input.layer.toString())
 
         HashMap<String, Integer> speciesMap = new HashMap()
@@ -45,26 +45,27 @@ class SpeciesByLayer extends SlaveProcess {
 
             def firstSpecies = true;
             def speciesNames = []
-            for (def species : speciesList) {
-                speciesNames.push(species.name)
 
-                int n = 0
-                for (def fieldObject : fieldObjects) {
-                    def areaName = new String(fieldObject.name.getBytes("US-ASCII"), "UTF-8")
-                    if (speciesList.size > 1) areaName + ", " + species.name
+            speciesNames.push(species.name)
 
-                    def count = new SpeciesByLayerCount(fieldObject.area_km)
+            int n = 0
+            for (def fieldObject : fieldObjects) {
+                def areaName = new String(fieldObject.name.getBytes("US-ASCII"), "UTF-8")
 
-                    n = n + 1
-                    task.message = "Getting species for \"" + fieldObject.name + "\" (area " + n + " of " + fieldObjects.size + ", group " + speciesNames.size + " of " + speciesList.size + ")"
+                def count = new SpeciesByLayerCount(fieldObject.area_km)
 
-                    def fq = fields[0] + ":" + fieldObject.name
-                    count.species = facetCount('names_and_lsid', species, fq)
-                    count.occurrences = occurrenceCount(species, fq)
+                n = n + 1
+                taskLog("Getting species for \"" + fieldObject.name + "\" (area " + n + " of " + fieldObjects.size() + ")")
 
-                    // added encoding fix
-                    counts.put(areaName, count)
-                }
+                def fq = fields[0] + ":" + fieldObject.name
+
+                taskLog(fq)
+
+                count.species = facetCount('names_and_lsid', species, fq)
+                count.occurrences = occurrenceCount(species, fq)
+
+                // added encoding fix
+                counts.put(areaName, count)
             }
         } else {
             // indexed only - environmental fields
@@ -77,27 +78,25 @@ class SpeciesByLayer extends SlaveProcess {
 
             def firstSpecies = true;
             def speciesNames = []
-            for (def species : speciesList) {
-                speciesNames.push(species.name)
 
-                int n = 0
-                for (def fieldObject : fieldObjects) {
-                    def areaName = fieldObject.label
-                    if (speciesList.size > 1) fields[0].name + ':' + areaName + " " + layer.environmentalvalueunits + ", " + species.name
+            speciesNames.push(species.name)
 
-                    // no area_km
-                    def count = new SpeciesByLayerCount(-1)
+            int n = 0
+            for (def fieldObject : fieldObjects) {
+                def areaName = fieldObject.label
 
-                    n = n + 1
-                    task.message = "Getting species for \"" + fieldObject.label + "\" (area " + n + " of " + fieldObjects.size + ", group " + speciesNames.size + " of " + speciesList.size + ")"
+                // no area_km
+                def count = new SpeciesByLayerCount(-1)
 
-                    def fq = fieldObject.fq
-                    count.species = facetCount('names_and_lsid', species, fq)
-                    count.occurrences = occurrenceCount(species, fq)
+                n = n + 1
+                task.message = "Getting species for \"" + fieldObject.label + "\" (area " + n + " of " + fieldObjects.size + ")"
 
-                    // added encoding fix
-                    counts.put(areaName, count)
-                }
+                def fq = fieldObject.fq
+                count.species = facetCount('names_and_lsid', species, fq)
+                count.occurrences = occurrenceCount(species, fq)
+
+                // added encoding fix
+                counts.put(areaName, count)
             }
         }
 
@@ -131,8 +130,7 @@ class SpeciesByLayer extends SlaveProcess {
     }
 
     private class SpeciesByLayerCount {
-        BitSet species = new BitSet()
-
+        int species = 0
         int occurrences = 0
         double area = 0
 
