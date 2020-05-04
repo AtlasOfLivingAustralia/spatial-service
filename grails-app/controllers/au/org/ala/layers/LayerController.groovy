@@ -117,9 +117,9 @@ class LayerController {
                            "Keywords", "Date Added"]
 
         def usage
-        if (params.usage?.asBoolean) {
+        if ("true".equalsIgnoreCase(params.usage)) {
             header = ArrayUtils.addAll(header, "Usage")
-            usage = layerUsage().get("Total")
+            usage = layerUsage(params.months as Integer).get("Total")
         }
 
         response.setContentType("text/csv charset=UTF-8")
@@ -156,7 +156,7 @@ class LayerController {
                         String.valueOf(lyr.keywords),
                         String.valueOf(lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added()))]
 
-                if (params.usage?.asBoolean) {
+                if ("true".equalsIgnoreCase(params.usage)) {
                     row = ArrayUtils.add(row, String.valueOf(usage.getOrDefault(String.valueOf(lyr.id), 0)))
                 }
 
@@ -234,11 +234,11 @@ class LayerController {
      *
      * @return
      */
-    def layerUsage() {
+    private def layerUsage(months) {
         def layerUsage = [:]
 
         def c = Calendar.getInstance()
-        c.add(Calendar.MONTH, params.ageInMonths ?: -6)
+        c.add(Calendar.MONTH, params.ageInMonths ?: -1 * months)
 
         // Use as layer
         def fields = fieldDao.getFields()
