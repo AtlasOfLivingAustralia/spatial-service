@@ -302,15 +302,19 @@ class SlaveProcess {
         if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
 
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q + fq
-        String response = Util.getUrl(url)
-
         JSONParser jp = new JSONParser()
-        def results = ((JSONArray) jp.parse(response))
-        if (results) {
-            results.get(0).getAt("count")
-        } else {
-            0
+        try {
+            String response = Util.getUrl(url)
+
+            def results = ((JSONArray) jp.parse(response))
+            if (results) {
+                return results.get(0).getAt("count")
+            }
+        } catch (err) {
+            log.error 'failed get facet count for: ' + task.id + ", " + url, err
         }
+
+        return 0
     }
 
     def occurrenceCount(species) {

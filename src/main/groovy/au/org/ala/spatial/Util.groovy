@@ -45,6 +45,10 @@ class Util {
     }
 
     static PoolingHttpClientConnectionManager pool = new PoolingHttpClientConnectionManager()
+            {
+                pool.setMaxPerRoute(100)
+                pool.setDefaultMaxPerRoute(50)
+            }
 
     static Map<String, Object> getStream(url) {
         HttpClient client = null
@@ -89,6 +93,10 @@ class Util {
     }
 
     static MultiThreadedHttpConnectionManager mgr = new MultiThreadedHttpConnectionManager();
+    {
+        mgr.setMaxConnectionsPerHost(50)
+        mgr.setMaxTotalConnections(100)
+    }
 
     static Map<String, Object> urlResponse(String type, String url, NameValuePair[] nameValues = null,
                            Map<String, String> headers = null, RequestEntity entity = null,
@@ -99,7 +107,7 @@ class Util {
 
             HttpClientParams httpParams = client.getParams()
             httpParams.setSoTimeout(300000)
-            httpParams.setConnectionManagerTimeout(10000)
+            httpParams.setConnectionManagerTimeout(300000)
 
             if (username != null && password != null) {
                 client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
@@ -158,10 +166,6 @@ class Util {
             }
         } catch (Exception e) {
             log.error url, e
-        } finally {
-            if (client && client instanceof SimpleHttpConnectionManager && client.getHttpConnectionManager()) {
-                ((SimpleHttpConnectionManager) client.getHttpConnectionManager()).shutdown()
-            }
         }
 
         return null
