@@ -45,10 +45,14 @@ class Util {
     }
 
     static PoolingHttpClientConnectionManager pool = new PoolingHttpClientConnectionManager()
-            {
-                pool.setMaxPerRoute(100)
-                pool.setDefaultMaxPerRoute(50)
-            }
+    static {
+        try {
+            pool.setMaxPerRoute(100)
+            pool.setDefaultMaxPerRoute(50)
+        } catch (e) {
+            // this fails when running tests
+        }
+    }
 
     static Map<String, Object> getStream(url) {
         HttpClient client = null
