@@ -175,11 +175,12 @@ class ShapesController {
             GeometryJSON gJson = new GeometryJSON()
             Geometry geometry = gJson.read(new StringReader(geojsonString))
 
-            if (!geometry.isValid()) {
-                retMap.put("error", "Invalid geometry")
-            }
+            wkt = fixWkt(geometry.toText())
 
-            wkt = geometry.toText()
+            if (!isWKTValid(wkt)) {
+                retMap.put("error", "Invalid geometry")
+                return retMap
+            }
         } catch (Exception ex) {
             log.error("Malformed GeoJSON geometry. Note that only GeoJSON geometries can be supplied here. Features and FeatureCollections cannot.", ex)
             retMap.put("error", "Malformed GeoJSON geometry. Note that only GeoJSON geometries can be supplied here. Features and FeatureCollections cannot.")
@@ -235,8 +236,11 @@ class ShapesController {
             return retMap
         }
 
+        wkt = fixWkt(wkt)
+
         if (!isWKTValid(wkt)) {
             retMap.put("error", "Invalid WKT")
+            return retMap
         }
 
         try {
@@ -366,8 +370,11 @@ class ShapesController {
             String kml = IOUtils.toString(fileItem.getInputStream())
             String wkt = SpatialUtils.getKMLPolygonAsWKT(kml)
 
+            wkt = fixWkt(wkt)
+
             if (!isWKTValid(wkt)) {
                 retMap.put("error", "Invalid geometry")
+                return retMap
             } else {
                 String generatedPid = objectDao.createUserUploadedObject(wkt, name, description, userId)
                 retMap.put("id", Integer.parseInt(generatedPid))
@@ -434,8 +441,11 @@ class ShapesController {
 
                 String wkt = SpatialUtils.getShapeFileFeaturesAsWkt(shpFileDir, featureIndex)
 
+                wkt = fixWkt(wkt)
+
                 if (wkt == null || !isWKTValid(wkt)) {
                     retMap.put("error", "Invalid geometry")
+                    return retMap
                 }
 
                 if (pid != null) {
@@ -729,10 +739,27 @@ class ShapesController {
         }
     }
 
+    private String fixWkt(String wkt) {
+        WKTReader wktReader = new WKTReader()
+        try {
+            Geometry geom = wktReader.read(wkt.toString())
+
+            // Use CCW for exterior rings. Normalizing will use the JTS default (CW). Reverse makes it CCW.
+            geom.normalize()
+            Geometry ccw = geom.reverse()
+
+            return GeomMakeValid.makeValid(ccw).toString()
+        } catch (ParseException ex) {
+            log.trace(ex.getMessage(), ex)
+            return wkt
+        }
+    }
+
     private boolean isWKTValid(String wkt) {
         WKTReader wktReader = new WKTReader()
         try {
             Geometry geom = wktReader.read(wkt.toString())
+
             return geom.isValid()
         } catch (ParseException ex) {
             log.trace(ex.getMessage(), ex)
