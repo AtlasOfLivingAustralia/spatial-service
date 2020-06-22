@@ -186,9 +186,28 @@ class TasksController {
     def download(Task task) {
         login()
 
-        String file = grailsApplication.config.publish.dir + "/" + task.id + ".zip"
+        String file = grailsApplication.config.publish.dir + task.id + ".zip"
 
         render file: file, contentType: 'application/zip'
+    }
+
+    /**
+     * Internal use
+     *
+     * data.dir or publish.dir?
+     * get zip of all task outputs (zip received from slave/publish)
+     * @param task
+     * @return
+     */
+    def downloadReport(String taskId) {
+
+        def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
+
+        response.setHeader("Content-Type", "application/octet-stream")
+        response.setHeader("Content-disposition", "attachment;filename=${file.name}")
+        response.setContentLengthLong(file.size())
+        response.outputStream << file.bytes
+
     }
 
     @Transactional(readOnly = false)

@@ -297,7 +297,12 @@ class TasksService {
     }
 
     def validateInput(request) {
-        validateInput(request.name, request.input)
+        try {
+            validateInput(request.name, request.input)
+        } catch (err) {
+            log.error(err.getMessage(), err)
+            [generalError: err.getMessage()]
+        }
     }
     /**
      * Validate input against name's spec.
@@ -321,7 +326,7 @@ class TasksService {
         def errors = [:]
 
         //input init from spec
-        spec.input.each { k, v ->
+        spec?.input.each { k, v ->
 
             if (v.containsKey('constraints')) {
                 def i = !input.containsKey(k) ? null : input.get(k)
