@@ -60,7 +60,7 @@ class BootStrap {
         }
 
         if (grailsApplication.config.service.enable.toBoolean()) {
-            monitorService.init()
+            monitorService.monitor()
         }
         if (grailsApplication.config.slave.enable.toBoolean()) {
             slaveService.monitor()

@@ -23,38 +23,39 @@ class MonitorService {
     def grailsApplication
     def masterService
     def tasksService
-    def checkThread
+    def checkThread = new Thread() {
+        public void run() {
+            try {
+                while (running) {
+                    //wait
+                    synchronized (lock) {
+                        lock.wait(monitorFreqency)
+                    }
+
+                    log.debug 'checking tasks and slaves'
+
+                    // check running task status (for slaves that fail to push status)
+                    checkTasks()
+
+                    // check slaves without tasks
+                    checkSlaves()
+                }
+            } catch (InterruptedException e) {
+                log.error 'checkThread interrupted'
+            } catch (err) {
+                log.error 'checkThread error', err
+            }
+            log.debug 'checkThread ending'
+        }
+    }
+
     def running = true
     def lock = new Object()
 
-    def init() {
-        checkThread = new Thread() {
-            public void run() {
-                try {
-                    while (running) {
-                        //wait
-                        synchronized (lock) {
-                            lock.wait(monitorFreqency)
-                        }
-
-                        log.debug 'checking tasks and slaves'
-
-                        // check running task status (for slaves that fail to push status)
-                        checkTasks()
-
-                        // check slaves without tasks
-                        checkSlaves()
-                    }
-                } catch (InterruptedException e) {
-                    log.error 'checkThread interrupted'
-                } catch (err) {
-                    log.error 'checkThread error', err
-                }
-                log.debug 'checkThread ending'
-            }
+    synchronized def monitor() {
+        if (!checkThread.isAlive()) {
+            checkThread.start()
         }
-
-        checkThread.start()
     }
 
     // inform monitoring thread that a change has occurred 
