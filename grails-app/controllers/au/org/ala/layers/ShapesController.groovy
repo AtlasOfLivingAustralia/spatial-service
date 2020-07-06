@@ -19,6 +19,7 @@ import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.SpatialUtils
+import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.ParseException
