@@ -19,7 +19,7 @@ import au.com.bytecode.opencsv.CSVWriter
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.json.simple.JSONArray
+import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 
 @Slf4j
@@ -35,18 +35,20 @@ class SpeciesByLayer extends SlaveProcess {
         def field = getField(fields[0])
         def layer = getLayer(field.spid)
 
+        def speciesNames = []
+
+        speciesNames.push(species.name)
+
+        HashMap<String, SpeciesByLayerCount> counts = new HashMap();
+
         if (field.type != 'e') {
             // indexed only fields - contextual or grid as contextual layers
 
             def fieldObjects = getObjects(fields[0])
-            HashMap<String, SpeciesByLayerCount> counts = new HashMap();
 
             HashSet<String> occurrenceIds = new HashSet();
 
             def firstSpecies = true;
-            def speciesNames = []
-
-            speciesNames.push(species.name)
 
             int n = 0
             for (def fieldObject : fieldObjects) {
@@ -74,28 +76,46 @@ class SpeciesByLayer extends SlaveProcess {
             String response = Util.getUrl(url)
 
             JSONParser jp = new JSONParser()
-            def fieldObjects = ((JSONArray) jp.parse(response)).getAt("data").get(0).getAt("data")
+            def fieldObjects = ((JSONObject) jp.parse(response)).getAt("data").get(0).getAt("data")
 
-            def firstSpecies = true;
-            def speciesNames = []
+            def firstSpecies = true
 
-            speciesNames.push(species.name)
-
-            int n = 0
+            def min = Double.MAX_VALUE, max = Double.MIN_VALUE
             for (def fieldObject : fieldObjects) {
                 def areaName = fieldObject.label
+                if (areaName) {
+                    def values = areaName.split('-')
+                    values.each {
+                        try {
+                            def n = Double.parseDouble(it)
+                            if (min > n) min = n
+                            if (max < n) max = n
+                        } catch (err) {
+                        }
+                    }
+                }
+            }
 
+            double steps = 30
+            double step = (max - min) / steps
+            for (int n = 0; n < steps; n++) {
                 // no area_km
                 def count = new SpeciesByLayerCount(-1)
 
-                n = n + 1
-                task.message = "Getting species for \"" + fieldObject.label + "\" (area " + n + " of " + fieldObjects.size + ")"
+                task.message = "Getting species for area " + (n + 1) + " of " + steps
 
-                def fq = fieldObject.fq
+                def lowerBound = (min + n * step)
+                def upperBound = n == steps - 1 ? max : (min + (n + 1) * step)
+
+                def fq = fields[0] + ":[" + lowerBound + " TO " + upperBound + "]"
+                if (n > 0) {
+                    fq += " AND -" + fields[0] + ":" + lowerBound
+                }
                 count.species = facetCount('names_and_lsid', species, fq)
                 count.occurrences = occurrenceCount(species, fq)
 
-                // added encoding fix
+                def areaName = lowerBound + " " + upperBound
+
                 counts.put(areaName, count)
             }
         }
@@ -112,14 +132,15 @@ class SpeciesByLayer extends SlaveProcess {
         if (field.type != 'e') {
             writer.writeNext((String[]) ['area name', 'area (sq km)', 'number of species', 'number of occurrences'])
         } else {
-            writer.writeNext((String[]) ['area name', 'number of species', 'number of occurrences'])
+            writer.writeNext((String[]) ['lower bound', 'upper bound', 'number of species', 'number of occurrences'])
         }
 
         for (def entry : counts.entrySet()) {
             if (field.type != 'e') {
-                writer.writeNext([entry.key, entry.value.area, entry.value.species.cardinality(), entry.value.occurrences] as String[])
+                writer.writeNext([entry.key, entry.value.area, entry.value.species, entry.value.occurrences] as String[])
             } else {
-                writer.writeNext([entry.key, entry.value.species.cardinality(), entry.value.occurrences] as String[])
+                def bounds = entry.key.split(' ')
+                writer.writeNext([bounds[0], bounds[1], entry.value.species, entry.value.occurrences] as String[])
             }
         }
 
