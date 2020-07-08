@@ -24,6 +24,7 @@ class LogService {
     def category1;
     def category2;
     def logColumns = ["category1", "category2", "data", "sessionId", "userId"]
+    def extraColumns = [year: "year(created)", month: "month(created)"]
 
     def init() {
         if (!category1) {
@@ -37,7 +38,7 @@ class LogService {
     def search(params, userId, userIsAdmin) {
         init();
 
-        def columns = params.groupBy?.split(',').collect { logColumns.contains(it) }?.size() == params.groupBy?.split(',')?.size() ? params.groupBy?.split(',') : logColumns;
+        def columns = params.groupBy?.split(',').collect { logColumns.contains(it) ? it : extraColumns.containsKey(it) ? extraColumns.get(it) : null }?.findAll { it != null }
         def counts = count(params.countBy)
         def where = where(params, userId, userIsAdmin)
         def groupBy = params.groupBy ? "GROUP BY ${columns.join(',')} ORDER BY ${columns.join(',')} DESC" : "ORDER BY created DESC"
@@ -104,7 +105,7 @@ class LogService {
                 countColumns.push("count(distinct sessionId) AS sessions")
             }
             if ("user".equals(by)) {
-                countColumns.push("count(distinct user) AS users")
+                countColumns.push("count(distinct userId) AS users")
             }
         }
 
@@ -132,7 +133,7 @@ class LogService {
 
         if (params.startDate && params.endDate) {
             def start = DateTimeFormatter.ISO_LOCAL_DATE.parse(params.startDate)
-            def end = DateTimeFormatter.ISO_LOCAL_DATE.parse(params.endDate)
+            def end = 'now'.equalsIgnoreCase(params.endDate) ? java.time.Instant.now() : DateTimeFormatter.ISO_LOCAL_DATE.parse(params.endDate)
             clause.add("created between '${DateTimeFormatter.ISO_LOCAL_DATE.format(start)}' and '${DateTimeFormatter.ISO_LOCAL_DATE.format(end)}'")
         }
 

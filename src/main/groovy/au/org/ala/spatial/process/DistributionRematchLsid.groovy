@@ -25,7 +25,7 @@ import org.json.simple.JSONObject
 class DistributionRematchLsid extends SlaveProcess {
 
     void start() {
-        String updateAll = 'true'.equalsIgnoreCase(task.input.updateAll)
+        String updateAll = 'true'.equalsIgnoreCase(String.valueOf(task.input.updateAll))
 
         List distributions = getDistributions()
         distributions.addAll(getChecklists())
