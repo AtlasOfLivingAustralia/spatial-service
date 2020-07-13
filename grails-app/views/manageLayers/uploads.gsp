@@ -91,7 +91,8 @@
                         </g:link><g:if
                             test="${item.containsKey('data_resource_uid')}">Expert distribution exists: ${item.data_resource_uid}
                         <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-danger"
-                                id="${item.raw_id}"> <i class="glyphicon glyphicon-remove"></i> delete distribution</g:link></g:if>
+                                id="${item.raw_id}"><i
+                                class="glyphicon glyphicon-remove"></i> delete distribution</g:link></g:if>
                         <br/>
                         <g:link controller="manageLayers" action="checklist" class="btn btn-sm btn-default"
                                 id="${item.containsKey('checklist') ? item.checklist : item.raw_id}">
@@ -99,9 +100,11 @@
                         </g:link><g:if
                             test="${item.containsKey('checklist')}">Checklist exists: ${item.checklist}
                         <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-default btn-danger"
-                                id="${item.raw_id}"> <i class="glyphicon glyphicon-remove"></i> delete checklist</g:link></g:if>
+                                id="${item.raw_id}"><i
+                                class="glyphicon glyphicon-remove"></i> delete checklist</g:link></g:if>
                     </g:if></td>
-                <td><a onclick="return confirmDelete(${item.raw_id}, '${item.filename}');" class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-remove"></i> delete</a></td>
+                <td><a onclick="return confirmDelete('${item.raw_id}', '${item.filename}');"
+                       class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-remove"></i> delete</a></td>
             </tr>
         </g:each>
         </tbody>
