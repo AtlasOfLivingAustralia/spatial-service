@@ -59,7 +59,7 @@ class SpeciesByLayer extends SlaveProcess {
                 n = n + 1
                 taskLog("Getting species for \"" + fieldObject.name + "\" (area " + n + " of " + fieldObjects.size() + ")")
 
-                def fq = fields[0] + ":" + fieldObject.name
+                def fq = fields[0] + ":\"" + fieldObject.name + "\""
 
                 taskLog(fq)
 
