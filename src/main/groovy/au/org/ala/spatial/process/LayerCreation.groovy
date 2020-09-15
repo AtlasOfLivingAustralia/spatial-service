@@ -44,11 +44,15 @@ class LayerCreation extends SlaveProcess {
         String dir = grailsApplication.config.data.dir
         File shpUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".shp")
         File bilUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".bil")
+        File tifUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".tif")
         File txtUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".txt")
         File diva = new File(dir + "/layer/" + layer.name + ".grd")
 
-        if (bilUploaded.exists()) {
+        if (bilUploaded.exists() || tifUploaded.exists()) {
             String srcPath = bilUploaded.getPath()
+            if (tifUploaded.exists()) {
+                srcPath = tifUploaded.getPath()
+            }
             String outPath = dir + "/layer/" + layer.name
             FileUtils.forceMkdir(new File(outPath).getParentFile())
 
