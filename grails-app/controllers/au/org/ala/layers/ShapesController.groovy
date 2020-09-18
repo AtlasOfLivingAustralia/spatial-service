@@ -53,6 +53,31 @@ class ShapesController {
 
     def objectDao
 
+    def groovySql
+
+    static final String KML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<kml xmlns=\"http://earth.google.com/kml/2.2\">" +
+            "<Document>" +
+            "  <name></name>" +
+            "  <description></description>" +
+            "  <Style id=\"style1\">" +
+            "    <LineStyle>" +
+            "      <color>40000000</color>" +
+            "      <width>3</width>" +
+            "    </LineStyle>" +
+            "    <PolyStyle>" +
+            "      <color>73FF0000</color>" +
+            "      <fill>1</fill>" +
+            "      <outline>1</outline>" +
+            "    </PolyStyle>" +
+            "  </Style>" +
+            "  <Placemark>" +
+            "    <name></name>" +
+            "    <description></description>" +
+            "    <styleUrl>#style1</styleUrl>"
+
+    private static final String KML_FOOTER = "</Placemark></Document></kml>"
+
     def wkt(String id) {
         String filename = params?.filename ?: id
         filename = makeValidFilename(filename)
@@ -64,7 +89,16 @@ class ShapesController {
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'wkt')
             } else {
-                objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'wkt')
+                if (id.contains('~')) {
+                    List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                    String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                    groovySql.eachRow(query, { row ->
+                        os.write(row.wkt.toString().getBytes())
+                    })
+                } else {
+                    objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'wkt')
+                }
             }
             os.flush()
         } catch (err) {
@@ -90,6 +124,19 @@ class ShapesController {
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".kml\"")
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'kml')
+            } else if (id.contains('~')) {
+                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                os.write(KML_HEADER
+                        .replace("<name></name>", "<name><![CDATA[" + filename + "]]></name>")
+                        .replace("<description></description>", "<description><![CDATA[" + ids.join(',') + "]]></description>").getBytes())
+
+                String query = "select st_askml(st_collect(geom)) as kml from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                groovySql.eachRow(query, { row ->
+                    os.write(row.kml.toString().getBytes())
+                })
+
+                os.write(KML_FOOTER.getBytes())
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'kml')
             }
@@ -117,6 +164,13 @@ class ShapesController {
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".geojson\"")
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'geojson')
+            } else if (id.contains('~')) {
+                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                String query = "select st_asgeojson(st_collect(geom)) as geojson from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                groovySql.eachRow(query, { row ->
+                    os.write(row.geojson.toString().getBytes())
+                })
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'geojson')
             }
@@ -145,6 +199,17 @@ class ShapesController {
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".zip\"")
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'shp')
+            } else if (id.contains('~')) {
+                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                String wkt = ""
+                groovySql.eachRow(query, { row ->
+                    wkt = row.wkt
+                })
+
+                File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, 'area', filename, ids.join(','))
+                FileUtils.copyFile(zippedShapeFile, os);
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'shp')
             }
