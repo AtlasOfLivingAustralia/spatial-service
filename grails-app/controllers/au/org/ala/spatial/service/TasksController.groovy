@@ -16,7 +16,6 @@
 package au.org.ala.spatial.service
 
 import au.org.ala.spatial.Util
-import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.grails.web.json.JSONObject
@@ -25,11 +24,17 @@ import org.grails.web.json.JSONObject
 class TasksController {
 
     TasksService tasksService
-    AuthService authService
-    ServiceAuthService serviceAuthService
+    def serviceAuthService
 
+    /**
+     * admin only or api_key
+     *
+     * @return
+     */
     def index() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         if (!params?.max) params.max = 10
         if (!params?.sort) params.sort = "created"
@@ -81,7 +86,15 @@ class TasksController {
         [taskInstanceList: list, taskInstanceCount: count]
     }
 
+    /**
+     * must be logged in
+     *
+     * @param task
+     * @return
+     */
     def status(Task task) {
+        if (!doLogin()) return
+
         def status = tasksService.getStatus(task)
 
         if (params.containsKey('last')) {
@@ -107,8 +120,14 @@ class TasksController {
         render status as JSON
     }
 
+    /**
+     * must be logged in
+     *
+     * @param task
+     * @return
+     */
     def show(Task task) {
-        login()
+        if (!doLogin()) return
 
         task.history = task.history.sort { a, b ->
             a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
@@ -121,33 +140,13 @@ class TasksController {
         }
     }
 
-    private login() {
-
-        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {
-            return
-        }
-
-        if (serviceAuthService.isValid(params['api_key'])) {
-            return
-        }
-
-        if (!serviceAuthService.isValid(params['api_key'])) {
-            if (!authService.getUserId() && !request.contentType?.equalsIgnoreCase("application/json")) {
-                redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                        grailsApplication.config.security.cas.appServerName + createLink(controller: 'tasks', action: 'index'))
-            } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
-                Map err = [error: 'not authorised']
-                render err as JSON
-            }
-        }
-    }
-
     /**
      * @return a map of inputs to errors, or the created task
      */
     @Transactional(readOnly = false)
     create() {
-        login()
+        if (!doLogin())
+            return
 
         JSONObject input = null
         if (params.containsKey('input')) {
@@ -155,7 +154,7 @@ class TasksController {
         }
 
         //Validate input. It may update input
-        def errors = tasksService.validateInput(params.name, input)
+        def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
 
         if (errors) {
             render errors as JSON
@@ -165,9 +164,15 @@ class TasksController {
         }
     }
 
+    /**
+     * login requried
+     *
+     * @param task
+     * @return
+     */
     @Transactional(readOnly = false)
     cancel(Task task) {
-        login()
+        if (!doLogin()) return
 
         if (task?.status < 2) tasksService.cancel(task)
 
@@ -180,11 +185,14 @@ class TasksController {
 
     /**
      * get zip of all task outputs (zip received from slave/publish)
+     *
+     * login required
+     *
      * @param task
      * @return
      */
     def download(Task task) {
-        login()
+        if (!doLogin()) return
 
         String file = grailsApplication.config.publish.dir + task.id + ".zip"
 
@@ -194,12 +202,15 @@ class TasksController {
     /**
      * Internal use
      *
+     * login required
+     *
      * data.dir or publish.dir?
      * get zip of all task outputs (zip received from slave/publish)
      * @param task
      * @return
      */
     def downloadReport(String taskId) {
+        if (!doLogin(params)) return
 
         def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
 
@@ -210,9 +221,18 @@ class TasksController {
 
     }
 
+    /**
+     *
+     * admin only or api_key
+     *
+     * @param task
+     * @return
+     */
     @Transactional(readOnly = false)
     reRun(Task task) {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         if (task != null) {
             def history = [:]
@@ -227,7 +247,13 @@ class TasksController {
         }
     }
 
+    /**
+     * login required
+     *
+     * @return
+     */
     def output() {
+        if (!doLogin(params)) return
 
         def path = "${grailsApplication.config.data.dir}/public"
         def p1 = params.p1
@@ -323,15 +349,22 @@ class TasksController {
                     os.close()
                 }
             }
-        }else{
-            render('File does not exist: ' + file, contentType: "text/html", encoding: "UTF-8" )
+        } else {
+            render('File does not exist: ' + file, contentType: "text/html", encoding: "UTF-8")
             return
         }
     }
 
+    /**
+     * admin required
+     *
+     * @return
+     */
     @Transactional(readOnly = false)
     def cancelAll() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         def list = Task.createCriteria().list() {
             and {
@@ -362,5 +395,23 @@ class TasksController {
         } else {
             redirect(action: "index", params: params)
         }
+    }
+
+    /**
+     * Return true when logged in, CAS is disabled or api_key is valid.
+     *
+     * Otherwise redirect to CAS for login.
+     *
+     * @param params
+     * @return
+     */
+    private boolean doLogin() {
+        if (!serviceAuthService.isLoggedIn(params)) {
+            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+            return false
+        }
+
+        return true
     }
 }

@@ -34,9 +34,7 @@ class LayerController {
     def fieldDao
     def objectDao
     def fileService
-    def authService
-    def logService
-    def tasksService
+    def serviceAuthService
 
     def list() {
         def fields = fieldDao.getFieldsByCriteria('')
@@ -392,7 +390,7 @@ class LayerController {
 
     private downloadAllowed(layer) {
         return grailsApplication.config.download.layer.licence_levels.contains(layer.licence_level) ||
-                authService.userInRole(grailsApplication.config.auth.admin_role)
+                serviceAuthService.isAdmin(params)
     }
 
     def more(String id) {

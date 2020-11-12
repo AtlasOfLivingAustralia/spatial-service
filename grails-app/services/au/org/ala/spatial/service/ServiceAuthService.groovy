@@ -22,6 +22,7 @@ import java.text.MessageFormat
 class ServiceAuthService {
 
     def grailsApplication
+    def authService
 
     def testedKeys = [:]
 
@@ -40,5 +41,45 @@ class ServiceAuthService {
         }
 
         return result
+    }
+
+    /**
+     *
+     * @return true when cas is disabled, api key is valid or user is admin
+     */
+    boolean isAdmin(params) {
+        // login disabled
+        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {
+            return true
+        }
+
+        // valid api key provided
+        if (isValid(params['api_key'])) {
+            return true
+        }
+
+        // user is admin
+        if (authService.userInRole(grailsApplication.config.auth.admin_role)) {
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     *
+     * @return true when cas is disabled, api key is valid or user is logged in
+     */
+    boolean isLoggedIn(params) {
+        if (isAdmin(params)) {
+            return true
+        }
+
+        // is logged in
+        if (authService.getUserId()) {
+            return true
+        }
+
+        return false
     }
 }

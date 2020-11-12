@@ -17,6 +17,7 @@ package au.org.ala.layers
 
 import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
+import au.org.ala.spatial.service.ServiceAuthService
 import au.org.ala.spatial.util.BatchConsumer
 import au.org.ala.spatial.util.BatchProducer
 import com.vividsolutions.jts.geom.Geometry
@@ -32,6 +33,7 @@ class IntersectController {
     ObjectDAO objectDao
     LayerIntersectDAO layerIntersectDao
     GrailsApplication grailsApplication
+    ServiceAuthService serviceAuthService
 
     def intersect(String ids, Double lat, Double lng) {
         if (lat == null) {
@@ -203,6 +205,11 @@ class IntersectController {
     }
 
     def reloadConfig() {
+        if (!serviceAuthService.isAdmin(params)) {
+            render(["error": "not authorised"]) as JSON
+            return
+        }
+
         Map map = new HashMap()
         layerIntersectDao.reload()
         map.put("layerIntersectDao", "successful")

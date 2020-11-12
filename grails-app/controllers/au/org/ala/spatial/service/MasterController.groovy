@@ -26,15 +26,17 @@ class MasterController {
     def publishService
     def masterService
     def serviceAuthService
-    def authService
     def tasksService
 
     /**
      * for slaves to check in the server is alive
+     *
+     * admin only or api_key, do not redirect to CAS
+     *
      * @return
      */
     def ping() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+        if (!serviceAuthService.isAdmin(params)) {
             Map err = [error: 'not authorised']
             render err as JSON
             return
@@ -50,12 +52,14 @@ class MasterController {
      * for slaves to send task outputs for installation onto
      * geoserver (shape and grid files, slds), layersdb (e.g. tabulation processing),
      * file system (metadata.html, pdfs)
+     *
+     * admin only or api_key, do not redirect to CAS
+     *
      * @return
      */
-
     @Transactional(readOnly = false)
     publish() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+        if (!serviceAuthService.isAdmin(params)) {
             Map err = [error: 'not authorised']
             render err as JSON
             return
@@ -72,10 +76,12 @@ class MasterController {
      * a layer: 'cl...', 'el...', will provide the sample-able files (original extents) - shape files or diva grids
      * a layer: 'cl..._res', 'el..._res', will provide the standardized files at the requested resolution
      *          (or next detailed) - shape files or diva grids
+     *
+     * admin only or api_key, do not redirect to CAS
      * @return
      */
     def resource() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+        if (!serviceAuthService.isAdmin(params)) {
             Map err = [error: 'not authorised']
             render err as JSON
             return
@@ -104,10 +110,13 @@ class MasterController {
 
     /**
      * for slaves to peek at a resource on the master
+     *
+     * admin only or api_key, do not redirect to CAS
+     *
      * @return
      */
     def resourcePeek() {
-        if (!serviceAuthService.isValid(params.api_key)) {
+        if (!serviceAuthService.isAdmin(params)) {
             Map err = [error: 'not authorised']
             render err as JSON
             return
@@ -119,11 +128,14 @@ class MasterController {
 
     /**
      * recieves slave registration requests containing [limit:, capabilities:]
+     *
+     * admin only or api_key, do not redirect to CAS
+     *
      * @return
      */
     @Transactional
     register() {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+        if (!serviceAuthService.isAdmin(params)) {
             Map err = [error: 'not authorised']
             render err as JSON
             return
@@ -139,12 +151,14 @@ class MasterController {
     /**
      * allows slave to update the status of a task
      *
+     * admin only or api_key, do not redirect to CAS
+     *
      * @param id
      * @return
      */
     @Transactional
     task(Long id) {
-        if (!authService.userInRole(grailsApplication.config.auth.admin_role) && !serviceAuthService.isValid(params['api_key'])) {
+        if (!serviceAuthService.isAdmin(params)) {
             Map err = [error: 'not authorised']
             render err as JSON
             return
@@ -165,5 +179,4 @@ class MasterController {
 
         render new Object() as JSON
     }
-
 }

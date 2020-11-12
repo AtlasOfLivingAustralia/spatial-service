@@ -382,7 +382,8 @@ class ShapesController {
 
                 if (!checkAPIKey(apiKey)) {
                     retMap.put("error", "Invalid user ID or API key")
-                    return retMap
+                    render retMap as JSON
+                    return
                 }
 
                 // Use shape file url from json body
@@ -395,7 +396,8 @@ class ShapesController {
         } else {
             if (!checkAPIKey(apiKey)) {
                 retMap.put("error", "Invalid user ID or API key")
-                return retMap
+                render retMap as JSON
+                return
             }
 
             // Parse the request

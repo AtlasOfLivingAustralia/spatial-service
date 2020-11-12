@@ -245,7 +245,7 @@ class ManageLayersService {
                 if (!name.equals(newName) && f.getName().length() > 4 &&
                         f.getName().substring(0, f.getName().length() - 4).equals(name)) {
                     def newF = new File(f.getParent() + "/" + f.getName().replace(name, newName))
-                    if (!newF.getPath().equals(f.getPath())) {
+                    if (!newF.getPath().equals(f.getPath()) && !newF.exists()) {
                         FileUtils.moveFile(f, newF)
                         log.info("Moving file ${f.getName()} to ${newF.getName()}")
                     }
