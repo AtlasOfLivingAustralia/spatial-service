@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><kml:Polygon xmlns:kml="http://earth.google.com/kml/2.1">
+<kml:outerBoundaryIs>
+<kml:LinearRing>
+<kml:coordinates>-40.0,140.0 -15.0,120.0 -25.0,154.0 -40.0,140.0</kml:coordinates>
+</kml:LinearRing>
+</kml:outerBoundaryIs>
+</kml:Polygon>

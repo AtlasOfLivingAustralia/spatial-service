@@ -806,30 +806,39 @@ class ShapesController {
     }
 
     private String fixWkt(String wkt) {
-        WKTReader wktReader = new WKTReader()
-        try {
-            Geometry geom = wktReader.read(wkt.toString())
+        // only attempt to fix POLYGON and MULTIPOLYGON
+        if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON")) {
+            WKTReader wktReader = new WKTReader()
+            try {
+                Geometry geom = wktReader.read(wkt.toString())
 
-            // Use CCW for exterior rings. Normalizing will use the JTS default (CW). Reverse makes it CCW.
-            Geometry validGeom = GeomMakeValid.makeValid(geom)
-            validGeom.normalize()
-            return validGeom.reverse().toText()
-        } catch (ParseException ex) {
-            log.trace(ex.getMessage(), ex)
+                // Use CCW for exterior rings. Normalizing will use the JTS default (CW). Reverse makes it CCW.
+                Geometry validGeom = GeomMakeValid.makeValid(geom)
+                validGeom.normalize()
+                return validGeom.reverse().toText()
+            } catch (ParseException ex) {
+                log.trace(ex.getMessage(), ex)
+                return wkt
+            }
+        } else {
             return wkt
         }
     }
 
     private boolean isWKTValid(String wkt) {
-        WKTReader wktReader = new WKTReader()
-        try {
-            Geometry geom = wktReader.read(wkt.toString())
+        // only validate POLYGON and MULTIPOLYGON
+        if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON")) {
+            WKTReader wktReader = new WKTReader()
+            try {
+                Geometry geom = wktReader.read(wkt.toString())
 
-            return geom.isValid()
-        } catch (ParseException ex) {
-            log.trace(ex.getMessage(), ex)
-            return false
+                return geom.isValid()
+            } catch (ParseException ex) {
+                log.trace(ex.getMessage(), ex)
+                return false
+            }
         }
+        return true
     }
 
     private String makeValidFilename(String filename) {
