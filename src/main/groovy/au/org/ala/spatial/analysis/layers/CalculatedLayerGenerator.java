@@ -1,11 +1,18 @@
 package au.org.ala.spatial.analysis.layers;
 
 import au.com.bytecode.opencsv.CSVReader;
-import org.apache.commons.io.FileUtils;
+import au.org.ala.layers.intersect.SimpleShapeFile;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.util.*;
+import java.math.RoundingMode;
+import java.util.AbstractMap;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
+
+import static java.math.BigDecimal.ROUND_CEILING;
+import static java.math.BigDecimal.ROUND_FLOOR;
 
 /**
  * Generates a layer using species cell count and cell species list data
@@ -19,64 +26,30 @@ import java.util.*;
  */
 public abstract class CalculatedLayerGenerator {
 
-    protected Map<String, Integer> _speciesCellCounts;
-    protected Map<Map.Entry<BigDecimal, BigDecimal>, List<String>> _cellSpecies;
+    protected Map<Integer, Integer> _speciesCellCounts;
+    protected Map<Map.Entry<BigDecimal, BigDecimal>, BitSet> _cellSpecies;
     protected Map<Map.Entry<BigDecimal, BigDecimal>, Long> _cellOccurrenceCounts;
     protected Map<Map.Entry<BigDecimal, BigDecimal>, Map<Integer, Integer>> _cellSpeciesOccurrenceCounts;
-    protected Map<String, Integer> _cellSpeciesOccurrenceCountsSpeciesIndex;
+    protected Map<String, Integer> _speciesIndex;
     protected BigDecimal _resolution;
 
     public CalculatedLayerGenerator(BigDecimal resolution) throws IOException {
         _resolution = resolution;
     }
 
-    // read species cell counts into memory
-    protected void readSpeciesCellCounts(File speciesCellCountFile) throws IOException {
-        _speciesCellCounts = new HashMap<String, Integer>();
-
-        List<String> speciesCellCountLines = FileUtils.readLines(speciesCellCountFile);
-        for (String line : speciesCellCountLines) {
-            String[] tokens = line.split(",");
-            String speciesLsid = tokens[0];
-            int cellCount = Integer.parseInt(tokens[1]);
-            _speciesCellCounts.put(speciesLsid, cellCount);
-        }
+    protected void readCoordinateSpeciesFlatFile(File coordinateSpeciesFlatFile, Boolean cellSpeciesOccurrenceCounts, Boolean cellOccurrenceCounts, Boolean cellSpeciesCounts, Boolean speciesCellCounts) throws IOException {
+        readCoordinateSpeciesFlatFile(coordinateSpeciesFlatFile, cellSpeciesOccurrenceCounts, cellOccurrenceCounts, cellSpeciesCounts, speciesCellCounts, null);
     }
 
     // Read cell species lists into memory
-    protected void readCellSpeciesLists(File cellSpeciesFile) throws IOException {
-        _cellSpecies = new HashMap<Map.Entry<BigDecimal, BigDecimal>, List<String>>();
-
-        List<String> cellSpeciesLines = FileUtils.readLines(cellSpeciesFile);
-        for (String line : cellSpeciesLines) {
-            String[] tokens = line.split(",");
-            BigDecimal latitude = new BigDecimal(tokens[0]).setScale(2, BigDecimal.ROUND_UNNECESSARY);
-            BigDecimal longitude = new BigDecimal(tokens[1]).setScale(2, BigDecimal.ROUND_UNNECESSARY);
-            List<String> speciesLsids = Arrays.asList(Arrays.copyOfRange(tokens, 2, tokens.length));
-            _cellSpecies.put(new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(latitude, longitude), speciesLsids);
-        }
-    }
-
-    // Read cell species lists into memory
-    protected void readCellOccurrenceCounts(File cellOccurrenceCountsFile) throws IOException {
-        _cellOccurrenceCounts = new HashMap<Map.Entry<BigDecimal, BigDecimal>, Long>();
-
-        List<String> cellOccurrenceCountsLines = FileUtils.readLines(cellOccurrenceCountsFile);
-        for (String line : cellOccurrenceCountsLines) {
-            String[] tokens = line.split(",");
-            BigDecimal latitude = new BigDecimal(tokens[0]).setScale(2, BigDecimal.ROUND_UNNECESSARY);
-            BigDecimal longitude = new BigDecimal(tokens[1]).setScale(2, BigDecimal.ROUND_UNNECESSARY);
-            long cellOccurrencesCount = Long.parseLong(tokens[2]);
-            _cellOccurrenceCounts.put(new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(latitude, longitude), cellOccurrencesCount);
-        }
-    }
-
-    // Read cell species lists into memory
-    protected void readCoordinateSpeciesFlatFile(File coordinateSpeciesFlatFile) throws IOException {
+    protected void readCoordinateSpeciesFlatFile(File coordinateSpeciesFlatFile, Boolean cellSpeciesOccurrenceCounts, Boolean cellOccurrenceCounts, Boolean cellSpeciesCounts, Boolean speciesCellCounts, SimpleShapeFile shapefileMask) throws IOException {
         _cellSpeciesOccurrenceCounts = new HashMap<Map.Entry<BigDecimal, BigDecimal>, Map<Integer, Integer>>();
-        _cellSpeciesOccurrenceCountsSpeciesIndex = new HashMap<String, Integer>();
+        _speciesIndex = new HashMap<String, Integer>();
+        _cellOccurrenceCounts = new HashMap<Map.Entry<BigDecimal, BigDecimal>, Long>();
+        _cellSpecies = new HashMap();
+        _speciesCellCounts = new HashMap();
 
-        CSVReader reader = new CSVReader(new BufferedReader(new FileReader(coordinateSpeciesFlatFile)));
+        CSVReader reader = new CSVReader(new BufferedReader(new FileReader(coordinateSpeciesFlatFile)), '\t', '|');
 
         int scale = 2;
         if (_resolution.doubleValue() == 1.0) {
@@ -97,32 +70,81 @@ public abstract class CalculatedLayerGenerator {
                 System.out.println("reading row: " + rowCount);
             }
             try {
-                BigDecimal latitude = new BigDecimal(line[0]).setScale(2, scale);
-                BigDecimal longitude = new BigDecimal(line[1]).setScale(2, scale);
-                Map.Entry<BigDecimal, BigDecimal> p = new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(latitude, longitude);
+                BigDecimal latitude = new BigDecimal(line[0]);
+                BigDecimal longitude = new BigDecimal(line[1]);
 
-                //scientificName.p, taxonConceptId.p
-                String species = line[2] + '|' + line[3];
-                Integer sidx = _cellSpeciesOccurrenceCountsSpeciesIndex.get(species);
-                if (sidx == null) {
-                    sidx = _cellSpeciesOccurrenceCountsSpeciesIndex.size();
-                    _cellSpeciesOccurrenceCountsSpeciesIndex.put(species, sidx);
+                boolean skip = false;
+
+                if (shapefileMask != null) {
+                    skip = shapefileMask.intersectInt(longitude.doubleValue(), latitude.doubleValue()) < 0;
                 }
 
-                Map<Integer, Integer> m = _cellSpeciesOccurrenceCounts.get(p);
-                if (m == null) {
-                    m = new HashMap<Integer, Integer>();
-                }
+                if (!skip) {
+                    Map.Entry<BigDecimal, BigDecimal> p = new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(
+                            latitude.setScale(scale, ROUND_CEILING),
+                            longitude.setScale(scale, ROUND_FLOOR));
 
-                Integer i = m.get(sidx);
-                if (i == null) {
-                    i = 0;
-                }
-                m.put(sidx, i + 1);
+                    if (cellOccurrenceCounts) {
+                        Long count = _cellOccurrenceCounts.get(p);
+                        if (count == null) {
+                            count = 0L;
+                        }
+                        count++;
+                        _cellOccurrenceCounts.put(p, count);
+                    }
 
-                _cellSpeciesOccurrenceCounts.put(p, m);
-            } catch (NumberFormatException e) {
-                //ignore parse errors
+                    //scientificName.p, taxonConceptId.p
+                    String species = line[2] + '|' + line[3];
+
+                    if (cellSpeciesOccurrenceCounts || speciesCellCounts || cellSpeciesCounts) {
+                        Integer sidx = _speciesIndex.get(species);
+                        if (sidx == null) {
+                            sidx = _speciesIndex.size();
+                            _speciesIndex.put(species, sidx);
+                        }
+
+                        if (cellSpeciesOccurrenceCounts) {
+                            Map<Integer, Integer> m = _cellSpeciesOccurrenceCounts.get(p);
+                            if (m == null) {
+                                m = new HashMap<Integer, Integer>();
+                            }
+
+                            Integer i = m.get(sidx);
+                            if (i == null) {
+                                i = 0;
+                            }
+                            m.put(sidx, i + 1);
+
+                            _cellSpeciesOccurrenceCounts.put(p, m);
+                        }
+                        if (cellSpeciesCounts || speciesCellCounts) {
+                            BitSet m = _cellSpecies.get(p);
+                            if (m == null) {
+                                m = new BitSet();
+                            }
+                            m.set(sidx);
+
+                            _cellSpecies.put(p, m);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+
+            }
+        }
+
+        if (speciesCellCounts) {
+            for (BitSet m : _cellSpecies.values()) {
+                for (int i = 0; i < m.length(); i++) {
+                    if (m.get(i)) {
+                        Integer count = _speciesCellCounts.get(i);
+                        if (count == null) {
+                            count = 0;
+                        }
+                        count++;
+                        _speciesCellCounts.put(i, count);
+                    }
+                }
             }
         }
 
@@ -166,12 +188,22 @@ public abstract class CalculatedLayerGenerator {
 
             float maxValue = Float.NEGATIVE_INFINITY;
 
+            int scale = 2;
+            if (_resolution.doubleValue() == 1.0) {
+                scale = 0;
+            }
+            if (_resolution.doubleValue() == 0.1) {
+                scale = 1;
+            }
+            if (_resolution.doubleValue() == 0.01) {
+                scale = 2;
+            }
+
             for (BigDecimal lat = maxLatitude; lat.compareTo(minLatitude) == 1; lat = lat.subtract(_resolution)) {
                 // a row for each _resolution unit of latitude
-                // System.out.println(lat.doubleValue());
                 for (BigDecimal lon = minLongitude; lon.compareTo(maxLongitude) == -1; lon = lon.add(_resolution)) {
                     // a column for each _resolution unit of longitude
-                    Map.Entry<BigDecimal, BigDecimal> coordPair = new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(lat, lon);
+                    Map.Entry<BigDecimal, BigDecimal> coordPair = new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(lat.setScale(scale, RoundingMode.FLOOR), lon.setScale(scale, RoundingMode.FLOOR));
 
                     maxValue = handleCell(coordPair, maxValue, ascPrintWriter, divaOutputStream);
 

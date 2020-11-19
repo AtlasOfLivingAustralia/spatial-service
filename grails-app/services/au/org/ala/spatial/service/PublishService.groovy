@@ -196,6 +196,11 @@ class PublishService {
                                     // errors.put(String.valueOf(System.currentTimeMillis()), out)
                                 }
 
+                                out = UploadSpatialResource.addGwcStyle(geoserverUrl, layer.name, name, geoserverUsername, geoserverPassword)
+                                if (!out.startsWith("200") && !out.startsWith("201")) {
+                                    //ignore errors
+                                    // errors.put(String.valueOf(System.currentTimeMillis()), out)
+                                }
                             }
                         }
 
@@ -466,7 +471,7 @@ class PublishService {
 
                     if (sld.exists()) {
                         //Create style
-                        def out = UploadSpatialResource.sld(geoserverUrl + "/rest/styles/", geoserverUsername, geoserverPassword, name, sld.getPath())
+                        def out = UploadSpatialResource.sld(geoserverUrl + "/rest/styles/", geoserverUsername, geoserverPassword, name, name, sld.getPath())
 
                         if (!out.startsWith("200") && !out.startsWith("201")) {
                             errors.put(String.valueOf(System.currentTimeMillis()), out)

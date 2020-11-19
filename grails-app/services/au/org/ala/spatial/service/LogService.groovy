@@ -15,35 +15,40 @@
 
 package au.org.ala.spatial.service
 
+import java.time.format.DateTimeFormatter
+
 class LogService {
+
+    def authService
 
     def category1;
     def category2;
     def logColumns = ["category1", "category2", "data", "sessionId", "userId"]
+    def extraColumns = [year: "year(created)", month: "month(created)"]
 
     def init() {
         if (!category1) {
-            category1 = Log.executeQuery("SELECT category1 FROM Log WHERE category1 IS NOT NULL AND category1 <> 'httpService' GROUP BY category1")
+            category1 = Log.executeQuery("SELECT category1 FROM Log WHERE category1 IS NOT NULL AND category1 <> 'httpService' GROUP BY category1").findAll { it.replaceAll('[^a-zA-Z0-9]', '') == it }
         }
         if (!category2) {
-            category2 = Log.executeQuery("SELECT category2 FROM Log WHERE category2 IS NOT NULL AND category1 <> 'httpService' GROUP BY category2")
+            category2 = Log.executeQuery("SELECT category2 FROM Log WHERE category2 IS NOT NULL AND category1 <> 'httpService' GROUP BY category2").findAll { it.replaceAll('[^a-zA-Z0-9]', '') == it }
         }
     }
 
     def search(params, userId, userIsAdmin) {
         init();
 
-        def columns = logColumns.contains(params.groupBy) ? params.groupBy : logColumns.join(",");
+        def columns = params.groupBy?.split(',').collect { logColumns.contains(it) ? it : extraColumns.containsKey(it) ? extraColumns.get(it) : null }?.findAll { it != null }
         def counts = count(params.countBy)
         def where = where(params, userId, userIsAdmin)
-        def groupBy = params.groupBy ? "GROUP BY ${columns} ORDER BY ${columns} DESC" : "ORDER BY created DESC"
+        def groupBy = params.groupBy ? "GROUP BY ${columns.join(',')} ORDER BY ${columns.join(',')} DESC" : "ORDER BY created DESC"
 
-        def sql = "SELECT ${columns} ${counts} FROM Log ${where} ${groupBy}"
+        def sql = "SELECT ${(columns + counts).join(",")} FROM Log ${where} ${groupBy}"
 
         def response = Log.executeQuery(sql.toString(), [max: params.max ?: 10, offset: params.offset ?: 0])
 
-        def headers = columns.split(",").toList()
-        if (counts) headers.addAll(counts.substring(1).split(",").collect { it -> it.replaceAll(".* AS ", "") })
+        def headers = columns.toList()
+        if (counts) headers.addAll(counts.collect { it -> it.replaceAll(".* AS ", "") })
 
         response.collect { it -> toMap(it, headers) }
     }
@@ -84,15 +89,27 @@ class LogService {
     }
 
     def count(countBy) {
-        if ("record".equals(countBy)) {
-            return ", count(*) AS records"
-        } else if ("category1".equals(countBy)) {
-            return category1.collect { it -> ", SUM(CASE WHEN category1 = '${it}' THEN 1 ELSE 0 END) AS ${it}" }.join("")
-        } else if ("category2".equals(countBy)) {
-            return category2.collect { it -> ", SUM(CASE WHEN category2 = '${it}' THEN 1 ELSE 0 END) AS ${it}" }.join("")
-        } else {
-            return ""
+        def countColumns = []
+
+        countBy?.split(',')?.each { by ->
+            if ("record".equals(by)) {
+                countColumns.push("count(*) AS records")
+            }
+            if ("category1".equals(by)) {
+                category1.each { countColumns.push("SUM(CASE WHEN category1 = '${it}' THEN 1 ELSE 0 END) AS ${it}") }
+            }
+            if ("category2".equals(by)) {
+                category2.each { countColumns.push("SUM(CASE WHEN category2 = '${it}' THEN 1 ELSE 0 END) AS ${it}") }
+            }
+            if ("session".equals(by)) {
+                countColumns.push("count(distinct sessionId) AS sessions")
+            }
+            if ("user".equals(by)) {
+                countColumns.push("count(distinct userId) AS users")
+            }
         }
+
+        countColumns
     }
 
     def where(params, userId, userIsAdmin) {
@@ -112,6 +129,34 @@ class LogService {
 
         if (params.sessionId && Long.parseLong(params.sessionId)) {
             clause.add("sessionId = '${params.sessionId}'")
+        }
+
+        if (params.startDate && params.endDate) {
+            def start = DateTimeFormatter.ISO_LOCAL_DATE.parse(params.startDate)
+            def end = 'now'.equalsIgnoreCase(params.endDate) ? java.time.Instant.now() : DateTimeFormatter.ISO_LOCAL_DATE.parse(params.endDate)
+            clause.add("created between '${DateTimeFormatter.ISO_LOCAL_DATE.format(start)}' and '${DateTimeFormatter.ISO_LOCAL_DATE.format(end)}'")
+        }
+
+        if (params.excludeRoles) {
+            // get user ids in the log
+            def userIds = Log.executeQuery("SELECT userId FROM Log WHERE userId is not null GROUP BY userId")
+
+            def roleList = params.excludeRoles.split(',')
+
+            // list of users with these excluded roles
+            def usersInfoResp = authService.getUserDetailsById(userIds)
+            List excludedUserIds = []
+            if (usersInfoResp?.success) {
+                usersInfoResp.users.each { id, userData ->
+                    if (userData.roles.findAll { role -> roleList.contains(role) }) {
+                        excludedUserIds.push(id)
+                    }
+                }
+            }
+
+            if (excludedUserIds.size) {
+                clause.add("userId not in ('${excludedUserIds.join("','")}')")
+            }
         }
 
         clause.add("sessionId IS NOT NULL AND category1 IS NOT NULL AND category1 <> 'httpService'")

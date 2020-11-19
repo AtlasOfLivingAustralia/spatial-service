@@ -16,18 +16,23 @@
 package au.org.ala.spatial.process
 
 import au.com.bytecode.opencsv.CSVWriter
+import au.org.ala.layers.intersect.Grid
+import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.json.simple.JSONArray
+import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
+
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 @Slf4j
 class SpeciesByLayer extends SlaveProcess {
 
     void start() {
 
-        def speciesList = JSON.parse(task.input.species.toString())
+        def species = JSON.parse(task.input.species.toString())
         def fields = JSON.parse(task.input.layer.toString())
 
         HashMap<String, Integer> speciesMap = new HashMap()
@@ -35,36 +40,41 @@ class SpeciesByLayer extends SlaveProcess {
         def field = getField(fields[0])
         def layer = getLayer(field.spid)
 
+        def speciesNames = []
+
+        speciesNames.push(species.name)
+
+        List<String> items = new ArrayList()
+        List<SpeciesByLayerCount> counts = new ArrayList();
+
         if (field.type != 'e') {
             // indexed only fields - contextual or grid as contextual layers
 
             def fieldObjects = getObjects(fields[0])
-            HashMap<String, SpeciesByLayerCount> counts = new HashMap();
 
             HashSet<String> occurrenceIds = new HashSet();
 
             def firstSpecies = true;
-            def speciesNames = []
-            for (def species : speciesList) {
-                speciesNames.push(species.name)
 
-                int n = 0
-                for (def fieldObject : fieldObjects) {
-                    def areaName = new String(fieldObject.name.getBytes("US-ASCII"), "UTF-8")
-                    if (speciesList.size > 1) areaName + ", " + species.name
+            int n = 0
+            for (def fieldObject : fieldObjects) {
+                def areaName = new String(fieldObject.name.getBytes("US-ASCII"), "UTF-8")
 
-                    def count = new SpeciesByLayerCount(fieldObject.area_km)
+                def count = new SpeciesByLayerCount(fieldObject.area_km)
 
-                    n = n + 1
-                    task.message = "Getting species for \"" + fieldObject.name + "\" (area " + n + " of " + fieldObjects.size + ", group " + speciesNames.size + " of " + speciesList.size + ")"
+                n = n + 1
+                taskLog("Getting species for \"" + fieldObject.name + "\" (area " + n + " of " + fieldObjects.size() + ")")
 
-                    def fq = fields[0] + ":" + fieldObject.name
-                    count.species = facetCount('names_and_lsid', species, fq)
-                    count.occurrences = occurrenceCount(species, fq)
+                def fq = fields[0] + ":\"" + fieldObject.name + "\""
 
-                    // added encoding fix
-                    counts.put(areaName, count)
-                }
+                taskLog(fq)
+
+                count.species = facetCount('names_and_lsid', species, fq)
+                count.occurrences = occurrenceCount(species, fq)
+
+                // added encoding fix
+                items.add(areaName)
+                counts.add(count)
             }
         } else {
             // indexed only - environmental fields
@@ -73,31 +83,57 @@ class SpeciesByLayer extends SlaveProcess {
             String response = Util.getUrl(url)
 
             JSONParser jp = new JSONParser()
-            def fieldObjects = ((JSONArray) jp.parse(response)).getAt("data").get(0).getAt("data")
+            def fieldObjects = ((JSONObject) jp.parse(response)).getAt("data").get(0).getAt("data")
 
-            def firstSpecies = true;
-            def speciesNames = []
-            for (def species : speciesList) {
-                speciesNames.push(species.name)
+            def firstSpecies = true
 
-                int n = 0
-                for (def fieldObject : fieldObjects) {
-                    def areaName = fieldObject.label
-                    if (speciesList.size > 1) fields[0].name + ':' + areaName + " " + layer.environmentalvalueunits + ", " + species.name
-
-                    // no area_km
-                    def count = new SpeciesByLayerCount(-1)
-
-                    n = n + 1
-                    task.message = "Getting species for \"" + fieldObject.label + "\" (area " + n + " of " + fieldObjects.size + ", group " + speciesNames.size + " of " + speciesList.size + ")"
-
-                    def fq = fieldObject.fq
-                    count.species = facetCount('names_and_lsid', species, fq)
-                    count.occurrences = occurrenceCount(species, fq)
-
-                    // added encoding fix
-                    counts.put(areaName, count)
+            def min = Double.MAX_VALUE, max = Double.MIN_VALUE
+            for (def fieldObject : fieldObjects) {
+                def areaName = fieldObject.label
+                if (areaName) {
+                    def values = areaName.split('-')
+                    values.each {
+                        try {
+                            def n = Double.parseDouble(it)
+                            if (min > n) min = n
+                            if (max < n) max = n
+                        } catch (err) {
+                        }
+                    }
                 }
+            }
+
+            // number of environmental bins
+            double steps = 16
+
+            double step = (max - min) / steps
+            for (int n = 0; n < steps; n++) {
+                // no area_km
+                def count = new SpeciesByLayerCount(-1)
+
+                task.message = "Getting species for area " + (n + 1) + " of " + steps
+
+                def lowerBound = (min + n * step)
+                def upperBound = n == steps - 1 ? max : (min + (n + 1) * step)
+
+                // for usage 'value < upperBoundFile'
+                def upperBoundFile = n == steps - 1 ? max * 1.1 : (min + (n + 1) * step)
+                // for usage 'value < upperBoundQuery'. For the last value use '*' to include the upper value
+                def upperBoundQuery = n == steps - 1 ? "*" : (min + (n + 1) * step)
+
+                // SOLR range query; lowerBound <= value < upperBoundQuery
+                def fq = fields[0] + ":[" + lowerBound + " TO " + upperBoundQuery + "}"
+                if (n > 0) {
+                    fq += " AND -" + fields[0] + ":" + lowerBound
+                }
+                count.species = facetCount('names_and_lsid', species, fq)
+                count.occurrences = occurrenceCount(species, fq)
+                count.area = envelopeArea(layer.name, lowerBound, upperBound)
+
+                def areaName = lowerBound + " " + upperBound
+
+                items.add(areaName)
+                counts.add(count)
             }
         }
 
@@ -113,14 +149,18 @@ class SpeciesByLayer extends SlaveProcess {
         if (field.type != 'e') {
             writer.writeNext((String[]) ['area name', 'area (sq km)', 'number of species', 'number of occurrences'])
         } else {
-            writer.writeNext((String[]) ['area name', 'number of species', 'number of occurrences'])
+            writer.writeNext((String[]) ['lower bound', 'upper bound', 'number of species', 'number of occurrences'])
         }
 
-        for (def entry : counts.entrySet()) {
+        for (int i = 0; i < items.size(); i++) {
+            String item = items.get(i)
+            String count = counts.get(i)
+
             if (field.type != 'e') {
-                writer.writeNext([entry.key, entry.value.area, entry.value.species.cardinality(), entry.value.occurrences] as String[])
+                writer.writeNext([item, count.area, count.species, count.occurrences] as String[])
             } else {
-                writer.writeNext([entry.key, entry.value.species.cardinality(), entry.value.occurrences] as String[])
+                def bounds = item.split(' ')
+                writer.writeNext([bounds[0], bounds[1], count.species, count.occurrences] as String[])
             }
         }
 
@@ -131,13 +171,129 @@ class SpeciesByLayer extends SlaveProcess {
     }
 
     private class SpeciesByLayerCount {
-        BitSet species = new BitSet()
-
+        int species = 0
         int occurrences = 0
         double area = 0
 
         SpeciesByLayerCount(double area) {
             this.area = area
+        }
+    }
+
+
+    public double envelopeArea(String layerName, double minBound, double maxBound) {
+        Grid grid = new Grid(grailsApplication.config.data.dir.toString() + '/layer/' + layerName)
+
+        int bufferSize = 1024 * 1024
+
+        Grid g = Grid.getLoadedGrid(grid.filename);
+        if (g != null && g.grid_data != null) {
+            for (int i = 0; i < g.grid_data.length; i++) {
+                areaSqKm += areaOf(g, value, i, min, max)
+            }
+        } else {
+            int length = this.nrows * this.ncols;
+            RandomAccessFile afile = null;
+            File f2 = new File(this.filename + ".GRI");
+
+            try {
+                if (!f2.exists()) {
+                    afile = new RandomAccessFile(this.filename + ".gri", "r");
+                } else {
+                    afile = new RandomAccessFile(this.filename + ".GRI", "r");
+                }
+
+                byte[] b = new byte[bufferSize];
+                int i = 0;
+                int maxLen = 0;
+
+                while (true) {
+                    int len;
+                    while ((len = afile.read(b)) > 0) {
+                        ByteBuffer bb = ByteBuffer.wrap(b);
+                        if (this.byteorderLSB) {
+                            bb.order(ByteOrder.LITTLE_ENDIAN);
+                        }
+
+                        if (this.datatype.equalsIgnoreCase("UBYTE")) {
+                            max += len;
+
+                            for (max = Math.min(max, length); i < max; ++i) {
+                                value = (float) bb.get();
+                                if (value < 0.0F) {
+                                    value += 256.0F;
+                                }
+                                areaSqKm += areaOf(grid, value, i, minBound, maxBound)
+                            }
+                        } else if (this.datatype.equalsIgnoreCase("BYTE")) {
+                            max += len;
+
+                            for (max = Math.min(max, length); i < max; ++i) {
+                                areaSqKm += areaOf(grid, (float) bb.get(), i, minBound, maxBound)
+                            }
+                        } else if (this.datatype.equalsIgnoreCase("SHORT")) {
+                            max += len / 2;
+
+                            for (max = Math.min(max, length); i < max; ++i) {
+                                areaSqKm += areaOf(grid, (float) bb.getShort(), i, minBound, maxBound)
+                            }
+                        } else if (this.datatype.equalsIgnoreCase("INT")) {
+                            max += len / 4;
+
+                            for (max = Math.min(max, length); i < max; ++i) {
+                                areaSqKm += areaOf(grid, (float) bb.getInt(), i, minBound, maxBound)
+                            }
+                        } else if (this.datatype.equalsIgnoreCase("LONG")) {
+                            max += len / 8;
+
+                            for (max = Math.min(max, length); i < max; ++i) {
+                                areaSqKm += areaOf(grid, (float) bb.getLong(), i, minBound, maxBound)
+                            }
+                        } else if (this.datatype.equalsIgnoreCase("FLOAT")) {
+                            max += len / 4;
+
+                            for (max = Math.min(max, length); i < max; ++i) {
+                                areaSqKm += areaOf(grid, (float) bb.getFloat(), i, minBound, maxBound)
+                            }
+                        } else if (this.datatype.equalsIgnoreCase("DOUBLE")) {
+                            max += len / 8;
+
+                            for (max = Math.min(max, length); i < max; ++i) {
+                                areaSqKm += areaOf(grid, (float) bb.getDouble(), i, minBound, maxBound)
+                            }
+                        }
+                    }
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace()
+            }
+        }
+
+        return areaSqKm
+    }
+
+    int cellsInRow = 0
+
+    double areaOf(Grid grid, float value, int cellIdx, float minValue, float maxValue) {
+        if (value >= minValue && value < maxValue && value != grid.nodatavalue) {
+            cellsInRow++
+        }
+
+        // end of row; return area value
+        if ((cellIdx + 1) % grid.ncols == 0) {
+            // latitude at the middle of the current row
+            double latitude = Math.floor(cellIdx / grid.ncols) * grid.yres + grid.yres / 2.0 + grid.ymax
+
+            // area of a cell at this grid resolution and latitude * number of cells to count
+            double area = SpatialUtil.cellArea(grid.yres, latitude) * cellsInRow
+
+            // reset number of cells
+            cellsInRow = 0
+
+            return area
+        } else {
+            return 0
         }
     }
 }

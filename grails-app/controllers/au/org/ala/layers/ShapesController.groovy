@@ -19,6 +19,7 @@ import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.SpatialUtils
+import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.ParseException
@@ -52,6 +53,31 @@ class ShapesController {
 
     def objectDao
 
+    def groovySql
+
+    static final String KML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<kml xmlns=\"http://earth.google.com/kml/2.2\">" +
+            "<Document>" +
+            "  <name></name>" +
+            "  <description></description>" +
+            "  <Style id=\"style1\">" +
+            "    <LineStyle>" +
+            "      <color>40000000</color>" +
+            "      <width>3</width>" +
+            "    </LineStyle>" +
+            "    <PolyStyle>" +
+            "      <color>73FF0000</color>" +
+            "      <fill>1</fill>" +
+            "      <outline>1</outline>" +
+            "    </PolyStyle>" +
+            "  </Style>" +
+            "  <Placemark>" +
+            "    <name></name>" +
+            "    <description></description>" +
+            "    <styleUrl>#style1</styleUrl>"
+
+    private static final String KML_FOOTER = "</Placemark></Document></kml>"
+
     def wkt(String id) {
         String filename = params?.filename ?: id
         filename = makeValidFilename(filename)
@@ -63,7 +89,16 @@ class ShapesController {
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'wkt')
             } else {
-                objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'wkt')
+                if (id.contains('~')) {
+                    List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                    String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                    groovySql.eachRow(query, { row ->
+                        os.write(row.wkt.toString().getBytes())
+                    })
+                } else {
+                    objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'wkt')
+                }
             }
             os.flush()
         } catch (err) {
@@ -89,6 +124,19 @@ class ShapesController {
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".kml\"")
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'kml')
+            } else if (id.contains('~')) {
+                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                os.write(KML_HEADER
+                        .replace("<name></name>", "<name><![CDATA[" + filename + "]]></name>")
+                        .replace("<description></description>", "<description><![CDATA[" + ids.join(',') + "]]></description>").getBytes())
+
+                String query = "select st_askml(st_collect(geom)) as kml from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                groovySql.eachRow(query, { row ->
+                    os.write(row.kml.toString().getBytes())
+                })
+
+                os.write(KML_FOOTER.getBytes())
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'kml')
             }
@@ -116,6 +164,13 @@ class ShapesController {
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".geojson\"")
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'geojson')
+            } else if (id.contains('~')) {
+                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                String query = "select st_asgeojson(st_collect(geom)) as geojson from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                groovySql.eachRow(query, { row ->
+                    os.write(row.geojson.toString().getBytes())
+                })
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'geojson')
             }
@@ -144,6 +199,17 @@ class ShapesController {
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".zip\"")
             if (id.startsWith("ENVELOPE")) {
                 streamEnvelope(os, id.replace("ENVELOPE", ""), 'shp')
+            } else if (id.contains('~')) {
+                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+
+                String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
+                String wkt = ""
+                groovySql.eachRow(query, { row ->
+                    wkt = row.wkt
+                })
+
+                File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, 'area', filename, ids.join(','))
+                FileUtils.copyFile(zippedShapeFile, os);
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'shp')
             }
@@ -175,11 +241,12 @@ class ShapesController {
             GeometryJSON gJson = new GeometryJSON()
             Geometry geometry = gJson.read(new StringReader(geojsonString))
 
-            if (!geometry.isValid()) {
-                retMap.put("error", "Invalid geometry")
-            }
+            wkt = fixWkt(geometry.toText())
 
-            wkt = geometry.toText()
+            if (!isWKTValid(wkt)) {
+                retMap.put("error", "Invalid geometry")
+                return retMap
+            }
         } catch (Exception ex) {
             log.error("Malformed GeoJSON geometry. Note that only GeoJSON geometries can be supplied here. Features and FeatureCollections cannot.", ex)
             retMap.put("error", "Malformed GeoJSON geometry. Note that only GeoJSON geometries can be supplied here. Features and FeatureCollections cannot.")
@@ -235,8 +302,11 @@ class ShapesController {
             return retMap
         }
 
+        wkt = fixWkt(wkt)
+
         if (!isWKTValid(wkt)) {
             retMap.put("error", "Invalid WKT")
+            return retMap
         }
 
         try {
@@ -312,7 +382,8 @@ class ShapesController {
 
                 if (!checkAPIKey(apiKey)) {
                     retMap.put("error", "Invalid user ID or API key")
-                    return retMap
+                    render retMap as JSON
+                    return
                 }
 
                 // Use shape file url from json body
@@ -325,7 +396,8 @@ class ShapesController {
         } else {
             if (!checkAPIKey(apiKey)) {
                 retMap.put("error", "Invalid user ID or API key")
-                return retMap
+                render retMap as JSON
+                return
             }
 
             // Parse the request
@@ -366,8 +438,11 @@ class ShapesController {
             String kml = IOUtils.toString(fileItem.getInputStream())
             String wkt = SpatialUtils.getKMLPolygonAsWKT(kml)
 
+            wkt = fixWkt(wkt)
+
             if (!isWKTValid(wkt)) {
                 retMap.put("error", "Invalid geometry")
+                return retMap
             } else {
                 String generatedPid = objectDao.createUserUploadedObject(wkt, name, description, userId)
                 retMap.put("id", Integer.parseInt(generatedPid))
@@ -434,8 +509,11 @@ class ShapesController {
 
                 String wkt = SpatialUtils.getShapeFileFeaturesAsWkt(shpFileDir, featureIndex)
 
+                wkt = fixWkt(wkt)
+
                 if (wkt == null || !isWKTValid(wkt)) {
                     retMap.put("error", "Invalid geometry")
+                    return retMap
                 }
 
                 if (pid != null) {
@@ -729,15 +807,40 @@ class ShapesController {
         }
     }
 
-    private boolean isWKTValid(String wkt) {
-        WKTReader wktReader = new WKTReader()
-        try {
-            Geometry geom = wktReader.read(wkt.toString())
-            return geom.isValid()
-        } catch (ParseException ex) {
-            log.trace(ex.getMessage(), ex)
-            return false
+    private String fixWkt(String wkt) {
+        // only attempt to fix POLYGON and MULTIPOLYGON
+        if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON")) {
+            WKTReader wktReader = new WKTReader()
+            try {
+                Geometry geom = wktReader.read(wkt.toString())
+
+                // Use CCW for exterior rings. Normalizing will use the JTS default (CW). Reverse makes it CCW.
+                Geometry validGeom = GeomMakeValid.makeValid(geom)
+                validGeom.normalize()
+                return validGeom.reverse().toText()
+            } catch (ParseException ex) {
+                log.trace(ex.getMessage(), ex)
+                return wkt
+            }
+        } else {
+            return wkt
         }
+    }
+
+    private boolean isWKTValid(String wkt) {
+        // only validate POLYGON and MULTIPOLYGON
+        if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON")) {
+            WKTReader wktReader = new WKTReader()
+            try {
+                Geometry geom = wktReader.read(wkt.toString())
+
+                return geom.isValid()
+            } catch (ParseException ex) {
+                log.trace(ex.getMessage(), ex)
+                return false
+            }
+        }
+        return true
     }
 
     private String makeValidFilename(String filename) {

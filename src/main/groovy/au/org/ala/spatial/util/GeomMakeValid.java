@@ -39,40 +39,6 @@ import java.util.*;
 
 public class GeomMakeValid {
 
-    public static void main(String[] args) {
-//        try {
-//            String wkt = FileUtils.readFileToString(new File("/data/wkt.txt"));
-//            WKTReader r = new WKTReader();
-//            Geometry g = r.read(wkt);
-//            System.out.println(g.isValid());
-//            Geometry g2 = makeValid(g);
-//            System.out.println(g2.isValid());
-//            System.out.println(g2.toText());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return;
-        //testing all shapefiles
-        File d = new File("/data/spatial/layer");
-        boolean ok = false;
-        for (File f : d.listFiles()) {
-            if (f.getName().endsWith(".shp")) {
-                if (f.getName().startsWith("stubbleNumber")) {
-                    ok = true;
-                }
-                if (ok) {
-                    String outputShapefile = "/data/fixedshapefiles/" + f.getName();
-                    try {
-                        makeValidShapefile(f.getPath(), outputShapefile);
-                    } catch (Exception e) {
-                        System.out.println("ERROR: " + f.getPath());
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-    }
-
     public static void makeValidShapefile(String inputShapefile, String outputShapefile) {
         try {
             File file = new File(inputShapefile);

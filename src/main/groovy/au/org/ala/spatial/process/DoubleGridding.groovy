@@ -40,8 +40,8 @@ class DoubleGridding extends SlaveProcess {
 
         new File(getTaskPath()).mkdirs()
 
-        def gridCellSize = task.input.gridCellSize.toString().toDouble()
-        def innerGridCellSize = task.input.innerGridCellSize.toString().toDouble()
+        def primaryGridCellSize = task.input.primaryGridCellSize.toString().toDouble()
+        def secondaryGridCellSize = task.input.secondaryGridCellSize.toString().toDouble()
 
         def yearSize = task.input.yearSize.toString().toInteger()
 
@@ -66,13 +66,16 @@ class DoubleGridding extends SlaveProcess {
 
 
         def years = []
-        for (def result in facetOccurenceCount(speciesArea, 'year')[0].fieldResult) {
+        for (def result in facetOccurenceCount('year', speciesArea)[0].fieldResult) {
             years.push(Integer.parseInt(result.label))
         }
         years.sort()
-
-
-        task.message = "getting data for " + year + " to " + (year + yearSize - 1)
+        if (years.size() == 0) {
+            taskLog("ERROR: No year values found")
+            return
+        }
+        def minYear = years[0]
+        def maxYear = years[years.size() - 1]
 
         Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.toString(), bbox, null, null)
 
@@ -84,10 +87,10 @@ class DoubleGridding extends SlaveProcess {
             miny = Math.min(miny, records.getLatitude(i))
             maxy = Math.max(maxy, records.getLatitude(i))
         }
-        minx -= gridCellSize
-        miny -= gridCellSize
-        maxx += gridCellSize
-        maxy += gridCellSize
+        minx -= secondaryGridCellSize
+        miny -= secondaryGridCellSize
+        maxx += secondaryGridCellSize
+        maxy += secondaryGridCellSize
         bbox[0] = minx
         bbox[2] = maxx
         bbox[1] = miny
@@ -95,7 +98,7 @@ class DoubleGridding extends SlaveProcess {
 
         //test restrictions
         int occurrenceCount = records.getRecordsSize()
-        int boundingboxcellcount = (int) ((bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) / (gridCellSize * gridCellSize))
+        int boundingboxcellcount = (int) ((bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) / (secondaryGridCellSize * secondaryGridCellSize))
         String error = null
         if (occurrenceCount == 0) {
             error = "No occurrences found"
@@ -105,10 +108,10 @@ class DoubleGridding extends SlaveProcess {
             return
         }
 
-        writeMetadata(getTaskPath() + "sxs_metadata.html", "Sites by Species", records, bbox, counts, "" /*TODO: area_km*/, species.name.toString(), gridCellSize, innerGridCellSize)
+        writeMetadata(getTaskPath() + "sxs_metadata.html", "Sites by Species", records, bbox, null, "" /*TODO: area_km*/, species.name.toString(), secondaryGridCellSize, primaryGridCellSize)
         addOutput("metadata", "sxs_metadata.html", true)
 
-        DoubleGriddingGenerator sbs = new DoubleGriddingGenerator(gridCellSize, innerGridCellSize, bbox, minyear, maxYear, yearStep)
+        DoubleGriddingGenerator sbs = new DoubleGriddingGenerator(secondaryGridCellSize, primaryGridCellSize, bbox, minYear, maxYear, yearSize)
 
         int[] counts = sbs.write(records, getTaskPath(), region, envelopeGrid)
 
@@ -120,7 +123,7 @@ class DoubleGridding extends SlaveProcess {
         new Records(bs, q, bbox, filename, region)
     }
 
-    void writeMetadata(String filename, String title, Records records, double[] bbox, int[] counts, String addAreaSqKm, String speciesName, Double gridCellSize, Double innerGridCellSize) throws IOException {
+    void writeMetadata(String filename, String title, Records records, double[] bbox, int[] counts, String addAreaSqKm, String speciesName, Double secondaryGridCellSize, Double primaryGridCellSize) throws IOException {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
         FileWriter fw = new FileWriter(filename)
         fw.append("<html><h1>").append(title).append("</h1>")
@@ -128,8 +131,8 @@ class DoubleGridding extends SlaveProcess {
         fw.append("<tr><td>Date/time " + sdf.format(new Date()) + "</td></tr>")
         fw.append("<tr><td>Model reference number: " + task.id + "</td></tr>")
         fw.append("<tr><td>Species selection " + speciesName + "</td></tr>")
-        fw.append("<tr><td>Grid size (decimal degrees) " + gridCellSize + "</td></tr>")
-        fw.append("<tr><td>Inner grid size (decimal degrees) " + gridCellSize2 + "</td></tr>")
+        fw.append("<tr><td>Primary grid size (decimal degrees) " + primaryGridCellSize + "</td></tr>")
+        fw.append("<tr><td>Secondary grid size (decimal degrees) " + secondaryGridCellSize + "</td></tr>")
 
         fw.append("<tr><td>" + records.getSpeciesSize() + " species</td></tr>")
         fw.append("<tr><td>" + records.getRecordsSize() + " occurrences</td></tr>")

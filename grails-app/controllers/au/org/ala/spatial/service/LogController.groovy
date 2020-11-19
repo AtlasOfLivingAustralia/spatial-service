@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.service
 
+import au.com.bytecode.opencsv.CSVWriter
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
@@ -26,9 +27,19 @@ class LogController {
 
     def logService
     AuthService authService
+    def serviceAuthService
 
+    /**
+     * login required
+     *
+     * @return
+     */
     @Transactional
     def index() {
+        if (!doLogin()) {
+            return
+        }
+
         def log = new Log(params)
         log.data = request.JSON.toString()
 
@@ -41,19 +52,58 @@ class LogController {
         render status: 200
     }
 
+    /**
+     * login required
+     *
+     * @return
+     */
     def search() {
-        def searchResult = logService.search(params, authService.getUserId(),
-                authService.userInRole(grailsApplication.config.auth.admin_role))
+        if (!doLogin()) {
+            return
+        }
 
-        def totalCount = logService.searchCount(params, authService.getUserId(),
-                authService.userInRole(grailsApplication.config.auth.admin_role))
+        def searchResult = logService.search(params, authService.getUserId(), serviceAuthService.isAdmin(params))
 
-        if ("application/json".equals(request.getHeader("accept"))) {
+        def totalCount = logService.searchCount(params, authService.getUserId(), serviceAuthService.isAdmin(params))
+
+        if ("application/json".equals(request.getHeader("accept")) || "application/json".equals(params.accept)) {
             def map = [records: searchResult, totalCount: totalCount]
             render map as JSON
+        } else if ("application/csv".equals(request.getHeader("accept")) || "application/csv".equals(params.accept)) {
+            response.contentType = 'application/csv'
+            response.setHeader("Content-disposition", "filename=\"search.csv\"")
+
+            CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.outputStream))
+            def firstRow = true
+            searchResult.each { row ->
+                if (firstRow) {
+                    writer.writeNext(row.keySet() as String[])
+                    firstRow = false
+                }
+                writer.writeNext(row.values() as String[])
+            }
+            writer.flush()
+            writer.close()
         } else {
             [searchResult: searchResult, totalCount: totalCount]
         }
     }
 
+    /**
+     * Return true when logged in, CAS is disabled or api_key is valid.
+     *
+     * Otherwise redirect to CAS for login.
+     *
+     * @param params
+     * @return
+     */
+    private boolean doLogin() {
+        if (!serviceAuthService.isLoggedIn(params)) {
+            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+            return false
+        }
+
+        return true
+    }
 }

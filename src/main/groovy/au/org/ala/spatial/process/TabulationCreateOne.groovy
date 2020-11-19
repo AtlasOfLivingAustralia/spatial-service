@@ -275,13 +275,14 @@ class TabulationCreateOne extends SlaveProcess {
                 // TODO: copy the files necessary for gridToGrid to operate on 'grid as shapefile' layers
                 int counter = 0
                 def fname = 'import' + counter + '.sql'
-                TabulationGenerator.gridToGrid(fieldId1, fieldId2, null, getTaskPath() + "/" + fname)
+
+                // init sql
+                FileUtils.writeStringToFile(new File(getTaskPath() + fname), "DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
                 addOutput('sql', fname)
                 counter++
 
-                // init sql
                 fname = 'import' + counter + '.sql'
-                FileUtils.writeStringToFile(new File(getTaskPath() + fname), "DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
+                TabulationGenerator.gridToGrid(fieldId1, fieldId2, null, getTaskPath() + "/" + fname)
                 addOutput('sql', fname)
             }
         } catch (err) {

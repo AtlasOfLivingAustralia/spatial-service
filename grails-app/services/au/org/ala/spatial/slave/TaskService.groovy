@@ -16,7 +16,6 @@
 package au.org.ala.spatial.slave
 
 import au.org.ala.spatial.process.SlaveProcess
-import au.org.ala.web.UserDetails
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.apache.commons.io.FileUtils
@@ -269,14 +268,23 @@ class TaskService {
     Object create(json, api_key) {
         Task task = newTask(json)
 
-        // TODO: check for failed validation
-        tasksService.validateInput(task)
+        def errors = tasksService.validateInput(task)
 
-        // start
-        start(task)
+        if (errors) {
+            task.output.put(System.currentTimeMillis(), "input errors: " + errors.toString())
+            task.message = 'finished'
+            task.finished = true
 
-        // save
-        [status: getStatus(task), id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
+            // save
+            def status = getStatus(task)
+            status.put('finished', true)
+            [status: status, id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
+        } else {
+            // start
+            start(task)
+
+            [status: getStatus(task), id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
+        }
     }
 
     class TaskThread extends Thread {

@@ -139,8 +139,9 @@ class TaxonFrequency extends SlaveProcess {
         //The third one is ratio
         def maxYear = Math.max(ds1.getTimePeriods().max().year, ds2.getTimePeriods().max().year)
         def minYear = Math.min(ds1.getTimePeriods().min().year, ds2.getTimePeriods().min().year)
-        int sum1 = 0;
-        int sum2 = 0;
+        int sum1 = 0
+        int sum2 = 0
+        double ratioSum = 0
         for (int year = minYear; year <= maxYear; year++) {
             def y = new Year(year)
 
@@ -154,7 +155,8 @@ class TaxonFrequency extends SlaveProcess {
             }
 
             if (sum2 > 0 && v1 != null && v2 != null) {
-                cumulativeRatio.add(y, sum1 / sum2)
+                ratioSum += sum1 / sum2
+                cumulativeRatio.add(y, ratioSum)
             }
         }
     }

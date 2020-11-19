@@ -25,7 +25,7 @@ import org.json.simple.JSONObject
 class DistributionRematchLsid extends SlaveProcess {
 
     void start() {
-        String updateAll = 'true'.equalsIgnoreCase(task.input.updateAll)
+        String updateAll = 'true'.equalsIgnoreCase(String.valueOf(task.input.updateAll))
 
         List distributions = getDistributions()
         distributions.addAll(getChecklists())
@@ -86,6 +86,7 @@ class DistributionRematchLsid extends SlaveProcess {
         def taxonConceptID = ''
         def familyID = ''
         def genusID = ''
+        def ignoreTaxonMatch = false
 
         for (def c : output.getJSONArray('values')) {
             def name = ((JSONObject) c).get('name')
@@ -96,7 +97,15 @@ class DistributionRematchLsid extends SlaveProcess {
                 familyID = value
             } else if ('genusID'.equalsIgnoreCase(name)) {
                 genusID = value
+            } else if ('taxonomicIssue'.equalsIgnoreCase(name)) {
+                ignoreTaxonMatch = ('' + value).indexOf('excluded') >= 0
             }
+        }
+
+        if (ignoreTaxonMatch) {
+            taxonConceptID = ''
+            familyID = ''
+            genusID = ''
         }
 
         [taxonConceptID: taxonConceptID, familyID: familyID, genusID: genusID]

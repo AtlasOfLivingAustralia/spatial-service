@@ -34,9 +34,7 @@ class LayerController {
     def fieldDao
     def objectDao
     def fileService
-    def authService
-    def logService
-    def tasksService
+    def serviceAuthService
 
     def list() {
         def fields = fieldDao.getFieldsByCriteria('')
@@ -119,7 +117,7 @@ class LayerController {
         def usage
         if ("true".equalsIgnoreCase(params.usage)) {
             header = ArrayUtils.addAll(header, "Usage")
-            usage = layerUsage().get("Total")
+            usage = layerUsage(params.months as Integer).get("Total")
         }
 
         response.setContentType("text/csv charset=UTF-8")
@@ -234,11 +232,11 @@ class LayerController {
      *
      * @return
      */
-    def layerUsage() {
+    private def layerUsage(months) {
         def layerUsage = [:]
 
         def c = Calendar.getInstance()
-        c.add(Calendar.MONTH, params.ageInMonths ?: -6)
+        c.add(Calendar.MONTH, params.ageInMonths ?: -1 * months)
 
         // Use as layer
         def fields = fieldDao.getFields()
@@ -392,7 +390,7 @@ class LayerController {
 
     private downloadAllowed(layer) {
         return grailsApplication.config.download.layer.licence_levels.contains(layer.licence_level) ||
-                authService.userInRole(grailsApplication.config.auth.admin_role)
+                serviceAuthService.isAdmin(params)
     }
 
     def more(String id) {

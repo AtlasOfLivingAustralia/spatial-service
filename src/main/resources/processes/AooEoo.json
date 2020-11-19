@@ -1,6 +1,6 @@
 {
   "name": "AooEoo",
-  "description": "Area of Extent, Extent of Occupancy and Alpha Hull.",
+  "description": "Area of Occupancy, Extent of Occurrence and Alpha Hull",
   "isBackground": false,
   "version": 1.0,
   "private": {
@@ -45,6 +45,15 @@
       "constraints": {
         "min": 0.01,
         "default": 2
+      }
+    },
+    "radius": {
+      "description": "Radius (m) for points with radius",
+      "type": "double",
+      "constraints": {
+        "min": 1,
+        "min": 1000000,
+        "default": 5000
       }
     }
   },

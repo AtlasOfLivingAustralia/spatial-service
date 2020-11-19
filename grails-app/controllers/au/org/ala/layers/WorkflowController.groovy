@@ -50,7 +50,7 @@ class WorkflowController {
         def header;
 
         String errorMsg;
-        if (data.doi?.asBoolean) {
+        if ("true".equalsIgnoreCase(data?.doi?.toString())) {
             // test for minimum data for a DOI
             errorMsg = getErrorForDoi(data)
 
@@ -58,7 +58,7 @@ class WorkflowController {
                 // analysis_id is used to hold the minted value. This makes it readonly.
                 header = userDataDao.put(user_id, RECORD_TYPE, description, metadata, isPublic, null)
                 if (header?.ud_header_id) {
-                    userDataDao.update(header.ud_header_id, user_id, RECORD_TYPE, description, metadata, isPublic, header.ud_header_id)
+                    userDataDao.update(header.ud_header_id, user_id, RECORD_TYPE, description, metadata, isPublic, header.ud_header_id.toString())
                 }
             }
         } else {
