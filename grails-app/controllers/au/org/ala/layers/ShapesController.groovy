@@ -15,6 +15,7 @@
 
 package au.org.ala.layers
 
+import au.org.ala.RequireApiKey
 import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.spatial.Util
@@ -256,12 +257,6 @@ class ShapesController {
         String name = json.name
         String description = json.description
         String user_id = json.user_id
-        String api_key = json.api_key
-
-        if (false && !checkAPIKey(api_key)) {
-            retMap.put("error", "Invalid user ID or API key")
-            return retMap
-        }
 
         try {
             if (pid != null) {
@@ -295,13 +290,6 @@ class ShapesController {
         String name = json.name
         String description = json.description
         String user_id = json.user_id
-        String api_key = json.api_key
-
-        if (false && !checkAPIKey(api_key)) {
-            retMap.put("error", "Invalid user ID or API key")
-            return retMap
-        }
-
         wkt = fixWkt(wkt)
 
         if (!isWKTValid(wkt)) {
@@ -331,6 +319,7 @@ class ShapesController {
         return retMap
     }
 
+    @RequireApiKey
     def uploadWkt(Integer id) {
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
@@ -338,6 +327,7 @@ class ShapesController {
         render processWKTRequest(request.JSON, id, namesearch) as JSON
     }
 
+    @RequireApiKey
     def uploadGeoJSON() throws Exception {
         render processGeoJSONRequest(request.JSON, null) as JSON
     }
@@ -359,6 +349,11 @@ class ShapesController {
         render processWKTRequest(request.JSON, pid, namesearch) as JSON
     }
 
+    /**
+     * TODO
+     * @return
+     */
+    @RequireApiKey
     def uploadShapeFile() {
         String apiKey = params.containsKey("api_key") ? params.api_key : null
 
@@ -373,18 +368,12 @@ class ShapesController {
             JSONRequestBodyParser reqBodyParser = new JSONRequestBodyParser()
             reqBodyParser.addParameter("user_id", String.class, false)
             reqBodyParser.addParameter("shp_file_url", String.class, false)
-            reqBodyParser.addParameter("api_key", String.class, false)
+            //reqBodyParser.addParameter("api_key", String.class, false)
 
             if (reqBodyParser.parseJSON(jsonRequestBody)) {
 
                 String shpFileUrl = (String) reqBodyParser.getParsedValue("shp_file_url")
-                 apiKey = (String) reqBodyParser.getParsedValue("api_key")
-
-                if (!checkAPIKey(apiKey)) {
-                    retMap.put("error", "Invalid user ID or API key")
-                    render retMap as JSON
-                    return
-                }
+                //apiKey = (String) reqBodyParser.getParsedValue("api_key")
 
                 // Use shape file url from json body
                 FileUtils.copyURLToFile(new URL(shpFileUrl), tmpZipFile)
@@ -394,12 +383,6 @@ class ShapesController {
             }
 
         } else {
-            if (!checkAPIKey(apiKey)) {
-                retMap.put("error", "Invalid user ID or API key")
-                render retMap as JSON
-                return
-            }
-
             // Parse the request
             Map<String, MultipartFile> items = request.getFileMap()
 
@@ -415,19 +398,15 @@ class ShapesController {
         render retMap as JSON
     }
 
+    @RequireApiKey
     def uploadKMLFile() {
         String userId = params.containsKey("user_id") ? params.user_id : null
-        String apiKey = params.containsKey("api_key") ? params.api_key : null
+
         String name = params.containsKey("name") ? params.name : null
         String description = params.containsKey("description") ? params.description : null
 
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>()
-
-        if (false && !checkAPIKey(apiKey, userId)) {
-            retMap.put("error", "Invalid user ID or API key")
-            return retMap
-        }
 
         // Parse the request
         Map<String, MultipartFile> items = request.getFileMap()
@@ -490,19 +469,12 @@ class ShapesController {
         reqBodyParser.addParameter("name", String.class, false)
         reqBodyParser.addParameter("description", String.class, false)
         reqBodyParser.addParameter("user_id", String.class, false)
-        reqBodyParser.addParameter("api_key", String.class, false)
 
         if (reqBodyParser.parseJSON(json)) {
 
             String name = (String) reqBodyParser.getParsedValue("name")
             String description = (String) reqBodyParser.getParsedValue("description")
             String user_id = (String) reqBodyParser.getParsedValue("user_id")
-            String api_key = (String) reqBodyParser.getParsedValue("api_key")
-
-            if (false && !checkAPIKey(api_key)) {
-                retMap.put("error", "Invalid user ID or API key")
-                return retMap
-            }
 
             try {
                 File shpFileDir = new File(System.getProperty("java.io.tmpdir"), shapeFileId)
@@ -554,10 +526,12 @@ class ShapesController {
         }
     }
 
+    @RequireApiKey
     def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
         render processShapeFileFeatureRequest(request.reader.text, null, shapeId, featureIndex) as JSON
     }
 
+    @RequireApiKey
     def updateFromShapeFileFeature(Integer objectPid, String shapeId, String featureIndex) throws Exception {
         if (objectPid == null) {
             render status: 400, text: "Path parameter `objectPid` is not an integer."
@@ -612,12 +586,6 @@ class ShapesController {
             String name = (String) reqBodyParser.getParsedValue("name")
             String description = (String) reqBodyParser.getParsedValue("description")
             String user_id = (String) reqBodyParser.getParsedValue("user_id")
-            String api_key = (String) reqBodyParser.getParsedValue("api_key")
-
-            if (!checkAPIKey(api_key)) {
-                retMap.put("error", "Invalid user ID or API key")
-                return retMap
-            }
 
             try {
                 String wkt = SpatialConversionUtils.createCircleJs(longitude, latitude, radiusKm * 1000)
@@ -638,6 +606,7 @@ class ShapesController {
         return retMap
     }
 
+    @Deprecated
     private boolean checkAPIKey(String apiKey) {
         if (IntersectConfig.getApiKeyCheckUrlTemplate() == null || IntersectConfig.getApiKeyCheckUrlTemplate().isEmpty()) {
             return true
@@ -680,6 +649,7 @@ class ShapesController {
         }
     }
 
+    @RequireApiKey
     def poi() {
         Map<String, Object> retMap = new HashMap<String, Object>()
 
@@ -706,12 +676,7 @@ class ShapesController {
             String user_id = (String) reqBodyParser.getParsedValue("user_id")
             String description = (String) reqBodyParser.getParsedValue("description")
             Double focal_length = (Double) reqBodyParser.getParsedValue("focal_length")
-            String api_key = (String) reqBodyParser.getParsedValue("api_key")
 
-            if (!checkAPIKey(api_key)) {
-                retMap.put("error", "Invalid user ID or API key")
-                return retMap
-            }
             try {
                 int id = objectDao.createPointOfInterest(object_id, name, type, latitude, longitude, bearing, user_id, description, focal_length)
                 retMap.put("id", id)
@@ -726,19 +691,14 @@ class ShapesController {
         return retMap
     }
 
+    @RequireApiKey
     def poiRequest(Integer id) {
         if (id == null) {
             render status: 400, text: "Path parameter `id` is not an integer."
             return
         }
         if (request.method == "DELETE") {
-            String apiKey = params.containsKey("api_key") ? params.api_key : null
-
             Map<String, Object> retMap = new HashMap<String, Object>()
-            if (!checkAPIKey(apiKey)) {
-                retMap.put("error", "Invalid user ID or API key")
-                render retMap as JSON
-            }
 
             try {
                 boolean success = objectDao.deletePointOfInterest(id)
@@ -776,10 +736,7 @@ class ShapesController {
                 Double focal_length = (Double) reqBodyParser.getParsedValue("focal_length")
                 String api_key = (String) reqBodyParser.getParsedValue("api_key")
 
-                if (!checkAPIKey(api_key)) {
-                    retMap.put("error", "Invalid user ID or API key")
-                    return retMap
-                }
+
                 try {
                     boolean updateSuccessful = objectDao.updatePointOfInterest(id, object_id, name, type, latitude, longitude, bearing, user_id, description, focal_length)
                     retMap.put("updated", updateSuccessful)
@@ -903,3 +860,4 @@ class ShapesController {
     }
 
 }
+
