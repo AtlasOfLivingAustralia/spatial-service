@@ -15,7 +15,8 @@
 
 package au.org.ala.layers
 
-import au.org.ala.RequireApiKey
+import au.ala.org.ws.security.RequireApiKey
+import au.ala.org.ws.security.SkipApiKeyCheck
 import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.spatial.Util
@@ -50,6 +51,7 @@ import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 import java.text.MessageFormat
 
+@RequireApiKey
 class ShapesController {
 
     def objectDao
@@ -155,6 +157,7 @@ class ShapesController {
         }
     }
 
+    @SkipApiKeyCheck
     def geojson(String id) {
         String filename = params?.filename ?: id
         filename = makeValidFilename(filename)
@@ -605,32 +608,7 @@ class ShapesController {
         }
         return retMap
     }
-
-    @Deprecated
-    private boolean checkAPIKey(String apiKey) {
-        if (IntersectConfig.getApiKeyCheckUrlTemplate() == null || IntersectConfig.getApiKeyCheckUrlTemplate().isEmpty()) {
-            return true
-        }
-
-        try {
-            def response = Util.urlResponse("GET", MessageFormat.format(IntersectConfig.getApiKeyCheckUrlTemplate(), apiKey))
-
-            if (response) {
-                if (response.statusCode != 200) {
-                    throw new RuntimeException("Error occurred checking api key")
-                }
-
-                ObjectMapper mapper = new ObjectMapper()
-                Map parsedJSON = mapper.readValue(response.text, Map.class)
-
-                return (Boolean) parsedJSON.get("valid")
-            }
-        } catch (Exception ex) {
-            log.trace(ex.getMessage(), ex)
-            throw new RuntimeException("Error checking API key")
-        }
-    }
-
+    @RequireApiKey
     def deleteShape(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
