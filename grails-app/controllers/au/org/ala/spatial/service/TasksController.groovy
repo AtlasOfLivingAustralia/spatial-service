@@ -210,7 +210,7 @@ class TasksController {
      * @return
      */
     def downloadReport(String taskId) {
-        if (!doLogin(params)) return
+        if (!doLogin()) return
 
         def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
 
