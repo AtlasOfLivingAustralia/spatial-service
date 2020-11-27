@@ -253,7 +253,7 @@ class TasksController {
      * @return
      */
     def output() {
-        if (!doLogin(params)) return
+        if (!doLogin()) return
 
         def path = "${grailsApplication.config.data.dir}/public"
         def p1 = params.p1
