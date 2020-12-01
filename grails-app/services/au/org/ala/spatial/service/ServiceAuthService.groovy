@@ -47,6 +47,7 @@ class ServiceAuthService {
      *
      * @return true when cas is disabled, api key is valid or user is admin
      */
+    @Deprecated
     boolean isAdmin(params) {
         // login disabled
         if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {
@@ -66,10 +67,12 @@ class ServiceAuthService {
         return false
     }
 
+
     /**
      *
      * @return true when cas is disabled, api key is valid or user is logged in
      */
+    @Deprecated
     boolean isLoggedIn(params) {
         if (isAdmin(params)) {
             return true
@@ -82,4 +85,27 @@ class ServiceAuthService {
 
         return false
     }
+
+    /**
+     *
+     * @return true when is logged in
+     */
+    boolean isLoggedIn() {
+        if (authService.getUserId()) {
+            return true
+        }
+        false
+    }
+
+    /**
+     *
+     * @return true when user is the role of given
+     */
+    boolean isRoleOf(role) {
+        if (authService.userInRole(role)) {
+            return true
+        }
+        return false
+    }
+
 }

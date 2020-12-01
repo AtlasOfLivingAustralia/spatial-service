@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.service
 
+import au.org.ala.RequireAdmin
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.grails.web.json.JSONObject
@@ -35,13 +36,8 @@ class MasterController {
      *
      * @return
      */
+    @RequireAdmin
     def ping() {
-        if (!serviceAuthService.isAdmin(params)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
         // TODO: check stuff
 
         Map map = [status: 'alive']
@@ -58,13 +54,8 @@ class MasterController {
      * @return
      */
     @Transactional(readOnly = false)
+    @RequireAdmin
     publish() {
-        if (!serviceAuthService.isAdmin(params)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
         Boolean isPublic = params?.isPublic ? params.isPublic : false
         def map = masterService.publish(isPublic, params.id, request)
 
@@ -80,13 +71,8 @@ class MasterController {
      * admin only or api_key, do not redirect to CAS
      * @return
      */
+    @RequireAdmin
     def resource() {
-        if (!serviceAuthService.isAdmin(params)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
         OutputStream outputStream = null
         try {
             outputStream = response.outputStream as OutputStream
@@ -115,13 +101,8 @@ class MasterController {
      *
      * @return
      */
+    @RequireAdmin
     def resourcePeek() {
-        if (!serviceAuthService.isAdmin(params)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
         //write resource
         render fileService.info(params.resource.toString()) as JSON
     }
@@ -134,13 +115,8 @@ class MasterController {
      * @return
      */
     @Transactional
+    @RequireAdmin
     register() {
-        if (!serviceAuthService.isAdmin(params)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
         JSONObject json = (JSONObject) request.getJSON()
 
         def slave = masterService.register(json)
@@ -157,13 +133,8 @@ class MasterController {
      * @return
      */
     @Transactional
+    @RequireAdmin
     task(Long id) {
-        if (!serviceAuthService.isAdmin(params)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
         JSONObject json = (JSONObject) request.getJSON()
 
         def newValues = [:]

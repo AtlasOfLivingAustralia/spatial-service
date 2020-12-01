@@ -15,6 +15,7 @@
 
 package au.org.ala.layers
 
+import au.org.ala.RequireAdmin
 import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
 import au.org.ala.spatial.service.ServiceAuthService
@@ -203,13 +204,8 @@ class IntersectController {
             }
         }
     }
-
+    @RequireAdmin
     def reloadConfig() {
-        if (!serviceAuthService.isAdmin(params)) {
-            render(["error": "not authorised"]) as JSON
-            return
-        }
-
         Map map = new HashMap()
         layerIntersectDao.reload()
         map.put("layerIntersectDao", "successful")

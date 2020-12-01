@@ -16,11 +16,13 @@
 package au.org.ala.spatial.service
 
 import au.com.bytecode.opencsv.CSVWriter
+import au.org.ala.RequireLogin
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
 
+@RequireLogin
 class LogController {
 
     final Logger logger = Logger.getLogger(LogController.class)
@@ -36,10 +38,6 @@ class LogController {
      */
     @Transactional
     def index() {
-        if (!doLogin()) {
-            return
-        }
-
         def log = new Log(params)
         log.data = request.JSON.toString()
 
@@ -58,10 +56,6 @@ class LogController {
      * @return
      */
     def search() {
-        if (!doLogin()) {
-            return
-        }
-
         def searchResult = logService.search(params, authService.getUserId(), serviceAuthService.isAdmin(params))
 
         def totalCount = logService.searchCount(params, authService.getUserId(), serviceAuthService.isAdmin(params))
@@ -87,23 +81,5 @@ class LogController {
         } else {
             [searchResult: searchResult, totalCount: totalCount]
         }
-    }
-
-    /**
-     * Return true when logged in, CAS is disabled or api_key is valid.
-     *
-     * Otherwise redirect to CAS for login.
-     *
-     * @param params
-     * @return
-     */
-    private boolean doLogin() {
-        if (!serviceAuthService.isLoggedIn(params)) {
-            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
-            return false
-        }
-
-        return true
     }
 }

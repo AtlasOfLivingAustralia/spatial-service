@@ -15,6 +15,8 @@
 
 package au.org.ala.spatial.service
 
+import au.org.ala.RequireAdmin
+import au.org.ala.RequireLogin
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
@@ -46,26 +48,18 @@ class AdminController {
      *
      * @return
      */
+    @RequireAdmin
     def slaves() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         render masterService.slaves as JSON
     }
 
     /**
      * information about all tasks waiting and running
      *
-     * admin only
-     *
      * @return
      */
+    @RequireAdmin
     def tasks() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         params.max = params?.max ?: 10
 
         List list
@@ -84,11 +78,8 @@ class AdminController {
      *
      * @return
      */
+    @RequireAdmin
     def reRegisterSlaves() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         int count = 0
         masterService.slaves.each { url, slave ->
             if (masterService.reRegister(slave)) {
@@ -101,34 +92,12 @@ class AdminController {
     }
 
     /**
-     * Return true when logged in, CAS is disabled or api_key is valid.
-     *
-     * Otherwise redirect to CAS for login.
-     *
-     * @param params
-     * @return
-     */
-    private boolean doLogin() {
-        if (!serviceAuthService.isLoggedIn(params)) {
-            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
-            return false
-        }
-
-        return true
-    }
-
-
-    /**
      * admin only
      *
      * @return
      */
+    @RequireAdmin
     def defaultGeoserverStyles() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         def geoserverUrl = grailsApplication.config.geoserver.url
         def geoserverUsername = grailsApplication.config.geoserver.username
         def geoserverPassword = grailsApplication.config.geoserver.password

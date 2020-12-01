@@ -68,16 +68,3 @@ Disable authentication when running locally by creating the configuration file `
 security.cas.bypass=true
 security.cas.disableCAS=true
 ```
-RequireApiKey annotation has been used in ShapeController.
-
-It supports standard 'apiKey' stored in http header.
-It also supports 'api_key' stored in http request params and POST body.
-
-Make sure ApiKey check url has been set in config:
-
-```
-security:
-    apikey:
-        check:
-            serviceUrl: "https://auth.ala.org.au/apikey/ws/check?apikey="
-```

@@ -63,7 +63,7 @@ class AooEooSpec extends Specification implements GrailsUnitTest {
 
         then:
         tmpDir.listFiles().each { file ->
-            assert FileUtils.readFileToString(file) == TestUtil.getResourceAsString('output/aooeoo/' + file.name)
+            assert FileUtils.readFileToString(file).replaceAll("\\s","") == TestUtil.getResourceAsString('output/aooeoo/' + file.name).replaceAll("\\s","")
         }
     }
 
