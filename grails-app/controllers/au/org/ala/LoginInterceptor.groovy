@@ -97,36 +97,9 @@ class LoginInterceptor {
         } else if (request.JSON?.api_key != null) {
             // backward compatible
             // Check if body contains api_key
+            // For example: ShapeController: poiRequest -> retrieve api_key from json body
             apikey = request.JSON?.api_key
         }
         apikey
     }
-
-    /**
-     * Client IP passes if it is in the whitelist of if the whitelist is empty apart from localhost.
-     * @param clientIp
-     * @return
-     */
-    def checkClientIp(clientIp, List whiteList) {
-        whiteList.contains(clientIp) || (whiteList.size() == 1 && whiteList[0] == LOCALHOST_IP)
-    }
-
-    def buildWhiteList() {
-        def whiteList = [LOCALHOST_IP] // allow calls from localhost to make testing easier
-        def config = grailsApplication.config.app.api.whiteList as String
-        if (config) {
-            whiteList.addAll(config.split(',').collect({it.trim()}))
-        }
-        whiteList
-    }
-
-    def getClientIP(request) {
-        // External requests to ecodata are proxied by Apache, which uses X-Forwarded-For to identify the original IP.
-        def ip = request.getHeader("X-Forwarded-For")
-        if (!ip) {
-            ip = request.getRemoteHost()
-        }
-        return ip
-    }
-
 }

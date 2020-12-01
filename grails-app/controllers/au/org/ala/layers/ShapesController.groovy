@@ -356,8 +356,6 @@ class ShapesController {
      */
     @RequireAdmin
     def uploadShapeFile() {
-        String apiKey = params.containsKey("api_key") ? params.api_key : null
-
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>()
 
@@ -723,7 +721,6 @@ class ShapesController {
             reqBodyParser.addParameter("user_id", String.class, true)
             reqBodyParser.addParameter("description", String.class, true)
             reqBodyParser.addParameter("focal_length", Double.class, true)
-            reqBodyParser.addParameter("api_key", String.class, false)
 
             if (reqBodyParser.parseJSON(request.JSON as String)) {
 
@@ -736,8 +733,6 @@ class ShapesController {
                 String user_id = (String) reqBodyParser.getParsedValue("user_id")
                 String description = (String) reqBodyParser.getParsedValue("description")
                 Double focal_length = (Double) reqBodyParser.getParsedValue("focal_length")
-                String api_key = (String) reqBodyParser.getParsedValue("api_key")
-
 
                 try {
                     boolean updateSuccessful = objectDao.updatePointOfInterest(id, object_id, name, type, latitude, longitude, bearing, user_id, description, focal_length)
