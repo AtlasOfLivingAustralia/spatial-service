@@ -123,7 +123,7 @@ class ManageLayersController {
      * @return
      */
 
-    @RequireLogin
+    @RequireAdmin
     def uploads() {
         Map map = [:]
 

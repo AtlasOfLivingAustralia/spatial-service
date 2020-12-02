@@ -20,7 +20,6 @@ class LoginInterceptor {
     ServiceAuthService serviceAuthService
 
     LoginInterceptor() {
-       // matchAll()
         match controller: '*'
     }
 
@@ -33,7 +32,7 @@ class LoginInterceptor {
         Class controllerClass = controller?.clazz
         def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
 
-        def role
+        def role  // if require a certain level of ROLE
         def securityCheck = false // if need to do security check
 
         if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
@@ -55,15 +54,15 @@ class LoginInterceptor {
             if(serviceAuthService.isValid(apikey)){
                 true
             }else{
-                if (Strings.isNullOrEmpty(role)) {
-                    //Request login only
-                    if (!serviceAuthService.isLoggedIn()) {
-                        //TODO check type of request, determine whether returns JSON or redirect to login page
-                        redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                                grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
-                        return false
-                    }
-                } else {
+                if (!serviceAuthService.isLoggedIn()) {
+                    //TODO check type of request, determine whether returns JSON or redirect to login page
+                    redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                            grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+                    return false
+                }
+
+                if (!Strings.isNullOrEmpty(role)) {
+                    //Check if matches ROLE requirement
                     if (!serviceAuthService.isRoleOf(role)) {
                         //TODO check type of request, determine whether returns JSON or redirect to login page
                         render text: "Forbidden. " + role + " required", status: STATUS_UNAUTHORISED

@@ -556,7 +556,7 @@ class ShapesController {
         }
         render processPointRadiusRequest(request.reader.text, null, latitude, longitude, radius) as JSON
     }
-    @RequireAdmin
+    @RequireLogin
     def updateWithPointRadius(Double latitude, Double longitude, Double radius, Integer objectPid) {
         if (latitude == null) {
             render status: 400, text: "Path parameter `latitude` is not a number."
@@ -651,7 +651,7 @@ class ShapesController {
         }
     }
 
-    @RequireAdmin
+    @RequireLogin
     def poi() {
         Map<String, Object> retMap = new HashMap<String, Object>()
 
@@ -693,7 +693,7 @@ class ShapesController {
         return retMap
     }
 
-    @RequireAdmin
+    @RequireLogin
     def poiRequest(Integer id) {
         if (id == null) {
             render status: 400, text: "Path parameter `id` is not an integer."
