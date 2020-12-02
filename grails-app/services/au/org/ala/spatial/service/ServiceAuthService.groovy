@@ -47,7 +47,6 @@ class ServiceAuthService {
      *
      * @return true when cas is disabled, api key is valid or user is admin
      */
-    @Deprecated
     boolean isAdmin(params) {
         // login disabled
         if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {

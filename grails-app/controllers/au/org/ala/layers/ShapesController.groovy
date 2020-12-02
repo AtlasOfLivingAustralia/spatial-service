@@ -279,6 +279,7 @@ class ShapesController {
     }
 
     // Create from geoJSON
+    @RequireAdmin
     def uploadGeojson(Integer id) {
         //id can be null
         processGeoJSONRequest(request.getJSON(), id)
@@ -320,7 +321,7 @@ class ShapesController {
         return retMap
     }
 
-    @RequireAdmin
+    @RequireLogin
     def uploadWkt(Integer id) {
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
@@ -328,11 +329,11 @@ class ShapesController {
         render processWKTRequest(request.JSON, id, namesearch) as JSON
     }
 
-    @RequireAdmin
+    @RequireLogin
     def uploadGeoJSON() throws Exception {
         render processGeoJSONRequest(request.JSON, null) as JSON
     }
-    @RequireAdmin
+    @RequireLogin
     def updateWithGeojson(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -341,6 +342,7 @@ class ShapesController {
         render processGeoJSONRequest(request.JSON, pid) as JSON
     }
 
+    @RequireLogin
     def updateWithWKT(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -354,7 +356,7 @@ class ShapesController {
      * TODO
      * @return
      */
-    @RequireAdmin
+    @RequireLogin
     def uploadShapeFile() {
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>()

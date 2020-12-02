@@ -14,5 +14,7 @@ import java.lang.annotation.Target
 @Documented
 
 @interface RequireLogin {
+    //If role is supplied, for example, ROLE_ADMIN, then it requires the user shouble be at least ROLE_ADMIN
+    //If role is not supplied by default, it only requires a login user
     String role() default ""
 }
