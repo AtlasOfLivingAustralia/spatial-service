@@ -40,7 +40,7 @@ class LoginInterceptor {
             securityCheck = true
         }else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
             RequireLogin requireLogin = method.getAnnotation(RequireLogin.class)
-            role=requireLogin.role()
+            role=requireLogin?.role()
             securityCheck = true
         }
         //Should be the last step
