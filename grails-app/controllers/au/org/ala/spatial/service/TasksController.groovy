@@ -25,6 +25,7 @@ class TasksController {
 
     TasksService tasksService
     def serviceAuthService
+    def authService
 
     /**
      * admin only or api_key
@@ -159,7 +160,7 @@ class TasksController {
         if (errors) {
             render errors as JSON
         } else {
-            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, params.userId, params.email)
+            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, authService.getUserId() ?: params.userId, params.email)
             render task as JSON
         }
     }
