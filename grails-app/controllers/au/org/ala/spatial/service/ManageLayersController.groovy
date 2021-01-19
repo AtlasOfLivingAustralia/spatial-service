@@ -17,9 +17,6 @@ package au.org.ala.spatial.service
 
 import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.LayerDAO
-import au.org.ala.layers.dto.Field
-import au.org.ala.layers.dto.Layer
-import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.converters.XML
 import grails.core.GrailsApplication
@@ -39,15 +36,28 @@ class ManageLayersController {
     FileService fileService
     TasksService tasksService
     GrailsApplication grailsApplication
-    AuthService authService
     ServiceAuthService serviceAuthService
 
+    /**
+     * admin only or api_key
+     *
+     * @return
+     */
     def index() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
     }
 
+    /**
+     * admin only
+     *
+     * @return
+     */
     def layers() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         Map map = [:]
         map.put("layers", manageLayersService.getAllLayers(null))
@@ -55,8 +65,15 @@ class ManageLayersController {
         map
     }
 
+    /**
+     * admin only
+     *
+     * @return
+     */
     def remote() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         if (!params?.remoteUrl) params.remoteUrl = grailsApplication.config.spatialService.remote
 
@@ -108,8 +125,15 @@ class ManageLayersController {
         map
     }
 
+    /**
+     * admin only
+     *
+     * @return
+     */
     def uploads() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         Map map = [:]
 
@@ -121,10 +145,15 @@ class ManageLayersController {
     /**
      * query status, or start download, of local copy of id,names_and_lsid,longitude,latitude
      * that is used in various background processes
+     *
+     * admin only
+     *
      * @return
      */
     def records() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         Map map = [:]
 
@@ -158,13 +187,18 @@ class ManageLayersController {
      * columns, listing of column name containted in the .dbf
      * url, for display and inspection
      *
+     * admin only
+     *
      * @param req
      * @param apiKey
      * @return
      * @throws Exception
      */
     def upload() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
+
         log.info("Receiving upload of zip file")
         String id = String.valueOf(System.currentTimeMillis())
 
@@ -202,10 +236,15 @@ class ManageLayersController {
      * importLayer with values from layers-service/layer/{id} url
      * if /data/spatial-data/uploads/{id}/{id}.* does not exist an attempt will be made to copy it from
      * /data/ala/data/layers/ready/shape or /diva
+     *
+     * admin only
+     *
      * @return
      */
     def importLayer() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         JSONParser jp = new JSONParser()
         InputStream is = new URL(params.url.toString()).openStream()
@@ -255,10 +294,15 @@ class ManageLayersController {
     /**
      * importField with values from layers-service/field/{id} url
      * layer must exist
+     *
+     * admin only
+     *
      * @return
      */
     def importField() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         JSONParser jp = new JSONParser()
         InputStream is = new URL(params.url.toString()).openStream()
@@ -291,11 +335,15 @@ class ManageLayersController {
     /**
      * create/update (POST) or get (GET) layer
      *
+     * admin only
+     *
      * @param id
      * @return
      */
     def layer(String id) {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         String layerId = id
         Map map = [:]
@@ -305,7 +353,7 @@ class ManageLayersController {
             } else {
                 map.putAll manageLayersService.createOrUpdateLayer(request.JSON as Map, layerId)
             }
-            redirect( action: 'layers', params: map )
+            redirect(action: 'layers', params: map)
         }
 
         //show
@@ -362,11 +410,16 @@ class ManageLayersController {
 
     /**
      * delete field with fieldId, layer with layerId, distribution with data_resource_uid
+     *
+     * admin only
+     *
      * @param id
      * @return
      */
     def delete(String id, String action) {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         if (fieldDao.getFieldById(id, false) == null) {
             Map m = manageLayersService.getUpload(id, false)
@@ -390,11 +443,15 @@ class ManageLayersController {
     /**
      * create/update (POST) or get (GET) field
      *
+     * admin only
+     *
      * @param id
      * @return
      */
     def field(String id) {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         Map map = [:]
         Map layer = id.startsWith('cl') || id.startsWith('el') ? [:] : manageLayersService.layerMap(id)
@@ -465,11 +522,15 @@ class ManageLayersController {
     /**
      * create/update (POST) or get (GET) distribution
      *
+     * admin only
+     *
      * @param id
      * @return
      */
     def distribution(String id) {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         String uploadId = id
         Map map = [:]
@@ -521,11 +582,15 @@ class ManageLayersController {
     /**
      * create/update (POST) or get (GET) distribution
      *
+     * admin only
+     *
      * @param id
      * @return
      */
     def checklist(String id) {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         String uploadId = id
         Map map = [:]
@@ -579,42 +644,30 @@ class ManageLayersController {
      *
      * If it already exists it will be updated.
      *
+     * admin only
      */
     def copy() {
-        login()
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
 
         def spatialServiceUrl = params.spatialServiceUrl;
         def fieldId = params.fieldId;
 
         manageLayersService.updateFromRemote(spatialServiceUrl, fieldId)
-        redirect(controller: "Tasks", action: "index" )
+        redirect(controller: "Tasks", action: "index")
 
     }
 
-    private def login() {
-
-        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()){
-            return
-        }
-
-        if (serviceAuthService.isValid(params['api_key'])) {
-            log.info("API key is valid")
-            return
-        } else if (!authService.getUserId()) {
-//            log.info("Unable to get userID - redirecting - should path be in CAS config ? " )
-//            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-//                    grailsApplication.config.grails.serverURL + createLink(controller: 'manageLayers', action: 'index'))
-
-            Map err = [error: 'not logged in']
-            render err as JSON
-        } else if (!authService.userInRole(grailsApplication.config.auth.admin_role)) {
-            Map err = [error: 'not authorised']
-            render err as JSON
-        }
-    }
-
-
+    /**
+     * admin only
+     *
+     * @return
+     */
     def enable() {
+        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
+            return
+        }
         if (params.id.isNumber()) {
             def layer = layerDao.getLayerById(params.id.toInteger(), false)
             layer.enabled = true
@@ -626,5 +679,23 @@ class ManageLayersController {
         }
 
         render ''
+    }
+
+    /**
+     * Return true when logged in, CAS is disabled or api_key is valid.
+     *
+     * Otherwise redirect to CAS for login.
+     *
+     * @param params
+     * @return
+     */
+    private boolean doLogin() {
+        if (!serviceAuthService.isLoggedIn(params)) {
+            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+            return false
+        }
+
+        return true
     }
 }

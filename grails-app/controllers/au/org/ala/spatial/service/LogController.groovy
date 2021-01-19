@@ -29,8 +29,17 @@ class LogController {
     AuthService authService
     def serviceAuthService
 
+    /**
+     * login required
+     *
+     * @return
+     */
     @Transactional
     def index() {
+        if (!doLogin()) {
+            return
+        }
+
         def log = new Log(params)
         log.data = request.JSON.toString()
 
@@ -43,20 +52,19 @@ class LogController {
         render status: 200
     }
 
+    /**
+     * login required
+     *
+     * @return
+     */
     def search() {
-        def isAdmin = authService.userInRole(grailsApplication.config.auth.admin_role) || serviceAuthService.isValid(params['api_key']) ||
-                grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()
-        def userId = authService.getUserId()
-
-        if (!isAdmin && !userId) {
-            render status: 401
+        if (!doLogin()) {
             return
         }
 
-        def searchResult = logService.search(params, authService.getUserId(), isAdmin)
+        def searchResult = logService.search(params, authService.getUserId(), serviceAuthService.isAdmin(params))
 
-        def totalCount = logService.searchCount(params, authService.getUserId(),
-                authService.userInRole(grailsApplication.config.auth.admin_role))
+        def totalCount = logService.searchCount(params, authService.getUserId(), serviceAuthService.isAdmin(params))
 
         if ("application/json".equals(request.getHeader("accept")) || "application/json".equals(params.accept)) {
             def map = [records: searchResult, totalCount: totalCount]
@@ -81,4 +89,21 @@ class LogController {
         }
     }
 
+    /**
+     * Return true when logged in, CAS is disabled or api_key is valid.
+     *
+     * Otherwise redirect to CAS for login.
+     *
+     * @param params
+     * @return
+     */
+    private boolean doLogin() {
+        if (!serviceAuthService.isLoggedIn(params)) {
+            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+            return false
+        }
+
+        return true
+    }
 }

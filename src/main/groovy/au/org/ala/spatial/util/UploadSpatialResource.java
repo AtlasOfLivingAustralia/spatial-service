@@ -125,23 +125,55 @@ public class UploadSpatialResource {
                 true, username, password));
     }
 
-    public static String sld(String geoserverUrl, String geoserverUsername, String geoserverPassword, String name, String pathToSldFile) {
+    public static String sld(String geoserverUrl, String geoserverUsername, String geoserverPassword, String layerName, String styleName, String pathToSldFile) {
         String extra = "";
 
         // Create sld
         UploadSpatialResource.loadCreateStyle(geoserverUrl + "/rest/styles/",
-                extra, geoserverUsername, geoserverPassword, name);
+                extra, geoserverUsername, geoserverPassword, styleName);
 
         // Upload sld
-        UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + name,
+        UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + styleName,
                 extra, geoserverUsername, geoserverPassword, pathToSldFile);
 
         // Apply style
-        String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
+        String data = "<layer><enabled>true</enabled><defaultStyle><name>" + styleName +
                 "</name></defaultStyle></layer>";
 
-        return UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + name, extra,
+        String resp = UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + layerName, extra,
                 geoserverUsername, geoserverPassword, data);
 
+        addGwcStyle(geoserverUrl, layerName, styleName, geoserverUsername, geoserverPassword);
+
+
+        return resp;
+    }
+
+    public static String addGwcStyle(String geoserverUrl, String layerName, String styleName, String username, String password) {
+        String url = geoserverUrl + "/gwc/rest/layers/ALA:" + layerName + ".xml";
+        Map<String, Object> response = Util.urlResponse("GET", url, null,
+                null, null, true, username, password);
+
+        //add Style to layer GWC styles
+        String conf = (String) response.get("text");
+        if (conf != null && !conf.contains("<string>" + styleName + "</string>")) {
+            conf = conf.replace("</values>", "<string>" + styleName + "</string></values>");
+
+            RequestEntity entity = null;
+            try {
+                // Request content will be retrieved directly
+                // from the input stream
+                File file = File.createTempFile("tmp", "xml");
+                FileUtils.writeStringToFile(file, conf, "UTF-8");
+                entity = new FileRequestEntity(file, "text/xml");
+
+                return processResponse(Util.urlResponse("POST", url, null, null, entity,
+                        true, username, password));
+            } catch (Exception e) {
+                logger.error(conf, e);
+            }
+        }
+
+        return "";
     }
 }

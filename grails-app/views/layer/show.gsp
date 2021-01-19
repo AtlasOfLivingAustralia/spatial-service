@@ -9,13 +9,13 @@
 
 <body>
 
-<h1>Layer metadata: ${layer.name}</h1>
-<p class="lead">Layer metadata for the layer${layer.name}</p>
+<h1>${layer.displayname}</h1>
+
 <div>
     <table class="table table-bordered table-condensed">
         <thead>
-            <th>Field</th>
-            <th>Value</th>
+        <th>Field</th>
+        <th>Value</th>
         </thead>
         <tbody>
         <tr>

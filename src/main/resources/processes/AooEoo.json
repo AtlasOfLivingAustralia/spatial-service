@@ -46,6 +46,15 @@
         "min": 0.01,
         "default": 2
       }
+    },
+    "radius": {
+      "description": "Radius (m) for points with radius",
+      "type": "double",
+      "constraints": {
+        "min": 1,
+        "min": 1000000,
+        "default": 5000
+      }
     }
   },
   "output": {

@@ -57,13 +57,13 @@ class AooEooSpec extends Specification implements GrailsUnitTest {
         }
 
         proc.task = [spec : Mock(TaskService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
-                     input: [area: "[{}]", species: "{\"q\": \"\", \"name\": \"test species\"}", resolution: "0.02", coverage: "2"]]
+                     input: [area: "[{}]", species: "{\"q\": \"\", \"name\": \"test species\"}", resolution: "0.02", coverage: "2", radius: 5000]]
 
         proc.start()
 
         then:
         tmpDir.listFiles().each { file ->
-            assert FileUtils.readFileToString(file) == TestUtil.getResourceAsString('output/aooeoo/' + file.name)
+            assert FileUtils.readFileToString(file).replaceAll("\\s","") == TestUtil.getResourceAsString('output/aooeoo/' + file.name).replaceAll("\\s","")
         }
     }
 

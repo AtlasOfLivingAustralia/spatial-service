@@ -298,7 +298,7 @@ class TasksService {
 
     def validateInput(request) {
         try {
-            validateInput(request.name, request.input)
+            validateInput(request.name, request.input, true)
         } catch (err) {
             log.error(err.getMessage(), err)
             [generalError: err.getMessage()]
@@ -313,17 +313,18 @@ class TasksService {
      * @param input
      * @return map of errors
      */
-    def validateInput(name, input) {
+    def validateInput(name, input, isAdmin) {
         if (input == null) input = [:] as Map
 
         //get task spec
-        def spec = masterService.spec(true).get(name)
-
-        if (spec == null) {
-            log.error("failed to find spec for: " + name)
-        }
+        def spec = masterService.spec(isAdmin).get(name)
 
         def errors = [:]
+
+        if (spec == null) {
+            errors.put("spec", "failed to find spec for: " + name)
+            return errors
+        }
 
         //input init from spec
         spec?.input.each { k, v ->

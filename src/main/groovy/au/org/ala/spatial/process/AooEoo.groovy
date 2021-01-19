@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.layers.util.SpatialUtil
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.geom.GeometryFactory
@@ -61,6 +62,11 @@ class AooEoo extends SlaveProcess {
         double aoo = gridSize * gridSize * aooPoints.size() * 10000
         String aooWkt = aooWkt(aooPoints, gridSize)
 
+        //radius for point circles size
+        def radius = task.input.radius.toDouble()
+        def circleWkt = circleRadiusProcess(aooPoints, radius)
+        double circleArea = SpatialUtil.calculateArea(circleWkt) / 1000000.0
+
         def occurrenceCount = occurrenceCount(speciesArea)
 
         double eoo
@@ -72,7 +78,7 @@ class AooEoo extends SlaveProcess {
             Geometry convexHull = g.convexHull()
             String wkt = convexHull.toText().replace(" (", "(").replace(", ", ",")
 
-            eoo = SpatialUtil.calculateArea(wkt)
+            eoo = SpatialUtil.calculateArea(wkt) / 1000000.0
 
             //aoo area
             Geometry a = reader.read(aooWkt)
@@ -82,7 +88,7 @@ class AooEoo extends SlaveProcess {
             //concave hull
             Geometry concaveHull = buildConcaveHull(g, Double.parseDouble(alpha))
             String concaveWkt = concaveHull.toText().replace(" (", "(").replace(", ", ",")
-            double alphaHull = SpatialUtil.calculateArea(concaveWkt)
+            double alphaHull = SpatialUtil.calculateArea(concaveWkt) / 1000000.0
 
             if (eoo > 0) {
 
@@ -95,7 +101,7 @@ class AooEoo extends SlaveProcess {
 
                 filename = "Area of occupancy.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), aWkt)
-                values = [file: "Area of occupancy.wkt", name: "Area of occupancy (area): " + species.name,
+                values = [file       : "Area of occupancy.wkt", name: "Area of occupancy (area): " + species.name,
                           description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
@@ -103,6 +109,13 @@ class AooEoo extends SlaveProcess {
                 filename = "Alpha Hull.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), concaveWkt)
                 values = [file       : "Alpha Hull.wkt", name: "Alpha Hull: " + species.name,
+                          description: "Created by AOO and EOO Tool"]
+                addOutput("areas", (values as JSON).toString(), true)
+                addOutput("files", filename, true)
+
+                filename = "Point Radius.wkt"
+                FileUtils.writeStringToFile(new File(getTaskPath() + filename), circleWkt)
+                values = [file       : "Point Radius.wkt", name: "Point Radius: " + species.name,
                           description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
@@ -116,8 +129,9 @@ class AooEoo extends SlaveProcess {
                         "<tr><td>Number of records used for the calculations</td><td>" + occurrenceCount + "</td></tr>" +
                         "<tr><td>Species</td><td>" + species.name + "</td></tr>" +
                         "<tr><td>Area of Occupancy (AOO: ${gridSize} degree grid)</td><td>" + String.format("%.0f", aoo) + " sq km</td></tr>" +
-                        "<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>" + (String.format("%.2f", eoo / 1000.0 / 1000.0)) + " sq km</td></tr>" +
-                        "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format("%.0f", alphaHull / 1000.0 / 1000.0) + " sq km</td></tr>" +
+                        "<tr><td>Area of Occupancy (Points with radius: " + String.format("%.0f", radius) + "m)</td><td>" + String.format("%.0f", circleArea) + " sq km</td></tr>" +
+                        "<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>" + (String.format("%.0f", eoo)) + " sq km</td></tr>" +
+                        "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format("%.0f", alphaHull) + " sq km</td></tr>" +
                         "</table></body></html>" +
                         "</div>"
 
@@ -132,6 +146,14 @@ class AooEoo extends SlaveProcess {
 
                 filename = "Area of occupancy.kml"
                 writeWktAsKmlToFile(new File(getTaskPath() + filename), aWkt)
+                addOutput("files", filename, true)
+
+                filename = "Alpha Hull.kml"
+                writeWktAsKmlToFile(new File(getTaskPath() + filename), concaveWkt)
+                addOutput("files", filename, true)
+
+                filename = "Point Radius.kml"
+                writeWktAsKmlToFile(new File(getTaskPath() + filename), circleWkt)
                 addOutput("files", filename, true)
             } else {
                 log.error 'Extent of occurrences is 0.'
@@ -190,6 +212,23 @@ class AooEoo extends SlaveProcess {
         }
 
         set
+    }
+
+    // sq km
+    private String circleRadiusProcess(Set<Point2D> points, double radius) {
+        Geometry geom = null
+        points.each { point ->
+            WKTReader wkt = new WKTReader()
+            Geometry circle = wkt.read(SpatialConversionUtils.createCircleJs(point.x, point.y, radius))
+
+            if (geom == null) {
+                geom = circle
+            } else {
+                geom = geom.union(circle)
+            }
+        }
+
+        geom.toString()
     }
 
     float round(double d, double by) {
