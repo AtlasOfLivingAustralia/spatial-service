@@ -27,7 +27,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         if (!environment.getProperty("security.cas.appServerName")) {
             def serverURL = environment.getProperty("grails.serverURL")
             if (!serverURL){
-                serverURL = "http://dev.ala.org.au"
+                serverURL = "http://devt.ala.org.au"
                 println("WARNING: Unable to retrieve 'grails.serverURL' - using "+ serverURL)
             }
             def url = new URL(serverURL)
