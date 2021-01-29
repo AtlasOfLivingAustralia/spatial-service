@@ -14,6 +14,8 @@ SET default_with_oids = false;
 --drop database layersdb;
 
 create database layersdb;
+CREATE USER layers WITH PASSWORD 'layers';
+GRANT ALL PRIVILEGES ON DATABASE layersdb TO layers;
 
 \connect layersdb;
 

@@ -146,7 +146,7 @@ batch_sampling_fields_limit: 1000
 #
 # au.org.ala.spatial.slave config
 #
-spatialService.url: "http://localhost:8080/ws"
+spatialService.url: "http://devt.ala.org.au:8080/ws"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"
@@ -177,6 +177,7 @@ security:
     #    loginUrl: 'https://auth.ala.org.au/cas/login'
     #    logoutUrl: 'https://auth.ala.org.au/cas/logout'
     #    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
+
     bypass: false # set to true for non-ALA deployment
     gateway: false
     uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
@@ -319,13 +320,20 @@ environments:
             logSql: false
             dbCreate: update
         grails:
-            serverURL: http://dev.ala.org.au:8080
-            #ssh user@nectar-spatial-test.ala.org.au -L 5432:localhost:5432  //tunnel to test
-            #ssh user@aws-spatial-prod.ala.org.au -L 5432:localhost:5432
-            app:
-                context: ''
+            server:
+              #port: 8080
+              use-forward-headers: true
+            serverURL: http://devt.ala.org.au:8080
+
+        server:
+          port: 8080
+          contextPath: '/ws'
         gdal:
             dir: "/usr/local/bin/"
+#        security:
+#            cas:
+#            bypass: true
+#            disableCAS: true
 
     test:
         dataSource:
