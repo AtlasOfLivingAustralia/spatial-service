@@ -76,6 +76,9 @@ class ScatterplotCreate extends SlaveProcess {
             File file = new File(getTaskPath() + "data.xml")
             scatterplot.save(file)
 
+            File csvFile = new File(getTaskPath() + "data.csv")
+            scatterplot.saveCsv(csvFile)
+
             species1.putAt("scatterplotId", task.id)
             def imgFile = new File(scatterplot.getImagePath())
             species1.putAt("scatterplotUrl",
@@ -101,6 +104,8 @@ class ScatterplotCreate extends SlaveProcess {
             species1.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
 
             addOutput("species", (species1 as JSON).toString())
+
+            addOutput("download", csvFile.name);
         }
     }
 }
