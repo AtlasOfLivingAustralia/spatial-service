@@ -86,12 +86,10 @@ class TasksController {
     }
 
     /**
-     * must be logged in
-     *
+     * Query status of task
      * @param task
      * @return
      */
-    @RequireLogin
     def status(Task task) {
         def status = tasksService.getStatus(task)
 
@@ -237,11 +235,10 @@ class TasksController {
     }
 
     /**
-     * login required
+     * Download output
      *
      * @return
      */
-    @RequireLogin
     def output() {
         def path = "${grailsApplication.config.data.dir}/public"
         def p1 = params.p1
