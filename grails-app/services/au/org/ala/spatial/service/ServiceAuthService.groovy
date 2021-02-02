@@ -66,25 +66,6 @@ class ServiceAuthService {
         return false
     }
 
-
-    /**
-     *
-     * @return true when cas is disabled, api key is valid or user is logged in
-     */
-    @Deprecated
-    boolean isLoggedIn(params) {
-        if (isAdmin(params)) {
-            return true
-        }
-
-        // is logged in
-        if (authService.getUserId()) {
-            return true
-        }
-
-        return false
-    }
-
     /**
      *
      * @return true when is logged in
