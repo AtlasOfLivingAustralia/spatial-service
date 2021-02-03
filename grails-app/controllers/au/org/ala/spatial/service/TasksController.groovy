@@ -87,14 +87,12 @@ class TasksController {
     }
 
     /**
-     * must be logged in
+     * login not required
      *
      * @param task
      * @return
      */
     def status(Task task) {
-        if (!doLogin()) return
-
         def status = tasksService.getStatus(task)
 
         if (params.containsKey('last')) {
@@ -129,11 +127,11 @@ class TasksController {
     def show(Task task) {
         if (!doLogin()) return
 
-        task.history = task.history.sort { a, b ->
-            a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
-        }
-
         if (task) {
+            task.history = task.history.sort { a, b ->
+                a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
+            }
+
             render task as JSON
         } else {
             render status: 404
@@ -248,13 +246,11 @@ class TasksController {
     }
 
     /**
-     * login required
+     * login not required
      *
      * @return
      */
     def output() {
-        if (!doLogin()) return
-
         def path = "${grailsApplication.config.data.dir}/public"
         def p1 = params.p1
         def p2 = params.p2
