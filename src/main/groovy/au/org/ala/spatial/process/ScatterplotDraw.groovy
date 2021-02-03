@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.scatterplot.ScatterplotStyleDTO
+import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 
@@ -106,5 +107,12 @@ class ScatterplotDraw extends SlaveProcess {
         image.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
 
         addOutput("species", (image as JSON).toString())
+
+        // replace original zip of data.csv
+        File csvFile = new File(getTaskPathById(taskId) + "data.csv")
+        scatterplot.saveCsv(csvFile)
+        File downloadZip = new File(getTaskPathById(taskId) + "download.zip")
+        downloadZip.delete();
+        Util.zip(downloadZip.path, (String[]) [csvFile.path].toArray(), (String[]) [csvFile.name].toArray())
     }
 }

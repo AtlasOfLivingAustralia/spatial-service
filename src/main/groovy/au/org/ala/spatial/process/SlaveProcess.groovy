@@ -82,6 +82,10 @@ class SlaveProcess {
         taskService.getBasePath(task)
     }
 
+    String getTaskPathById(taskId) {
+        taskService.getBasePath([taskId: taskId])
+    }
+
     List getLayers() {
         List layers = null
 
