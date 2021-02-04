@@ -113,6 +113,11 @@ class PublishService {
             }
         }
 
+        // Fix layer styles after LayerCopy and FieldCreation
+        if (spec.name == 'LayerCopy' || spec.name == 'FieldCreation') {
+            manageLayersService.fixLayerStyles()
+        }
+
         //delete zip
         zip.delete()
 
