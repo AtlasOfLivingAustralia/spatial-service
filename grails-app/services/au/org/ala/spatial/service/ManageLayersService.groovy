@@ -1465,6 +1465,8 @@ class ManageLayersService {
     }
 
     // Schedule to run once, 5 mins after startup
+    // Create outline/polygon style for Vector layer
+    // Create a linear/none linear style for each Raster layer
     @Scheduled(initialDelay = 3000000L, fixedDelay = Long.MAX_VALUE)
     def fixLayerStyles() {
         def geoserverUrl = grailsApplication.config.geoserver.url
