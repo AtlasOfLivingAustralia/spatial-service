@@ -1549,27 +1549,43 @@ class ManageLayersService {
         String dir = grailsApplication.config.data.dir
         def diva = new Grid(dir + "/layer/" + name)
 
-        def min = diva.minval
-        def max = diva.maxval
+        def min = diva.minval.round(2)
+        def max = diva.maxval.round(2)
+        def mid = ((diva.maxval + diva.minval)/2).round(2)
+        def midMin = ((mid + diva.minval)/2).round(2)
+        def midMax = ((diva.maxval + mid)/2).round(2)
+
         def nodatavalue = diva.nodatavalue
 
         def colour1
         def colour2
+        def colour3
+        def colour4
+        def colour5
 
         if (reversed) {
-            colour1 = '0xffffff'
-            colour2 = '0x000000'
+            colour1 = '0x323232'
+            colour2 = '0x636363'
+            colour3 = '0x808080'
+            colour4 = '0xa6a6a6'
+            colour5 = '0xe2e2e2'
         } else {
-            colour1 = '0x000000'
-            colour2 = '0xffffff'
+            colour1 = '0xe2e2e2'
+            colour2 = '0xa6a6a6'
+            colour3 = '0x808080'
+            colour4 = '0x636363'
+            colour5 = '0x323232'
         }
 
         String classSld = '<?xml version="1.0" encoding="UTF-8"?><StyledLayerDescriptor xmlns="http://www.opengis.net/sld">' +
                 '<NamedLayer><Name>ALA:' + name + '</Name>' +
                 '<UserStyle><FeatureTypeStyle><Rule><RasterSymbolizer><Geometry></Geometry><ColorMap>' +
-                (nodatavalue < min ? '<ColorMapEntry color="0x000000" opacity="0" quantity="' + nodatavalue + '"/>' : '') +
-                '<ColorMapEntry color="0x000000" opacity="1" quantity="' + min + '" label="' + ((float) min) + " " + diva.units + '"/>' +
-                '<ColorMapEntry color="0xffffff" opacity="1" quantity="' + max + '" label="' + ((float) max) + " " + diva.units + '"/>' +
+                (nodatavalue < min ? '<ColorMapEntry color="0xffffff" opacity="0" quantity="' + nodatavalue + '"/>' : '') +
+                '<ColorMapEntry color="'+colour1 +'" opacity="1" quantity="' + min + '" label="' + ((float) min) + " " + diva.units + '"/>' +
+                '<ColorMapEntry color="'+colour2 +'" opacity="1" quantity="' + midMin + '"/>' +
+                '<ColorMapEntry color="'+colour3 +'" opacity="1" quantity="' + mid + '" label="' + ((float) mid) + " " + diva.units + '"/>' +
+                '<ColorMapEntry color="'+colour4 +'" opacity="1" quantity="' + midMax + '"/>' +
+                '<ColorMapEntry color="'+colour5 +'" opacity="1" quantity="' + max + '" label="' + ((float) max) + " " + diva.units + '"/>' +
                 (nodatavalue > max ? '<ColorMapEntry color="0xffffff" opacity="0" quantity="' + nodatavalue + '"/>' : '') +
                 '</ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>'
     }
