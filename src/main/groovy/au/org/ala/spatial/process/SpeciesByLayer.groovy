@@ -154,7 +154,7 @@ class SpeciesByLayer extends SlaveProcess {
 
         for (int i = 0; i < items.size(); i++) {
             String item = items.get(i)
-            String count = counts.get(i)
+            def count = counts.get(i)
 
             if (field.type != 'e') {
                 writer.writeNext([item, count.area, count.species, count.occurrences] as String[])
@@ -185,6 +185,7 @@ class SpeciesByLayer extends SlaveProcess {
         Grid grid = new Grid(grailsApplication.config.data.dir.toString() + '/layer/' + layerName)
 
         int bufferSize = 1024 * 1024
+        float areaSqKm = 0
 
         Grid g = Grid.getLoadedGrid(grid.filename);
         if (g != null && g.grid_data != null) {
@@ -192,30 +193,30 @@ class SpeciesByLayer extends SlaveProcess {
                 areaSqKm += areaOf(g, value, i, min, max)
             }
         } else {
-            int length = this.nrows * this.ncols;
+            int length = grid.nrows * grid.ncols;
             RandomAccessFile afile = null;
-            File f2 = new File(this.filename + ".GRI");
+            File f2 = new File(grid.filename + ".GRI");
 
             try {
                 if (!f2.exists()) {
-                    afile = new RandomAccessFile(this.filename + ".gri", "r");
+                    afile = new RandomAccessFile(grid.filename + ".gri", "r");
                 } else {
-                    afile = new RandomAccessFile(this.filename + ".GRI", "r");
+                    afile = new RandomAccessFile(grid.filename + ".GRI", "r");
                 }
 
                 byte[] b = new byte[bufferSize];
                 int i = 0;
-                int maxLen = 0;
+                int max = 0;
 
                 while (true) {
                     int len;
                     while ((len = afile.read(b)) > 0) {
                         ByteBuffer bb = ByteBuffer.wrap(b);
-                        if (this.byteorderLSB) {
+                        if (grid.byteorderLSB) {
                             bb.order(ByteOrder.LITTLE_ENDIAN);
                         }
 
-                        if (this.datatype.equalsIgnoreCase("UBYTE")) {
+                        if (grid.datatype.equalsIgnoreCase("UBYTE")) {
                             max += len;
 
                             for (max = Math.min(max, length); i < max; ++i) {
@@ -225,37 +226,37 @@ class SpeciesByLayer extends SlaveProcess {
                                 }
                                 areaSqKm += areaOf(grid, value, i, minBound, maxBound)
                             }
-                        } else if (this.datatype.equalsIgnoreCase("BYTE")) {
+                        } else if (grid.datatype.equalsIgnoreCase("BYTE")) {
                             max += len;
 
                             for (max = Math.min(max, length); i < max; ++i) {
                                 areaSqKm += areaOf(grid, (float) bb.get(), i, minBound, maxBound)
                             }
-                        } else if (this.datatype.equalsIgnoreCase("SHORT")) {
+                        } else if (grid.datatype.equalsIgnoreCase("SHORT")) {
                             max += len / 2;
 
                             for (max = Math.min(max, length); i < max; ++i) {
                                 areaSqKm += areaOf(grid, (float) bb.getShort(), i, minBound, maxBound)
                             }
-                        } else if (this.datatype.equalsIgnoreCase("INT")) {
+                        } else if (grid.datatype.equalsIgnoreCase("INT")) {
                             max += len / 4;
 
                             for (max = Math.min(max, length); i < max; ++i) {
                                 areaSqKm += areaOf(grid, (float) bb.getInt(), i, minBound, maxBound)
                             }
-                        } else if (this.datatype.equalsIgnoreCase("LONG")) {
+                        } else if (grid.datatype.equalsIgnoreCase("LONG")) {
                             max += len / 8;
 
                             for (max = Math.min(max, length); i < max; ++i) {
                                 areaSqKm += areaOf(grid, (float) bb.getLong(), i, minBound, maxBound)
                             }
-                        } else if (this.datatype.equalsIgnoreCase("FLOAT")) {
+                        } else if (grid.datatype.equalsIgnoreCase("FLOAT")) {
                             max += len / 4;
 
                             for (max = Math.min(max, length); i < max; ++i) {
                                 areaSqKm += areaOf(grid, (float) bb.getFloat(), i, minBound, maxBound)
                             }
-                        } else if (this.datatype.equalsIgnoreCase("DOUBLE")) {
+                        } else if (grid.datatype.equalsIgnoreCase("DOUBLE")) {
                             max += len / 8;
 
                             for (max = Math.min(max, length); i < max; ++i) {
