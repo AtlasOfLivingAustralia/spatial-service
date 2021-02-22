@@ -17,9 +17,11 @@ package au.org.ala.spatial.service
 
 import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Layer
+import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.Bil2diva
 import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
@@ -31,6 +33,7 @@ import org.json.simple.JSONValue
 import org.json.simple.parser.JSONParser
 import org.opengis.feature.simple.SimpleFeatureType
 import org.opengis.feature.type.AttributeDescriptor
+import org.springframework.scheduling.annotation.Scheduled
 
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
@@ -1459,6 +1462,132 @@ class ManageLayersService {
 
         task
 
+    }
+
+    // Schedule to run once, 5 mins after startup
+    // Create outline/polygon style for Vector layer
+    // Create a linear/none linear style for each Raster layer
+    @Scheduled(initialDelay = 3000000L, fixedDelay = Long.MAX_VALUE)
+    def fixLayerStyles() {
+        def geoserverUrl = grailsApplication.config.geoserver.url
+        def geoserverUsername = grailsApplication.config.geoserver.username
+        def geoserverPassword = grailsApplication.config.geoserver.password
+
+        // create outline style
+        def data = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
+                "<StyledLayerDescriptor version=\"1.0.0\"\n" +
+                "  xsi:schemaLocation=\"http://www.opengis.net/sld http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd\"\n" +
+                "  xmlns=\"http://www.opengis.net/sld\" xmlns:ogc=\"http://www.opengis.net/ogc\"\n" +
+                "  xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
+                "\n" +
+                "  <NamedLayer>\n" +
+                "    <Name></Name>\n" +
+                "    <UserStyle>\n" +
+                "      <Title>An outline polygon style</Title>\n" +
+                "      <FeatureTypeStyle>\n" +
+                "        <Rule>\n" +
+                "          <Title>outline polygon</Title>\n" +
+                "          <PolygonSymbolizer>\n" +
+                "            <Stroke>\n" +
+                "              <CssParameter name=\"stroke\">#000000</CssParameter>\n" +
+                "              <CssParameter name=\"stroke-width\">0.5</CssParameter>\n" +
+                "            </Stroke>\n" +
+                "          </PolygonSymbolizer>\n" +
+                "\n" +
+                "        </Rule>\n" +
+                "\n" +
+                "      </FeatureTypeStyle>\n" +
+                "    </UserStyle>\n" +
+                "  </NamedLayer>\n" +
+                "</StyledLayerDescriptor>\n"
+
+        def extra = ''
+
+        au.org.ala.spatial.util.UploadSpatialResource.loadCreateStyle(geoserverUrl + "/rest/styles/",
+                extra, geoserverUsername, geoserverPassword, "outline")
+        File tmpFile = File.createTempFile("sld", "xml")
+        FileUtils.writeStringToFile(tmpFile, data, "UTF-8");
+        au.org.ala.spatial.util.UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + "outline",
+                extra, geoserverUsername, geoserverPassword, tmpFile.path);
+
+        def fields = fieldDao.getFieldsByCriteria('')
+        fields.each { field ->
+            def styleName = field.id
+            def layerName = field.layer.name
+
+            def stylesRequired = []
+            if ('c'.equals(field.type)) {
+                stylesRequired.push(styleName)
+                stylesRequired.push('outline')
+                stylesRequired.push('polygon')
+            } else {
+                stylesRequired.push(layerName)
+
+                def linear = layerName + "_linear"
+                stylesRequired.push(linear)
+
+                // add layerName_linear sld if required
+                UploadSpatialResource.loadCreateStyle(geoserverUrl + "/rest/styles/",
+                        extra, geoserverUsername, geoserverPassword, linear)
+                tmpFile = File.createTempFile("sld", "xml")
+                FileUtils.writeStringToFile(tmpFile, getLinearStyle(layerName, false), "UTF-8");
+                UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + linear,
+                        extra, geoserverUsername, geoserverPassword, tmpFile.path)
+            }
+
+            stylesRequired.each { style ->
+                data = "<style><name>" + style + "</name></style>"
+                UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + layerName + "/styles", "",
+                        geoserverUsername, geoserverPassword, data)
+                UploadSpatialResource.addGwcStyle(geoserverUrl, layerName, style, geoserverUsername, geoserverPassword)
+            }
+        }
+    }
+
+    private def getLinearStyle(String name, boolean reversed) {
+
+        String dir = grailsApplication.config.data.dir
+        def diva = new Grid(dir + "/layer/" + name)
+
+        def min = diva.minval.round(2)
+        def max = diva.maxval.round(2)
+        def mid = ((diva.maxval + diva.minval)/2).round(2)
+        def midMin = ((mid + diva.minval)/2).round(2)
+        def midMax = ((diva.maxval + mid)/2).round(2)
+
+        def nodatavalue = diva.nodatavalue
+
+        def colour1
+        def colour2
+        def colour3
+        def colour4
+        def colour5
+
+        if (reversed) {
+            colour1 = '0x323232'
+            colour2 = '0x636363'
+            colour3 = '0x808080'
+            colour4 = '0xa6a6a6'
+            colour5 = '0xe2e2e2'
+        } else {
+            colour1 = '0xe2e2e2'
+            colour2 = '0xa6a6a6'
+            colour3 = '0x808080'
+            colour4 = '0x636363'
+            colour5 = '0x323232'
+        }
+
+        String classSld = '<?xml version="1.0" encoding="UTF-8"?><StyledLayerDescriptor xmlns="http://www.opengis.net/sld">' +
+                '<NamedLayer><Name>ALA:' + name + '</Name>' +
+                '<UserStyle><FeatureTypeStyle><Rule><RasterSymbolizer><Geometry></Geometry><ColorMap>' +
+                (nodatavalue < min ? '<ColorMapEntry color="0xffffff" opacity="0" quantity="' + nodatavalue + '"/>' : '') +
+                '<ColorMapEntry color="'+colour1 +'" opacity="1" quantity="' + min + '" label="' + ((float) min) + " " + diva.units + '"/>' +
+                '<ColorMapEntry color="'+colour2 +'" opacity="1" quantity="' + midMin + '"/>' +
+                '<ColorMapEntry color="'+colour3 +'" opacity="1" quantity="' + mid + '" label="' + ((float) mid) + " " + diva.units + '"/>' +
+                '<ColorMapEntry color="'+colour4 +'" opacity="1" quantity="' + midMax + '"/>' +
+                '<ColorMapEntry color="'+colour5 +'" opacity="1" quantity="' + max + '" label="' + ((float) max) + " " + diva.units + '"/>' +
+                (nodatavalue > max ? '<ColorMapEntry color="0xffffff" opacity="0" quantity="' + nodatavalue + '"/>' : '') +
+                '</ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>'
     }
 }
 

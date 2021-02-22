@@ -146,7 +146,7 @@ batch_sampling_fields_limit: 1000
 #
 # au.org.ala.spatial.slave config
 #
-spatialService.url: "http://devt.ala.org.au:8080/ws"
+spatialService.url: "http://localhost:8080/ws"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"
@@ -173,10 +173,10 @@ retryTime: 30000
 #  NOTE: Some of these will be ignored if default_config exists
 security:
   cas:
-#    casServerName: 'https://auth.ala.org.au'
-    #    loginUrl: 'https://auth.ala.org.au/cas/login'
-    #    logoutUrl: 'https://auth.ala.org.au/cas/logout'
-    #    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
+    casServerName: 'https://auth.ala.org.au'
+    loginUrl: 'https://auth.ala.org.au/cas/login'
+    logoutUrl: 'https://auth.ala.org.au/cas/logout'
+    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
 
     bypass: false # set to true for non-ALA deployment
     gateway: false
