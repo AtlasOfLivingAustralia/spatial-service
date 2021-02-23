@@ -827,6 +827,7 @@ class ManageLayersService {
         def layer = layerDao.getLayerById(Integer.parseInt(fieldDao.getFieldById(fieldId, false).spid), false)
 
         def map = fieldMapDefault(String.valueOf(layer.id))
+        map.put("layerName", layer.name) // layer name for wms requests
 
         def field = fieldDao.getFieldById(fieldId, false)
         map.put("id", field.getId())
