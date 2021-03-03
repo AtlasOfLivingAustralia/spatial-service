@@ -87,6 +87,8 @@ class TasksController {
 
     /**
      * Query status of task
+     * login not required
+     *
      * @param task
      * @return
      */
@@ -124,11 +126,10 @@ class TasksController {
      */
     @RequireLogin
     def show(Task task) {
-        task.history = task.history.sort { a, b ->
-            a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
-        }
-
         if (task) {
+            task.history = task.history.sort { a, b ->
+                a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
+            }
             render task as JSON
         } else {
             render status: 404
@@ -236,6 +237,7 @@ class TasksController {
 
     /**
      * Download output
+     * login not required
      *
      * @return
      */

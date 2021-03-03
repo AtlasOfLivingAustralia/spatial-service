@@ -37,18 +37,24 @@ Here are some instructions for running spatial-service locally for development.
 The assumption here is that you are trying to run spatial-service in an IDE such as IntelliJ
 
 
-There is a docker-compose YML file that can be used to run postgres & geoserver
+There is a docker-compose YML file under `docker` folder that can be used to run postgres & geoserver
  locally for local development purposes. To use, run:
 
 ```
-docker-compose -f geoserver-postgis.yml up -d
+cd ./docker
+docker-compose up -d
 ```
 
 And to shutdown:
 
 ```
-docker-compose -f geoserver-postgis.yml kill
+docker-compose -f kill
 ```
+
+`Geoserver:  http://localhost:8079/geoserver`
+
+`Postgis is under standard 5432 port`
+
 
 There is also a requirement for have GDAL installed locally. This can be done with HomeBrew on Mac OSX
 

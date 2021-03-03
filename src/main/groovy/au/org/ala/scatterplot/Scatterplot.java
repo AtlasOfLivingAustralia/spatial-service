@@ -1,6 +1,7 @@
 package au.org.ala.scatterplot;
 
 import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 import au.org.ala.layers.grid.GridCutter;
 import au.org.ala.layers.intersect.Grid;
 import au.org.ala.layers.intersect.SimpleRegion;
@@ -45,8 +46,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URLEncoder;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 
 /**
@@ -1507,6 +1508,103 @@ public class Scatterplot {
             FileUtils.write(file, JSONArray.fromObject(list).toString());
         } catch (Exception e) {
             logger.error("failed to save scatterplot data: " + file, e);
+        }
+    }
+
+    public void saveCsv(File file) {
+        try {
+            CSVWriter csv = new CSVWriter(new FileWriter(file));
+            String[] row = new String[9];
+
+            //header
+            row[0] = "id";
+            row[1] = "latitude";
+            row[2] = "longitude";
+            row[3] = scatterplotDTO.getLayer1name() + " " + scatterplotDTO.getLayer1units();
+            row[4] = scatterplotDTO.getLayer2name() + " " + scatterplotDTO.getLayer2units();
+            row[5] = "group";
+            row[6] = "species";
+            if (scatterplotStyleDTO.getHighlightWkt() != null) {
+                row[7] = "inside highlighted area";
+            } else {
+                row[7] = "";
+            }
+            if (scatterplotStyleDTO.getSelection() != null) {
+                row[8] = "inside selected environmental ranges";
+            } else {
+                row[8] = "";
+            }
+            csv.writeNext(row);
+
+            SimpleRegion region = SimpleShapeFile.parseWKT(scatterplotStyleDTO.getHighlightWkt());
+
+            writeToCSV(csv, region, scatterplotDataDTO.data, scatterplotDataDTO.ids, scatterplotDataDTO.points, scatterplotDataDTO.series, scatterplotDTO.getForegroundName(), scatterplotStyleDTO.getSelection());
+            if (scatterplotDataDTO.backgroundData != null) {
+                writeToCSV(csv, region, scatterplotDataDTO.backgroundData, scatterplotDataDTO.backgroundIds, scatterplotDataDTO.backgroundPoints, scatterplotDataDTO.backgroundSeries, scatterplotDTO.getBackgroundName(), null);
+            }
+
+            csv.flush();
+            csv.close();
+        } catch (Exception e) {
+            logger.error("failed to save scatterplot csv: " + file, e);
+        }
+    }
+
+    private void writeToCSV(CSVWriter csv, SimpleRegion region, double[][] data, String[] ids, double[] points, String[] series, String species, double[] selection) {
+        String[] row = new String[9];
+
+        for (int i = 0; i < data.length; i++) {
+            if (ids != null) {
+                row[0] = ids[i];
+            } else {
+                row[0] = "";
+            }
+            double lng = points[i * 2];
+            double lat = points[i * 2 + 1];
+            row[1] = String.valueOf(lat);
+            row[2] = String.valueOf(lng);
+
+            double d1 = data[i][col1];
+            double d2 = data[i][col2];
+            if (!Double.isNaN(d1) && !Double.isInfinite(d1)) {
+                row[3] = String.valueOf(d1);
+            } else {
+                row[3] = "";
+            }
+            if (!Double.isNaN(d2) && !Double.isInfinite(d2)) {
+                row[4] = String.valueOf(d2);
+            } else {
+                row[4] = "";
+            }
+
+            if (series != null) {
+                if (i < series.length) {
+                    row[5] = series[i];
+                } else if (series.length > 0) {
+                    row[5] = series[0];
+                } else {
+                    row[5] = "";
+                }
+            } else {
+                row[5] = "";
+            }
+            row[6] = species;
+
+            if (region != null && region.isWithin(lng, lat)) {
+                row[7] = "yes";
+            } else {
+                row[7] = "";
+            }
+
+            if (!Double.isNaN(d1) && !Double.isNaN(d2) && selection != null &&
+                    d2 >= selection[0] && d2 <= selection[2] &&
+                    d1 >= selection[1] && d1 <= selection[3]) {
+                row[8] = "yes";
+            } else {
+                row[8] = "";
+            }
+
+            csv.writeNext(row);
         }
     }
 

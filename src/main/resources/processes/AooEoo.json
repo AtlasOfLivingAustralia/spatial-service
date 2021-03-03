@@ -52,7 +52,7 @@
       "type": "double",
       "constraints": {
         "min": 1,
-        "min": 1000000,
+        "max": 1000000,
         "default": 5000
       }
     }
