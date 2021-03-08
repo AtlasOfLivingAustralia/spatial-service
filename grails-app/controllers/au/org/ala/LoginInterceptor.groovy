@@ -93,12 +93,18 @@ class LoginInterceptor {
             // backward compatible
             // Check if params contains api_key
             apikey = params.api_key
-        } else if (request.JSON?.api_key != null) {
+        }
+
+        /*
+        won't work, since it opens inputstream
+        else if (request.JSON?.api_key != null) {
             // backward compatible
             // Check if body contains api_key
             // For example: ShapeController: poiRequest -> retrieve api_key from json body
             apikey = request.JSON?.api_key
         }
+        */
+
         apikey
     }
 }
