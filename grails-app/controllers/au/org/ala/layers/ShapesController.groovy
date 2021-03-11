@@ -43,9 +43,11 @@ import org.geotools.graph.util.ZipUtil
 import org.geotools.kml.KML
 import org.geotools.kml.KMLConfiguration
 import org.geotools.xml.Encoder
+import org.grails.web.json.JSONObject
 import org.opengis.feature.simple.SimpleFeatureType
 import org.springframework.dao.DataAccessException
 import org.springframework.web.multipart.MultipartFile
+import groovy.json.JsonOutput
 
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
@@ -279,7 +281,7 @@ class ShapesController {
     }
 
     // Create from geoJSON
-    @RequireAdmin
+    @RequireAdmin(apiKeyInBody = true)
     def uploadGeojson(Integer id) {
         //id can be null
         processGeoJSONRequest(request.getJSON(), id)
@@ -321,42 +323,43 @@ class ShapesController {
         return retMap
     }
 
-    @RequireLogin
+    @RequireLogin(apiKeyInBody = true)
     def uploadWkt(Integer id) {
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
         //id can be null
-        render processWKTRequest(request.JSON, id, namesearch) as JSON
+        render processWKTRequest(JsonOutput.toJson(request.getJSON()), id, namesearch) as JSON
     }
 
-    @RequireLogin
+    @RequireLogin(apiKeyInBody = true)
     def uploadGeoJSON() throws Exception {
-        render processGeoJSONRequest(request.JSON, null) as JSON
+        render processGeoJSONRequest(JsonOutput.toJson(request.getJSON()), null) as JSON
     }
+
     @RequireLogin
     def updateWithGeojson(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return
         }
-        render processGeoJSONRequest(request.JSON, pid) as JSON
+        render processGeoJSONRequest(JsonOutput.toJson(request.getJSON()), pid) as JSON
     }
 
-    @RequireLogin
+    @RequireLogin(apiKeyInBody = true)
     def updateWithWKT(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return
         }
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
-        render processWKTRequest(request.JSON, pid, namesearch) as JSON
+        render processWKTRequest(JsonOutput.toJson(request.getJSON()), pid, namesearch) as JSON
     }
 
     /**
      * TODO
      * @return
      */
-    @RequireLogin
+    @RequireLogin(apiKeyInBody = true)
     def uploadShapeFile() {
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>()
@@ -364,8 +367,8 @@ class ShapesController {
         File tmpZipFile = File.createTempFile("shpUpload", ".zip")
 
         if (!ServletFileUpload.isMultipartContent(request)) {
-            String jsonRequestBody = IOUtils.toString(request.reader)
-
+            //String jsonRequestBody = IOUtils.toString(request.reader)
+            String jsonRequestBody = JsonOutput.toJson(request.getJSON())
             JSONRequestBodyParser reqBodyParser = new JSONRequestBodyParser()
             reqBodyParser.addParameter("user_id", String.class, false)
             reqBodyParser.addParameter("shp_file_url", String.class, false)
@@ -399,7 +402,7 @@ class ShapesController {
         render retMap as JSON
     }
 
-    @RequireAdmin
+    @RequireAdmin(apiKeyInBody = true)
     def uploadKMLFile() {
         String userId = params.containsKey("user_id") ? params.user_id : null
 
@@ -461,6 +464,9 @@ class ShapesController {
         }
 
         return retMap
+    }
+    private Map<String, Object> processShapeFileFeatureRequest(JSONObject json, Integer pid, String shapeFileId, String featureIndex) {
+        processShapeFileFeatureRequest( JsonOutput.toJson(json), pid, shapeFileId, featureIndex)
     }
 
     private Map<String, Object> processShapeFileFeatureRequest(String json, Integer pid, String shapeFileId, String featureIndex) {
@@ -527,9 +533,9 @@ class ShapesController {
         }
     }
 
-    @RequireAdmin
+    @RequireAdmin(apiKeyInBody = true)
     def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
-        render processShapeFileFeatureRequest(request.reader.text, null, shapeId, featureIndex) as JSON
+        render processShapeFileFeatureRequest(request.getJSON(), null, shapeId, featureIndex) as JSON
     }
 
     @RequireAdmin
@@ -538,7 +544,7 @@ class ShapesController {
             render status: 400, text: "Path parameter `objectPid` is not an integer."
             return
         }
-        render processShapeFileFeatureRequest(request.reader.text, objectPid, shapeId, featureIndex) as JSON
+        render processShapeFileFeatureRequest(request.getJSON(), objectPid, shapeId, featureIndex) as JSON
     }
     @RequireAdmin
     def createPointRadius(Double latitude, Double longitude, Double radius) {
@@ -554,7 +560,7 @@ class ShapesController {
             render status: 400, text: "Path parameter `radius` is not a number."
             return
         }
-        render processPointRadiusRequest(request.reader.text, null, latitude, longitude, radius) as JSON
+        render processPointRadiusRequest(JsonOutput.toJson(request.getJSON()), null, latitude, longitude, radius) as JSON
     }
     @RequireLogin
     def updateWithPointRadius(Double latitude, Double longitude, Double radius, Integer objectPid) {
@@ -570,7 +576,7 @@ class ShapesController {
             render status: 400, text: "Path parameter `radius` is not a number."
             return
         }
-        render processPointRadiusRequest(request.reader.text, objectPid, latitude, longitude, radius) as JSON
+        render processPointRadiusRequest(JsonOutput.toJson(request.getJSON()), objectPid, latitude, longitude, radius) as JSON
     }
 
     private Map<String, Object> processPointRadiusRequest(String json, Integer pid, double latitude, double longitude, double radiusKm) {
@@ -667,7 +673,7 @@ class ShapesController {
         reqBodyParser.addParameter("focal_length", Double.class, true)
         reqBodyParser.addParameter("api_key", String.class, false)
 
-        if (reqBodyParser.parseJSON(request.reader.text)) {
+        if (reqBodyParser.parseJSON(JsonOutput.toJson(request.getJSON()))) {
 
             String object_id = (String) reqBodyParser.getParsedValue("object_id")
             String name = (String) reqBodyParser.getParsedValue("name")
@@ -724,7 +730,7 @@ class ShapesController {
             reqBodyParser.addParameter("description", String.class, true)
             reqBodyParser.addParameter("focal_length", Double.class, true)
 
-            if (reqBodyParser.parseJSON(request.JSON as String)) {
+            if (reqBodyParser.parseJSON(JsonOutput.toJson(request.getJSON()))) {
 
                 String object_id = (String) reqBodyParser.getParsedValue("object_id")
                 String name = (String) reqBodyParser.getParsedValue("name")

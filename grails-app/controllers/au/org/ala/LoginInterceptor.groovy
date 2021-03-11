@@ -3,6 +3,7 @@ package au.org.ala
 
 import au.org.ala.spatial.service.ServiceAuthService
 import com.google.common.base.Strings
+import grails.converters.JSON
 
 /**
  * Copy and simplify from plugin "ala-ws-security-plugin:2.0"
@@ -34,13 +35,19 @@ class LoginInterceptor {
 
         def role  // if require a certain level of ROLE
         def securityCheck = false // if need to do security check
+        boolean apiKeyInBody = false //  api key into body
 
         if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
             role= grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
+
+            RequireAdmin requireAdmin = method.getAnnotation(RequireAdmin.class)
+            apiKeyInBody=requireAdmin?.apiKeyInBody()
+
             securityCheck = true
         }else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
             RequireLogin requireLogin = method.getAnnotation(RequireLogin.class)
             role=requireLogin?.role()
+            apiKeyInBody=requireLogin?.apiKeyInBody()
             securityCheck = true
         }
         //Should be the last step
@@ -49,23 +56,28 @@ class LoginInterceptor {
         }
 
         if(securityCheck){
-            String apikey = getApiKey() //collect apikey from header, param and body
+            String apikey = getApiKey(apiKeyInBody) //collect apikey from header, param and body
 
             if(serviceAuthService.isValid(apikey)){
                 true
             }else{
                 if (!serviceAuthService.isLoggedIn()) {
                     //TODO check type of request, determine whether returns JSON or redirect to login page
-                    redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                            grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+//                    redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+//                            grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+//                    return false
+                    response.status = STATUS_UNAUTHORISED
+                    Map error = [error: 'Forbidden, user login required!']
+                    render error as JSON
                     return false
                 }
 
                 if (!Strings.isNullOrEmpty(role)) {
                     //Check if matches ROLE requirement
                     if (!serviceAuthService.isRoleOf(role)) {
-                        //TODO check type of request, determine whether returns JSON or redirect to login page
-                        render text: "Forbidden. " + role + " required", status: STATUS_UNAUTHORISED
+                        response.status = STATUS_UNAUTHORISED
+                        Map error = [error: "Forbidden. " + role + " required!"]
+                        render error as JSON
                         return false
                     }
                 }
@@ -84,26 +96,21 @@ class LoginInterceptor {
      * ALA uses 'apiKey' as standard
      * @return
      */
-    private getApiKey(){
+    private getApiKey(boolean apiKeyInBody){
         String apikey
         if (request.getHeader(API_KEY_HEADER_NAME) != null) {
             //Standard way
-            apikey = request.getHeader(API_KEY_HEADER_NAME)
+           return  request.getHeader(API_KEY_HEADER_NAME)
         } else if (params.containsKey("api_key")) {
             // backward compatible
             // Check if params contains api_key
-            apikey = params.api_key
+            return params.api_key
         }
 
-        /*
-        won't work, since it opens inputstream
-        else if (request.JSON?.api_key != null) {
-            // backward compatible
-            // Check if body contains api_key
-            // For example: ShapeController: poiRequest -> retrieve api_key from json body
-            apikey = request.JSON?.api_key
+        if(apiKeyInBody){
+            //    Since it opens inputstream, we should only use request.json, not request.read or request.text
+                apikey = request.JSON?.api_key
         }
-        */
 
         apikey
     }

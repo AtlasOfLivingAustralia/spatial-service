@@ -14,5 +14,6 @@ import java.lang.annotation.Target
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @interface RequireAdmin{
-
+    // Support earlier auth method which stores api key into body.
+    boolean apiKeyInBody() default false
 }
