@@ -340,12 +340,12 @@ class ShapesController {
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
         //id can be null
-        render processWKTRequest(JsonOutput.toJson(request.getJSON()), id, namesearch) as JSON
+        render processWKTRequest(request.JSON, id, namesearch) as JSON
     }
 
     @RequireLogin(apiKeyInBody = true)
     def uploadGeoJSON() throws Exception {
-        render processGeoJSONRequest(JsonOutput.toJson(request.getJSON()), null) as JSON
+        render processGeoJSONRequest(request.JSON, null) as JSON
     }
 
     @RequireLogin
@@ -354,7 +354,7 @@ class ShapesController {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return
         }
-        render processGeoJSONRequest(JsonOutput.toJson(request.getJSON()), pid) as JSON
+        render processGeoJSONRequest(request.JSON, pid) as JSON
     }
 
     @RequireLogin(apiKeyInBody = true)
@@ -364,7 +364,7 @@ class ShapesController {
             return
         }
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
-        render processWKTRequest(JsonOutput.toJson(request.getJSON()), pid, namesearch) as JSON
+        render processWKTRequest(request.JSON, pid, namesearch) as JSON
     }
 
     /**
@@ -577,7 +577,7 @@ class ShapesController {
             render status: 400, text: "Path parameter `radius` is not a number."
             return
         }
-        render processPointRadiusRequest(JsonOutput.toJson(request.getJSON()), null, latitude, longitude, radius) as JSON
+        render processPointRadiusRequest(request.json, null, latitude, longitude, radius) as JSON
     }
     @RequireLogin
     def updateWithPointRadius(Double latitude, Double longitude, Double radius, Integer objectPid) {
@@ -593,7 +593,7 @@ class ShapesController {
             render status: 400, text: "Path parameter `radius` is not a number."
             return
         }
-        render processPointRadiusRequest(JsonOutput.toJson(request.getJSON()), objectPid, latitude, longitude, radius) as JSON
+        render processPointRadiusRequest(request.json, objectPid, latitude, longitude, radius) as JSON
     }
 
     private Map<String, Object> processPointRadiusRequest(String json, Integer pid, double latitude, double longitude, double radiusKm) {
@@ -690,7 +690,7 @@ class ShapesController {
         reqBodyParser.addParameter("focal_length", Double.class, true)
         reqBodyParser.addParameter("api_key", String.class, false)
 
-        if (reqBodyParser.parseJSON(JsonOutput.toJson(request.getJSON()))) {
+        if (reqBodyParser.parseJSON(request.json)) {
 
             String object_id = (String) reqBodyParser.getParsedValue("object_id")
             String name = (String) reqBodyParser.getParsedValue("name")
@@ -747,7 +747,7 @@ class ShapesController {
             reqBodyParser.addParameter("description", String.class, true)
             reqBodyParser.addParameter("focal_length", Double.class, true)
 
-            if (reqBodyParser.parseJSON(JsonOutput.toJson(request.getJSON()))) {
+            if (reqBodyParser.parseJSON(request.JSON as String)) {
 
                 String object_id = (String) reqBodyParser.getParsedValue("object_id")
                 String name = (String) reqBodyParser.getParsedValue("name")
