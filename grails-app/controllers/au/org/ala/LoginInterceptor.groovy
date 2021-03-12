@@ -35,7 +35,7 @@ class LoginInterceptor {
 
         def role  // if require a certain level of ROLE
         def securityCheck = false // if need to do security check
-        boolean apiKeyInBody = false //  api key into body
+        boolean apiKeyInBody = false //  api key into body - legacy authentication
 
         if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
             role= grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
@@ -108,7 +108,7 @@ class LoginInterceptor {
         }
 
         if(apiKeyInBody){
-            //    Since it opens inputstream, we should only use request.json, not request.read or request.text
+            //  Since it opens inputstream, we should only use request.json, not request.read or request.text
                 apikey = request.JSON?.api_key
         }
 

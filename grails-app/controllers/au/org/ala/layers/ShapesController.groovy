@@ -107,6 +107,9 @@ class ShapesController {
             os.flush()
         } catch (err) {
             log.error 'failed to get wkt for object: ' + id, err
+            response.status = 400
+            Map error = [error: 'failed to get wkt for object: ' + id + "(" + err +")"]
+            render error as JSON
         } finally {
             if (os != null) {
                 try {
@@ -147,6 +150,9 @@ class ShapesController {
             os.flush()
         } catch (err) {
             log.error 'failed to get kml for object: ' + id, err
+            response.status = 400
+            Map error = [error: 'failed to get kml for object: ' + id + "(" + err +")"]
+            render error as JSON
         } finally {
             if (os != null) {
                 try {
@@ -182,6 +188,9 @@ class ShapesController {
             os.flush()
         } catch (err) {
             log.error 'failed to get geojson for object: ' + id, err
+            response.status = 400
+            Map error = [error: 'failed to get geojson for object: ' + id + "(" + err +")"]
+            render error as JSON
         } finally {
             if (os != null) {
                 try {
@@ -220,6 +229,9 @@ class ShapesController {
             os.flush()
         } catch (err) {
             log.error 'failed to get shapefile zip for object: ' + id, err
+            response.status = 400
+            Map error = [error: 'failed to get shapefile for object: ' + id + "(" + err +")"]
+            render error as JSON
         } finally {
             if (os != null) {
                 try {
@@ -417,20 +429,25 @@ class ShapesController {
 
         if (items.size() == 1) {
             MultipartFile fileItem = items.values()[0]
+            try {
+                String kml = IOUtils.toString(fileItem.getInputStream())
+                String wkt = SpatialUtils.getKMLPolygonAsWKT(kml)
 
-            String kml = IOUtils.toString(fileItem.getInputStream())
-            String wkt = SpatialUtils.getKMLPolygonAsWKT(kml)
+                wkt = fixWkt(wkt)
 
-            wkt = fixWkt(wkt)
-
-            if (!isWKTValid(wkt)) {
-                retMap.put("error", "Invalid geometry")
-                return retMap
-            } else {
-                String generatedPid = objectDao.createUserUploadedObject(wkt, name, description, userId)
-                retMap.put("id", Integer.parseInt(generatedPid))
+                if (!isWKTValid(wkt)) {
+                    retMap.put("error", "Invalid geometry")
+                    return retMap
+                } else {
+                    String generatedPid = objectDao.createUserUploadedObject(wkt, name, description, userId)
+                    retMap.put("id", Integer.parseInt(generatedPid))
+                }
+            }catch(Exception e){
+                response.status = 400
+                retMap.put("error", "KML parsing failure: " + e.message)
             }
         } else {
+            response.status = 400
             retMap.put("error", "Multiple files sent in request. A single unzipped kml file should be supplied.")
         }
 
@@ -613,30 +630,30 @@ class ShapesController {
         return retMap
     }
 
-    @Deprecated
-    private boolean checkAPIKey(String apiKey) {
-        if (IntersectConfig.getApiKeyCheckUrlTemplate() == null || IntersectConfig.getApiKeyCheckUrlTemplate().isEmpty()) {
-            return true
-        }
-
-        try {
-            def response = Util.urlResponse("GET", MessageFormat.format(IntersectConfig.getApiKeyCheckUrlTemplate(), apiKey))
-
-            if (response) {
-                if (response.statusCode != 200) {
-                    throw new RuntimeException("Error occurred checking api key")
-                }
-
-                ObjectMapper mapper = new ObjectMapper()
-                Map parsedJSON = mapper.readValue(response.text, Map.class)
-
-                return (Boolean) parsedJSON.get("valid")
-            }
-        } catch (Exception ex) {
-            log.trace(ex.getMessage(), ex)
-            throw new RuntimeException("Error checking API key")
-        }
-    }
+//    @Deprecated
+//    private boolean checkAPIKey(String apiKey) {
+//        if (IntersectConfig.getApiKeyCheckUrlTemplate() == null || IntersectConfig.getApiKeyCheckUrlTemplate().isEmpty()) {
+//            return true
+//        }
+//
+//        try {
+//            def response = Util.urlResponse("GET", MessageFormat.format(IntersectConfig.getApiKeyCheckUrlTemplate(), apiKey))
+//
+//            if (response) {
+//                if (response.statusCode != 200) {
+//                    throw new RuntimeException("Error occurred checking api key")
+//                }
+//
+//                ObjectMapper mapper = new ObjectMapper()
+//                Map parsedJSON = mapper.readValue(response.text, Map.class)
+//
+//                return (Boolean) parsedJSON.get("valid")
+//            }
+//        } catch (Exception ex) {
+//            log.trace(ex.getMessage(), ex)
+//            throw new RuntimeException("Error checking API key")
+//        }
+//    }
 
     @RequireAdmin
     def deleteShape(Integer pid) {

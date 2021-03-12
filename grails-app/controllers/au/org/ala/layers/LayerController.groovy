@@ -16,6 +16,7 @@
 package au.org.ala.layers
 
 import au.com.bytecode.opencsv.CSVWriter
+import au.org.ala.RequireAdmin
 import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Layer
 import au.org.ala.spatial.service.Log
@@ -353,44 +354,48 @@ class LayerController {
 
     }
 
+    @RequireAdmin
     def download(String id) {
         Layer l = layerDao.getLayerByDisplayName(id)
-        if (downloadAllowed(l)) {
-            OutputStream outputStream = null
-            try {
-                outputStream = response.outputStream as OutputStream
-                //write resource
-                response.setContentType("application/octet-stream")
-                response.setHeader("Content-disposition", "attachment;filename=${id}.zip")
+        if(l){
+            if (downloadAllowed()) {
+                OutputStream outputStream = null
+                try {
+                    outputStream = response.outputStream as OutputStream
+                    //write resource
+                    response.setContentType("application/octet-stream")
+                    response.setHeader("Content-disposition", "attachment;filename=${id}.zip")
 
-                // When a geotiff exists, only download the geotiff
-                def path = "/layer/${l.name}"
-                def geotiff = new File(grailsApplication.config.data.dir + path + ".tif")
-                if (geotiff.exists()) {
-                    path += ".tif"
-                }
+                    // When a geotiff exists, only download the geotiff
+                    def path = "/layer/${l.name}"
+                    def geotiff = new File(grailsApplication.config.data.dir + path + ".tif")
+                    if (geotiff.exists()) {
+                        path += ".tif"
+                    }
 
-                fileService.write(outputStream, path)
-                outputStream.flush()
-            } catch (err) {
-                log.error(err.getMessage(), err)
-            } finally {
-                if (outputStream != null) {
-                    try {
-                        outputStream.close()
-                    } catch (err) {
-                        log.error(err.getMessage(), err)
+                    fileService.write(outputStream, path)
+                    outputStream.flush()
+                } catch (err) {
+                    log.error(err.getMessage(), err)
+                } finally {
+                    if (outputStream != null) {
+                        try {
+                            outputStream.close()
+                        } catch (err) {
+                            log.error(err.getMessage(), err)
+                        }
                     }
                 }
+            } else {
+                response.sendError(403, "Downloding $id is prohabited by licence!")
             }
-        } else {
+        }else{
             response.sendError(404, "$id not available")
         }
     }
 
     private downloadAllowed(layer) {
-        return grailsApplication.config.download.layer.licence_levels.contains(layer.licence_level) ||
-                serviceAuthService.isAdmin(params)
+        return grailsApplication.config.download.layer.licence_levels.contains(layer.licence_level)
     }
 
     def more(String id) {
@@ -404,7 +409,6 @@ class LayerController {
                 log.error 'failed to get layer: ' + id, err
             }
         }
-
 
         render(view: "show.gsp", model: [layer: l.toMap(), downloadAllowed: downloadAllowed(l)])
     }

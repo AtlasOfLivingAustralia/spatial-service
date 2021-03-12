@@ -66,6 +66,7 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def remote() {
         if (!params?.remoteUrl) params.remoteUrl = grailsApplication.config.spatialService.remote
 
@@ -140,6 +141,7 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def records() {
         Map map = [:]
 
@@ -180,6 +182,7 @@ class ManageLayersController {
      * @return
      * @throws Exception
      */
+    @RequireAdmin
     def upload() {
         log.info("Receiving upload of zip file")
         String id = String.valueOf(System.currentTimeMillis())
@@ -223,6 +226,7 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def importLayer() {
         JSONParser jp = new JSONParser()
         InputStream is = new URL(params.url.toString()).openStream()
@@ -277,6 +281,7 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def importField() {
         JSONParser jp = new JSONParser()
         InputStream is = new URL(params.url.toString()).openStream()
@@ -314,6 +319,7 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def layer(String id) {
         String layerId = id
         Map map = [:]
@@ -386,6 +392,7 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def delete(String id, String action) {
         if (fieldDao.getFieldById(id, false) == null) {
             Map m = manageLayersService.getUpload(id, false)
@@ -414,6 +421,7 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def field(String id) {
         Map map = [:]
         Map layer = id.startsWith('cl') || id.startsWith('el') ? [:] : manageLayersService.layerMap(id)
@@ -489,6 +497,7 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def distribution(String id) {
         String uploadId = id
         Map map = [:]
@@ -545,6 +554,7 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def checklist(String id) {
         String uploadId = id
         Map map = [:]
@@ -600,6 +610,7 @@ class ManageLayersController {
      *
      * admin only
      */
+    @RequireAdmin
     def copy() {
         def spatialServiceUrl = params.spatialServiceUrl;
         def fieldId = params.fieldId;
@@ -614,6 +625,7 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def enable() {
         if (params.id.isNumber()) {
             def layer = layerDao.getLayerById(params.id.toInteger(), false)

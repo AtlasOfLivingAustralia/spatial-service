@@ -29,7 +29,6 @@ class SlaveController {
     def fileLockService
     def slaveAuthService
 
-
     def reRegister() {
         if (!slaveAuthService.isValid(params.api_key)) {
             def err = [error: 'not authorised']
