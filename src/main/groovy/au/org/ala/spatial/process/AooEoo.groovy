@@ -55,7 +55,7 @@ class AooEoo extends SlaveProcess {
         // eoo
         def points = facet("lat_long", speciesArea)
 
-        if(points.size() == 0){
+        if (points.size() == 0) {
             throw new Exception("No occurrences are found in the defined area!")
         }
 
@@ -100,7 +100,7 @@ class AooEoo extends SlaveProcess {
 
                 def filename = "Extent of occurrence.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), wkt)
-                def values = [file: "Extent of occurrence.wkt", name: "Extent of occurrence (area): " + species.name,
+                def values = [file       : "Extent of occurrence.wkt", name: "Extent of occurrence (area): " + species.name,
                               description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
@@ -210,7 +210,7 @@ class AooEoo extends SlaveProcess {
         points.each { point ->
             try {
                 //key=latitude,longitude
-                String [] ll = point.replace("\"", "").split(",")
+                String[] ll = point.replace("\"", "").split(",")
                 Point2D pt = new Point2D.Float(round(Double.parseDouble(ll[1]), gridSize),
                         round(Double.parseDouble(ll[0]), gridSize))
                 set.add(pt)
