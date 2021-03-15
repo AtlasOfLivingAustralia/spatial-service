@@ -54,6 +54,11 @@ class AooEoo extends SlaveProcess {
 
         // eoo
         def points = facet("lat_long", speciesArea)
+
+        if(points.size() == 0){
+            throw new Exception("No occurrences are found in the defined area!")
+        }
+
         StringBuilder eWkt = new StringBuilder()
         processPoints(points, eWkt)
 
@@ -72,6 +77,7 @@ class AooEoo extends SlaveProcess {
         double eoo
         WKTReader reader = new WKTReader()
         String metadata
+        taskLog("Calculating AooEoo!")
         try {
             Geometry g = reader.read(eWkt.toString())
 
@@ -161,6 +167,7 @@ class AooEoo extends SlaveProcess {
 
         } catch (err) {
             log.error 'failed to calculate aoo eoo ' + task.id, err
+            throw new Exception("AooEoo:" + task.id + " failed!", err)
         }
     }
 

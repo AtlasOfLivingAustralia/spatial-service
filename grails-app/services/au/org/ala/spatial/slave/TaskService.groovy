@@ -354,11 +354,12 @@ class TaskService {
 
                 //taskService.tasks.remove(request.id)
             } catch (err) {
-                if (!(err instanceof InterruptedException)) {
-                    log.error "error running request: ${request.id}", err
-                    request.history.put(System.currentTimeMillis(), "failed (id:${request.id})")
-                } else {
+                if (err instanceof InterruptedException) {
                     request.history.put(System.currentTimeMillis(), "cancelled (id:${request.id})")
+
+                } else {
+                    log.error "error running request: ${request.id}", err
+                    request.history.put(System.currentTimeMillis(), "failed (id:${request.id}): " + err.message)
                 }
 
                 request.finished = true
