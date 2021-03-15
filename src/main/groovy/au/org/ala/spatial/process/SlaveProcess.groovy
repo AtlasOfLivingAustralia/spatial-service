@@ -339,8 +339,12 @@ class SlaveProcess {
     def facet(facet, species) {
         String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q
         String response = Util.getUrl(url)
+        if(response) {
+            response.split("\n")
+        }else{
+            []
+        }
 
-        response.split("\n")
     }
 
     def downloadSpecies(species) {

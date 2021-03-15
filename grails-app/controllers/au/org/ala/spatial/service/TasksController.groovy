@@ -151,6 +151,7 @@ class TasksController {
         def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
 
         if (errors) {
+            response.status = 400
             render errors as JSON
         } else {
             Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, params.userId, params.email)
