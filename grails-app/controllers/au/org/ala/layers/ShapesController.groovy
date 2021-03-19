@@ -293,7 +293,7 @@ class ShapesController {
     }
 
     // Create from geoJSON
-    @RequireAdmin(apiKeyInBody = true)
+    @RequireLogin(apiKeyInBody = true)
     def uploadGeojson(Integer id) {
         //id can be null
         processGeoJSONRequest(request.getJSON(), id)
@@ -409,7 +409,7 @@ class ShapesController {
         render retMap as JSON
     }
 
-    @RequireAdmin(apiKeyInBody = true)
+    @RequireLogin(apiKeyInBody = true)
     def uploadKMLFile() {
         String userId = params.containsKey("user_id") ? params.user_id : null
 
@@ -545,12 +545,12 @@ class ShapesController {
         }
     }
 
-    @RequireAdmin(apiKeyInBody = true)
+    @RequireLogin(apiKeyInBody = true)
     def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
         render processShapeFileFeatureRequest(request.getJSON(), null, shapeId, featureIndex) as JSON
     }
 
-    @RequireAdmin
+    @RequireLogin
     def updateFromShapeFileFeature(Integer objectPid, String shapeId, String featureIndex) throws Exception {
         if (objectPid == null) {
             render status: 400, text: "Path parameter `objectPid` is not an integer."
@@ -558,7 +558,7 @@ class ShapesController {
         }
         render processShapeFileFeatureRequest(request.getJSON(), objectPid, shapeId, featureIndex) as JSON
     }
-    @RequireAdmin
+    @RequireLogin
     def createPointRadius(Double latitude, Double longitude, Double radius) {
         if (latitude == null) {
             render status: 400, text: "Path parameter `latitude` is not a number."
