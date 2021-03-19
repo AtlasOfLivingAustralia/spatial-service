@@ -356,8 +356,8 @@ class LayerController {
 
     @RequireAdmin
     def download(String id) {
-        Layer l = layerDao.getLayerByDisplayName(id)
-        if(l){
+        Layer layer = layerDao.getLayerByDisplayName(id)
+        if (layer) {
             if (downloadAllowed()) {
                 OutputStream outputStream = null
                 try {
@@ -367,7 +367,7 @@ class LayerController {
                     response.setHeader("Content-disposition", "attachment;filename=${id}.zip")
 
                     // When a geotiff exists, only download the geotiff
-                    def path = "/layer/${l.name}"
+                    def path = "/layer/${layer.name}"
                     def geotiff = new File(grailsApplication.config.data.dir + path + ".tif")
                     if (geotiff.exists()) {
                         path += ".tif"
@@ -389,13 +389,13 @@ class LayerController {
             } else {
                 response.sendError(403, "Downloding $id is prohabited by licence!")
             }
-        }else{
+        } else {
             response.sendError(404, "$id not available")
         }
     }
 
     private downloadAllowed(layer) {
-        return grailsApplication.config.download.layer.licence_levels.contains(layer.licence_level)
+        return grailsApplication.config.getProperty('download.layer.licence_levels', String, '').contains(layer.licence_level)
     }
 
     def more(String id) {

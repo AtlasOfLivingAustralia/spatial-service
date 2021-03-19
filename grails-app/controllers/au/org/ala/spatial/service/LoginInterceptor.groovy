@@ -1,7 +1,8 @@
-package au.org.ala
+package au.org.ala.spatial.service
 
-
-import au.org.ala.spatial.service.ServiceAuthService
+import au.org.ala.RequireAdmin
+import au.org.ala.RequireLogin
+import au.org.ala.SkipSecurityCheck
 import com.google.common.base.Strings
 import grails.converters.JSON
 
@@ -38,29 +39,29 @@ class LoginInterceptor {
         boolean apiKeyInBody = false //  api key into body - legacy authentication
 
         if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
-            role= grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
+            role = grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
 
             RequireAdmin requireAdmin = method.getAnnotation(RequireAdmin.class)
-            apiKeyInBody=requireAdmin?.apiKeyInBody()
+            apiKeyInBody = requireAdmin?.apiKeyInBody()
 
             securityCheck = true
-        }else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
+        } else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
             RequireLogin requireLogin = method.getAnnotation(RequireLogin.class)
-            role=requireLogin?.role()
-            apiKeyInBody=requireLogin?.apiKeyInBody()
+            role = requireLogin?.role()
+            apiKeyInBody = requireLogin?.apiKeyInBody()
             securityCheck = true
         }
         //Should be the last step
-        if(method?.isAnnotationPresent(SkipSecurityCheck)){
+        if (method?.isAnnotationPresent(SkipSecurityCheck)) {
             securityCheck = false
         }
 
-        if(securityCheck){
+        if (securityCheck) {
             String apikey = getApiKey(apiKeyInBody) //collect apikey from header, param and body
 
-            if(serviceAuthService.isValid(apikey)){
+            if (serviceAuthService.isValid(apikey)) {
                 true
-            }else{
+            } else {
                 if (!serviceAuthService.isLoggedIn()) {
                     //TODO check type of request, determine whether returns JSON or redirect to login page
 //                    redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
@@ -96,20 +97,20 @@ class LoginInterceptor {
      * ALA uses 'apiKey' as standard
      * @return
      */
-    private getApiKey(boolean apiKeyInBody){
+    private getApiKey(boolean apiKeyInBody) {
         String apikey
         if (request.getHeader(API_KEY_HEADER_NAME) != null) {
             //Standard way
-           return  request.getHeader(API_KEY_HEADER_NAME)
+            return request.getHeader(API_KEY_HEADER_NAME)
         } else if (params.containsKey("api_key")) {
             // backward compatible
             // Check if params contains api_key
             return params.api_key
         }
 
-        if(apiKeyInBody){
+        if (apiKeyInBody) {
             //  Since it opens inputstream, we should only use request.json, not request.read or request.text
-                apikey = request.JSON?.api_key
+            apikey = request.JSON?.api_key
         }
 
         apikey

@@ -100,28 +100,29 @@ class AooEoo extends SlaveProcess {
 
                 def filename = "Extent of occurrence.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), wkt)
-                def values = [file       : "Extent of occurrence.wkt", name: "Extent of occurrence (area): " + species.name,
+                def values = [file: "Extent of occurrence.wkt",
+                              name: "Extent of occurrence (area): " + species.name,
                               description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
 
                 filename = "Area of occupancy.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), aWkt)
-                values = [file       : "Area of occupancy.wkt", name: "Area of occupancy (area): " + species.name,
+                values = [file: "Area of occupancy.wkt", name: "Area of occupancy (area): " + species.name,
                           description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
 
                 filename = "Alpha Hull.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), concaveWkt)
-                values = [file       : "Alpha Hull.wkt", name: "Alpha Hull: " + species.name,
+                values = [file: "Alpha Hull.wkt", name: "Alpha Hull: " + species.name,
                           description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
 
                 filename = "Point Radius.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), circleWkt)
-                values = [file       : "Point Radius.wkt", name: "Point Radius: " + species.name,
+                values = [file: "Point Radius.wkt", name: "Point Radius: " + species.name,
                           description: "Created by AOO and EOO Tool"]
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)

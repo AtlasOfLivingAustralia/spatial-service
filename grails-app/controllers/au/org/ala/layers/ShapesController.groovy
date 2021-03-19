@@ -367,10 +367,6 @@ class ShapesController {
         render processWKTRequest(request.JSON, pid, namesearch) as JSON
     }
 
-    /**
-     * TODO
-     * @return
-     */
     @RequireLogin(apiKeyInBody = true)
     def uploadShapeFile() {
         // Use linked hash map to maintain key ordering
@@ -379,17 +375,16 @@ class ShapesController {
         File tmpZipFile = File.createTempFile("shpUpload", ".zip")
 
         if (!ServletFileUpload.isMultipartContent(request)) {
-            //String jsonRequestBody = IOUtils.toString(request.reader)
             String jsonRequestBody = JsonOutput.toJson(request.getJSON())
             JSONRequestBodyParser reqBodyParser = new JSONRequestBodyParser()
             reqBodyParser.addParameter("user_id", String.class, false)
             reqBodyParser.addParameter("shp_file_url", String.class, false)
-            //reqBodyParser.addParameter("api_key", String.class, false)
+            reqBodyParser.addParameter("api_key", String.class, false)
 
             if (reqBodyParser.parseJSON(jsonRequestBody)) {
 
                 String shpFileUrl = (String) reqBodyParser.getParsedValue("shp_file_url")
-                //apiKey = (String) reqBodyParser.getParsedValue("api_key")
+                apiKey = (String) reqBodyParser.getParsedValue("api_key")
 
                 // Use shape file url from json body
                 FileUtils.copyURLToFile(new URL(shpFileUrl), tmpZipFile)
@@ -442,7 +437,7 @@ class ShapesController {
                     String generatedPid = objectDao.createUserUploadedObject(wkt, name, description, userId)
                     retMap.put("id", Integer.parseInt(generatedPid))
                 }
-            }catch(Exception e){
+            }catch (Exception e) {
                 response.status = 400
                 retMap.put("error", "KML parsing failure: " + e.message)
             }
@@ -629,31 +624,6 @@ class ShapesController {
         }
         return retMap
     }
-
-//    @Deprecated
-//    private boolean checkAPIKey(String apiKey) {
-//        if (IntersectConfig.getApiKeyCheckUrlTemplate() == null || IntersectConfig.getApiKeyCheckUrlTemplate().isEmpty()) {
-//            return true
-//        }
-//
-//        try {
-//            def response = Util.urlResponse("GET", MessageFormat.format(IntersectConfig.getApiKeyCheckUrlTemplate(), apiKey))
-//
-//            if (response) {
-//                if (response.statusCode != 200) {
-//                    throw new RuntimeException("Error occurred checking api key")
-//                }
-//
-//                ObjectMapper mapper = new ObjectMapper()
-//                Map parsedJSON = mapper.readValue(response.text, Map.class)
-//
-//                return (Boolean) parsedJSON.get("valid")
-//            }
-//        } catch (Exception ex) {
-//            log.trace(ex.getMessage(), ex)
-//            throw new RuntimeException("Error checking API key")
-//        }
-//    }
 
     @RequireAdmin
     def deleteShape(Integer pid) {
