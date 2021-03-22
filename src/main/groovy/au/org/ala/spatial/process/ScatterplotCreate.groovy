@@ -104,7 +104,6 @@ class ScatterplotCreate extends SlaveProcess {
             species1.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
 
             addOutput("species", (species1 as JSON).toString())
-
             addOutput("download", csvFile.name);
         }
     }
