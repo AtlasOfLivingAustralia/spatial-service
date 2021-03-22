@@ -237,8 +237,10 @@ grails.plugin.elfinder.rootDir: '/data/spatial-service'
 i18n.override.dir: '/data/spatial-service/config/i18n/'
 
 
-skin.orgNameLong: 'Atlas of Living Australia'
-skin.orgNameShort: 'ALA'
+skin:
+  orgNameLong: 'Atlas of Living Australia'
+  orgNameShort: 'ALA'
+  favicon: 'https://www.ala.org.au/app/uploads/2019/01/cropped-favicon-32x32.png'
 
 
 #layers-store config
