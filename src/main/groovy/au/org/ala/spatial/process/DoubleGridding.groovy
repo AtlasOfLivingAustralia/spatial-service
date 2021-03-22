@@ -66,6 +66,10 @@ class DoubleGridding extends SlaveProcess {
 
 
         def years = []
+        if (facetOccurenceCount('year', speciesArea).size() == 0){
+            taskLog("Error: No occurrences in that area!")
+            throw new Exception("Error: No occurrences in that area!")
+        }
         for (def result in facetOccurenceCount('year', speciesArea)[0].fieldResult) {
             years.push(Integer.parseInt(result.label))
         }
