@@ -15,9 +15,7 @@
 
 <body>
 <div class='footer'>
-    <div style="float:left;margin-left:20px">www.ala.org.au</div>
-
-    <div style="float:right;margin-right:10px">Page <span id="pagenumber"></span> of <span id="pagecount"></span></div>
+    ${raw(footer)}
 </div>
 
 <g:each var="page" in="${pages}">

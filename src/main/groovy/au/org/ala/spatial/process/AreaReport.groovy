@@ -105,6 +105,8 @@ class AreaReport extends SlaveProcess {
                 grailsApplication.config.openstreetmap.url.toString(),
                 grailsApplication.config.biocacheServiceUrl.toString(),
                 grailsApplication.config.biocacheUrl.toString(),
+                grailsApplication.config.bie.baseURL.toString(),
+                grailsApplication.config.lists.url.toString(),
                 q,
                 area[0].pid.toString(),
                 area[0].name.toString(),
