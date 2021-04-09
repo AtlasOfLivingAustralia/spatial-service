@@ -15,15 +15,15 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.layers.dao.ObjectDAOImpl
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.Util
 import grails.converters.JSON
-import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.NameValuePair
+import org.apache.log4j.Logger
 
-@Slf4j
 class GeneratePoints extends SlaveProcess {
-
+    private static final Logger logger = Logger.getLogger(GeneratePoints.class);
     void start() {
 
         //area to restrict
@@ -50,6 +50,7 @@ class GeneratePoints extends SlaveProcess {
                 }
             }
         }
+        task.history.put(System.currentTimeMillis(), points.size() + " points have been created.")
 
         uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points, area.name, distance)
     }
@@ -74,38 +75,48 @@ class GeneratePoints extends SlaveProcess {
                 new NameValuePair("alaId", userId.toString())
         ]
 
+        task.history.put(System.currentTimeMillis(), "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
+
         def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
                 nameValuePairs.toArray(new NameValuePair[0]))
 
         if (response) {
+            if (response.statusCode != 200) {
+                task.message = "Error"
+                task.history.put(System.currentTimeMillis(), response.statusCode + " : " + response.text)
+                return
+            }
             def dataResourceUid = JSON.parse(response.text).uid
-
+            task.history.put(System.currentTimeMillis(), "Sandbox data resource uid:" + dataResourceUid)
             //wait
             def statusUrl = "${sandboxBiocacheServiceUrl}/upload/status/${dataResourceUid}"
             def start = System.currentTimeMillis()
             def maxTime = 60 * 60 * 1000 //2hr
+            task.message = "Uploading ..."
             while (start + maxTime > System.currentTimeMillis()) {
                 Thread.sleep(10000) // 10s
+                task.history.put(System.currentTimeMillis(), "checking status of " + statusUrl)
                 def txt = Util.getUrl(statusUrl)
                 if (txt == null) {
                     // retry
                 } else if (txt.contains("COMPLETE")) {
-                    task.message = "upload successful"
-
-                    //add species layer
-                    def species = [q   : "data_resource_uid:${dataResourceUid}",
-                                   ws  : sandboxHubUrl,
-                                   bs  : sandboxBiocacheServiceUrl,
-                                   name: name]
-
-                    addOutput("species", (species as JSON).toString())
-                    break
+                        task.history.put(System.currentTimeMillis(), "Uploading completed")
+                        //add species layer
+                        def species = [q   : "data_resource_uid:${dataResourceUid}",
+                                       ws  : sandboxHubUrl,
+                                       bs  : sandboxBiocacheServiceUrl,
+                                       name: name]
+                        addOutput("species", (species as JSON).toString())
+                        logger.info(species.inspect())
+                        break
                 } else if (txt.contains("FAILED")) {
-                    task.message = "failed upload " + statusUrl
-                    break
+                        logger.error(txt)
+                        task.message = "failed upload " + statusUrl
+                        break
                 } else {
-                    def json = JSON.parse(txt)
-                    task.message = json.status + ": " + json.description
+                        logger.error(txt)
+                        def json = JSON.parse(txt)
+                        task.message = json.status + ": " + json.description
                 }
             }
         }
