@@ -15,15 +15,15 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.dao.ObjectDAOImpl
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.NameValuePair
-import org.apache.log4j.Logger
 
+@Slf4j
 class GeneratePoints extends SlaveProcess {
-    private static final Logger logger = Logger.getLogger(GeneratePoints.class);
+
     void start() {
 
         //area to restrict
@@ -107,14 +107,14 @@ class GeneratePoints extends SlaveProcess {
                                        bs  : sandboxBiocacheServiceUrl,
                                        name: name]
                         addOutput("species", (species as JSON).toString())
-                        logger.info(species.inspect())
+                        log.debug(species.inspect())
                         break
                 } else if (txt.contains("FAILED")) {
-                        logger.error(txt)
+                        log.error(txt)
                         task.message = "failed upload " + statusUrl
                         break
                 } else {
-                        logger.error(txt)
+                        log.error(txt)
                         def json = JSON.parse(txt)
                         task.message = json.status + ": " + json.description
                 }
