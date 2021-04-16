@@ -17,6 +17,7 @@ package au.org.ala.spatial.service
 
 import au.org.ala.RequireAdmin
 import au.org.ala.RequireLogin
+import au.org.ala.SkipSecurityCheck
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
