@@ -185,7 +185,7 @@ security:
     gateway: false
     uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,'
     uriFilterPattern: '/alaAdmin.*'
-    #authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
+    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
     disableCAS: false
 
 auth.admin_role: "ROLE_ADMIN"
