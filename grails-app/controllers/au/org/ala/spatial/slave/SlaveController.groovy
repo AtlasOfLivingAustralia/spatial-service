@@ -29,7 +29,6 @@ class SlaveController {
     def fileLockService
     def slaveAuthService
 
-
     def reRegister() {
         if (!slaveAuthService.isValid(params.api_key)) {
             def err = [error: 'not authorised']
@@ -97,10 +96,12 @@ class SlaveController {
         def bookmarks = false
 
         File file
-        def isStream = params.stream ? params.stream: true
+        def isStream = params.stream ? params.stream : true
         def i = params.start?.toInteger() ?: 1
-        def end = params.end?.toInteger() ?: 500
+        def end = params.end?.toInteger() ?: 5000
         def pageHeader
+        def pageFooter = new File(grailsApplication.config.data.dir + '/public/' + id + '/footer.html').text
+        def tableOfContentsHeading = new File(grailsApplication.config.data.dir + '/public/' + id + '/tableOfContents.html').text
 
         while (i <= end &&
                 ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
@@ -156,7 +157,7 @@ class SlaveController {
             def part1 = [pages[0]]
             def part2 = pages.size() > 1 ? pages.subList(1, pages.size()) : []
             pages = part1 +
-                    ["<div id='tableOfContents'><h1>Table of Contents</h1>" + sb.toString() + "</div>"] +
+                    [tableOfContentsHeading.replace("<contents/>", sb.toString())] +
                     part2
         } else {
             // insert into page with bookmarks
@@ -180,7 +181,7 @@ class SlaveController {
             css = new File(grailsApplication.config.data.dir + '/private/' + id + '/areaReport.css').text
         }
 
-        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id, css: css], filename: "areaReport" + id + ".pdf", stream: isStream)
+        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id, css: css, footer: pageFooter], filename: "areaReport" + id + ".pdf", stream: isStream)
     }
 
     private def cleanPageText(text, i, file) {

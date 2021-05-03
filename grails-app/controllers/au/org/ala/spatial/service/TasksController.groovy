@@ -15,6 +15,9 @@
 
 package au.org.ala.spatial.service
 
+import au.org.ala.RequireAdmin
+import au.org.ala.RequireLogin
+import au.org.ala.SkipSecurityCheck
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
@@ -31,11 +34,8 @@ class TasksController {
      *
      * @return
      */
+    @RequireAdmin
     def index() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         if (!params?.max) params.max = 10
         if (!params?.sort) params.sort = "created"
         if (!params?.order) params.order = "desc"
@@ -87,6 +87,7 @@ class TasksController {
     }
 
     /**
+     * Query status of task
      * login not required
      *
      * @param task
@@ -124,14 +125,12 @@ class TasksController {
      * @param task
      * @return
      */
+    @RequireLogin
     def show(Task task) {
-        if (!doLogin()) return
-
         if (task) {
             task.history = task.history.sort { a, b ->
                 a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
             }
-
             render task as JSON
         } else {
             render status: 404
@@ -142,10 +141,8 @@ class TasksController {
      * @return a map of inputs to errors, or the created task
      */
     @Transactional(readOnly = false)
+    @RequireLogin
     create() {
-        if (!doLogin())
-            return
-
         JSONObject input = null
         if (params.containsKey('input')) {
             input = ((JSONObject) JSON.parse(params.input.toString())).findAll { k, v -> v != null }
@@ -155,6 +152,7 @@ class TasksController {
         def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
 
         if (errors) {
+            response.status = 400
             render errors as JSON
         } else {
             Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, params.userId, params.email)
@@ -169,9 +167,8 @@ class TasksController {
      * @return
      */
     @Transactional(readOnly = false)
+    @RequireLogin
     cancel(Task task) {
-        if (!doLogin()) return
-
         if (task?.status < 2) tasksService.cancel(task)
 
         if (request.contentType?.equalsIgnoreCase("application/json")) {
@@ -189,9 +186,8 @@ class TasksController {
      * @param task
      * @return
      */
+    @RequireLogin
     def download(Task task) {
-        if (!doLogin()) return
-
         String file = grailsApplication.config.publish.dir + task.id + ".zip"
 
         render file: file, contentType: 'application/zip'
@@ -207,9 +203,8 @@ class TasksController {
      * @param task
      * @return
      */
+    @RequireLogin
     def downloadReport(String taskId) {
-        if (!doLogin()) return
-
         def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
 
         response.setHeader("Content-Type", "application/octet-stream")
@@ -227,11 +222,8 @@ class TasksController {
      * @return
      */
     @Transactional(readOnly = false)
+    @RequireAdmin
     reRun(Task task) {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         if (task != null) {
             def history = [:]
             history.put(String.valueOf(System.currentTimeMillis()), 'restarting task')
@@ -246,6 +238,7 @@ class TasksController {
     }
 
     /**
+     * Download output
      * login not required
      *
      * @return
@@ -357,11 +350,8 @@ class TasksController {
      * @return
      */
     @Transactional(readOnly = false)
+    @RequireAdmin
     def cancelAll() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         def list = Task.createCriteria().list() {
             and {
                 if (params?.q) {
@@ -393,21 +383,4 @@ class TasksController {
         }
     }
 
-    /**
-     * Return true when logged in, CAS is disabled or api_key is valid.
-     *
-     * Otherwise redirect to CAS for login.
-     *
-     * @param params
-     * @return
-     */
-    private boolean doLogin() {
-        if (!serviceAuthService.isLoggedIn(params)) {
-            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
-            return false
-        }
-
-        return true
-    }
 }

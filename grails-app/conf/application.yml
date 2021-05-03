@@ -162,6 +162,9 @@ sampling.threads: 4
 slaveKey: ""
 serviceKey: ""
 
+slave.enable: True
+service.enable: True
+
 # time between pushing status updates to the master for a task
 statusTime: 3000
 retryCount: 10
@@ -180,9 +183,9 @@ security:
 
     bypass: false # set to true for non-ALA deployment
     gateway: false
-    uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,/tasks/status/.*'
-    uriFilterPattern: '/alaAdmin.*,/log/,/log'
-    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/tasks,/tasks/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*,/log/search.*'
+    uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,'
+    uriFilterPattern: '/alaAdmin.*'
+    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
     disableCAS: false
 
 auth.admin_role: "ROLE_ADMIN"
@@ -234,8 +237,10 @@ grails.plugin.elfinder.rootDir: '/data/spatial-service'
 i18n.override.dir: '/data/spatial-service/config/i18n/'
 
 
-skin.orgNameLong: 'Atlas of Living Australia'
-skin.orgNameShort: 'ALA'
+skin:
+  orgNameLong: 'Atlas of Living Australia'
+  orgNameShort: 'ALA'
+  favicon: 'https://www.ala.org.au/app/uploads/2019/01/cropped-favicon-32x32.png'
 
 
 #layers-store config

@@ -68,18 +68,24 @@ class ServiceAuthService {
 
     /**
      *
-     * @return true when cas is disabled, api key is valid or user is logged in
+     * @return true when is logged in
      */
-    boolean isLoggedIn(params) {
-        if (isAdmin(params)) {
-            return true
-        }
-
-        // is logged in
+    boolean isLoggedIn() {
         if (authService.getUserId()) {
             return true
         }
+        false
+    }
 
+    /**
+     *
+     * @return true when user is the role of given
+     */
+    boolean isRoleOf(role) {
+        if (authService.userInRole(role)) {
+            return true
+        }
         return false
     }
+
 }

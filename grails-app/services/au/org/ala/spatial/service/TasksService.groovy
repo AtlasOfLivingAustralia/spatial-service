@@ -203,8 +203,22 @@ class TasksService {
     def registerSpeciesQid(v) {
         if (v instanceof Map && v.containsKey('q') && v.containsKey('bs') &&
                 v.q instanceof List && v.q.size() > 0) {
-            v.put('q', 'qid:' + Util.makeQid(v))
+            def qid = Util.makeQid(v)
+            if( validateQID(qid)){
+                v.put('q', 'qid:' + qid)
+            }
+            else {
+                log.error("Failed to generate QID.")
+                throw new Exception("Error: failed to genereate qid!")
+            }
         }
+    }
+
+    private validateQID(qid){
+        if (qid){
+            return qid ==~ /^-?\d+\.?\d*$/;
+        }
+        return false;
     }
 
     // attach final log, message and outputs to a task

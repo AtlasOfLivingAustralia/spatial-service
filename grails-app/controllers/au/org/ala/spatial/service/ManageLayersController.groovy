@@ -15,6 +15,8 @@
 
 package au.org.ala.spatial.service
 
+import au.org.ala.RequireAdmin
+import au.org.ala.RequireLogin
 import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.LayerDAO
 import grails.converters.JSON
@@ -28,6 +30,7 @@ import org.json.simple.parser.JSONParser
 
 import java.text.SimpleDateFormat
 
+@RequireAdmin
 class ManageLayersController {
 
     ManageLayersService manageLayersService
@@ -44,9 +47,6 @@ class ManageLayersController {
      * @return
      */
     def index() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
     }
 
     /**
@@ -55,10 +55,6 @@ class ManageLayersController {
      * @return
      */
     def layers() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         Map map = [:]
         map.put("layers", manageLayersService.getAllLayers(null))
 
@@ -70,11 +66,8 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def remote() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         if (!params?.remoteUrl) params.remoteUrl = grailsApplication.config.spatialService.remote
 
         def remote = manageLayersService.getAllLayers(params?.remoteUrl)
@@ -130,11 +123,9 @@ class ManageLayersController {
      *
      * @return
      */
-    def uploads() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
 
+    @RequireAdmin
+    def uploads() {
         Map map = [:]
 
         map.put("files", manageLayersService.listUploadedFiles())
@@ -150,11 +141,8 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def records() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         Map map = [:]
 
         //create a task to get status or download records
@@ -194,11 +182,8 @@ class ManageLayersController {
      * @return
      * @throws Exception
      */
+    @RequireAdmin
     def upload() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         log.info("Receiving upload of zip file")
         String id = String.valueOf(System.currentTimeMillis())
 
@@ -241,11 +226,8 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def importLayer() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         JSONParser jp = new JSONParser()
         InputStream is = new URL(params.url.toString()).openStream()
         String str = ""
@@ -299,11 +281,8 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def importField() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         JSONParser jp = new JSONParser()
         InputStream is = new URL(params.url.toString()).openStream()
         String str = ""
@@ -340,11 +319,8 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def layer(String id) {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         String layerId = id
         Map map = [:]
         if ("POST".equalsIgnoreCase(request.method)) {
@@ -416,11 +392,8 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def delete(String id, String action) {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         if (fieldDao.getFieldById(id, false) == null) {
             Map m = manageLayersService.getUpload(id, false)
             if (m == null || (!m.containsKey('data_resource_uid') && !m.containsKey('checklist'))) {
@@ -448,11 +421,8 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def field(String id) {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         Map map = [:]
         Map layer = id.startsWith('cl') || id.startsWith('el') ? [:] : manageLayersService.layerMap(id)
         if (layer.size() < 2) {
@@ -527,11 +497,8 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def distribution(String id) {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         String uploadId = id
         Map map = [:]
         if ("POST".equalsIgnoreCase(request.method)) {
@@ -587,11 +554,8 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def checklist(String id) {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         String uploadId = id
         Map map = [:]
         if ("POST".equalsIgnoreCase(request.method)) {
@@ -646,11 +610,8 @@ class ManageLayersController {
      *
      * admin only
      */
+    @RequireAdmin
     def copy() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
-
         def spatialServiceUrl = params.spatialServiceUrl;
         def fieldId = params.fieldId;
 
@@ -664,10 +625,8 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def enable() {
-        if (!doLogin() || !serviceAuthService.isAdmin(params)) {
-            return
-        }
         if (params.id.isNumber()) {
             def layer = layerDao.getLayerById(params.id.toInteger(), false)
             layer.enabled = true
@@ -681,21 +640,4 @@ class ManageLayersController {
         render ''
     }
 
-    /**
-     * Return true when logged in, CAS is disabled or api_key is valid.
-     *
-     * Otherwise redirect to CAS for login.
-     *
-     * @param params
-     * @return
-     */
-    private boolean doLogin() {
-        if (!serviceAuthService.isLoggedIn(params)) {
-            redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
-            return false
-        }
-
-        return true
-    }
 }

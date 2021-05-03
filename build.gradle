@@ -12,7 +12,7 @@ buildscript {
     }
 }
 
-version "0.3.12"
+version "0.4"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -33,8 +33,13 @@ repositories {
     maven { url "https://repo.grails.org/grails/core" }
 }
 
+configurations {
+    all {
+        exclude group: "org.slf4j", module: "slf4j-nop"
+    }
+}
+
 dependencies {
-    compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.springframework:spring-test:4.3.9.RELEASE"
     compile "org.grails:grails-core"
@@ -73,8 +78,8 @@ dependencies {
 
     // plugins needed at runtime but not for compilation
     compile "org.grails.plugins:ala-admin-plugin:2.1"
-    compile "org.grails.plugins:ala-auth:3.1.1"
-    compile "org.grails.plugins:ala-bootstrap3:3.2.1"
+    compile "org.grails.plugins:ala-auth:3.1.3"
+    compile "org.grails.plugins:ala-bootstrap3:3.2.3"
     compile 'org.grails.plugins:ala-cors-plugin:0.1-SNAPSHOT'
     compile 'org.grails.plugins:rendering:2.0.3'
     compile 'org.grails.plugins:mail:2.0.0.RC6'

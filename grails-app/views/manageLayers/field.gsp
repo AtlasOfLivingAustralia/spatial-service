@@ -135,7 +135,7 @@
                     }
                     </style>
                     Click on map to get values/columns.
-                    (layer_id = ${layer_id}, raw_id = ${raw_id}, test_id = ${test_id}, name = ${name})
+                    (layer_id = ${layer_id}, layer_name = ${layerName}, raw_id = ${raw_id}, test_id = ${test_id}, title = ${name} )
                     <div id="map"></div>
                     <script>
 
@@ -153,7 +153,7 @@
                         }).addTo(map);
 
                         var wmsLayer = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {
-                            layers: '${name}',
+                            layers: '${layerName}',
                             format: 'image/png',
                             version: '1.1.0',
                             transparent: true

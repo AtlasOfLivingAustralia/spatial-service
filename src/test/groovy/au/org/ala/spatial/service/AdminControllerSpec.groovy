@@ -48,7 +48,6 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
         controller.serviceAuthService = Mock(ServiceAuthService)
         controller.serviceAuthService.isValid(_) >> true
         controller.serviceAuthService.isAdmin(_) >> true
-        controller.serviceAuthService.isLoggedIn(_) >> true
 
         controller.authService = Mock(AuthService)
         controller.authService.userInRole(_) >> true

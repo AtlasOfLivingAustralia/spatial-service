@@ -23,6 +23,7 @@ import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
@@ -38,6 +39,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 
+@Slf4j
 class ManageLayersService {
 
     def grailsApplication
@@ -827,6 +829,7 @@ class ManageLayersService {
         def layer = layerDao.getLayerById(Integer.parseInt(fieldDao.getFieldById(fieldId, false).spid), false)
 
         def map = fieldMapDefault(String.valueOf(layer.id))
+        map.put("layerName", layer.name) // layer name for wms requests
 
         def field = fieldDao.getFieldById(fieldId, false)
         map.put("id", field.getId())
