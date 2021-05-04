@@ -56,9 +56,13 @@ class LogController {
      * @return
      */
     def search() {
-        def searchResult = logService.search(params, authService.getUserId(), serviceAuthService.isAdmin(params))
+        String userId = authService.userId?:request.getHeader("userId")
+        String apiKey = request.getHeader("apiKey")
+        boolean isAdmin =  serviceAuthService.isAdmin(params) | serviceAuthService.isValid(apiKey)
 
-        def totalCount = logService.searchCount(params, authService.getUserId(), serviceAuthService.isAdmin(params))
+
+        def searchResult = logService.search(params, userId, isAdmin)
+        def totalCount = logService.searchCount(params, userId, isAdmin)
 
         if ("application/json".equals(request.getHeader("accept")) || "application/json".equals(params.accept)) {
             def map = [records: searchResult, totalCount: totalCount]
