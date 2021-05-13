@@ -185,6 +185,9 @@ security:
     gateway: false
     uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,'
     uriFilterPattern: '/alaAdmin.*'
+    #if false, ticket params always proceed
+    #true, only processes urls listed in authenticateOnlyIfLoggedInFilterPattern
+    applyUriFiltersToTicketValidation: false
     authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
     disableCAS: false
 

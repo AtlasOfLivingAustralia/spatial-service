@@ -116,7 +116,7 @@ class CompareAreas extends SlaveProcess {
 
         taskLog("build summary")
         def html = "<div><div>Report for: ${species.name}<br>${area1.name}<br>${area2.name}</div><br>" +
-                "<table><tbody><tr><td>Area name</td><td>Sq km</td><td>Occurrences</td><td>Species</td></tr>" +
+                "<table name='areaComparisonResult'><tbody><tr><td>Area name</td><td>Sq km</td><td>Occurrences</td><td>Species</td></tr>" +
                 "<tr><td>${area1.name}</td><td>${area1.area_km}</td><td>${area1.numberOfOccurrences}</td><td>${sorted1.size}</td></tr>" +
                 "<tr><td>${area2.name}</td><td>${area2.area_km}</td><td>${area2.numberOfOccurrences}</td><td>${sorted2.size}</td></tr>" +
                 "<tr><td>&nbsp;</td></tr><tr><td>Species found only in ${area1.name}</td><td>${speciesOnly1.size}</td></tr>" +

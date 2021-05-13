@@ -42,7 +42,10 @@
         <li><g:link controller="layer" action="csvlist"
                     params="${[usage: true, months: 6]}">layer usage report - last 6 months (csv)</g:link></li>
         <li><g:link controller="admin" action="defaultGeoserverStyles">Fix layer styles</g:link> - Recreate linear/none linear styles for each Raster layers, Recreate polygon/outlines for Vector layers</li>
-
+        <li><g:link controller="tasks" action="create"
+                    params="${[name: 'TabulationCreate']}">Add missing 2-D tabulation</g:link> -Add missing 2-D tabulation</li>
+        <li><g:link controller="tasks" action="create"
+                    params="${[name: "DownloadRecords"]}">Get data for 2-D tabulation</g:link> -Get data for 2-D tabulation</li>
     </ul>
 </div>
 </body>

@@ -64,13 +64,16 @@ class LoginInterceptor {
             } else {
                 if (!serviceAuthService.isLoggedIn()) {
                     //TODO check type of request, determine whether returns JSON or redirect to login page
-//                    redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-//                            grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
-//                    return false
-                    response.status = STATUS_UNAUTHORISED
-                    Map error = [error: 'Forbidden, user login required!']
-                    render error as JSON
-                    return false
+                    if (request.contentType && request.contentType.matches(/(?i)application\/json|application\/xml/)) {
+                        response.status = STATUS_UNAUTHORISED
+                        Map error = [error: 'Forbidden, user login required!']
+                        render error as JSON
+                        return false
+                    } else {
+                        redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
+                            grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
+                        return false
+                    }
                 }
 
                 if (!Strings.isNullOrEmpty(role)) {

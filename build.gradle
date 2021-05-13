@@ -1,4 +1,4 @@
-import static org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.*
+
 
 buildscript {
     repositories {
@@ -116,7 +116,7 @@ dependencies {
 
 springBoot {
     buildInfo()
-    layout = WAR
+    layout = org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.WAR
 }
 
 bootRun {
