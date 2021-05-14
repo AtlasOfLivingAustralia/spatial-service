@@ -68,7 +68,7 @@ class PointsToGrid extends SlaveProcess {
         bbox[3] = 90
 
         // dump the species data to a file
-        task.message = "getting species data"
+        taskLog("getting species data")
         Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.toString(), bbox, null, null)
 
         //update bbox with spatial extent of records
@@ -114,7 +114,7 @@ class PointsToGrid extends SlaveProcess {
         }
 
         if (sitesBySpecies) {
-            task.message = "building sites by species matrix for " + records.getSpeciesSize() + " species in " + records.getRecordsSize() + " occurrences"
+            taskLog("building sites by species matrix for " + records.getSpeciesSize() + " species in " + records.getRecordsSize() + " occurrences")
 
             SitesBySpecies sbs = new SitesBySpecies(gridCellSize, bbox)
             int[] counts = sbs.write(records, getTaskPath(), region, envelopeGrid)
@@ -124,7 +124,7 @@ class PointsToGrid extends SlaveProcess {
         }
 
         if (occurrenceDensity) {
-            task.message = "building occurrence density layer"
+            taskLog("building occurrence density layer")
             OccurrenceDensity od = new OccurrenceDensity(movingAverage, gridCellSize, bbox)
             od.write(records, getTaskPath(), "occurrence_density", 1, true, true)
 
@@ -151,7 +151,7 @@ class PointsToGrid extends SlaveProcess {
         }
 
         if (speciesRichness) {
-            task.message = "building species richness layer"
+            taskLog("building species richness layer")
             SpeciesDensity sd = new SpeciesDensity(movingAverage, gridCellSize, bbox)
             sd.write(records, getTaskPath(), "species_richness", 1, true, true)
 
