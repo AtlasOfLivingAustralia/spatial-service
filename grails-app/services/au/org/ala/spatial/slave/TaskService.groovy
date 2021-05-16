@@ -222,7 +222,7 @@ class TaskService {
     //TODO: implement
     def cancel(taskId) {
         //tasks.remove(task.id)
-        def info = running.get(task.id)
+        def info = running.get(taskId)
         if (info) {
             try {
                 info.thread.interrupt();

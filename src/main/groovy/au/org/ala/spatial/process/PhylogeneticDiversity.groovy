@@ -44,10 +44,13 @@ class PhylogeneticDiversity extends SlaveProcess {
 
         int count = 1
         areas.each { area ->
-            task.message = "Processing " + area.name + " (" + count + " of " + areas.size() + ")"
+            task.message = "Running"
+            taskLog("Processing " + area.name + " (" + count + " of " + areas.size() + ")")
 
             //species list
             def speciesArea = getSpeciesArea(species, area)
+
+            taskLog("Loading species in " + area.name)
             def speciesList = getSpeciesList(speciesArea)
 
             CSVReader r = new CSVReader(new StringReader(speciesList))
@@ -58,6 +61,7 @@ class PhylogeneticDiversity extends SlaveProcess {
             }
 
             //get PD
+            taskLog("Reading phylogenetic diversity data")
             String url = phyloServiceUrl + "/phylo/getPD"
             NameValuePair[] params = new NameValuePair[2]
             params[0] = new NameValuePair("noTreeText", "true")
@@ -66,6 +70,7 @@ class PhylogeneticDiversity extends SlaveProcess {
             def pds = JSON.parse(Util.postUrl(url, params))
 
             //tree info
+            taskLog("Getting expert trees")
             url = phyloServiceUrl + "/phylo/getExpertTrees"
             def allTrees = JSON.parse(Util.getUrl(url))
             allTrees.each { t ->
@@ -79,6 +84,7 @@ class PhylogeneticDiversity extends SlaveProcess {
             Map<String, String> pdrow = new HashMap<String, String>()
             Map<String, List> speciesRow = new HashMap<String, List>()
 
+            taskLog("Generating results")
             for (int j = 0; j < pds.size(); j++) {
                 String tree = "" + pds.get(j).get("studyId")
                 pdrow.put(tree, pds.get(j).get("pd").toString())
