@@ -62,12 +62,13 @@ class Maxent extends SlaveProcess {
         new File(getTaskPath()).mkdirs()
 
         def cutDataPath = cutGrid((layers as List).toArray(new String[layers.size()]), resolution.toString(), region, envelope, null)
+        taskLog("Downloading species")
         def speciesPath = downloadSpecies(speciesArea)
 
         if (speciesPath.size() == 0) {
             //TODO: error
         }
-
+        taskLog("Run Maxent model")
         def cmd = ["java", "-mx" + String.valueOf(grailsApplication.config.maxent.mx),
                    "-jar", grailsApplication.config.data.dir + '/modelling/maxent/maxent.jar',
                    "-e", cutDataPath, "-s", speciesPath.get(0), "-a", "tooltips=false",
@@ -93,7 +94,7 @@ class Maxent extends SlaveProcess {
         // check if there is an error
         String maxentError = getMaxentError(new File(getTaskPath() + "maxent.log"), 2)
         if (maxentError != null) {
-            //TODO: error
+            taskLog("Maxent model failed")
         } else {
             def replaceMap = [:]
 
