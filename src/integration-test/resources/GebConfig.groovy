@@ -23,7 +23,7 @@ if (!System.getProperty("webdriver.chrome.driver")) {
 
 environments {
 	
-	// run via “./gradlew chromeTest”
+	//  ./gradlew :integrationTest -Ddriver=chrome
 	// See: http://code.google.com/p/selenium/wiki/ChromeDriver
 	chrome {
 		driver = {
@@ -33,8 +33,6 @@ environments {
 		}
 	}
 
-	// run via “./gradlew chromeHeadlessTest”
-	// See: http://code.google.com/p/selenium/wiki/ChromeDriver
 	chromeHeadless {
 		driver = {
 			ChromeOptions o = new ChromeOptions()
@@ -45,8 +43,7 @@ environments {
 		}
 	}
 	
-	// run via “./gradlew firefoxTest”
-	// See: http://code.google.com/p/selenium/wiki/FirefoxDriver
+	// run via ./gradlew :integrationTest
 	firefox {
 		atCheckWaiting = 1
 		driver = {
@@ -55,8 +52,7 @@ environments {
 			firefox
 			}
 		}
-
 }
 
-//baseUrl = System.properties['baseUrl'] ?: "http://devt.ala.org.au:8080/ws"
+
 
