@@ -15,27 +15,23 @@ class AuthModule extends Module {
 
         Properties properties = new Properties()
         File propertiesFile = new File(System.getProperty("configFile"))
-        propertiesFile.withInputStream {
-            properties.load(it)
+        if (propertiesFile.exists()) {
+            propertiesFile.withInputStream {
+                properties.load(it)
+            }
         }
 
-        if ( System.getProperty("username")) {
-           user = System.getProperty("username")
-        } else {
-            user = properties["username"]
-        }
-
-        if ( System.getProperty("password")) {
-            passwd = System.getProperty("password")
-        } else {
-            passwd = properties["password"]
-        }
+        user = System.getProperty("username")?: properties["username"]
+        passwd = System.getProperty("password")?: properties["password"]
 
         if ( user && passwd) {
             username =  user
             password =  passwd
             submit.click()
         } else {
+            println("Fatal error: Username or password is not provided!")
+            println("Username and password should be passed with -Dusername, -Dpassword")
+            println("Or stored in the default property file, e.g. /data/spatial-hub/test/default.property")
             throw new Exception( "Username and password is not supplied!")
         }
     }

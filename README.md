@@ -150,9 +150,19 @@ From line 200 in build.gradle, you will find how we pass different test servers 
 
 ## Usage
 
-### run with Firefox (default):
+### Run with Firefox (default):
+
+    ./gradlew :integrationTest -Dusername=xxxx -Dpassword=xxxxx
+
+Or store authentication into file:
+
+    /data/spatial-service/test/default.properties
+
+then run:
 
     ./gradlew :integrationTest
+
+**See** [How to pass authentication in](#Authentication)
 
 ### run with Chrome:
 
