@@ -50,9 +50,9 @@ class PhylogeneticDiversity extends SlaveProcess {
             //species list
             def speciesArea = getSpeciesArea(species, area)
 
-            taskLog("Loading species in " + area.name)
+            taskLog("Fetching species in " + area.name)
             def speciesList = getSpeciesList(speciesArea)
-
+            taskLog("Loading species in " + area.name)
             CSVReader r = new CSVReader(new StringReader(speciesList))
 
             JSONArray ja = new JSONArray()

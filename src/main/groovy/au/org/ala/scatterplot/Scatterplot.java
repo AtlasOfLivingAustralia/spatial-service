@@ -13,10 +13,12 @@ import au.org.ala.layers.util.Occurrences;
 import au.org.ala.layers.util.SpatialUtil;
 import au.org.ala.spatial.Util;
 import au.org.ala.spatial.util.SamplingUtil;
+import groovy.util.logging.Slf4j;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jfree.chart.ChartFactory;
@@ -39,7 +41,6 @@ import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYZDataset;
 import org.jfree.ui.RectangleAnchor;
 import org.jfree.ui.RectangleEdge;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
@@ -55,13 +56,14 @@ import java.util.*;
  *
  * TODO: when all values are NaN, report this error
  */
+@Slf4j
 public class Scatterplot {
 
     private static final String NUMBER_SERIES = "Number series";
     private static final String ACTIVE_AREA_SERIES = "In Active Area";
     private static final String[][] facetNameExceptions = {{"cl22", "state"}, {"cl20", "ibra"}, {"cl21", "imcra"}};
     private static Logger logger = Logger.getLogger(Scatterplot.class);
-    LoggerFactory lf;
+
     JFreeChart jChart;
     XYPlot plot;
     ChartRenderingInfo chartRenderingInfo;
@@ -121,6 +123,7 @@ public class Scatterplot {
         }
 
         //if >2 layers, build all of them and html for displaying them
+        logger.info ("Get layers ....");
         int layercount = scatterplotDTO.getLayers().length;
         String[] layers = scatterplotDTO.getLayers();
         if (layercount > 2) {
@@ -137,6 +140,7 @@ public class Scatterplot {
                         renderScatterplot("_" + layers[i] + "_" + layers[j]);
                     } catch (Exception e) {
                         //failed to make this scatterplot. one layer may have no intersections.
+                        logger.error("Failed to create a scatterplot: " + e.getMessage());
                     }
                 }
             }
@@ -340,6 +344,7 @@ public class Scatterplot {
     }
 
     void renderScatterplot(String filename_part) {
+
         if (filename_part == null) {
             filename_part = "";
         }
@@ -804,7 +809,7 @@ public class Scatterplot {
 
     private void resample(boolean foreground) {
         //no change = no data refresh
-
+        logger.info("Resample....");
         if (foreground) {
             if (scatterplotDataDTO.getPoints() != null
                     && scatterplotDataDTO.getColourMode() != null && scatterplotDataDTO.getColourMode().equals(scatterplotStyleDTO.getColourMode())) {
@@ -1131,7 +1136,7 @@ public class Scatterplot {
 
         String[] layers = new String[layersToSample.size()];
         layersToSample.toArray(layers);
-
+        logger.info("Sampling points... ");
         java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p);
 
         double[][] d = new double[p.length][layers.length];
@@ -1159,6 +1164,7 @@ public class Scatterplot {
     private String[] sampleSeries(double[][] p, String seriesName) {
 
         String[] layers = {seriesName};
+        logger.info("Sampling series... ");
         java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p);
 
         String[] series = new String[p.length];

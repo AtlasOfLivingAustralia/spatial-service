@@ -23,6 +23,7 @@ import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.methods.*
 import org.apache.commons.httpclient.params.HttpClientParams
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.log4j.Logger
 import org.json.simple.JSONArray
@@ -38,6 +39,21 @@ class Util {
 
     static String getUrl(String url) {
         urlResponse("GET", url)?.text
+    }
+
+    static String getUrlAsStream(String url) {
+        try {
+            HttpClient httpclient = new HttpClient()
+            GetMethod get = new PostMethod(url)
+            get.setRequestHeader("Content-type", "application/json; charset=ISO-8859-1")
+            httpclient.executeMethod(get)
+
+            BufferedInputStream bis = new BufferedInputStream(get.getResponseBodyAsStream())
+
+            return bis.getText('UTF-8')
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null) {
@@ -160,7 +176,8 @@ class Util {
 
                 client.executeMethod(call)
 
-                return [statusCode: call.statusCode, text: call.responseBodyAsString, headers: call.responseHeaders]
+                BufferedInputStream bis = new BufferedInputStream(call.getResponseBodyAsStream())
+                return [statusCode: call.statusCode, text:  IOUtils.toString(bis), headers: call.responseHeaders]
             } catch (Exception e) {
                 log.error url, e
             } finally {

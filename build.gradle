@@ -26,7 +26,7 @@ ext {
     }
 }
 
-version "0.4.1_SNAPSHOT"
+version "0.4.2_SNAPSHOT"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -159,6 +159,7 @@ springBoot {
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')
     addResources = true
+    jvmArgs = ['-Xmx4096m']
 }
 
 bootRepackage {

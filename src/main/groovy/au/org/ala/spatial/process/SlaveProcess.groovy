@@ -932,6 +932,7 @@ class SlaveProcess {
             String fq = ''
             if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
             String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q + fq
+            log.info("Loading species from: " + url )
             speciesList = Util.getUrl(url)
         } catch (err) {
             log.error 'failed to get species list', err
