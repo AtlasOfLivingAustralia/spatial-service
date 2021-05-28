@@ -38,18 +38,13 @@ class LogController {
      */
     @Transactional
     def index() {
-        try {
-            def log = new Log(params)
+        def log = new Log(params)
+        log.data = request.JSON.toString()
 
-            log.data = request.JSON.toString()
-
-            if (!log.save()) {
-                log.errors.each {
-                    logger.error(it)
-                }
+        if (!log.save()) {
+            log.errors.each {
+                logger.error(it)
             }
-        } catch(Exception e) {
-            log.warn(e.message)
         }
 
         render status: 200
@@ -60,14 +55,11 @@ class LogController {
      *
      * @return
      */
+    @RequireLogin
     def search() {
-        String userId = authService.userId?:request.getHeader("userId")
-        String apiKey = request.getHeader("apiKey")
-        boolean isAdmin =  serviceAuthService.isAdmin(params) | serviceAuthService.isValid(apiKey)
+        def searchResult = logService.search(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
 
-
-        def searchResult = logService.search(params, userId, isAdmin)
-        def totalCount = logService.searchCount(params, userId, isAdmin)
+        def totalCount = logService.searchCount(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
 
         if ("application/json".equals(request.getHeader("accept")) || "application/json".equals(params.accept)) {
             def map = [records: searchResult, totalCount: totalCount]

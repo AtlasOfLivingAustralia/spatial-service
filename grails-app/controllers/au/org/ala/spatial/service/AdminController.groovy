@@ -15,7 +15,8 @@
 
 package au.org.ala.spatial.service
 
-import au.org.ala.RequireAdmin
+
+import au.org.ala.RequirePermission
 import grails.converters.JSON
 
 class AdminController {
@@ -44,7 +45,7 @@ class AdminController {
      *
      * @return
      */
-    @RequireAdmin
+    @RequirePermission
     def slaves() {
         render masterService.slaves as JSON
     }
@@ -54,7 +55,7 @@ class AdminController {
      *
      * @return
      */
-    @RequireAdmin
+    @RequirePermission
     def tasks() {
         params.max = params?.max ?: 10
 
@@ -74,7 +75,7 @@ class AdminController {
      *
      * @return
      */
-    @RequireAdmin
+    @RequirePermission
     def reRegisterSlaves() {
         int count = 0
         masterService.slaves.each { url, slave ->
@@ -92,7 +93,7 @@ class AdminController {
      *
      * @return
      */
-    @RequireAdmin
+    @RequirePermission
     def defaultGeoserverStyles() {
         manageLayersService.fixLayerStyles()
     }

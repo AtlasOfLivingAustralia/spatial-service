@@ -2,6 +2,7 @@ package au.org.ala.spatial.service
 
 import au.org.ala.RequireAdmin
 import au.org.ala.RequireLogin
+import au.org.ala.RequirePermission
 import au.org.ala.SkipSecurityCheck
 import com.google.common.base.Strings
 import grails.converters.JSON
@@ -16,8 +17,8 @@ import grails.converters.JSON
 class LoginInterceptor {
 
     static final String LOCALHOST_IP = '127.0.0.1'
-    static final int STATUS_UNAUTHORISED = 403
-    static final String API_KEY_HEADER_NAME = "apiKey"
+    static final int STATUS_UNAUTHORISED = 401
+    static final int STATUS_FORBIDDEN = 403
 
     ServiceAuthService serviceAuthService
 
@@ -34,61 +35,42 @@ class LoginInterceptor {
         Class controllerClass = controller?.clazz
         def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
 
-        def role  // if require a certain level of ROLE
-        def securityCheck = false // if need to do security check
-        boolean apiKeyInBody = false //  api key into body - legacy authentication
-
-        if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
-            role = grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
-
-            RequireAdmin requireAdmin = method.getAnnotation(RequireAdmin.class)
-            apiKeyInBody = requireAdmin?.apiKeyInBody()
-
-            securityCheck = true
-        } else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
-            RequireLogin requireLogin = method.getAnnotation(RequireLogin.class)
-            role = requireLogin?.role()
-            apiKeyInBody = requireLogin?.apiKeyInBody()
-            securityCheck = true
-        }
-        //Should be the last step
         if (method?.isAnnotationPresent(SkipSecurityCheck)) {
-            securityCheck = false
+            return true
         }
 
-        if (securityCheck) {
-            String apikey = getApiKey(apiKeyInBody) //collect apikey from header, param and body
-
-            if (serviceAuthService.isValid(apikey)) {
-                true
+        def role  // if require a certain level of ROLE
+        if ( method?.isAnnotationPresent(RequirePermission) || controllerClass?.isAnnotationPresent(RequirePermission) ) {
+            if (serviceAuthService.isLoggedIn() || serviceAuthService.hasValidApiKey()) {
+                return true
             } else {
-                if (!serviceAuthService.isLoggedIn()) {
-                    //TODO check type of request, determine whether returns JSON or redirect to login page
-                    if (request.contentType && request.contentType.matches(/(?i)application\/json|application\/xml/)) {
-                        response.status = STATUS_UNAUTHORISED
-                        Map error = [error: 'Forbidden, user login required!']
-                        render error as JSON
-                        return false
-                    } else {
-                        redirect(url: grailsApplication.config.security.cas.loginUrl + "?service=" +
-                            grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : ''))
-                        return false
-                    }
-                }
-
-                if (!Strings.isNullOrEmpty(role)) {
-                    //Check if matches ROLE requirement
-                    if (!serviceAuthService.isRoleOf(role)) {
-                        response.status = STATUS_UNAUTHORISED
-                        Map error = [error: "Forbidden. " + role + " required!"]
-                        render error as JSON
-                        return false
-                    }
-                }
+                accessDenied(STATUS_UNAUTHORISED,'Forbidden, ApiKey or user login required!')
             }
         }
-        true
+        // UserId is required
+        // May need to check role
+        if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
+            role = grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
+        } else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
+            RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
+            role = requireAuthentication?.role()
+        } else {
+            return true
+        }
+
+        if ( serviceAuthService.isAuthenticated() ) {
+            //Check role
+            if (!Strings.isNullOrEmpty(role)) {
+                if ( !serviceAuthService.isRoleOf(role)) {
+                    accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: '+ role)
+                }
+            }
+            return true
+        } else {
+            accessDenied(STATUS_UNAUTHORISED,'Forbidden, user login required!')
+        }
     }
+
 
     boolean after() { true }
 
@@ -96,26 +78,18 @@ class LoginInterceptor {
         // no-op
     }
 
-    /**
-     * ALA uses 'apiKey' as standard
-     * @return
-     */
-    private getApiKey(boolean apiKeyInBody) {
-        String apikey
-        if (request.getHeader(API_KEY_HEADER_NAME) != null) {
-            //Standard way
-            return request.getHeader(API_KEY_HEADER_NAME)
-        } else if (params.containsKey("api_key")) {
-            // backward compatible
-            // Check if params contains api_key
-            return params.api_key
+    boolean accessDenied(status, message) {
+        if (request.getContentType() != "Application/json") {
+            String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
+                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
+            render view: "/login.gsp", model: [status: status, url: redirectUrl]
+            return false
+        } else {
+            response.status = status
+            Map error = [error: message]
+            render error as JSON
+            return false
         }
 
-        if (apiKeyInBody) {
-            //  Since it opens inputstream, we should only use request.json, not request.read or request.text
-            apikey = request.JSON?.api_key
-        }
-
-        apikey
     }
 }

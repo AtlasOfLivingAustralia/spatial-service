@@ -16,7 +16,7 @@
 package au.org.ala.layers
 
 import au.com.bytecode.opencsv.CSVWriter
-import au.org.ala.RequireAdmin
+import au.org.ala.RequirePermission
 import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Layer
 import au.org.ala.spatial.service.Log
@@ -354,7 +354,7 @@ class LayerController {
 
     }
 
-    @RequireAdmin
+    @RequirePermission
     def download(String id) {
         Layer layer = layerDao.getLayerByDisplayName(id)
         if (layer) {

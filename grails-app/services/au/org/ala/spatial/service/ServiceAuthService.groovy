@@ -16,15 +16,22 @@
 package au.org.ala.spatial.service
 
 import au.org.ala.spatial.Util
+import org.grails.web.util.WebUtils
 
 import java.text.MessageFormat
 
 class ServiceAuthService {
+    static final String[] USERID_HEADER_NAME = ["X-ALA-userId", "userId", "user_id"]
+    static final String[] API_KEY_HEADER_NAME = ["apiKey", "api_key"]
 
     def grailsApplication
     def authService
 
     def testedKeys = [:]
+
+    def hasValidApiKey() {
+        isValid(getApiKey())
+    }
 
     def isValid(key) {
         if (key == null) {
@@ -67,7 +74,7 @@ class ServiceAuthService {
     }
 
     /**
-     *
+     * authService check if user logins to spatial service
      * @return true when is logged in
      */
     boolean isLoggedIn() {
@@ -78,7 +85,7 @@ class ServiceAuthService {
     }
 
     /**
-     *
+     * Only works with local user
      * @return true when user is the role of given
      */
     boolean isRoleOf(role) {
@@ -87,5 +94,58 @@ class ServiceAuthService {
         }
         return false
     }
+    /**
+     * Return true, if a use login (local) or a valid apikey + userId in header
+     * @return
+     */
+    boolean isAuthenticated() {
+        if (isLoggedIn()){
+            return true
+        }
 
+        if ( getUserId() && hasValidApiKey() ){
+            return true
+        }
+    }
+
+
+
+    /**
+     * a login user Id,
+     * or userId in header/param
+     * @return
+     */
+    String getUserId(){
+        if (authService.getUserId()) {
+            return authService.getUserId()
+        } else {
+            def request = WebUtils.retrieveGrailsWebRequest().getCurrentRequest()
+            for (name in USERID_HEADER_NAME) {
+                if (request.getHeader(name)) {
+                    return request.getHeader(name)
+                }
+                if (request.getParameter(name)) {
+                    return request.getParameter(name)
+                }
+            }
+        }
+    }
+
+    private getApiKey() {
+        String apikey
+        def request = WebUtils.retrieveGrailsWebRequest().getCurrentRequest()
+
+        for (name in API_KEY_HEADER_NAME) {
+            if (request.getHeader(name)) {
+                return request.getHeader(name)
+            }
+            if (request.getParameter(name)) {
+                return request.getParameter(name)
+            }
+        }
+
+        //Last try
+        apikey = request.JSON?.api_key
+        apikey
+    }
 }
