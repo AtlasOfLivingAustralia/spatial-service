@@ -46,7 +46,6 @@ class LogController {
                 logger.error(it)
             }
         }
-
         render status: 200
     }
 
@@ -58,12 +57,10 @@ class LogController {
     @RequireLogin
     def search() {
         def searchResult = logService.search(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
-
         def totalCount = logService.searchCount(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
-
         if ("application/json".equals(request.getHeader("accept")) || "application/json".equals(params.accept)) {
             def map = [records: searchResult, totalCount: totalCount]
-            render map as JSON
+            render (map as JSON)
         } else if ("application/csv".equals(request.getHeader("accept")) || "application/csv".equals(params.accept)) {
             response.contentType = 'application/csv'
             response.setHeader("Content-disposition", "filename=\"search.csv\"")
@@ -80,7 +77,8 @@ class LogController {
             writer.flush()
             writer.close()
         } else {
-            [searchResult: searchResult, totalCount: totalCount]
+            def map = [records: searchResult, totalCount: totalCount]
+            render  map as JSON
         }
     }
 }

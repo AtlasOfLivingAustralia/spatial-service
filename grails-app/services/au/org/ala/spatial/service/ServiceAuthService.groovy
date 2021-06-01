@@ -22,7 +22,7 @@ import java.text.MessageFormat
 
 class ServiceAuthService {
     static final String[] USERID_HEADER_NAME = ["X-ALA-userId", "userId", "user_id"]
-    static final String[] API_KEY_HEADER_NAME = ["apiKey", "api_key"]
+    static final String[] API_KEY_HEADER_NAME = ["apiKey", "api_key", "api-key"]
 
     def grailsApplication
     def authService
