@@ -79,7 +79,7 @@ class LoginInterceptor {
     }
 
     boolean accessDenied(status, message) {
-        if (!request.getHeader("accept").equalsIgnoreCase("application/json")) {
+        if (!request.getHeader("accept").contains("application/json")) {
             String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
                     grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
             render view: "/login.gsp", model: [status: status, url: redirectUrl]

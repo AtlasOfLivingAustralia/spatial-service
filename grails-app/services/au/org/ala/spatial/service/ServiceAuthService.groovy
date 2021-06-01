@@ -122,10 +122,10 @@ class ServiceAuthService {
             def request = WebUtils.retrieveGrailsWebRequest().getCurrentRequest()
             for (name in USERID_HEADER_NAME) {
                 if (request.getHeader(name)) {
-                    return request.getHeader(name)
+                    return request.getHeader(name).split(",|;")[0]
                 }
                 if (request.getParameter(name)) {
-                    return request.getParameter(name)
+                    return request.getParameter(name).split(",|;")[0]
                 }
             }
         }
@@ -137,10 +137,10 @@ class ServiceAuthService {
 
         for (name in API_KEY_HEADER_NAME) {
             if (request.getHeader(name)) {
-                return request.getHeader(name)
+                return request.getHeader(name).split(",|;")[0]
             }
             if (request.getParameter(name)) {
-                return request.getParameter(name)
+                return request.getParameter(name).split(",|;")[0]
             }
         }
 
