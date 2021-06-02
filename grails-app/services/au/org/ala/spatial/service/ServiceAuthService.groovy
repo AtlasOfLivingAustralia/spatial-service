@@ -102,7 +102,6 @@ class ServiceAuthService {
         if (isLoggedIn()){
             return true
         }
-
         if ( getUserId() && hasValidApiKey() ){
             return true
         }
@@ -146,6 +145,8 @@ class ServiceAuthService {
 
         //Last try
         apikey = request.JSON?.api_key
+
+        log.info("apiKey: " + apikey)
         apikey
     }
 }

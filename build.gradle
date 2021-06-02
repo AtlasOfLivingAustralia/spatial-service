@@ -159,7 +159,7 @@ springBoot {
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')
     addResources = true
-    jvmArgs = ['-Xmx4096m']
+    jvmArgs = ['-Xmx2G']
 }
 
 bootRepackage {

@@ -58,7 +58,9 @@ class LogController {
     def search() {
         def searchResult = logService.search(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
         def totalCount = logService.searchCount(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
-        if ("application/json".equals(request.getHeader("accept")) || "application/json".equals(params.accept)) {
+        log.info("Logs: " + totalCount)
+        log.debug("Return as " + request.getHeader("accept"))
+        if (request.getHeader("accept").contains("application/json") || "application/json".equals(params.accept)) {
             def map = [records: searchResult, totalCount: totalCount]
             render (map as JSON)
         } else if ("application/csv".equals(request.getHeader("accept")) || "application/csv".equals(params.accept)) {

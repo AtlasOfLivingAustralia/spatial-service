@@ -79,6 +79,14 @@ class LoginInterceptor {
     }
 
     boolean accessDenied(status, message) {
+        log.debug("Access denied: " + message)
+        Enumeration<String> e = request.getHeaderNames()
+        while(e.hasMoreElements()){
+            String header = e.nextElement()
+            String value = request.getHeader(header)
+            log.debug(header + ":" + value)
+        }
+
         if (!request.getHeader("accept").contains("application/json")) {
             String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
                     grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
