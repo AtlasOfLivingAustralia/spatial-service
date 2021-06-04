@@ -150,10 +150,10 @@ class Util {
                             nameValues.each { nv ->
                                 if (nv.value instanceof List) {
                                     nv.value.each { i ->
-                                        ((PostMethod) call).addParameter(String.valueOf(nv.name), String.valueOf(i))
+                                        ((PostMethod) call).setParameter(String.valueOf(nv.name), String.valueOf(i))
                                     }
                                 } else {
-                                    ((PostMethod) call).addParameter(String.valueOf(nv.name), String.valueOf(nv.value))
+                                    ((PostMethod) call).setParameter(String.valueOf(nv.name), String.valueOf(nv.value))
                                 }
 
                             }

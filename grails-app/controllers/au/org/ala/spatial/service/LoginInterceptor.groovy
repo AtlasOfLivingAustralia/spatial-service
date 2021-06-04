@@ -79,7 +79,7 @@ class LoginInterceptor {
     }
 
     boolean accessDenied(status, message) {
-        log.debug("Access denied: " + message)
+        log.debug("Access denied : " + controllerName +"->" + actionName ?: "index")
         Enumeration<String> e = request.getHeaderNames()
         while(e.hasMoreElements()){
             String header = e.nextElement()
@@ -87,7 +87,7 @@ class LoginInterceptor {
             log.debug(header + ":" + value)
         }
 
-        if (!request.getHeader("accept").contains("application/json")) {
+        if (!request.getHeader("accept")?.contains("application/json")) {
             String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
                     grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
             render view: "/login.gsp", model: [status: status, url: redirectUrl]
@@ -98,6 +98,5 @@ class LoginInterceptor {
             render error as JSON
             return false
         }
-
     }
 }
