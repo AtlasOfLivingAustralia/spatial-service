@@ -38,12 +38,7 @@ class LogController {
      */
     @Transactional
     def index() {
-        def log = new Log(params)
-        try {
-            log.data = request.JSON.toString()
-        } catch(Exception e) {
-            logger.error( "Cannot parse the saving log info. Ignored")
-        }
+        def log = new Log(request.JSON)
         if (!log.save()) {
             log.errors.each {
                 logger.error(it)

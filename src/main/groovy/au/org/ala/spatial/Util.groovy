@@ -24,17 +24,22 @@ import org.apache.commons.httpclient.methods.*
 import org.apache.commons.httpclient.params.HttpClientParams
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.methods.HttpPut
+import org.apache.http.client.utils.URIBuilder
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
+import org.apache.http.message.BasicNameValuePair
 import org.apache.log4j.Logger
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
-
+import org.springframework.util.MultiValueMap
+import org.springframework.web.util.UriComponentsBuilder
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class Util {
-
     static final Logger log = Logger.getLogger(Util.toString())
 
     static String getUrl(String url) {
@@ -56,9 +61,11 @@ class Util {
         }
     }
 
-    static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null) {
-        urlResponse("POST", url, nameValues, headers)?.text
+    static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null,RequestEntity entity = null) {
+        urlResponse("POST", url, nameValues, headers, entity)?.text
     }
+
+
 
     static PoolingHttpClientConnectionManager pool = new PoolingHttpClientConnectionManager()
     static {
@@ -118,6 +125,18 @@ class Util {
         mgr.setMaxTotalConnections(100)
     }
 
+    /**
+     *
+     * @param type
+     * @param url
+     * @param nameValues passed as queryString in GET , but pass via BODY in POST
+     * @param headers
+     * @param entity  usually only used for binary data
+     * @param doAuthentication
+     * @param username
+     * @param password
+     * @return
+     */
     static Map<String, Object> urlResponse(String type, String url, NameValuePair[] nameValues = null,
                            Map<String, String> headers = null, RequestEntity entity = null,
                            Boolean doAuthentication = null, String username = null, String password = null) {
@@ -133,36 +152,71 @@ class Util {
                 client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
             }
 
+            //nvList will be added into queryString in GET
+            //but in body when POST
+            List<BasicNameValuePair> nvList = new ArrayList();
+            if (nameValues) {
+                nameValues.each {
+                    nvList.add(new BasicNameValuePair(it.getName(), it.getValue()));
+                }
+            }
+
+            //Parse target url, decouple params in queryString and base url
+            List<BasicNameValuePair> queryParams = new ArrayList();
+            def targetUriBuilder = UriComponentsBuilder.fromUriString(url).build()
+            MultiValueMap<String, String> targetParams = targetUriBuilder.getQueryParams()
+            //remove requestQuery from url
+            String targetUrl = new java.net.URI(targetUriBuilder.getScheme() ,targetUriBuilder.getUserInfo(), targetUriBuilder.getHost(), targetUriBuilder.getPort(),targetUriBuilder.getPath(),null, null).toString()
+            Iterator<String> it = targetParams.keySet().iterator()
+            while(it.hasNext()){
+                String key = (String)it.next()
+                //list always
+                //Support: fq=a&fq=b etc
+                def value = targetParams.get(key)
+
+                value.each { i ->
+                    String item = String.valueOf(i)
+                    if (item) {
+                        queryParams.add(new BasicNameValuePair(key, URLDecoder.decode(item, "UTF-8")));
+                    }
+                }
+            }
+
             HttpMethodBase call = null
 
             try {
-                if (type == "GET") {
-                    call = new GetMethod(url)
-                } else if (type == "DELETE") {
-                    call = new DeleteMethod(url)
+
+                if (type == HttpGet.METHOD_NAME) {
+                    HttpGet httpGet = new HttpGet(targetUrl);
+                    queryParams.addAll(nvList) //Combine name: value
+                    java.net.URI uri = new URIBuilder(httpGet.getURI())
+                            .setParameters(queryParams)
+                            .build();
+                    call = new GetMethod(uri.toString())
+                }else if (type == "DELETE") {
+                    HttpGet httpGet = new HttpGet(targetUrl);
+                    queryParams.addAll(nvList) //Combine name: value
+                    java.net.URI uri = new URIBuilder(httpGet.getURI())
+                            .setParameters(queryParams)
+                            .build();
+                    call = new DeleteMethod(uri.toString())
                 } else {
-                    if (type == "PUT") {
-                        call = new PutMethod(url)
-                    } else if (type == "POST") {
-                        call = new PostMethod(url)
-
-                        if (nameValues) {
-                            nameValues.each { nv ->
-                                if (nv.value instanceof List) {
-                                    nv.value.each { i ->
-                                        ((PostMethod) call).setParameter(String.valueOf(nv.name), String.valueOf(i))
-                                    }
-                                } else {
-                                    ((PostMethod) call).setParameter(String.valueOf(nv.name), String.valueOf(nv.value))
-                                }
-
-                            }
-                        }
+                    HttpPut httpGet = new HttpPut(targetUrl);
+                    java.net.URI uri = new URIBuilder(httpGet.getURI())
+                            .setParameters(queryParams)
+                            .build();
+                    if (type == HttpPut.METHOD_NAME) {
+                        call = new PutMethod(uri.toString())
+                    } else if (type == HttpPost.METHOD_NAME) {
+                        call = new PostMethod(uri.toString())
+                        ((PostMethod)call).addParameters(nameValues)
                     }
+
                     if (entity) {
                         ((EntityEnclosingMethod) call).setRequestEntity(entity)
                     }
                 }
+
 
                 if (doAuthentication != null) {
                     call.setDoAuthentication(doAuthentication)
