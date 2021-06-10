@@ -208,8 +208,9 @@ class TasksService {
                 v.put('q', 'qid:' + qid)
             }
             else {
-                log.error("Failed to generate QID.")
-                throw new Exception("Error: failed to genereate qid!")
+                log.error("Failed to generate QID. Returned: " + qid)
+                log.debug(v.toString())
+                throw new Exception("Error: failed to generate qid!")
             }
         }
     }
