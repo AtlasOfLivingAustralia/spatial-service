@@ -1484,6 +1484,14 @@ public class Scatterplot {
         list.add(spatialServiceUrl);
 
         try {
+            //Replace NaN coordinates, otherwise will throw JSON cannot take non-finite exception
+            for (int i = 0; i < scatterplotDataDTO.points.length; i++) {
+                double d1 = scatterplotDataDTO.points[i];
+                if (Double.isNaN(d1) || Double.isInfinite(d1)) {
+                    scatterplotDataDTO.points[i] = -999;
+                }
+            }
+
             //transform data for JSON
             for (int i = 0; i < scatterplotDataDTO.data.length; i++) {
                 double d1 = scatterplotDataDTO.data[i][0];

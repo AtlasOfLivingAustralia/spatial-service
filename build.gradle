@@ -110,7 +110,7 @@ dependencies {
     compile "org.codehaus.jackson:jackson-core-asl:1.8.6"
     compile "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
-    compile("au.org.ala:layers-store:2.0.5-SNAPSHOT") {
+    compile("au.org.ala:layers-store:2.0.6-SNAPSHOT") {
         exclude module: "spring-context"
         exclude module: "spring-jdbc"
         exclude module: "spring-orm"
@@ -157,7 +157,7 @@ springBoot {
 }
 
 bootRun {
-    jvmArgs('-Dspring.output.ansi.enabled=always', '-Xmx2G')
+    jvmArgs('-Dspring.output.ansi.enabled=always', '-Xmx4G')
     addResources = true
 }
 
