@@ -209,7 +209,10 @@ class Util {
                         call = new PutMethod(uri.toString())
                     } else if (type == HttpPost.METHOD_NAME) {
                         call = new PostMethod(uri.toString())
-                        ((PostMethod)call).addParameters(nameValues)
+                        if (nameValues) {
+                            ((PostMethod)call).addParameters(nameValues)
+                        }
+
                     }
 
                     if (entity) {

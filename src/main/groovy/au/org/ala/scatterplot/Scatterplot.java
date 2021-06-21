@@ -1488,7 +1488,7 @@ public class Scatterplot {
             for (int i = 0; i < scatterplotDataDTO.points.length; i++) {
                 double d1 = scatterplotDataDTO.points[i];
                 if (Double.isNaN(d1) || Double.isInfinite(d1)) {
-                    scatterplotDataDTO.points[i] = -999;
+                    scatterplotDataDTO.points[i] = Double.MIN_VALUE;
                 }
             }
 
