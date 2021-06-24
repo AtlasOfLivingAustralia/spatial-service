@@ -4,7 +4,7 @@
     <meta name="layout" content="main"/>
     <title>Spatial Service</title>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
-    <meta http-equiv="refresh" content="3;URL='${url}'" />
+    <meta http-equiv="refresh" content="0;URL='${url}'" />
 </head>
 <body class="fluid">
 <div class="container">
