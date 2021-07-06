@@ -52,7 +52,6 @@ class LogController {
      *
      * @return
      */
-    @RequireLogin
     def search() {
         def searchResult = logService.search(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
         def totalCount = logService.searchCount(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))

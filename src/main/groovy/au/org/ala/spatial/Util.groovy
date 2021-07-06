@@ -46,26 +46,9 @@ class Util {
         urlResponse("GET", url)?.text
     }
 
-    static String getUrlAsStream(String url) {
-        try {
-            HttpClient httpclient = new HttpClient()
-            GetMethod get = new PostMethod(url)
-            get.setRequestHeader("Content-type", "application/json; charset=ISO-8859-1")
-            httpclient.executeMethod(get)
-
-            BufferedInputStream bis = new BufferedInputStream(get.getResponseBodyAsStream())
-
-            return bis.getText('UTF-8')
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null,RequestEntity entity = null) {
         urlResponse("POST", url, nameValues, headers, entity)?.text
     }
-
-
 
     static PoolingHttpClientConnectionManager pool = new PoolingHttpClientConnectionManager()
     static {
