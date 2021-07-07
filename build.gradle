@@ -1,3 +1,4 @@
+import static org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.*
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.Test
 
