@@ -1,4 +1,3 @@
-import static org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.*
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.Test
 
@@ -36,7 +35,7 @@ apply plugin:"war"
 apply plugin:"org.grails.grails-web"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
-apply from: 'https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_grails_publish.gradle'
+//apply from: 'https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_grails_publish.gradle'
 
 apply plugin:"com.energizedwork.webdriver-binaries"
 
