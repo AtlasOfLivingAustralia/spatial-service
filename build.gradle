@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         mavenLocal()
+        maven { url "https://nexus.ala.org.au/content/groups/public/" }
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
@@ -32,7 +33,7 @@ apply plugin:"war"
 apply plugin:"org.grails.grails-web"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
-apply from: 'https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_grails_publish.gradle'
+//apply from: 'https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_grails_publish.gradle'
 
 apply plugin:"com.energizedwork.webdriver-binaries"
 
@@ -45,12 +46,14 @@ repositories {
     mavenCentral()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
     maven { url "https://repo.grails.org/grails/core" }
-    maven { url 'https://jitpack.io' }
 }
 
 configurations {
     all {
         exclude group: "org.slf4j", module: "slf4j-nop"
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'ch.qos.logback', module: 'logback-core'
     }
 }
 
@@ -119,7 +122,6 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
-
 
     compile 'jfree:jfreechart:1.0.13'
     compile 'com.thoughtworks.xstream:xstream:1.4.2' // TODO Upgrade to latest version due to CVEs
