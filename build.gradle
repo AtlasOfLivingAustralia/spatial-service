@@ -1,13 +1,7 @@
-import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.tasks.testing.Test
-
 buildscript {
     repositories {
         mavenLocal()
         maven { url "https://repo.grails.org/grails/core" }
-        maven {
-            url "https://repo1.maven.org/maven2"
-        }
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
@@ -51,6 +45,7 @@ repositories {
     mavenCentral()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
     maven { url "https://repo.grails.org/grails/core" }
+    maven { url 'https://jitpack.io' }
 }
 
 configurations {
@@ -66,7 +61,7 @@ webdriverBinaries {
 
 dependencies {
     compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.springframework:spring-test:4.3.9.RELEASE"
+    //compile "org.springframework:spring-test:4.3.9.RELEASE"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.springframework.boot:spring-boot-starter-tomcat"
@@ -154,10 +149,10 @@ dependencies {
     testCompile "org.seleniumhq.selenium:selenium-support:$seleniumVersion"
 }
 
-springBoot {
-    buildInfo()
-    layout = org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.WAR
-}
+//springBoot {
+//    buildInfo()
+//    layout = org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.WAR
+//}
 
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always', '-Xmx4G')
