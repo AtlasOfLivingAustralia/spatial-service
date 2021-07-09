@@ -2,6 +2,8 @@
 
 # spatial-service
 
+####_See also:_  [Integration Test](#integration-test)
+
 This component provides the bulk of the spatial web services for the Atlas' spatial portal that make use of spatial 
 data in Shape or Grid format.
 
@@ -134,3 +136,69 @@ Items
 | | field | mandatory for type=species, count of unique values in a SOLR field. e.g. names_and_lsid
 | | endemic | optional for type=species, use endemic species count. true or false (default=false)
 | | fq | optional for type=species OR type=occurrences
+
+
+## Integration Test
+
+## Description
+
+The build is setup to work with Firefox and Chrome.
+
+Have a look at the `build.gradle` and the `src/test/resources/GebConfig.groovy` file.
+
+From line 200 in build.gradle, you will find how we pass different test servers and authentication into tests.
+
+## Usage
+
+### Run with Firefox (default):
+
+    ./gradlew :integrationTest -Dusername=xxxx -Dpassword=xxxxx
+
+Or store authentication into file:
+
+    /data/spatial-service/test/default.properties
+
+then run:
+
+    ./gradlew :integrationTest
+
+**See** [How to pass authentication in](#Authentication)
+
+### run with Chrome:
+
+    ./gradlew :integrationTest -Ddriver=chrome
+
+Chrome driver > 89 is not available for webdirver
+Use npm to set the chrome driver version and reference the lib path from node_modules.
+
+Add `"chromedriver": "89.0.0"` to package.json
+
+Run `npm install`
+
+    In ./gebConfig.groovy
+
+    if (!System.getProperty("webdriver.chrome.driver")) {
+        System.setProperty("webdriver.chrome.driver", "node_modules/chromedriver/bin/chromedriver")
+    } 
+
+### Test other servers:
+
+    ./gradlew :integrationTest -DbaseUrl=http://spatial-test.ala.org.au/ws
+
+### Authentication
+
+Authentication info can be passed through with -Dusername and -Dpassword
+
+    /gradlew :integrationTest -Dusername=xxxx -Dpassword=xxxxx
+
+Or stored in a config file. The default config file is located in
+
+    /data/spatial-service/test/default.properties
+    
+    username="xxxx@csiro.au"
+    password="xxxxx"
+
+We can change the config file with -DconfigFile
+
+    /gradlew :integrationTest -DconfigFile="myconfig.properties"
+

@@ -1,18 +1,31 @@
-
-
 buildscript {
     repositories {
         mavenLocal()
+        maven { url "https://repository.jboss.org/" }
+        maven { url "https://nexus.ala.org.au/content/groups/public/" }
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
         classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.4"
+        classpath "gradle.plugin.com.energizedwork.webdriver-binaries:webdriver-binaries-gradle-plugin:1.4"
     }
 }
 
-version "0.4.1_SNAPSHOT"
+ext {
+    // The drivers we want to use
+    drivers = ["firefox", "chrome", "chromeHeadless"]
+
+    ext {
+        gebVersion = '2.3'
+        seleniumVersion = '3.14.0'
+        chromeDriverVersion = '2.44'
+        geckoDriverVersion = '0.26.0'
+    }
+}
+
+version "0.4.2_SNAPSHOT"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -21,7 +34,9 @@ apply plugin:"war"
 apply plugin:"org.grails.grails-web"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
-apply from: 'https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_grails_publish.gradle'
+//apply from: 'https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_grails_publish.gradle'
+
+apply plugin:"com.energizedwork.webdriver-binaries"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -29,6 +44,7 @@ targetCompatibility = 1.8
 
 repositories {
     mavenLocal()
+    maven { url "https://repository.jboss.org/" }
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
     maven { url "https://repo.grails.org/grails/core" }
 }
@@ -36,12 +52,20 @@ repositories {
 configurations {
     all {
         exclude group: "org.slf4j", module: "slf4j-nop"
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'ch.qos.logback', module: 'logback-core'
     }
+}
+
+webdriverBinaries {
+    chromedriver "$chromeDriverVersion"
+    geckodriver "$geckoDriverVersion"
 }
 
 dependencies {
     compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile "org.springframework:spring-test:4.3.9.RELEASE"
+    //compile "org.springframework:spring-test:4.3.9.RELEASE"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
     compile "org.springframework.boot:spring-boot-starter-tomcat"
@@ -68,10 +92,10 @@ dependencies {
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails.plugins:geb"
     testCompile "org.grails:grails-web-testing-support"
-    testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
-    testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+
     compile 'org.grails.plugins:converters'
     compile 'org.grails.plugins:grails-java8:1.2.2'
+    compile 'javax.media:jai_core:1.1.3'
 
     // plugins
     compile 'org.grails.plugins:quartz:2.0.12'
@@ -89,7 +113,7 @@ dependencies {
     compile "org.codehaus.jackson:jackson-core-asl:1.8.6"
     compile "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
-    compile("au.org.ala:layers-store:2.0.5-SNAPSHOT") {
+    compile("au.org.ala:layers-store:2.0.6-SNAPSHOT") {
         exclude module: "spring-context"
         exclude module: "spring-jdbc"
         exclude module: "spring-orm"
@@ -101,7 +125,6 @@ dependencies {
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
 
-
     compile 'jfree:jfreechart:1.0.13'
     compile 'com.thoughtworks.xstream:xstream:1.4.2' // TODO Upgrade to latest version due to CVEs
     compile 'commons-io:commons-io:2.4'
@@ -110,17 +133,33 @@ dependencies {
 
     compile 'com.github.ziplet:ziplet:2.0.0'
 
-    compile 'org.springframework.boot:spring-boot-starter-redis:1.4.6.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-data-redis:2.0.0.RELEASE'
     compile 'org.springframework.session:spring-session:1.3.5.RELEASE'
+
+    // If using Spock, need to depend on geb-spock
+    testCompile "org.gebish:geb-spock:$gebVersion"
+    testCompile("org.spockframework:spock-core:1.3-groovy-2.4") {
+        exclude group: "org.codehaus.groovy"
+    }
+
+    // If using JUnit, need to depend on geb-junit (3 or 4)
+    testCompile "org.gebish:geb-junit4:$gebVersion"
+    // Drivers
+    testCompile "org.seleniumhq.selenium:selenium-chrome-driver:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-firefox-driver:$seleniumVersion"
+
+    testCompile "org.seleniumhq.selenium:selenium-remote-driver:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-api:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-support:$seleniumVersion"
 }
 
-springBoot {
-    buildInfo()
-    layout = org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.WAR
-}
+//springBoot {
+//    buildInfo()
+//    layout = org.springframework.boot.gradle.SpringBootPluginExtension.LayoutType.WAR
+//}
 
 bootRun {
-    jvmArgs('-Dspring.output.ansi.enabled=always')
+    jvmArgs('-Dspring.output.ansi.enabled=always', '-Xmx4G')
     addResources = true
 }
 
@@ -133,4 +172,29 @@ bootRepackage {
 assets {
     minifyJs = true
     minifyCss = true
+}
+
+tasks.getByName("integrationTest") {
+    group JavaBasePlugin.VERIFICATION_GROUP
+
+    //outputs.upToDateWhen { false }  // Always run tests
+
+    systemProperty "geb.build.reportsDir", reporting.file("geb/$name")
+
+    systemProperty "geb.env",  System.properties['driver']?:"firefox"  // firefox by default
+    // pass test server by -DbaseUrl
+    systemProperty "geb.build.baseUrl", System.properties['baseUrl'] ?: "http://devt.ala.org.au:8080/ws"
+    //Store username and password into the default config file
+    systemProperty "configFile",System.properties['configFile']?: "/data/spatial-service/test/default.properties"
+    //or pass with -Dusername, -Dpassword
+    systemProperty "username", System.properties['username']
+    systemProperty "password", System.properties['password']
+}
+
+tasks.withType(Test) {
+       maxHeapSize = "1g"
+       jvmArgs '-XX:MaxMetaspaceSize=256m'
+       testLogging {
+           exceptionFormat = 'full'
+       }
 }

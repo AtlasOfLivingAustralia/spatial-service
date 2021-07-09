@@ -22,6 +22,7 @@ import au.org.ala.layers.legend.GridLegend
 import au.org.ala.layers.legend.Legend
 import au.org.ala.layers.legend.LegendEqualArea
 import au.org.ala.layers.util.LayerFilter
+import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.FileLockService
 import au.org.ala.spatial.slave.SlaveService
@@ -33,6 +34,7 @@ import grails.converters.JSON
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
+import org.apache.log4j.Logger
 import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.WKTReader2
@@ -487,7 +489,6 @@ class SlaveProcess {
 
         } else {
             Grid g = Grid.getGrid(getLayerPath(resolution, layer))
-
             extents[0][0] = g.xmin
             extents[0][1] = g.ymin
             extents[1][0] = g.xmax
@@ -499,8 +500,9 @@ class SlaveProcess {
 
     String getLayerPath(String resolution, String layer) {
         String standardLayersDir = grailsApplication.config.data.dir + '/standard_layer/'
-        File file = new File(standardLayersDir + resolution + '/' + layer + '.grd')
 
+        File file = new File(standardLayersDir + resolution + '/' + layer + '.grd')
+        log.debug("Get grid from: " + file.path)
         //move up a resolution when the file does not exist at the target resolution
         try {
             while (!file.exists()) {
@@ -526,6 +528,8 @@ class SlaveProcess {
             }
         } catch (Exception e) {
             //ignore
+            taskLog(e.message)
+            log.error(e.message)
         }
 
         String layerPath = standardLayersDir + File.separator + resolution + File.separator + layer
@@ -533,6 +537,8 @@ class SlaveProcess {
         if (new File(layerPath + ".grd").exists()) {
             return layerPath
         } else {
+            taskLog("Fatal error: Cannot calcuate grid due to missing the layer file: " + layerPath)
+            log.error("Fatal error: Cannot calcuate grid due to missing the layer file: " + layerPath)
             return null
         }
     }
@@ -932,8 +938,11 @@ class SlaveProcess {
             String fq = ''
             if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
             String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q + fq
+            taskLog("Loading species ...")
+            log.info("Loading species from: " + url )
             speciesList = Util.getUrl(url)
         } catch (err) {
+            taskLog("Failed to get species list.")
             log.error 'failed to get species list', err
         }
 

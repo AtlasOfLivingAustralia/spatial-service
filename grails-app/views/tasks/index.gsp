@@ -93,7 +93,7 @@
     <div>
         <g:link action="cancelAll" params="${params}">Cancel these ${taskInstanceCount ?: 0} tasks</g:link>
     </div>
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped" name="tasks">
         <thead>
 
             <g:sortableColumn property="message" title="${message(code: 'task.message.label', default: 'Message')}"/>

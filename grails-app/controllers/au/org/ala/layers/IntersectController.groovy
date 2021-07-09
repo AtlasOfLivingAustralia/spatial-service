@@ -15,7 +15,8 @@
 
 package au.org.ala.layers
 
-import au.org.ala.RequireAdmin
+
+import au.org.ala.RequirePermission
 import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
 import au.org.ala.spatial.service.ServiceAuthService
@@ -204,7 +205,7 @@ class IntersectController {
             }
         }
     }
-    @RequireAdmin
+    @RequirePermission
     def reloadConfig() {
         Map map = new HashMap()
         layerIntersectDao.reload()

@@ -44,9 +44,7 @@ class LogService {
         def groupBy = params.groupBy ? "GROUP BY ${columns.join(',')} ORDER BY ${columns.join(',')} DESC" : "ORDER BY created DESC"
 
         def sql = "SELECT ${(columns + counts).join(",")} FROM Log ${where} ${groupBy}"
-
         def response = Log.executeQuery(sql.toString(), [max: params.max ?: 10, offset: params.offset ?: 0])
-
         def headers = columns.toList()
         if (counts) headers.addAll(counts.collect { it -> it.replaceAll(".* AS ", "") })
 
@@ -55,7 +53,6 @@ class LogService {
 
     def searchCount(params, userId, userIsAdmin) {
         def sql = buildCountSql(params, userId, userIsAdmin)
-
         def response = Log.executeQuery(sql.toString())
 
         response[0]

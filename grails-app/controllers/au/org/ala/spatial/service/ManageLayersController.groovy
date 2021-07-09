@@ -16,7 +16,7 @@
 package au.org.ala.spatial.service
 
 import au.org.ala.RequireAdmin
-import au.org.ala.RequireLogin
+import au.org.ala.RequirePermission
 import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.LayerDAO
 import grails.converters.JSON
@@ -30,7 +30,7 @@ import org.json.simple.parser.JSONParser
 
 import java.text.SimpleDateFormat
 
-@RequireAdmin
+@RequirePermission
 class ManageLayersController {
 
     ManageLayersService manageLayersService

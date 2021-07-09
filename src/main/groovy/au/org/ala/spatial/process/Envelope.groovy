@@ -46,7 +46,9 @@ class Envelope extends SlaveProcess {
                         filter[i] = new LayerFilter(layername, filter[i].minimum_value, filter[i].maximum_value)
                     }
                 }
-                slaveService.getFile('/standard_layer/' + resolution + "/" + filter[i].getLayername())
+                String layerFile = '/standard_layer/' + resolution + "/" + filter[i].getLayername()
+                taskLog("Fetch layer: " + layerFile )
+                slaveService.getFile(layerFile)
             }
         }
 
@@ -64,6 +66,7 @@ class Envelope extends SlaveProcess {
             types[i] = filter[i].contextual ? "c" : "e"
             fieldIds[i] = filter[i].layername
         }
+        taskLog("Making envelope.....")
         if ((areaSqKm = GridCutter.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
 
             SpatialUtils.divaToAsc(dir.getPath() + File.separator + filename)

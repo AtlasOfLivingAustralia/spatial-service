@@ -61,99 +61,102 @@ public class SamplingUtil {
                     }
                 }
             }
+            String outputStr = IOUtils.toString(c.getInputStream());
+            JSONObject jo = JSONObject.fromObject(outputStr);
 
-            JSONObject jo = JSONObject.fromObject(IOUtils.toString(c.getInputStream()));
+            if (jo.has("error")) {
+                logger.error("Batch intersect failed: " + jo.get("error"));
+            } else {
+                String checkUrl = jo.getString("statusUrl");
+                //check status
+                boolean notFinished = true;
+                String downloadUrl = null;
+                while (notFinished) {
+                    //wait 5s before querying status
+                    Thread.sleep(5000);
 
-            String checkUrl = jo.getString("statusUrl");
+                    jo = JSONObject.fromObject(Util.getUrl(checkUrl));
 
-            //check status
-            boolean notFinished = true;
-            String downloadUrl = null;
-            while (notFinished) {
-                //wait 5s before querying status
-                Thread.sleep(5000);
-
-                jo = JSONObject.fromObject(Util.getUrl(checkUrl));
-
-                if (jo.containsKey("error")) {
-                    notFinished = false;
-                } else if (jo.containsKey("status")) {
-                    String status = jo.getString("status");
-
-                    if ("finished".equals(status)) {
-                        downloadUrl = jo.getString("downloadUrl");
+                    if (jo.containsKey("error")) {
                         notFinished = false;
-                    } else if ("cancelled".equals(status) || "error".equals(status)) {
-                        notFinished = false;
-                    }
-                }
-            }
+                    } else if (jo.containsKey("status")) {
+                        String status = jo.getString("status");
 
-            ZipInputStream zis = null;
-            CSVReader csv = null;
-            InputStream is = null;
-            ArrayList<StringBuilder> tmpOutput = new ArrayList<StringBuilder>();
-            long mid = System.currentTimeMillis();
-            try {
-                is = new URI(downloadUrl).toURL().openStream();
-                zis = new ZipInputStream(is);
-                ZipEntry ze = zis.getNextEntry();
-                csv = new CSVReader(new InputStreamReader(zis));
-
-                for (int i = 0; i < layers.length; i++) {
-                    tmpOutput.add(new StringBuilder());
-                }
-                String[] line;
-                int row = 0;
-                csv.readNext(); //discard header
-                while ((line = csv.readNext()) != null) {
-                    //order is consistent with request
-                    for (int i = 2; i < line.length && i - 2 < tmpOutput.size(); i++) {
-                        if (row > 0) {
-                            tmpOutput.get(i - 2).append("\n");
+                        if ("finished".equals(status)) {
+                            downloadUrl = jo.getString("downloadUrl");
+                            notFinished = false;
+                        } else if ("cancelled".equals(status) || "error".equals(status)) {
+                            notFinished = false;
                         }
-                        tmpOutput.get(i - 2).append(line[i]);
                     }
-                    row++;
                 }
 
-            } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-            } finally {
-                if (zis != null) {
-                    try {
-                        zis.close();
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
+                ZipInputStream zis = null;
+                CSVReader csv = null;
+                InputStream is = null;
+                ArrayList<StringBuilder> tmpOutput = new ArrayList<StringBuilder>();
+                long mid = System.currentTimeMillis();
+                try {
+                    is = new URI(downloadUrl).toURL().openStream();
+                    zis = new ZipInputStream(is);
+                    ZipEntry ze = zis.getNextEntry();
+                    csv = new CSVReader(new InputStreamReader(zis));
+
+                    for (int i = 0; i < layers.length; i++) {
+                        tmpOutput.add(new StringBuilder());
+                    }
+                    String[] line;
+                    int row = 0;
+                    csv.readNext(); //discard header
+                    while ((line = csv.readNext()) != null) {
+                        //order is consistent with request
+                        for (int i = 2; i < line.length && i - 2 < tmpOutput.size(); i++) {
+                            if (row > 0) {
+                                tmpOutput.get(i - 2).append("\n");
+                            }
+                            tmpOutput.get(i - 2).append(line[i]);
+                        }
+                        row++;
+                    }
+
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                } finally {
+                    if (zis != null) {
+                        try {
+                            zis.close();
+                        } catch (Exception e) {
+                            logger.error(e.getMessage(), e);
+                        }
+                    }
+                    if (is != null) {
+                        try {
+                            is.close();
+                        } catch (Exception e) {
+                            logger.error(e.getMessage(), e);
+                        }
+                    }
+                    if (csv != null) {
+                        try {
+                            csv.close();
+                        } catch (Exception e) {
+                            logger.error(e.getMessage(), e);
+                        }
                     }
                 }
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    }
+
+                output = new ArrayList<String>();
+                for (int i = 0; i < tmpOutput.size(); i++) {
+                    output.add(tmpOutput.get(i).toString());
+                    tmpOutput.set(i, null);
                 }
-                if (csv != null) {
-                    try {
-                        csv.close();
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    }
-                }
+
+                long end = System.currentTimeMillis();
+
+                logger.info("sample time for " + layers.length + " layers and " + 3 + " coordinates: get response="
+                        + (mid - start) + "ms, write response=" + (end - mid) + "ms");
+
             }
-
-            output = new ArrayList<String>();
-            for (int i = 0; i < tmpOutput.size(); i++) {
-                output.add(tmpOutput.get(i).toString());
-                tmpOutput.set(i, null);
-            }
-
-            long end = System.currentTimeMillis();
-
-            logger.info("sample time for " + 5 + " layers and " + 3 + " coordinates: get response="
-                    + (mid - start) + "ms, write response=" + (end - mid) + "ms");
-
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }

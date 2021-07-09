@@ -73,6 +73,7 @@ class ScatterplotCreate extends SlaveProcess {
             Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString(), task.input.layersServiceUrl)
 
             if (layers.length <= 2) {
+                taskLog("Generate plot style")
                 scatterplot.reStyle(style, false, false, false, false, false, false, false)
 
                 File file = new File(getTaskPath() + "data.xml")
