@@ -25,7 +25,7 @@ ext {
     }
 }
 
-version "0.4.2_SNAPSHOT"
+version "0.4."
 group "au.org.ala"
 
 apply plugin:"eclipse"
