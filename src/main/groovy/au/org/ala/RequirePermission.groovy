@@ -7,11 +7,15 @@ import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
 
 /**
- * Equivalent to RequireLogin(role=ROLE_ADMIN)
- * Annotation to check that a valid api key has been provided.
+ * Annotation to check if a valid api key has been provided
+ * or user has logged in
  */
 @Target([ElementType.TYPE, ElementType.METHOD])
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@interface RequireAdmin {
+
+/**
+ * Minimum ApiKey check or login user
+ */
+@interface RequirePermission {
 }

@@ -16,8 +16,7 @@
 package au.org.ala.spatial.service
 
 import au.org.ala.RequireAdmin
-import au.org.ala.RequireLogin
-import au.org.ala.SkipSecurityCheck
+import au.org.ala.RequirePermission
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
@@ -28,6 +27,7 @@ class TasksController {
 
     TasksService tasksService
     def serviceAuthService
+    def authService
 
     /**
      * admin only or api_key
@@ -125,7 +125,7 @@ class TasksController {
      * @param task
      * @return
      */
-    @RequireLogin
+    @RequirePermission
     def show(Task task) {
         if (task) {
             task.history = task.history.sort { a, b ->
@@ -141,7 +141,7 @@ class TasksController {
      * @return a map of inputs to errors, or the created task
      */
     @Transactional(readOnly = false)
-    @RequireLogin
+    @RequirePermission
     create() {
         JSONObject input = null
         if (params.containsKey('input')) {
@@ -155,7 +155,7 @@ class TasksController {
             response.status = 400
             render errors as JSON
         } else {
-            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, params.userId, params.email)
+            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, authService.getUserId() ?: params.userId, params.email)
             render task as JSON
         }
     }
@@ -167,7 +167,7 @@ class TasksController {
      * @return
      */
     @Transactional(readOnly = false)
-    @RequireLogin
+    @RequirePermission
     cancel(Task task) {
         if (task?.status < 2) tasksService.cancel(task)
 
@@ -186,7 +186,7 @@ class TasksController {
      * @param task
      * @return
      */
-    @RequireLogin
+    @RequirePermission
     def download(Task task) {
         String file = grailsApplication.config.publish.dir + task.id + ".zip"
 
@@ -203,7 +203,7 @@ class TasksController {
      * @param task
      * @return
      */
-    @RequireLogin
+    @RequirePermission
     def downloadReport(String taskId) {
         def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
 

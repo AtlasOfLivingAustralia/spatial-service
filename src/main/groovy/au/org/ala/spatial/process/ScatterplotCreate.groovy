@@ -20,6 +20,7 @@ import au.org.ala.scatterplot.ScatterplotDTO
 import au.org.ala.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
+import sun.reflect.annotation.ExceptionProxy
 
 @Slf4j
 class ScatterplotCreate extends SlaveProcess {
@@ -66,45 +67,52 @@ class ScatterplotCreate extends SlaveProcess {
         desc.setLayerunits(layerUnits)
         desc.setLayernames(layerNames)
 
-        ScatterplotStyleDTO style = new ScatterplotStyleDTO()
+        try {
+            ScatterplotStyleDTO style = new ScatterplotStyleDTO()
+            taskLog("Creating scatter plot.....")
+            Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString(), task.input.layersServiceUrl)
 
-        Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString(), task.input.layersServiceUrl)
+            if (layers.length <= 2) {
+                taskLog("Generate plot style")
+                scatterplot.reStyle(style, false, false, false, false, false, false, false)
 
-        if (layers.length <= 2) {
-            scatterplot.reStyle(style, false, false, false, false, false, false, false)
+                File file = new File(getTaskPath() + "data.xml")
+                scatterplot.save(file)
 
-            File file = new File(getTaskPath() + "data.xml")
-            scatterplot.save(file)
+                File csvFile = new File(getTaskPath() + "data.csv")
+                scatterplot.saveCsv(csvFile)
 
-            File csvFile = new File(getTaskPath() + "data.csv")
-            scatterplot.saveCsv(csvFile)
+                species1.putAt("scatterplotId", task.id)
+                def imgFile = new File(scatterplot.getImagePath())
+                species1.putAt("scatterplotUrl",
+                        imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
+                                .replace(imgFile.name, "Scatterplot%20(" + task.id + ").png?filename=" + imgFile.name))
 
-            species1.putAt("scatterplotId", task.id)
-            def imgFile = new File(scatterplot.getImagePath())
-            species1.putAt("scatterplotUrl",
-                    imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
-                            .replace(imgFile.name, "Scatterplot%20(" + task.id + ").png?filename=" + imgFile.name))
+                //style
+                species1.putAt('red', style.red)
+                species1.putAt('green', style.green)
+                species1.putAt('blue', style.blue)
+                species1.putAt('size', style.size)
+                species1.putAt('opacity', style.opacity)
+                species1.putAt('highlightWkt', style.highlightWkt)
 
-            //style
-            species1.putAt('red', style.red)
-            species1.putAt('green', style.green)
-            species1.putAt('blue', style.blue)
-            species1.putAt('size', style.size)
-            species1.putAt('opacity', style.opacity)
-            species1.putAt('highlightWkt', style.highlightWkt)
+                //annotation
+                species1.putAt('q', scatterplot.getScatterplotDTO().getForegroundOccurrencesQs())
+                species1.putAt('bs', scatterplot.getScatterplotDTO().getForegroundOccurrencesBs())
+                species1.putAt('name', scatterplot.getScatterplotDTO().getForegroundName())
 
-            //annotation
-            species1.putAt('q', scatterplot.getScatterplotDTO().getForegroundOccurrencesQs())
-            species1.putAt('bs', scatterplot.getScatterplotDTO().getForegroundOccurrencesBs())
-            species1.putAt('name', scatterplot.getScatterplotDTO().getForegroundName())
+                species1.putAt('scatterplotExtents', scatterplot.getScatterplotDataDTO().layerExtents())
+                species1.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotStyleDTO().getSelection())
+                species1.putAt('scatterplotLayers', scatterplot.getScatterplotDTO().getLayers())
+                species1.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
 
-            species1.putAt('scatterplotExtents', scatterplot.getScatterplotDataDTO().layerExtents())
-            species1.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotStyleDTO().getSelection())
-            species1.putAt('scatterplotLayers', scatterplot.getScatterplotDTO().getLayers())
-            species1.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
-
-            addOutput("species", (species1 as JSON).toString())
-            addOutput("download", csvFile.name);
+                addOutput("species", (species1 as JSON).toString())
+                addOutput("download", csvFile.name)
+            }
+        } catch (Exception e) {
+            taskLog("Failed to generate the scatter plot!")
+            log.error(e.message)
+            throw new Exception(e.message)
         }
     }
 }

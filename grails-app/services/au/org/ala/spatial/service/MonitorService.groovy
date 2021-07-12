@@ -229,6 +229,7 @@ class MonitorService {
                             i.put('sandboxHubUrl', grailsApplication.config.sandboxHubUrl)
                             i.put('sandboxBiocacheServiceUrl', grailsApplication.config.sandboxBiocacheServiceUrl)
                             i.put('geoserverUrl', grailsApplication.config.geoserver.url)
+                            i.put('userId', nextTask.userId)
 
                             def id = nextTask.id
                             def response = masterService.start(slave, nextTask, i)

@@ -19,7 +19,11 @@ import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.NameValuePair
+import org.apache.commons.httpclient.methods.RequestEntity
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
+import org.apache.commons.httpclient.methods.multipart.Part
+import org.apache.commons.httpclient.methods.multipart.StringPart
+import org.apache.commons.httpclient.params.HttpMethodParams
 import org.apache.commons.io.FileUtils
 import org.json.simple.JSONArray
 
@@ -44,28 +48,37 @@ class PhylogeneticDiversity extends SlaveProcess {
 
         int count = 1
         areas.each { area ->
-            task.message = "Processing " + area.name + " (" + count + " of " + areas.size() + ")"
+            task.message = "Running"
+            taskLog("Processing " + area.name + " (" + count + " of " + areas.size() + ")")
 
             //species list
             def speciesArea = getSpeciesArea(species, area)
-            def speciesList = getSpeciesList(speciesArea)
 
+            taskLog("Fetching species in " + area.name)
+            def speciesList = getSpeciesList(speciesArea)
+            taskLog("Loading species in " + area.name)
             CSVReader r = new CSVReader(new StringReader(speciesList))
 
             JSONArray ja = new JSONArray()
             for (String[] s : r.readAll()) {
                 ja.add(s[1])
             }
+            String q = ja.toString()
 
             //get PD
+            taskLog("Reading phylogenetic diversity data")
             String url = phyloServiceUrl + "/phylo/getPD"
-            NameValuePair[] params = new NameValuePair[2]
-            params[0] = new NameValuePair("noTreeText", "true")
-            params[1] = new NameValuePair("speciesList", ja.toString())
 
-            def pds = JSON.parse(Util.postUrl(url, params))
+            Part[] parts = new Part[2]
+            parts[0] = new StringPart("noTreeText", "true")
+            parts[1] = new StringPart("speciesList", q)
+
+            RequestEntity entity =  new MultipartRequestEntity(parts, new HttpMethodParams())
+
+            def pds = JSON.parse(Util.postUrl(url, null,null, entity))
 
             //tree info
+            taskLog("Getting expert trees")
             url = phyloServiceUrl + "/phylo/getExpertTrees"
             def allTrees = JSON.parse(Util.getUrl(url))
             allTrees.each { t ->
@@ -79,6 +92,7 @@ class PhylogeneticDiversity extends SlaveProcess {
             Map<String, String> pdrow = new HashMap<String, String>()
             Map<String, List> speciesRow = new HashMap<String, List>()
 
+            taskLog("Generating results")
             for (int j = 0; j < pds.size(); j++) {
                 String tree = "" + pds.get(j).get("studyId")
                 pdrow.put(tree, pds.get(j).get("pd").toString())

@@ -15,11 +15,9 @@
 
 package au.org.ala.layers
 
-import au.org.ala.RequireAdmin
-import au.org.ala.RequireLogin
-import au.org.ala.layers.intersect.IntersectConfig
+
+import au.org.ala.RequirePermission
 import au.org.ala.layers.util.SpatialConversionUtils
-import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
@@ -51,7 +49,6 @@ import groovy.json.JsonOutput
 
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
-import java.text.MessageFormat
 
 class ShapesController {
 
@@ -293,7 +290,7 @@ class ShapesController {
     }
 
     // Create from geoJSON
-    @RequireLogin(apiKeyInBody = true)
+    @RequirePermission
     def uploadGeojson(Integer id) {
         //id can be null
         processGeoJSONRequest(request.getJSON(), id)
@@ -335,7 +332,7 @@ class ShapesController {
         return retMap
     }
 
-    @RequireLogin(apiKeyInBody = true)
+    @RequirePermission
     def uploadWkt(Integer id) {
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
@@ -343,12 +340,12 @@ class ShapesController {
         render processWKTRequest(request.JSON, id, namesearch) as JSON
     }
 
-    @RequireLogin(apiKeyInBody = true)
+    @RequirePermission
     def uploadGeoJSON() throws Exception {
         render processGeoJSONRequest(request.JSON, null) as JSON
     }
 
-    @RequireLogin
+    @RequirePermission
     def updateWithGeojson(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -357,7 +354,7 @@ class ShapesController {
         render processGeoJSONRequest(request.JSON, pid) as JSON
     }
 
-    @RequireLogin(apiKeyInBody = true)
+    @RequirePermission
     def updateWithWKT(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -367,7 +364,7 @@ class ShapesController {
         render processWKTRequest(request.JSON, pid, namesearch) as JSON
     }
 
-    @RequireLogin(apiKeyInBody = true)
+    @RequirePermission
     def uploadShapeFile() {
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>()
@@ -409,7 +406,7 @@ class ShapesController {
         render retMap as JSON
     }
 
-    @RequireLogin(apiKeyInBody = true)
+    @RequirePermission
     def uploadKMLFile() {
         String userId = params.containsKey("user_id") ? params.user_id : null
 
@@ -545,12 +542,12 @@ class ShapesController {
         }
     }
 
-    @RequireLogin(apiKeyInBody = true)
+    @RequirePermission
     def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
         render processShapeFileFeatureRequest(request.getJSON(), null, shapeId, featureIndex) as JSON
     }
 
-    @RequireLogin
+    @RequirePermission
     def updateFromShapeFileFeature(Integer objectPid, String shapeId, String featureIndex) throws Exception {
         if (objectPid == null) {
             render status: 400, text: "Path parameter `objectPid` is not an integer."
@@ -558,7 +555,7 @@ class ShapesController {
         }
         render processShapeFileFeatureRequest(request.getJSON(), objectPid, shapeId, featureIndex) as JSON
     }
-    @RequireLogin
+    @RequirePermission
     def createPointRadius(Double latitude, Double longitude, Double radius) {
         if (latitude == null) {
             render status: 400, text: "Path parameter `latitude` is not a number."
@@ -574,7 +571,7 @@ class ShapesController {
         }
         render processPointRadiusRequest(request.json, null, latitude, longitude, radius) as JSON
     }
-    @RequireLogin
+    @RequirePermission
     def updateWithPointRadius(Double latitude, Double longitude, Double radius, Integer objectPid) {
         if (latitude == null) {
             render status: 400, text: "Path parameter `latitude` is not a number."
@@ -625,7 +622,7 @@ class ShapesController {
         return retMap
     }
 
-    @RequireAdmin
+    @RequirePermission
     def deleteShape(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -644,7 +641,7 @@ class ShapesController {
         }
     }
 
-    @RequireLogin
+    @RequirePermission
     def poi() {
         Map<String, Object> retMap = new HashMap<String, Object>()
 
@@ -686,7 +683,7 @@ class ShapesController {
         return retMap
     }
 
-    @RequireLogin
+    @RequirePermission
     def poiRequest(Integer id) {
         if (id == null) {
             render status: 400, text: "Path parameter `id` is not an integer."
