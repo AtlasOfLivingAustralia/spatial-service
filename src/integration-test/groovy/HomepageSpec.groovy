@@ -21,6 +21,7 @@ class HomepageSpec extends GebSpec {
         when:
         clickLink("Background tasks")
 
+        sleep(1000) //Assure redirection
         if (title.startsWith("ALA | Login"))
             authModule.login()
 
