@@ -177,6 +177,8 @@ class AooEoo extends SlaveProcess {
 
         Encoder encoder = new Encoder(new KMLConfiguration())
         encoder.setIndenting(true)
+        encoder.setOmitXMLDeclaration(true) //Omit duplication xml declaration.
+
         WKTReader reader = new WKTReader()
         String kml = encoder.encodeAsString(reader.read(wkt), KML.Geometry)
 
