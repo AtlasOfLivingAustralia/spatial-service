@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://earth.google.com/kml/2.2"><Document>  <name></name>  <description></description>  <Style id="style1">    <LineStyle>      <color>40000000</color>      <width>3</width>    </LineStyle>    <PolyStyle>      <color>73FF0000</color>      <fill>1</fill>      <outline>1</outline>    </PolyStyle>  </Style>  <Placemark>    <name></name>    <description></description>    <styleUrl>#style1</styleUrl><?xml version="1.0" encoding="UTF-8"?><kml:Polygon xmlns:kml="http://earth.google.com/kml/2.1">
+<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://earth.google.com/kml/2.2"><Document>  <name></name>  <description></description>  <Style id="style1">    <LineStyle>      <color>40000000</color>      <width>3</width>    </LineStyle>    <PolyStyle>      <color>73FF0000</color>      <fill>1</fill>      <outline>1</outline>    </PolyStyle>  </Style>  <Placemark>    <name></name>    <description></description>    <styleUrl>#style1</styleUrl><kml:Polygon xmlns:kml="http://earth.google.com/kml/2.1">
 <kml:outerBoundaryIs>
 <kml:LinearRing>
 <kml:coordinates>-40.0,140.0 -15.0,120.0 -25.0,154.0 -40.0,140.0</kml:coordinates>
