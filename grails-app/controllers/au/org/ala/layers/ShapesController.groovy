@@ -542,9 +542,26 @@ class ShapesController {
         }
     }
 
+    /**
+     * Process features in a shape file.
+     *
+     * Clint should post featureIndex via body, not queryString to avoid possible oversize url
+     *
+     * @param shapeId
+     * @param featureIndex
+     * @return
+     */
     @RequirePermission
     def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
-        render processShapeFileFeatureRequest(request.getJSON(), null, shapeId, featureIndex) as JSON
+        JSONObject json = request.getJSON()
+        if ( !featureIndex) {
+            if (json["featureIdx"]) {
+                featureIndex = json["featureIdx"]
+            } else {
+                render status: 400, text: "Feature Index is not provided"
+            }
+        }
+        render processShapeFileFeatureRequest(json, null, shapeId, featureIndex) as JSON
     }
 
     @RequirePermission
