@@ -36,19 +36,24 @@ class LogService {
     }
 
     def search(params, userId, userIsAdmin) {
-        init();
+        if (params.groupBy && params.countBy) { //search all over logs
+            init();
+            def columns = params.groupBy?.split(',').collect { logColumns.contains(it) ? it : extraColumns.containsKey(it) ? extraColumns.get(it) : null }?.findAll { it != null }
+            def counts = count(params.countBy)
+            def where = where(params, userId, userIsAdmin)
+            def groupBy = params.groupBy ? "GROUP BY ${columns.join(',')} ORDER BY ${columns.join(',')} DESC" : "ORDER BY created DESC"
 
-        def columns = params.groupBy?.split(',').collect { logColumns.contains(it) ? it : extraColumns.containsKey(it) ? extraColumns.get(it) : null }?.findAll { it != null }
-        def counts = count(params.countBy)
-        def where = where(params, userId, userIsAdmin)
-        def groupBy = params.groupBy ? "GROUP BY ${columns.join(',')} ORDER BY ${columns.join(',')} DESC" : "ORDER BY created DESC"
+            def sql = "SELECT ${(columns + counts).join(",")} FROM Log ${where} ${groupBy}"
+            def response = Log.executeQuery(sql.toString(), [max: params.max ?: 10, offset: params.offset ?: 0])
+            def headers = columns.toList()
+            if (counts) headers.addAll(counts.collect { it -> it.replaceAll(".* AS ", "") })
 
-        def sql = "SELECT ${(columns + counts).join(",")} FROM Log ${where} ${groupBy}"
-        def response = Log.executeQuery(sql.toString(), [max: params.max ?: 10, offset: params.offset ?: 0])
-        def headers = columns.toList()
-        if (counts) headers.addAll(counts.collect { it -> it.replaceAll(".* AS ", "") })
+            response.collect { it -> toMap(it, headers) }
+        } else if (params.category2) { //search a type of work log
+            def result = Log.executeQuery("SELECT userId, category2, sessionId, data, created FROM Log WHERE category2 ='" + params.category2+"' ORDER BY created DESC",[max: params.max ?: 10, offset: params.offset ?: 0])
+            result.collect {it -> toMap(it, ["userId", "category2", "sessionId","data","created"])}
+        }
 
-        response.collect { it -> toMap(it, headers) }
     }
 
     def searchCount(params, userId, userIsAdmin) {
