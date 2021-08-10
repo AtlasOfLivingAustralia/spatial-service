@@ -103,7 +103,12 @@ class UrlMappings {
         "/shape/upload/geojson(.$format)?"(controller: "shapes", action: "uploadGeoJSON")
         "/shape/upload/geojson/$pid(.$format)?"(controller: "shapes", action: "updateWithGeojson")
         "/shape/upload/shp(.$format)?"(controller: "shapes", action: 'uploadShapeFile')
+
+        //Post a small set of features via queryString.
         "/shape/upload/shp/$shapeId/$featureIndex(.$format)?"(controller: "shapes", action: 'saveFeatureFromShapeFile')
+        //Post features via body to avoid oversize queryString
+        "/shape/upload/shp/$shapeId/featureIndex"(controller: "shapes", action: 'saveFeatureFromShapeFile')
+
         "/shape/upload/shp/$objectPid/$shapeId/$featureIndex(.$format)?"(controller: "shapes", action: 'updateFromShapeFileFeature')
         "/shape/upload/shp/image/$shapeId/$featureIndexes(.$format)?"(controller: "shapes", action: 'shapeImage')
         "/shape/upload/kml(.$format)?"(controller: "shapes", action: 'uploadKMLFile')
