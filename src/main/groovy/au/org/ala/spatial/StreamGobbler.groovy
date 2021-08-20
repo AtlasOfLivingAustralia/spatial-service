@@ -36,9 +36,9 @@ class StreamGobbler extends Thread {
     void run() {
         try {
             String line
-            log.error("reading a line")
+            log.debug("reading a line")
             while ((line = br.readLine()) != null) {
-                log.error("reading a line - in loop")
+                log.debug("reading a line - in loop")
                 if (task != null) {
                     task.history.put(System.currentTimeMillis(), logPrefix + ": " + line)
                 }
@@ -47,6 +47,6 @@ class StreamGobbler extends Thread {
         } catch (Exception e) {
             log.error 'task: ' + ', failed consuming log with prefix ' + logPrefix, e
         }
-        log.error("finished gobbler run")
+        log.debug("finished gobbler run")
     }
 }
