@@ -162,9 +162,6 @@ sampling.threads: 4
 slaveKey: ""
 serviceKey: ""
 
-slave.enable: True
-service.enable: True
-
 # time between pushing status updates to the master for a task
 statusTime: 3000
 retryCount: 10
