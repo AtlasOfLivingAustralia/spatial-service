@@ -35,7 +35,6 @@ class LayerController {
     def fieldDao
     def objectDao
     def fileService
-    def serviceAuthService
 
     def list() {
         def fields = fieldDao.getFieldsByCriteria('')
@@ -244,94 +243,133 @@ class LayerController {
 
         def layers = [:]
         Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='ToolAddLayerService'").each {
-            JSON.parse(it).getAt("0")?.each {
-                layers.put(it, layers.getOrDefault(it, 0) + 1)
+            try {
+                if (it) {
+                    def layer = JSON.parse(it)
+                    String layerId = layer['0'][0]
+                    layers.put(layerId, layers.getOrDefault(layerId, 0) + 1)
+                }
+            } catch(Exception e) {
+                log.error("Error in calculating usage of tool: add layer")
             }
         }
         layerUsage.put("Add to Map | Layer", layers)
 
         layers = [:]
         Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='Tabulation'").each {
-            def layer1 = JSON.parse(it).getAt("layer1")
-            layers.put(layer1, layers.getOrDefault(layer1, 0) + 1)
-            def layer2 = JSON.parse(it).getAt("layer2")
-            layers.put(layer2, layers.getOrDefault(layer2, 0) + 1)
+            try {
+                def layer1 = JSON.parse(it).getAt("layer1")
+                layers.put(layer1, layers.getOrDefault(layer1, 0) + 1)
+                def layer2 = JSON.parse(it).getAt("layer2")
+                layers.put(layer2, layers.getOrDefault(layer2, 0) + 1)
+            } catch(Exception e) {
+                log.error("Error in calculating usage of tool: tabulation")
+            }
         }
         layerUsage.put("Tools | Tabulate", layers)
 
         layers = [:]
-        Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='Area'").each {
-            def pid = JSON.parse(it).getAt("pid")
-            if (pid != null) {
-                for (String p : pid.split("~")) {
-                    def obj = objectDao.getObjectByPid(p)
-                    if (obj) {
-                        if (obj.fid != grailsApplication.config.userObjectsField) {
-                            layers.put(obj.fid, layers.getOrDefault(obj.fid, 0) + 1)
+        Log.executeQuery("SELECT data FROM Log WHERE data is not null and created is not null and created >= ${c.time} and category2='Area'").each {
+            try {
+                def pid = JSON.parse(it).getAt("pid")
+                if (pid != null) {
+                    for (String p : pid.split("~")) {
+                        def obj = objectDao.getObjectByPid(p)
+                        if (obj) {
+                            if (obj.fid != grailsApplication.config.userObjectsField) {
+                                layers.put(obj.fid, layers.getOrDefault(obj.fid, 0) + 1)
+                            }
                         }
                     }
                 }
+            } catch(Exception e) {
+                log.error("Error in calculating usage of areas")
             }
         }
         layerUsage.put("Add to map | Area | Gaz or Area from polygonal layer", layers)
 
         layers = [:]
         Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'Envelope'").each {
-            if (it.name == 'envelope') {
-                JSON.parse(it.value).each {
-                    def layer = it.split(':')[0]
-                    layers.put(layer, layers.getOrDefault(layer, 0) + 1)
+            try {
+                if (it.name == 'envelope') {
+                    JSON.parse(it.value).each {
+                        def layer = it.split(':')[0]
+                        layers.put(layer, layers.getOrDefault(layer, 0) + 1)
+                    }
                 }
+            }catch (Exception e) {
+                log.error("Error in calculating usage of envelopes")
             }
+
         }
         layerUsage.put("Add to Map | Area | Environmental envelope", layers)
 
         layers = [:]
         Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'ScatterplotCreate'").each {
-            if (it.name == 'layer') {
-                JSON.parse(it.value).each {
-                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+            try {
+                if (it.name == 'layer') {
+                    JSON.parse(it.value).each {
+                        layers.put(it, layers.getOrDefault(it, 0) + 1)
+                    }
                 }
+            }catch (Exception e) {
+                log.error("Error in calculating usage of tool: single scatterplot ")
             }
         }
         layerUsage.put("Tools | Scatterplot - single", layers)
 
         layers = [:]
         Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'ScatterplotList'").each {
-            if (it.name == 'layer') {
-                JSON.parse(it.value).each {
-                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+            try {
+                if (it.name == 'layer') {
+                    JSON.parse(it.value).each {
+                        layers.put(it, layers.getOrDefault(it, 0) + 1)
+                    }
                 }
+            }catch (Exception e) {
+                log.error("Error in calculating usage of tool: multiple scatterplot")
             }
         }
         layerUsage.put("Tools | Scatterplot - multiple", layers)
 
         layers = [:]
         Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'Maxent'").each {
-            if (it.name == 'layer') {
-                JSON.parse(it.value).each {
-                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+            try {
+                if (it.name == 'layer') {
+                    JSON.parse(it.value).each {
+                        layers.put(it, layers.getOrDefault(it, 0) + 1)
+                    }
                 }
+            }catch (Exception e) {
+                log.error("Error in calculating usage of tool: predict")
             }
         }
         layerUsage.put("Tools | Predict", layers)
 
         layers = [:]
         Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'Classification'").each {
-            if (it.name == 'layer') {
-                JSON.parse(it.value).each {
-                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+            try {
+                if (it.name == 'layer') {
+                    JSON.parse(it.value).each {
+                        layers.put(it, layers.getOrDefault(it, 0) + 1)
+                    }
                 }
+            }catch (Exception e) {
+                log.error("Error in calculating usage of tool: classify")
             }
         }
         layerUsage.put("Tools | Classify", layers)
 
         layers = [:]
         Task.executeQuery("SELECT input FROM Task t where t.created is not null and t.created >= ${c.time} and t.status = 4 and t.name = 'SpeciesByLayer'").each {
-            if (it.name == 'layer') {
-                JSON.parse(it.value).each {
-                    layers.put(it, layers.getOrDefault(it, 0) + 1)
+            try {
+                if (it.name == 'layer') {
+                    JSON.parse(it.value).each {
+                        layers.put(it, layers.getOrDefault(it, 0) + 1)
+                    }
                 }
+            }catch (Exception e) {
+                log.error("Error in calculating usage of tool: speccies by layer")
             }
         }
         layerUsage.put("Tools | Species By Layer", layers)

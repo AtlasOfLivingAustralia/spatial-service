@@ -18,4 +18,5 @@ appender('STDOUT', ConsoleAppender) {
 logger("au.org.ala.spatial.service.MonitorService", INFO, ['STDOUT'], false)
 logger("au.org.ala.layers", DEBUG, ['STDOUT'], false)
 logger("au.org.ala.spatial", DEBUG, ['STDOUT'], false)
-root(WARN, ['STDOUT'])
+
+root(ERROR, ['STDOUT'])

@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial.service
 
-import org.hibernate.StaleObjectStateException
+//import org.hibernate.StaleObjectStateException
 
 class MonitorService {
     def monitorFreqency = 5 * 1000
@@ -78,7 +78,7 @@ class MonitorService {
                     def t = Task.get(task.id)
                     up = masterService.checkStatus(t)
                     log.debug "is up " + up
-                } catch (StaleObjectStateException err) {
+                } catch (Exception err) {
                     up = true
                 } catch (err) {
                     log.error 'failed to query task status', err
@@ -93,7 +93,7 @@ class MonitorService {
                         log.warn "making task available to another slave: " + task.id
                         def newValues = [status: 0, url: null, slave: null]
                         tasksService.update(task.id, newValues)
-                    } catch (StaleObjectStateException err) {
+                    } catch (Exception err) {
                         //ignore
                         log.error 'ignoring stale exception'
                     } catch (err) {

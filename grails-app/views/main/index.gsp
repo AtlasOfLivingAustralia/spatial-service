@@ -38,7 +38,7 @@
         <li><g:link controller="tasks" action="create"
                     params="${[name: 'DistributionRematchLsid', input: '{"updateAll":true}']}">Rematch checklist and expert distribution LSIDs</g:link> - Rematch expert distribution and checklist LSIDs (using sandbox if configured, otherwise biocache-service)</li>
         <li><g:link controller="log" action="search"
-                    params="${[admin: true, accept: 'application/csv', max: -1, groupBy: 'category1,category2', countBy: 'record,user,session', excludeRoles: 'ROLE_ADMIN', startDate: (java.time.LocalDate.now().minusMonths(6).toString()), endDate: (java.time.LocalDate.now().toString())]}">spatial-hub usage report - last 6 months (csv)</g:link> - Excludes ROLE_ADMIN users</li>
+                    params="${[admin: true, accept: 'application/csv', groupBy: 'category1,category2', countBy: 'record,user,session', excludeRoles: 'ROLE_ADMIN', startDate: (java.time.LocalDate.now().minusMonths(6).toString()), endDate: (java.time.LocalDate.now().toString())]}">spatial-hub usage report - last 6 months (csv)</g:link> - Excludes ROLE_ADMIN users</li>
         <li><g:link controller="layer" action="csvlist"
                     params="${[usage: true, months: 6]}">layer usage report - last 6 months (csv)</g:link></li>
         <li><g:link controller="admin" action="defaultGeoserverStyles">Fix layer styles</g:link> - Recreate linear/none linear styles for each Raster layers, Recreate polygon/outlines for Vector layers</li>

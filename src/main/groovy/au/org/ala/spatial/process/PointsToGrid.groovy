@@ -139,7 +139,8 @@ class PointsToGrid extends SlaveProcess {
                 addOutput("files", "occurrence_density.png", true)
                 addOutput("files", "occurrence_density_legend.png", true)
             } catch (Exception e) {
-
+                log.error(e.message)
+                taskLog("Error in convert density: " + e.message)
             }
 
             addOutput("layers", "/layer/" + task.id + "_occurrence_density.sld")

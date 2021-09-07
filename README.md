@@ -20,10 +20,63 @@ It includes:
 
 # Architecture
 
-* Grails 3 web application ran in the tomcat 7 or as standalone executable jar
+* Grails 4 web application ran in the tomcat 9 or as standalone executable jar
 * Open JDK 8
 * PostGIS database (9.6 or above)
 * Geoserver
+
+## Setup environment
+
+Modify configurations in 
+
+    /data/spatial-service/config/spatial-service-config.yml
+
+The dependent services point to other production servers by default
+
+The default production url is https://spatial.ala.org.au/ws
+
+The default develop url is http://devt.ala.org.au:8080/ws
+
+
+#### Minimum configurations in external config file:
+
+        api_key: xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx
+        google:
+            apikey: xxxxxxxxxxxxxx
+
+#### Set the following configurations if deployed on servers, instead of development/prod environment
+
+    grails.serverURL: https://spatial-test.ala.org.au/ws
+    #grails.server.context: /ws
+
+    google:
+        apikey: "xxxxxxxxxxxx"
+
+    api_key: xxxxxxxxxxxxx
+    spatialHubUrl: https://spatial-test.ala.org.au/
+
+    geoserver:
+        url: 'https://spatial-test.ala.org.au/geoserver'
+        username: 'admin'
+        password: 'xxxxxxxx'
+
+    dataSource:
+        url: 'jdbc:postgresql://localhost/layersdb'
+        username: postgres
+        password: xxxxxxxxx
+    
+    batch_sampling_passwords: ""
+
+    # au.org.ala.spatial.slave config
+    spatialService.url: "https://spatial-test.ala.org.au/ws"
+    shp2pgsql.path: "/usr/bin/shp2pgsql"
+    gdal.dir: "/usr/bin/"
+
+    slaveKey: "xxxxxxxxxxxxxx"
+    serviceKey: "xxxxxxxxxxxxxx"
+
+    layers_store.GEONETWORK_URL: 'https://spatial-test.ala.org.au/geonetwork'
+
 
 # Installation
 
