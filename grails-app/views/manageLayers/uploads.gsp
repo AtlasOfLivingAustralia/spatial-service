@@ -3,7 +3,7 @@
 <head>
     <title>Uploads</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="ala-main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">

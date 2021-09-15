@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="layout" content="main">
+    <meta name="layout" content="ala-main">
     <title>Tasks</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <g:set var="entityName" value="${message(code: 'task.label', default: 'Task')}"/>

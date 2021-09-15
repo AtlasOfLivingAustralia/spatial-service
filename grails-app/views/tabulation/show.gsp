@@ -3,7 +3,7 @@
 <head>
     <title>Tabulation</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink( controller: 'tabulation', action: 'index')}, Tabulations"/>
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
 <body class="fluid">
