@@ -43,6 +43,7 @@
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
             <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+            <li><g:link controller="tasks" action="activeThreads">Show active Tasks</g:link></li>
             <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
         </div>
     </div>

@@ -20,16 +20,20 @@ import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.apache.commons.io.FileUtils
 
+import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import java.util.Map
 
 class TaskService {
 
     GrailsApplication grailsApplication
     FileLockService fileLockService
+    ThreadGroup threadGroup = new ThreadGroup("SpatialServiceTasks")
     def tasksService
     def authService
+
 
 
 
@@ -43,12 +47,61 @@ class TaskService {
 
     Map running = [:]
 
+    def getActiveThreads() {
+        Map ts = [:]
+        int activeCounts = threadGroup.activeCount()
+        Thread[] threads = new Thread[activeCounts];
+        threadGroup.enumerate(threads)
+
+
+        for(Thread t in threads) {
+            if (t instanceof TaskThread) {
+                TaskThread thread = (TaskThread)t
+                ts.put( thread.taskId, ["name":thread.name, "created":thread.created])
+            }
+        }
+        return ts
+    }
+
+    def getActiveTasks() {
+        Map tasks = [:]
+        Map threads = getActiveThreads()
+
+        //Attach threads to task
+        //
+        this.running.each {
+            Map result = [:]
+            //cp objects
+            Task task = it.value["request"]
+            String taskId = task.taskId
+
+            task.properties.each { prop, val ->
+                if(prop in ["metaClass","class"]) return
+                result[prop] = val
+            }
+
+            if (threads.get(taskId)) {
+                result["activeThread"] = threads.get(taskId)? threads.get(taskId)["created"] : null
+                threads.remove(taskId) //remove from threads if exists
+            }
+
+            tasks[taskId] = result
+        }
+
+        //Cross check in case active threads deattached from tasks
+        threads.each {
+            tasks[it.key] = it.value
+        }
+
+        //return a collection
+        return tasks.values()
+    }
+
     void start(Task req) {
         try {
 
             Task request = req
             TaskThread t = new TaskThread(this, request)
-
             t.start()
 
             running.put(request.id, [request: request, thread: t])
@@ -290,10 +343,15 @@ class TaskService {
     class TaskThread extends Thread {
         def taskService
         def request
+        Date created
+        String taskId
 
-        TaskThread(taskService, request) {
+        TaskThread(TaskService taskService, Task task) {
+            super(taskService.threadGroup, task.name) // insert into threadGroup
             this.taskService = taskService
-            this.request = request
+            this.request = task
+            this.created = new Date(System.currentTimeMillis())
+            this.taskId = task.taskId
         }
 
         void run() {
