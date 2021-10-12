@@ -920,7 +920,7 @@ class SlaveProcess {
                        "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                        asc, grd + ".tif"]
             task.message = "asc > tif"
-            runCmd(cmd.toArray(new String[cmd.size()]), false)
+            runCmd(cmd.toArray(new String[cmd.size()]), false, grailsApplication.config.admin.timeout)
 
         } catch (Exception e) {
             e.printStackTrace()
@@ -1071,8 +1071,8 @@ class SlaveProcess {
         species
     }
 
-    def runCmd(String[] cmd, Boolean logToTask) {
-        Util.runCmd(cmd, logToTask, task)
+    def runCmd(String[] cmd, Boolean logToTask, Long timeout) {
+        Util.runCmd(cmd, logToTask, task, timeout)
     }
 
     def setMessage(String msg) {

@@ -64,7 +64,7 @@ class LayerCreation extends SlaveProcess {
                     , outPath + "_tmp.bil"]
             task.message = 'reprojecting shp'
             try {
-                runCmd(cmd, true)
+                runCmd(cmd, true, grailsApplication.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (1)", e)
             }
@@ -72,7 +72,7 @@ class LayerCreation extends SlaveProcess {
                    "-hist"
                    , outPath + "_tmp.bil"]
             try {
-                runCmd(cmd, true)
+                runCmd(cmd, true, grailsApplication.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (2)", e)
             }
@@ -82,7 +82,7 @@ class LayerCreation extends SlaveProcess {
                    , outPath + "_tmp.bil"
                    , outPath + ".bil"]
             try {
-                runCmd(cmd, true)
+                runCmd(cmd, true, grailsApplication.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (3)", e)
             }
@@ -159,7 +159,7 @@ class LayerCreation extends SlaveProcess {
                                 dst.getPath() + ".shp", "-sql", "CREATE SPATIAL INDEX ON " + layer.name]
                 task.message = 'shp spatial index'
                 try {
-                    runCmd(cmd, true)
+                    runCmd(cmd, true, grailsApplication.config.admin.timeout)
                 } catch (Exception e) {
                     log.error("error running shp spatial index", e)
                 }

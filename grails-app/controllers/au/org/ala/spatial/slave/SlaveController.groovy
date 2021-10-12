@@ -63,11 +63,7 @@ class SlaveController {
             return
         }
 
-        Map tasks = [:]
-        taskService.running.each {
-            tasks.put(it.key, it.value.request)
-        }
-        def map = [limits    : slaveService.getLimits(), tasks: tasks, activeThreads: taskService.getActiveThreads(),
+        def map = [limits    : slaveService.getLimits(), tasks: taskService.running,
                    file_locks: [
                            tasks_waiting: fileLockService.locks.collect { k, v -> [id: v.task.id, files: v.files] },
                            locked_files : fileLockService.filesList.collect { k, v -> [file: k, id: v.id] }]]

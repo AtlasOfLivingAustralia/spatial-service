@@ -78,7 +78,7 @@ class TaskController {
         }
 
         if (id == null) {
-            render taskService.tasks as JSON
+            render taskService.running as JSON
         } else {
             def t = taskService.tasks.get(id)
             if (t == null) {

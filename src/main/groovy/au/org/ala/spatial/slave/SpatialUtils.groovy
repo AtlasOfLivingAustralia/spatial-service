@@ -178,14 +178,14 @@ class SpatialUtils {
                    , outputFile]
 
 
-        Util.runCmd(cmd)
+        Util.runCmd(cmd, 36000000) // 10hr timeout
 
         cmd = [gdalPath + '/gdaladdo',
                "-r", "cubic"
                , outputFile
                , "2", "4", "8", "16", "32", "64"]
 
-        Util.runCmd(cmd)
+        Util.runCmd(cmd, 36000000) // 10hr timeout
     }
 
     static def save4326prj(path) {

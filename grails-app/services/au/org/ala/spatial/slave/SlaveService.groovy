@@ -37,17 +37,12 @@ class SlaveService {
 
     // task for pushing status updates to the master
     def statusUpdateThread
-    def statusUpdates = [:] as ConcurrentHashMap
     // time between pushing status updates to the master for a task
-    def statusTime = 5000;//grailsApplication.config.statusTime
     def statusLock = new Object()
 
     // for validating requests from the master
-    def retryCount = 10;//grailsApplication.config.retryCount
-    def retryTime = 30000;//grailsApplication.config.retryTime
     def monitorTask
     def monitorLock = new Object()
-
 
     def monitor() {
 
@@ -57,9 +52,9 @@ class SlaveService {
                 while (repeat) {
                     repeat = !registerWithMaster()
                     if (repeat) {
-                        log.error("not registered with a master, retrying in " + retryTime + "ms")
+                        log.error("not registered with a master, retrying in " + grailsApplication.config.retryTime + "ms")
                         synchronized (monitorLock) {
-                            monitorLock.sleep(retryTime)
+                            monitorLock.sleep(grailsApplication.config.retryTime)
                         }
                     }
                 }
@@ -73,12 +68,11 @@ class SlaveService {
                 def repeat = true
                 while (repeat) {
                     synchronized (statusLock) {
-                        statusLock.sleep(statusTime)
+                        statusLock.sleep(grailsApplication.config.retryTime)
                     }
-                    statusUpdates.each { k, v ->
-                        if (v.time + statusTime < System.currentTimeMillis() && v.status.length() > 0) {
-                            signalMasterImmediately(v.status)
-                            v.time = System.currentTimeMillis()
+                    taskService.running.each { k, v ->
+                        if (!v.isAdminTask && v.startTime + grailsApplication.config.taskTimeoutTime < System.currentTimeMillis()) {
+                            taskService.cancel(k)
                         }
                     }
                 }
@@ -125,18 +119,6 @@ class SlaveService {
         log.error 'failed to register with master: ' + error
 
         return false
-    }
-
-    def signalMaster(task) {
-        synchronized (statusLock) {
-            def s = statusUpdates.get(task.id)
-            if (s == null || s.time + statusTime < System.currentTimeMillis()) {
-                signalMasterImmediately(task)
-                statusUpdates.put(task.id, [time: System.currentTimeMillis(), status: ''])
-            } else {
-                statusUpdates.put(task.id, [time: System.currentTimeMillis(), status: taskService.getStatus(task)])
-            }
-        }
     }
 
     // POST status for a task to the master
@@ -400,7 +382,7 @@ class SlaveService {
         }
 
         def verified = false
-        for (int i = 0; i < retryCount; i++) {
+        for (int i = 0; i < grailsApplication.config.retryCount; i++) {
             try {
                 def url = grailsApplication.config.spatialService.url + "/master/ping/" +
                         "?api_key=" + grailsApplication.config.serviceKey
@@ -414,7 +396,7 @@ class SlaveService {
                 }
             } catch (err) {
             }
-            Thread.sleep(retryTime)
+            Thread.sleep(grailsApplication.config.retryTime)
         }
 
         if (!verified) {

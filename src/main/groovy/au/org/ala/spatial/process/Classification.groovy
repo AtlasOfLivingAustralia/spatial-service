@@ -56,7 +56,7 @@ class Classification extends SlaveProcess {
                         "-jar", grailsApplication.config.data.dir + '/modelling/aloc/aloc.jar',
                         cutDataPath, String.valueOf(groups), String.valueOf(grailsApplication.config.aloc.threads), getTaskPath()]
 
-        runCmd(cmd, true)
+        runCmd(cmd, true, grailsApplication.config.aloc.timeout)
 
         def replaceMap = [:] as LinkedHashMap
         envnameslist.each {
@@ -69,7 +69,7 @@ class Classification extends SlaveProcess {
                "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                getTaskPath() + "aloc.asc", getTaskPath() + task.id + "_aloc.tif"]
         task.message = "asc > tif"
-        runCmd(cmd, true)
+        runCmd(cmd, true, grailsApplication.config.aloc.timeout)
 
         if (new File(getTaskPath() + task.id + "aloc.sld").exists()) {
             File target = new File(grailsApplication.config.data.dir + '/layer/' + task.id + "_aloc.sld")

@@ -242,7 +242,11 @@ class MonitorService {
                                 def repeat = 0
                                 while (repeat < 5) {
                                     try {
-                                        tasksService.update(id, [status: 1, slave: slaveUrl, url: response.url, message: 'starting'])
+                                        if (response.failed) {
+                                            tasksService.update(id, [status: 3, slave: slaveUrl, url: response.url, message: 'failed'])
+                                        } else {
+                                            tasksService.update(id, [status: 1, slave: slaveUrl, url: response.url, message: 'starting'])
+                                        }
                                         repeat = 5
                                     } catch (err) {
                                         Thread.sleep(500)
@@ -253,6 +257,8 @@ class MonitorService {
                                         }
                                     }
                                 }
+                            } else {
+                                tasksService.update(id, [status: 3, message: 'failed'])
                             }
                         }
                     }

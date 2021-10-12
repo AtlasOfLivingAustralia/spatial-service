@@ -45,7 +45,7 @@ class TaskService {
     Map tasks = [:] as ConcurrentHashMap
     final Object createTaskLock = new Object()
 
-    Map running = [:]
+    Map running = [:] as ConcurrentHashMap
 
     def getActiveThreads() {
         Map ts = [:]
@@ -104,12 +104,28 @@ class TaskService {
             TaskThread t = new TaskThread(this, request)
             t.start()
 
-            running.put(request.id, [request: request, thread: t])
+            //find spec
+            getAllSpec().each { spec ->
+                if (spec.name.equalsIgnoreCase(request.name)) {
+                    req.spec = spec
+                }
+            }
+
+            running.put(request.id, [request: request, thread: t, startTime: System.currentTimeMillis(),
+                                     isAdminTask: req.spec.private.public == false])
         } catch (err) {
             log.error "failed to start thread for task: " + req.id, err
             req.output.put(System.currentTimeMillis(), "unknown error (id:${req.id})")
-            req.message = 'finished'
-            req.finished = true
+            req.message = 'error'
+            req.status = 3
+
+            try {
+                slaveService.signalMasterImmediately(req)
+            } catch (Exception ex) {
+                log.error("problem signaling master that task is cancelled: " + taskId, ex)
+            }
+
+            running.remove(request.id)
         }
     }
 
@@ -272,22 +288,40 @@ class TaskService {
         map
     }
 
-    //TODO: implement
     def cancel(taskId) {
-        //tasks.remove(task.id)
+        def successful = true
         def info = running.get(taskId)
         if (info) {
             try {
+                if (info.request) {
+                    info.request.message = 'cancelled'
+                    info.request.status = 2 //2==cancelled
+                }
+
                 info.thread.interrupt();
             } catch (Exception e) {
                 log.error("problem cancelling task: " + taskId, e)
+
+                if (info.request) {
+                    info.request.message = 'error'
+                    info.request.status = 3 //3==error
+                }
+
+                successful = false
+            } finally {
+                try {
+                    slaveService.signalMasterImmediately(request)
+                } catch (Exception ex) {
+                    log.error("problem signaling master that task is cancelled: " + taskId, ex)
+                }
+
             }
         }
 
-        true
+        running.remove(taskId)
+
+        successful
     }
-
-
 
     def newTask(params) {
         def task
@@ -307,7 +341,7 @@ class TaskService {
 
     def status(id) {
         if (id == null) {
-            slaveService.statusUpdates
+            [:]
         } else {
             def t = tasks.get(id)
             if (t == null) {
@@ -325,13 +359,11 @@ class TaskService {
 
         if (errors) {
             task.output.put(System.currentTimeMillis(), "input errors: " + errors.toString())
-            task.message = 'finished'
-            task.finished = true
+            task.message = 'failed'
+            task.status = 3 //3==failed
 
-            // save
-            def status = getStatus(task)
-            status.put('finished', true)
-            [status: status, id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
+            // save as cancelled
+            [failed: true, id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
         } else {
             // start
             start(task)
@@ -407,13 +439,20 @@ class TaskService {
                 log.debug "task:${request.id} finished"
 
                 taskService.slaveService.signalMasterImmediately(request)
-
-                taskService.slaveService.statusUpdates.remove(request.id)
-
-                //taskService.tasks.remove(request.id)
             } catch (err) {
                 if (err instanceof InterruptedException) {
                     request.history.put(System.currentTimeMillis(), "cancelled (id:${request.id})")
+
+                    // attempt to cancel Util.cmd
+                    if (request.proc) {
+                        try {
+                            request.proc.destroy()
+                            request.errorGobbler.interrupt()
+                            request.outputGobbler.interrupt()
+                        } catch (Exception ex) {
+                            log.error "error cancelling cmd in progress: ${request.cmd}", ex
+                        }
+                    }
 
                 } else {
                     log.error "error running request: ${request.id}", err
@@ -425,9 +464,6 @@ class TaskService {
 
                 taskService.slaveService.signalMasterImmediately(request)
 
-                taskService.slaveService.statusUpdates.remove(request.id)
-
-                //taskService.tasks.remove(request.id)
             }
             log.debug 'about to remove running task'
 

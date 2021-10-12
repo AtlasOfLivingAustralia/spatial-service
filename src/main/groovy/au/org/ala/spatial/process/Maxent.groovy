@@ -26,7 +26,7 @@ import org.apache.commons.io.IOUtils
 class Maxent extends SlaveProcess {
 
     void start() {
-        //update ALOC
+        //update maxent
         slaveService.getFile('/modelling/maxent/maxent.jar')
 
         //list of layers
@@ -87,7 +87,7 @@ class Maxent extends SlaveProcess {
         cmd.eachWithIndex { def entry, int i ->
             cmdList[i] = entry
         }
-        runCmd(cmdList, true)
+        runCmd(cmdList, true, grailsApplication.config.maxent.timeout)
 
         //format output
 
