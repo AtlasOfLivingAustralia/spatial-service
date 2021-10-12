@@ -389,11 +389,11 @@ class Util {
         return "\"" + s.replace("\"", "\"\"").replace("\\", "\\\\") + "\""
     }
 
-    static int runCmd(String[] cmd) {
-        return runCmd(cmd, false, null)
+    static int runCmd(String[] cmd, Long timeout) {
+        return runCmd(cmd, false, null, timeout)
     }
 
-    static int runCmd(String[] cmd, Boolean logToTask, Task task) {
+    static int runCmd(String[] cmd, Boolean logToTask, Task task, Long timeout) {
         int exitValue = 1
 
         ProcessBuilder builder = new ProcessBuilder(cmd)
@@ -414,7 +414,12 @@ class Util {
             errorGobbler.start()
             outputGobbler.start()
 
-            int exitVal = proc.waitFor()
+            // add cmd object to task so it can be cancelled
+            task.proc = proc;
+            task.errorGobbler = errorGobbler
+            task.outputGobbler = outputGobbler
+
+            int exitVal = proc.waitForOrKill(timeout)
 
             errorGobbler.interrupt()
             outputGobbler.interrupt()
@@ -424,6 +429,11 @@ class Util {
         } catch (Exception e) {
             log.error(e.getMessage(), e)
         } finally {
+            // remove cmd object from task
+            task.proc = null
+            task.errorGobbler = null
+            task.outputGobbler = null
+
             if (proc) {
                 try {
                     proc.getInputStream().close()

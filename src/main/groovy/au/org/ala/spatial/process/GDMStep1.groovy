@@ -92,7 +92,7 @@ class GDMStep1 extends SlaveProcess {
         // 6. run GDM
         log.error("running GDM:" + grailsApplication.config.gdm.dir.toString() + "-g1 " + params)
         String[] cmd = [grailsApplication.config.gdm.dir.toString(), "-g1", params]
-        runCmd(cmd, true)
+        runCmd(cmd, true, grailsApplication.config.gdm.timeout)
 
         Scanner sc = new Scanner(new File(getTaskPath() + "Cutpoint.csv"))
         // discard header

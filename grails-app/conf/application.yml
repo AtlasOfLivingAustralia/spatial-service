@@ -152,6 +152,13 @@ shp2pgsql.path: "/usr/bin/shp2pgsql"
 gdal.dir: "/usr/bin/"
 gdm.dir: "/data/spatial-data/modelling/gdm/DoGdm"
 
+# 900000ms=15 minutes
+gdm.timeout: 900000
+aloc.timeout: 900000
+maxent.timeout: 900000
+# 36000000=10 hours
+admin.timeout: 36000000
+
 aloc.xmx: "6G"
 aloc.threads: 4
 maxent.mx: "1G"
@@ -166,9 +173,12 @@ slave.enable: True
 service.enable: True
 
 # time between pushing status updates to the master for a task
-statusTime: 3000
+statusTime: 5000
 retryCount: 10
 retryTime: 30000
+
+# taskTimeoutTime
+taskTimeoutTime: 900000
 
 #
 #  CAS SETTINGS
