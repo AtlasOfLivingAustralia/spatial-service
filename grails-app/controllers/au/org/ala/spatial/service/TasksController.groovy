@@ -389,10 +389,6 @@ class TasksController {
 
     def activeThreads() {
         List tasks = new ArrayList(taskService.getActiveTasks())
-
-        tasks.add([taskId: "29420", "name": "GeneratePoints", "created":1634008704250,"history":[1634008704284:"running (id:29420)",1634008704424:"69 points have been created."],activeThread: 1634008701424])
-        tasks.add([taskId: "2", "name": "I am not here", "created":1634008704250,"history":[1634008704284:"running (id:29420)",1634008704424:"69 points have been created."]])
-        tasks.add([taskId: "3", "name": "I am not here", activeThread: 1634008701424, status:2])
         [tasks: tasks]
     }
 

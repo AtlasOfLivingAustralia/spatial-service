@@ -32,7 +32,6 @@
 
 
 <div id="list-task" class="content scaffold-list" role="main">
-Check "active thread" column. If the column is empty, it indicates the thread running this task is completed or not started yet.
     <table class="table table-bordered table-striped" name="tasks">
         <thead>
             <th>Id</th>
@@ -64,10 +63,7 @@ Check "active thread" column. If the column is empty, it indicates the thread ru
                 <td><g:formatDate date="${task.created}" format="yyyy-MM-dd hh:mm:ss"/></td>
                 <td><g:formatDate date="${task.activeThread}" format="yyyy-MM-dd hh:mm:ss"/></td>
 
-
                 <td>
-                    <g:link action="reRun" class="btn btn-sm btn-default" id="${task.taskId}"
-                            params="${params}">re-run task</g:link>
                      <g:link action="cancel" class="btn btn-sm btn-default" id="${task.taskId}"
                             params="${params}">cancel</g:link>
                 </td>
@@ -75,6 +71,12 @@ Check "active thread" column. If the column is empty, it indicates the thread ru
         </g:each>
         </tbody>
     </table>
+
+    <b>The purpose of this page is to identify abnormal tasks, e.g. the thread is completed but the status of this task still remain 'running'</b>
+    <li>Check "active thread" column. If the column is empty, it indicates the thread attached to this task is completed or not started yet. </li>
+    <li>Compare the time of 'Created' and 'Active thread', if those two timestamps are very close, it is very likely that the thread is not started yet.</li>
+    <li>If time of "Created" is much earlier than current timestamp, it is very likely the related thread is completed but the status of task is not updated properly.</li>
+    <li>If no logs or status or created time, but 'Active thread' exists, it means the task may be manually interrupted and the thread is an orphan thread.</li>
 </div>
 </body>
 </html>
