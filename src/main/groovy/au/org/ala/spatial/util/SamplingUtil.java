@@ -4,7 +4,11 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.spatial.Util;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.springframework.http.*;
+import org.springframework.web.client.RestOperations;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,6 +17,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -23,51 +28,30 @@ public class SamplingUtil {
 
     public static List<String> sample(String spatialServiceUrl, String[] layers, double[][] points) {
         ArrayList<String> output = null;
+        long start = System.currentTimeMillis();
+
+        String fields = StringUtils.join(layers, ",");
+        String strPoints = "";
+        for (int i = 0; i < points.length; i++) {
+            if (i > 0) {
+                strPoints += ",";
+            }
+            strPoints += (String.valueOf(points[i][1])) + "," + String.valueOf(points[i][0]);
+        }
+        String requestBody = "fids=" + fields + "&points=" + strPoints;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        HttpEntity<String> request = new HttpEntity<String>(
+                requestBody, headers);
 
         try {
-            long start = System.currentTimeMillis();
-            URL url = new URL(spatialServiceUrl + "/intersect/batch");
-            URLConnection c = url.openConnection();
-            c.setDoOutput(true);
+            RestOperations restTemplate = new RestTemplate();
+            ResponseEntity<String> taskResponse = restTemplate.postForEntity(spatialServiceUrl + "/intersect/batch", request, String.class);
 
-            OutputStreamWriter out = null;
-            try {
-                out = new OutputStreamWriter(c.getOutputStream());
-                out.write("fids=");
-                for (int i = 0; i < layers.length; i++) {
-                    if (i > 0) {
-                        out.write(",");
-                    }
-                    out.write(layers[i]);
-                }
-                out.write("&points=");
-                for (int i = 0; i < points.length; i++) {
-                    if (i > 0) {
-                        out.write(",");
-                    }
-                    out.write(String.valueOf(points[i][1]));
-                    out.write(",");
-                    out.write(String.valueOf(points[i][0]));
-                }
-                out.flush();
-            } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-            } finally {
-                if (out != null) {
-                    try {
-                        out.close();
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    }
-                }
-            }
-            String outputStr = IOUtils.toString(c.getInputStream());
-            JSONObject jo = JSONObject.fromObject(outputStr);
+            if (taskResponse.getStatusCode() == HttpStatus.OK) {
+                JSONObject taskResult = JSONObject.fromObject(taskResponse.getBody());
+                String checkUrl = taskResult.getString("statusUrl");
 
-            if (jo.has("error")) {
-                logger.error("Batch intersect failed: " + jo.get("error"));
-            } else {
-                String checkUrl = jo.getString("statusUrl");
                 //check status
                 boolean notFinished = true;
                 String downloadUrl = null;
@@ -75,7 +59,7 @@ public class SamplingUtil {
                     //wait 5s before querying status
                     Thread.sleep(5000);
 
-                    jo = JSONObject.fromObject(Util.getUrl(checkUrl));
+                    JSONObject jo = JSONObject.fromObject(Util.getUrl(checkUrl));
 
                     if (jo.containsKey("error")) {
                         notFinished = false;
@@ -156,10 +140,13 @@ public class SamplingUtil {
                 logger.info("sample time for " + layers.length + " layers and " + 3 + " coordinates: get response="
                         + (mid - start) + "ms, write response=" + (end - mid) + "ms");
 
+            } else {
+                logger.error("Batch intersect failed: " + taskResponse.getStatusCode());
             }
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+        } catch(Exception e) {
+            logger.error("Failed to create a layer intersect task: " + e.getMessage());
         }
+
         return output;
     }
 }

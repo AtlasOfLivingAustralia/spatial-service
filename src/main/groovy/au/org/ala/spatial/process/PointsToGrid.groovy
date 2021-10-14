@@ -114,6 +114,7 @@ class PointsToGrid extends SlaveProcess {
         }
 
         if (sitesBySpecies) {
+            log.debug("building sites by species matrix for " + records.getSpeciesSize() + " species in " + records.getRecordsSize() + " occurrences")
             taskLog("building sites by species matrix for " + records.getSpeciesSize() + " species in " + records.getRecordsSize() + " occurrences")
 
             SitesBySpecies sbs = new SitesBySpecies(gridCellSize, bbox)
@@ -125,6 +126,7 @@ class PointsToGrid extends SlaveProcess {
 
         if (occurrenceDensity) {
             taskLog("building occurrence density layer")
+            log.debug("building occurrence density layer")
             OccurrenceDensity od = new OccurrenceDensity(movingAverage, gridCellSize, bbox)
             od.write(records, getTaskPath(), "occurrence_density", 1, true, true)
 

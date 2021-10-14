@@ -1158,6 +1158,7 @@ public class Scatterplot {
             scanners[i].close();
         }
 
+        logger.info( p.length + " sampling points done.");
         return d;
     }
 
