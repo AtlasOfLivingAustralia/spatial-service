@@ -303,14 +303,14 @@ class ShapesController {
         String name = json.name
         String description = json.description
         String user_id = json.user_id
-        wkt = fixWkt(wkt)
-
-        if (!isWKTValid(wkt)) {
-            retMap.put("error", "Invalid WKT")
-            return retMap
-        }
-
         try {
+            wkt = fixWkt(wkt)
+
+            if (!isWKTValid(wkt)) {
+                retMap.put("error", "Invalid WKT")
+                return retMap
+            }
+
             if (pid != null) {
                 objectDao.updateUserUploadedObject(pid, wkt, name, description, user_id)
                 objectDao.updateObjectNames()
@@ -321,12 +321,12 @@ class ShapesController {
                 retMap.put("id", Integer.parseInt(generatedPid))
             }
 
-        } catch (DataAccessException ex) {
-            log.error("Malformed WKT.", ex)
-            retMap.put("error", "Malformed WKT.")
-        } catch (Exception ex) {
-            log.error("Error uploading WKT", ex)
-            retMap.put("error", "Unexpected error. Please notify support@ala.org.au.")
+        } catch (ParseException e) {
+            log.error("Invalid WKT:", e.message)
+            retMap.put("error", "Invalid WKT:" + e.message)
+        } catch (Exception e) {
+            log.error("Error in processing WKT", e.message)
+            retMap.put("error", "Unexpected error: " + e.message)
         }
 
         return retMap
@@ -773,35 +773,27 @@ class ShapesController {
     private String fixWkt(String wkt) {
         // only attempt to fix POLYGON and MULTIPOLYGON
         if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON")) {
-            WKTReader wktReader = new WKTReader()
             try {
+                WKTReader wktReader = new WKTReader()
                 Geometry geom = wktReader.read(wkt.toString())
 
                 // Use CCW for exterior rings. Normalizing will use the JTS default (CW). Reverse makes it CCW.
                 Geometry validGeom = GeomMakeValid.makeValid(geom)
                 validGeom.normalize()
-                return validGeom.reverse().toText()
-            } catch (ParseException ex) {
-                log.trace(ex.getMessage(), ex)
-                return wkt
+                wkt = validGeom.reverse().toText()
+            } catch (Exception e) {
+                throw new ParseException(e.getMessage())
             }
-        } else {
-            return wkt
         }
+        return wkt
     }
 
     private boolean isWKTValid(String wkt) {
         // only validate POLYGON and MULTIPOLYGON
         if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON")) {
             WKTReader wktReader = new WKTReader()
-            try {
-                Geometry geom = wktReader.read(wkt.toString())
-
-                return geom.isValid()
-            } catch (ParseException ex) {
-                log.trace(ex.getMessage(), ex)
-                return false
-            }
+            Geometry geom = wktReader.read(wkt.toString())
+            return geom.isValid()
         }
         return true
     }
