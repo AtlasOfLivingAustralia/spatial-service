@@ -16,6 +16,7 @@ buildscript {
     }
 }
 
+
 ext {
     // The drivers we want to use
     drivers = ["firefox", "chrome", "chromeHeadless"]
@@ -41,6 +42,10 @@ war {
 
 springBoot {
     mainClassName = "au.org.ala.spatial.service.Application"
+}
+
+buildProperties {
+    inputs.property("info.app.build.date", new Date().format('yyyy-MM-dd HH:mm:ss'))
 }
 
 repositories {
