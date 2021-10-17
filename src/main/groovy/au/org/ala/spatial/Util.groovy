@@ -415,9 +415,11 @@ class Util {
             outputGobbler.start()
 
             // add cmd object to task so it can be cancelled
-            task.proc = proc;
-            task.errorGobbler = errorGobbler
-            task.outputGobbler = outputGobbler
+            if (task) {
+                task.proc = proc;
+                task.errorGobbler = errorGobbler
+                task.outputGobbler = outputGobbler
+            }
 
             int exitVal = proc.waitForOrKill(timeout)
 
