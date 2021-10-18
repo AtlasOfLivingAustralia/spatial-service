@@ -15,8 +15,10 @@
 
 package au.org.ala.spatial.slave
 
-class Task {
+import au.org.ala.spatial.StreamGobbler
 
+class Task {
+    static transients = ['proc',"errorGobbler", "outputGobbler"]
     Long id = System.currentTimeMillis()
 
     // date/time created
@@ -44,4 +46,8 @@ class Task {
 
     // finished flag
     Boolean finished = false
+
+    Process proc
+    StreamGobbler errorGobbler
+    StreamGobbler outputGobbler
 }

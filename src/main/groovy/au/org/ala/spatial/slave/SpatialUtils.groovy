@@ -177,9 +177,6 @@ class SpatialUtils {
                    , inputFile
                    , outputFile]
 
-
-        Util.runCmd(cmd, 36000000) // 10hr timeout
-
         cmd = [gdalPath + '/gdaladdo',
                "-r", "cubic"
                , outputFile

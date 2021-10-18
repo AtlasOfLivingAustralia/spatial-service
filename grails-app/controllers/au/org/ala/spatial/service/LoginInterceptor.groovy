@@ -50,6 +50,8 @@ class LoginInterceptor {
         // UserId is required
         // May need to check role
         if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
+            if (serviceAuthService.hasValidApiKey())
+                return true
             role = grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
         } else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
             RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)

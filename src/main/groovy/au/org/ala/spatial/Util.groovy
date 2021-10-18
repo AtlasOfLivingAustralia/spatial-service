@@ -432,9 +432,11 @@ class Util {
             log.error(e.getMessage(), e)
         } finally {
             // remove cmd object from task
-            task.proc = null
-            task.errorGobbler = null
-            task.outputGobbler = null
+            if (task) {
+                task.proc = null
+                task.errorGobbler = null
+                task.outputGobbler = null
+            }
 
             if (proc) {
                 try {
