@@ -55,7 +55,7 @@ class SlaveController {
         render m as JSON
     }
 
-    //TODO: limits vs running tasks, resources, etc 
+    //TODO: limits vs running tasks, active threads resources, etc
     def status() {
         if (!slaveAuthService.isValid(params.api_key)) {
             def err = [error: 'not authorised']
@@ -63,7 +63,7 @@ class SlaveController {
             return
         }
 
-        def map = [limits    : slaveService.getLimits(), tasks: taskService.tasks,
+        def map = [limits    : slaveService.getLimits(), tasks: taskService.running,
                    file_locks: [
                            tasks_waiting: fileLockService.locks.collect { k, v -> [id: v.task.id, files: v.files] },
                            locked_files : fileLockService.filesList.collect { k, v -> [file: k, id: v.id] }]]

@@ -4,7 +4,7 @@
     <title>${layer.displayname}</title>
     <meta name="breadcrumbs"
           content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink(controller: 'layer', action: 'list')}, Layers"/>
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="ala-main"/>
 </head>
 
 <body>

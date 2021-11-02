@@ -1,7 +1,6 @@
 /**
- * To run the tests with all browsers just run “./gradlew firefoxTest”
  *
- * ./gradlew firefoxTest -baseUrl="https://spatial-test.ala.org.au" --tests="AddFacetSpec" -Dusername=xxxx -Dpassword=xxxxx
+ * ./gradlew integrationTest -DbaseUrl="https://spatial-test.ala.org.au" --tests="AddFacetSpec" -Dusername=xxxx -Dpassword=xxxxx
  *
  * Username and password can be stored in default config file: /data/spatial-hub/test/default.properties
  * We can also point to another property file by passing --DconfigFile=xxxxxx

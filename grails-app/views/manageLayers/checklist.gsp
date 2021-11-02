@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Checklist</title>
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
 <body class="fluid">

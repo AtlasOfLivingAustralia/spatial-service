@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="layout" content="main">
+    <meta name="layout" content="ala-main">
     <title>Tasks</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
     <g:set var="entityName" value="${message(code: 'task.label', default: 'Task')}"/>
@@ -43,6 +43,7 @@
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
             <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+            <li><g:link controller="tasks" action="activeThreads">Show active Tasks</g:link></li>
             <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
         </div>
     </div>
@@ -116,6 +117,7 @@
             <th></th>
         </thead>
         <tbody>
+        <g:set var="status" value="${["Queued","Running","Cancelled","Error","Successful"]}"></g:set>
         <g:each in="${taskInstanceList}" status="i" var="taskInstance">
             <tr class="${(i % 2) == 0 ? 'odd' : 'even'}">
 
@@ -129,8 +131,8 @@
                 <td>${fieldValue(bean: taskInstance, field: "tag") && fieldValue(bean: taskInstance, field: "tag") != 'null' ?  fieldValue(bean: taskInstance, field: "tag") : ''}</td>
 
                 <td><g:formatDate date="${taskInstance.created}" format="dd/MM/yy hh:mm:ss"/></td>
-
-                <td>${fieldValue(bean: taskInstance, field: "status")}</td>
+                <g:set var="statusIdx" value="${fieldValue(bean: taskInstance, field: "status")}"/>
+                <td>${status[statusIdx.toInteger()]}</td>
 
                 <td><g:each in="${taskInstance.history}" var="h">
                     <g:formatDate date="${h.key}" format="dd/MM/yy hh:mm:ss"/>=${h.value}<br/>

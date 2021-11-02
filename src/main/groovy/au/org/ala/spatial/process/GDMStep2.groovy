@@ -66,7 +66,7 @@ class GDMStep2 extends SlaveProcess {
         String params = updateParamfile(cutpoint, distance ? "1" : "0", weighting, "1", sitePairsSize, getTaskPath())
 
         // 6. run GDM
-        runCmd([grailsApplication.config.gdm.dir, "-g2", params] as String[], true)
+        runCmd([grailsApplication.config.gdm.dir, "-g2", params] as String[], true, grailsApplication.config.gdm.timeout)
 
         // 7. process params file
 
@@ -88,7 +88,7 @@ class GDMStep2 extends SlaveProcess {
                        "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                        getTaskPath() + lyr + ".bil", getTaskPath() + 'gdm_' + lyr + "_" + task.id + ".tif"]
             task.message = "bil > tif"
-            runCmd(cmd as String[], true)
+            runCmd(cmd as String[], true, grailsApplication.config.gdm.timeout)
 
             File target = new File(grailsApplication.config.data.dir + '/layer/gdm_' + lyr + "_" + task.id + ".tif")
             if (target.exists()) target.delete()

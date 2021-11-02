@@ -3,7 +3,7 @@
 <head>
     <title>Edit Layers</title>
     <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>

@@ -61,7 +61,8 @@ class IntersectController {
 
         try {
             if (request.post && !params.containsKey('fids') && !params.containsKey('points')) {
-                for (String param : request.reader.text.split("&")) {
+                String text =  request.reader.text
+                for (String param : text.split("&")) {
                     if (param.startsWith("fids=")) {
                         fids = param.substring(5)
                     } else if (param.startsWith("points=")) {

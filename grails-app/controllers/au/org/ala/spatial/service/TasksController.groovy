@@ -18,6 +18,7 @@ package au.org.ala.spatial.service
 import au.org.ala.RequireAdmin
 import au.org.ala.RequirePermission
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.slave.TaskService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.grails.web.json.JSONObject
@@ -26,8 +27,11 @@ import org.grails.web.json.JSONObject
 class TasksController {
 
     TasksService tasksService
+    TaskService taskService
+
     def serviceAuthService
     def authService
+
 
     /**
      * admin only or api_key
@@ -381,6 +385,11 @@ class TasksController {
         } else {
             redirect(action: "index", params: params)
         }
+    }
+
+    def activeThreads() {
+        List tasks = new ArrayList(taskService.getActiveTasks())
+        [tasks: tasks]
     }
 
 }

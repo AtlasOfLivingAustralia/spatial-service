@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="layout" content="main">
+    <meta name="layout" content="ala-main">
     <g:set var="entityName" value="${message(code: 'task.label', default: 'Task')}"/>
     <title><g:message code="default.create.label" args="[entityName]"/></title>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
