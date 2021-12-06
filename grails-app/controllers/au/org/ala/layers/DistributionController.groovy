@@ -20,6 +20,7 @@ import au.org.ala.layers.dto.Distribution
 import au.org.ala.layers.dto.MapDTO
 import au.org.ala.spatial.util.AttributionCache
 import grails.converters.JSON
+import groovy.json.JsonSlurper
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 import org.json.simple.parser.ParseException
@@ -108,10 +109,10 @@ class DistributionController {
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrl(distributions.get(0))
             render distributions.get(0).toMap().findAll {
-                    i -> i.value != null && "class" != i.key
+                i -> i.value != null && "class" != i.key
             } as JSON
         } else {
-            render(status: 404, text: 'no records for this lsid')
+            render text:[] as JSON
         }
     }
 
@@ -126,7 +127,7 @@ class DistributionController {
                 }
             } as JSON
         } else {
-            render(status: 404, text: 'no records for this lsid')
+            render text:[] as JSON
         }
     }
 
@@ -205,10 +206,12 @@ class DistributionController {
         } finally {
             try {
                 input.close()
-            } catch (err) {}
+            } catch (err) {
+            }
             try {
                 response.outputStream.close()
-            } catch (err) {}
+            } catch (err) {
+            }
         }
     }
 
@@ -223,6 +226,8 @@ class DistributionController {
      *                   point's decimal latitude (with key "decimalLatitude") and
      *                   decimal longitude (with key "decimalLongitude"). The decimal
      *                   latitude and longitude values must be numbers.
+     *
+     *                   ALSO, the points can be in POST BODY
      * @param response the http response
      * @return A map containing the distance outside the expert distribution for
      * each point which falls outside the area defined by the
@@ -230,34 +235,34 @@ class DistributionController {
      * @throws Exception
      */
     def outliers(String lsid) {
+        log.info("Calculating EDL of " + lsid)
+        JSONObject pointsMap
         def pointsJson = params.get('pointsJson', null)
 
         if (pointsJson == null) {
-            render(status: 404, text: 'missing parameter pointsJson')
+            pointsMap = request.getJSON()
+        } else {
+            pointsMap = (JSONObject) new JSONParser().parse(pointsJson as String)
         }
 
-        try {
-            JSONObject pointsMap = (JSONObject) new JSONParser().parse(pointsJson as String)
-
+        if (pointsMap == null) {
+            render(status: 400, text: 'missing parameter pointsJson / no points via post body')
+        }
+        //Check if it has EDL
+        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
+        if (distributions.size() > 0) {
             try {
                 Map outlierDistances = distributionDao.identifyOutlierPointsForDistribution(lsid, pointsMap,
                         Distribution.EXPERT_DISTRIBUTION)
                 render outlierDistances as JSON
-            } catch (IllegalArgumentException ex) {
+            } catch (ParseException | ClassCastException ex) {
                 log.error 'failed to get outliers', ex
-                render(status: 400, text: 'No expert distribution for species associated with supplied lsid')
-                return null
+                render(status: 400, text: 'Invalid JSON for point information')
+                return
             }
-        } catch (ParseException ex) {
-            log.error 'failed to get outliers', ex
-            render(status: 400, text: 'Invalid JSON for point information')
-            return null
-        } catch (ClassCastException ex) {
-            log.error 'failed to get outliers', ex
-            render(status: 400, text: 'Invalid format for point information')
-            return null
         }
     }
+
 
     def overviewMapPng(String geomIdx) {
         map(geomIdx)

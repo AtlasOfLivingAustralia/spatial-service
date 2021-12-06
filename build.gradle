@@ -23,7 +23,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "1.0.0"
+version "1.0.1"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -134,7 +134,7 @@ dependencies {
     compile "org.codehaus.jackson:jackson-core-asl:1.8.6"
     compile "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
-    compile("au.org.ala:layers-store:2.0.7-SNAPSHOT") {
+    compile("au.org.ala:layers-store:2.0.8-SNAPSHOT") {
         exclude module: "spring-context"
         exclude module: "spring-jdbc"
         exclude module: "spring-orm"
@@ -161,9 +161,6 @@ dependencies {
 configurations {
     all {
         exclude group: "org.slf4j", module: "slf4j-nop"
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-        exclude group: 'ch.qos.logback', module: 'logback-core'
     }
 }
 
