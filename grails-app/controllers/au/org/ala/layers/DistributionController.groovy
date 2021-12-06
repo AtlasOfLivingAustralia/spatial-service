@@ -260,8 +260,6 @@ class DistributionController {
                 render(status: 400, text: 'Invalid JSON for point information')
                 return
             }
-        } else {
-            render(status: 400, text: 'No expert distribution for species associated with supplied lsid')
         }
     }
 
