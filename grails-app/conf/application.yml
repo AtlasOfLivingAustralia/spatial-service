@@ -328,9 +328,9 @@ spring:
 #    host: "localhost"
 #    port: 6379
 #    password: ""
-logging:
-  level:
-    root: INFO
+#logging:
+#  level:
+#    root: INFO
 
 environments:
     development:

@@ -322,10 +322,10 @@ class ShapesController {
             }
 
         } catch (ParseException e) {
-            log.error("Invalid WKT:", e.message)
+            log.error("Invalid WKT:", e.message, e)
             retMap.put("error", "Invalid WKT:" + e.message)
         } catch (Exception e) {
-            log.error("Error in processing WKT", e.message)
+            log.error("Error in processing WKT", e.message, e)
             retMap.put("error", "Unexpected error: " + e.message)
         }
 

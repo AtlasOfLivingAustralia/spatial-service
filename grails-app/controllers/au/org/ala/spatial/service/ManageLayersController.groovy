@@ -22,6 +22,7 @@ import au.org.ala.layers.dao.LayerDAO
 import grails.converters.JSON
 import grails.converters.XML
 import grails.core.GrailsApplication
+import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.hibernate.criterion.CriteriaSpecification
@@ -55,6 +56,7 @@ class ManageLayersController {
      * @return
      */
     def layers() {
+        log.info("List avaliable layers")
         Map map = [:]
         map.put("layers", manageLayersService.getAllLayers(null))
 

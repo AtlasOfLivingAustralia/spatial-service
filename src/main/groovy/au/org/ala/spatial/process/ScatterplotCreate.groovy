@@ -70,6 +70,7 @@ class ScatterplotCreate extends SlaveProcess {
         try {
             ScatterplotStyleDTO style = new ScatterplotStyleDTO()
             taskLog("Creating scatter plot.....")
+            log.info("Creating scatter plot.")
             Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString(), task.input.layersServiceUrl)
 
             if (layers.length <= 2) {
