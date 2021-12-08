@@ -23,7 +23,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "1.0.1-SNAPSHOT"
+version "1.0.2-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -161,9 +161,6 @@ dependencies {
 configurations {
     all {
         exclude group: "org.slf4j", module: "slf4j-nop"
-//        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-//        exclude group: 'ch.qos.logback', module: 'logback-classic'
-//        exclude group: 'ch.qos.logback', module: 'logback-core'
     }
 }
 
