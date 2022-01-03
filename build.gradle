@@ -18,6 +18,9 @@ buildscript {
     }
 }
 
+plugins {
+    id 'war'
+}
 
 ext {
     // The drivers we want to use
@@ -231,6 +234,7 @@ publishing {
             }
         }
     }
+
     publications {
         MavenPublication(MavenPublication) {
             pom.withXml {
