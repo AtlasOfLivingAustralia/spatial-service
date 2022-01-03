@@ -18,6 +18,10 @@ buildscript {
 }
 
 
+plugins {
+    id 'war'
+}
+
 ext {
     // The drivers we want to use
     drivers = ["firefox", "chrome", "chromeHeadless"]
@@ -231,8 +235,7 @@ publishing {
         }
     }
     publications {
-        mavenJar(MavenPublication) {
-
+        MavenPublication(org.gradle.api.publish.maven.MavenPublication) {
             pom.withXml {
                 def pomNode = asNode()
                 pomNode.dependencyManagement.replaceNode {}
@@ -246,7 +249,7 @@ publishing {
                     it.replaceNode {}
                 }
             }
-            artifact bootJar
+            artifact bootWar
         }
     }
 }
