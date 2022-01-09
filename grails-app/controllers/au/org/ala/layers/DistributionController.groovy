@@ -25,6 +25,9 @@ import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 import org.json.simple.parser.ParseException
 
+import java.nio.charset.StandardCharsets
+import java.util.stream.Collectors
+
 class DistributionController {
 
     def distributionsService
@@ -117,6 +120,7 @@ class DistributionController {
     }
 
     def lsids(String lsid) {
+        lsid = URLDecoder.decode(lsid, StandardCharsets.UTF_8.toString())
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
         if (distributions != null && !distributions.isEmpty()) {
@@ -219,7 +223,7 @@ class DistributionController {
      * For a given set of points and an lsid, identify the points which do not
      * fall within the expert distribution associated with the lsid.
      *
-     * @param lsid the lsid associated with the expert distribution
+     * @param lsid  URLEncoded REQUIRED. the lsid associated with the expert distribution
      * @param pointsJson the points to test in JSON format. This must be a map whose
      *                   keys are point ids (strings - typically these will be
      *                   occurrence record ids). The values are maps containing the
@@ -235,8 +239,9 @@ class DistributionController {
      * @throws Exception
      */
     def outliers(String lsid) {
-        log.info("Calculating EDL of " + lsid)
         JSONObject pointsMap
+        lsid = URLDecoder.decode(lsid, StandardCharsets.UTF_8.toString())
+
         def pointsJson = params.get('pointsJson', null)
 
         if (pointsJson == null) {
@@ -247,19 +252,28 @@ class DistributionController {
 
         if (pointsMap == null) {
             render(status: 400, text: 'missing parameter pointsJson / no points via post body')
+            return
         }
+
         //Check if it has EDL
+        log.info("Calculating the distance to ELD for " + lsid )
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
         if (distributions.size() > 0) {
             try {
                 Map outlierDistances = distributionDao.identifyOutlierPointsForDistribution(lsid, pointsMap,
                         Distribution.EXPERT_DISTRIBUTION)
                 render outlierDistances as JSON
-            } catch (ParseException | ClassCastException ex) {
-                log.error 'failed to get outliers', ex
-                render(status: 400, text: 'Invalid JSON for point information')
-                return
+            } catch (Exception e) {
+                log.error('Runtime error in calculating outliers of lsid: ' + lsid)
+                log.error('Details: ' + pointsMap)
+                Writer buffer = new StringWriter()
+                PrintWriter pw = new PrintWriter(buffer)
+                e.printStackTrace(pw)
+                log.error(e.toString());
+                render(status: 400, text: 'Spatial encounters runtime error when calculating outlier of lsid: ' + lsid)
             }
+        } else {
+            render [:] as JSON
         }
     }
 

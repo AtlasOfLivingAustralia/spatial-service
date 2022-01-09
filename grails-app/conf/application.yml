@@ -201,7 +201,6 @@ security:
     casServerUrlPrefix: 'https://auth.ala.org.au/cas'
     bypass: false # set to true for non-ALA deployment
     disableCAS: false
-    #roleAttribute: authority  Incorrect set this field will cause alaAdmin failed to load
     ignoreCase: true
     authCookieName: ALA-Auth
 
