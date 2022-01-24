@@ -192,19 +192,17 @@ taskTimeoutTime: 900000
 security:
   cas:
     casServerName: 'https://auth.ala.org.au'
+    uriFilterPattern: ['/alaAdmin/?.*']
+    uriExclusionFilterPattern: ['/portal/q/*','/portal/messages/*','/portal/sessionCache/*','/static/*','/assets/*']
+    authenticateOnlyIfLoggedInPattern: ['/portal/*','/','/portal/config/*','/portal/i18n/*','/hub/[a-zA-Z0-9]+']
     loginUrl: 'https://auth.ala.org.au/cas/login'
     logoutUrl: 'https://auth.ala.org.au/cas/logout'
-    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
-
-    bypass: false # set to true for non-ALA deployment
     gateway: false
-    uriExclusionFilterPattern: '/assets.*,/images.*,/css.*,/js.*,/less.*,'
-    uriFilterPattern: '/alaAdmin.*'
-    #if false, ticket params always proceed
-    #true, only processes urls listed in authenticateOnlyIfLoggedInFilterPattern
-    applyUriFiltersToTicketValidation: false
-    authenticateOnlyIfLoggedInFilterPattern: '/master,/master/.*,/manageLayers,/manageLayers/.*,/admin,/admin/.*,/layers/view/more/.*,/layer/download/.*,/workflow.*'
+    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
+    bypass: false # set to true for non-ALA deployment
     disableCAS: false
+    ignoreCase: true
+    authCookieName: ALA-Auth
 
 auth.admin_role: "ROLE_ADMIN"
 app.http.header.userId: "X-ALA-userId"

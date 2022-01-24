@@ -44,7 +44,7 @@ class LoginInterceptor {
             if (serviceAuthService.isLoggedIn() || serviceAuthService.hasValidApiKey()) {
                 return true
             } else {
-                accessDenied(STATUS_UNAUTHORISED,'Forbidden, ApiKey or user login required!')
+                return accessDenied(STATUS_UNAUTHORISED,'Forbidden, ApiKey or user login required!')
             }
         }
         // UserId is required
@@ -64,12 +64,12 @@ class LoginInterceptor {
             //Check role
             if (!Strings.isNullOrEmpty(role)) {
                 if ( !serviceAuthService.isRoleOf(role)) {
-                    accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: '+ role)
+                   return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: '+ role)
                 }
             }
             return true
         } else {
-            accessDenied(STATUS_UNAUTHORISED,'Forbidden, user login required!')
+             return  accessDenied(STATUS_UNAUTHORISED,'Forbidden, user login required!')
         }
     }
 
@@ -89,7 +89,7 @@ class LoginInterceptor {
             log.debug(header + ":" + value)
         }
 
-        if (!request.getHeader("accept")?.contains("application/json")) {
+        if (!request.getHeader("accept")?.toLowerCase().contains("application/json")) {
             String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
                     grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
             render view: "/login.gsp", model: [status: status, url: redirectUrl]
