@@ -27,7 +27,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "1.0.2-SNAPSHOT"
+version "1.0.4-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -65,6 +65,10 @@ configurations {
     developmentOnly
     runtimeClasspath {
         extendsFrom developmentOnly
+    }
+    compile {
+        //Avoid conflicting with 'org.hsqldb:hsqldb:2.4.1'
+        exclude group: 'hsqldb', module: 'hsqldb'
     }
 }
 
@@ -145,6 +149,7 @@ dependencies {
         exclude module: "spring-oxm"
         exclude module: "ands-pid-client"
         exclude module: "xalan"
+        //exclude module: "hsqldb"
     }
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
