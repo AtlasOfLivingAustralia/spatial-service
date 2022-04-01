@@ -176,6 +176,7 @@ class SpatialUtils {
                    "-co", "BIGTIFF=IF_SAFER"
                    , inputFile
                    , outputFile]
+        Util.runCmd(cmd, 36000000)
 
         cmd = [gdalPath + '/gdaladdo',
                "-r", "cubic"

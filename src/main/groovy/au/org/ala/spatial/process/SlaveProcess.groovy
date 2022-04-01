@@ -885,7 +885,7 @@ class SlaveProcess {
             }
             br.close()
 
-            Grid g = new Grid(null)
+            Grid g = new Grid()
             g.writeGrid(grd, data, lng1, lat1, lng1 + ncols * div, lat1 + nrows * div, div, div, nrows, ncols)
 
             if (!saveImage) {

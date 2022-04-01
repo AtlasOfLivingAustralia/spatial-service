@@ -38,12 +38,17 @@ class LogController {
      */
     @Transactional
     def index() {
-        def log = new Log(request.JSON)
-        if (!log.save()) {
-            log.errors.each {
-                logger.error(it)
+        try {
+            def log = new Log(request.JSON)
+            if (!log.save()) {
+                log.errors.each {
+                    logger.error(it)
+                }
             }
+        } catch(Exception e) {
+            log.warn("log info is broken, ignored!")
         }
+
         render status: 200
     }
 
