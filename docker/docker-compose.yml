@@ -1,0 +1,33 @@
+---
+networks:
+  geoserver_postgis: ~
+services:
+  geoserver:
+    image: bioatlas/ala-geoserver:v0.4
+    container_name: geoserver
+    environment:
+      - JAVA_OPTS=-Xmx2g -Xms128m -Xss512k -Djava.awt.headless=true
+    env_file: ./env/geoserver/.envgeoserver
+    volumes:
+      - /data/geoserver_data_dir:/data/geoserver_data_dir
+      - /data/spatial-data:/data/spatial-data
+    networks:
+      - geoserver_postgis
+    ports:
+      - "8079:8080"
+  postgis:
+    image: kartoza/postgis:12.4
+    container_name: postgis
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASS=postgres
+    networks:
+      - geoserver_postgis
+    ports:
+      - "5432:5432"
+    volumes:
+#      - /data/spatial-db:/data/spatial-db
+      - /data/spatial-db:/var/lib/postgresql
+#      - ./env/postgis/pg_hba.conf:/etc/postgresql/12/main/pg_hba.conf
+      - ./env/postgis/layersdb.sql:/docker-entrypoint-initdb.d/layersdb.sql
+version: "2"
