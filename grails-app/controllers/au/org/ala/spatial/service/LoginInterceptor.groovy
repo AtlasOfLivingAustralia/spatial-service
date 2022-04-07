@@ -39,21 +39,37 @@ class LoginInterceptor {
             return true
         }
 
+        //Calculating the required permission.
+        def permissionLevel = null;
+
+        if ( controllerClass?.isAnnotationPresent(RequirePermission)) {
+            permissionLevel = RequirePermission
+        } else if (controllerClass?.isAnnotationPresent(RequireLogin)){
+            permissionLevel = RequireLogin
+        } else if (controllerClass?.isAnnotationPresent(RequireAdmin)){
+            permissionLevel = RequireAdmin
+        }
+
+        if ( method?.isAnnotationPresent(RequirePermission)) {
+            permissionLevel = RequirePermission
+        } else if (controllerClass?.isAnnotationPresent(RequireLogin)){
+            permissionLevel = RequireLogin
+        } else if (method?.isAnnotationPresent(RequireAdmin)){
+            permissionLevel = RequireAdmin
+        }
+
         def role  // if require a certain level of ROLE
-        if ( method?.isAnnotationPresent(RequirePermission) || controllerClass?.isAnnotationPresent(RequirePermission) ) {
+        if ( permissionLevel == RequirePermission ) {
             if (serviceAuthService.isLoggedIn() || serviceAuthService.hasValidApiKey()) {
                 return true
             } else {
                 return accessDenied(STATUS_UNAUTHORISED,'Forbidden, ApiKey or user login required!')
             }
-        }
-        // UserId is required
-        // May need to check role
-        if (method?.isAnnotationPresent(RequireAdmin) || controllerClass?.isAnnotationPresent(RequireAdmin)) {
+        } else if ( permissionLevel == RequireAdmin ) {
             if (serviceAuthService.hasValidApiKey())
                 return true
             role = grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
-        } else if (method?.isAnnotationPresent(RequireLogin) || controllerClass?.isAnnotationPresent(RequireLogin)) {
+        } else if (permissionLevel == RequireLogin) {
             RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
             role = requireAuthentication?.role()
         } else {
@@ -82,17 +98,12 @@ class LoginInterceptor {
 
     boolean accessDenied(status, message) {
         log.debug("Access denied : " + controllerName +"->" + actionName ?: "index")
-        Enumeration<String> e = request.getHeaderNames()
-        while(e.hasMoreElements()){
-            String header = e.nextElement()
-            String value = request.getHeader(header)
-            log.debug(header + ":" + value)
-        }
 
         if (!request.getHeader("accept")?.toLowerCase().contains("application/json")) {
             String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
                     grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
             render view: "/login.gsp", model: [status: status, url: redirectUrl]
+
             return false
         } else {
             response.status = status
