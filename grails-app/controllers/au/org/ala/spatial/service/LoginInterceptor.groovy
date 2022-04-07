@@ -41,23 +41,26 @@ class LoginInterceptor {
 
         //Calculating the required permission.
         def permissionLevel = null;
-
-        if ( controllerClass?.isAnnotationPresent(RequirePermission)) {
-            permissionLevel = RequirePermission
-        } else if (controllerClass?.isAnnotationPresent(RequireLogin)){
-            permissionLevel = RequireLogin
-        } else if (controllerClass?.isAnnotationPresent(RequireAdmin)){
-            permissionLevel = RequireAdmin
-        }
-
+        //Permission on method has the top priority
         if ( method?.isAnnotationPresent(RequirePermission)) {
             permissionLevel = RequirePermission
-        } else if (controllerClass?.isAnnotationPresent(RequireLogin)){
+        } else if (method?.isAnnotationPresent(RequireLogin)){
             permissionLevel = RequireLogin
         } else if (method?.isAnnotationPresent(RequireAdmin)){
             permissionLevel = RequireAdmin
         }
 
+        if (Objects.isNull(permissionLevel)) {
+            if ( controllerClass?.isAnnotationPresent(RequirePermission)) {
+                permissionLevel = RequirePermission
+            } else if (controllerClass?.isAnnotationPresent(RequireLogin)){
+                permissionLevel = RequireLogin
+            } else if (controllerClass?.isAnnotationPresent(RequireAdmin)){
+                permissionLevel = RequireAdmin
+            }
+        }
+
+        //Permission check
         def role  // if require a certain level of ROLE
         if ( permissionLevel == RequirePermission ) {
             if (serviceAuthService.isLoggedIn() || serviceAuthService.hasValidApiKey()) {
@@ -102,7 +105,7 @@ class LoginInterceptor {
         if (!request.getHeader("accept")?.toLowerCase().contains("application/json")) {
             String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
                     grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
-            render view: "/login.gsp", model: [status: status, url: redirectUrl]
+            render view: "/login.gsp", model: [status: status, url: redirectUrl, message: message]
 
             return false
         } else {
