@@ -42,36 +42,37 @@ class LoginInterceptor {
         //Calculating the required permission.
         def permissionLevel = null;
         //Permission on method has the top priority
-        if ( method?.isAnnotationPresent(RequirePermission)) {
+        if (method?.isAnnotationPresent(RequirePermission.class)) {
             permissionLevel = RequirePermission
-        } else if (method?.isAnnotationPresent(RequireLogin)){
+        } else if (method?.isAnnotationPresent(RequireLogin.class)) {
             permissionLevel = RequireLogin
-        } else if (method?.isAnnotationPresent(RequireAdmin)){
+        } else if (method?.isAnnotationPresent(RequireAdmin.class)) {
             permissionLevel = RequireAdmin
         }
 
         if (Objects.isNull(permissionLevel)) {
-            if ( controllerClass?.isAnnotationPresent(RequirePermission)) {
+            if (controllerClass?.isAnnotationPresent(RequirePermission.class)) {
                 permissionLevel = RequirePermission
-            } else if (controllerClass?.isAnnotationPresent(RequireLogin)){
+            } else if (controllerClass?.isAnnotationPresent(RequireLogin.class)) {
                 permissionLevel = RequireLogin
-            } else if (controllerClass?.isAnnotationPresent(RequireAdmin)){
+            } else if (controllerClass?.isAnnotationPresent(RequireAdmin.class)) {
                 permissionLevel = RequireAdmin
             }
         }
 
         //Permission check
         def role  // if require a certain level of ROLE
-        if ( permissionLevel == RequirePermission ) {
+        if (permissionLevel == RequirePermission) {
             if (serviceAuthService.isLoggedIn() || serviceAuthService.hasValidApiKey()) {
                 return true
             } else {
-                return accessDenied(STATUS_UNAUTHORISED,'Forbidden, ApiKey or user login required!')
+                return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, ApiKey or user login required!')
             }
-        } else if ( permissionLevel == RequireAdmin ) {
+        } else if (permissionLevel == RequireAdmin) {
             if (serviceAuthService.hasValidApiKey())
                 return true
-            role = grailsApplication.config.auth.admin_role //recommended: ROLE_ADMIN
+
+            role = grailsApplication.config.getProperty('auth.admin_role', String, 'ROLE_ADMIN')
         } else if (permissionLevel == RequireLogin) {
             RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
             role = requireAuthentication?.role()
@@ -79,16 +80,16 @@ class LoginInterceptor {
             return true
         }
 
-        if ( serviceAuthService.isAuthenticated() ) {
+        if (serviceAuthService.isAuthenticated()) {
             //Check role
             if (!Strings.isNullOrEmpty(role)) {
-                if ( !serviceAuthService.isRoleOf(role)) {
-                   return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: '+ role)
+                if (!serviceAuthService.isRoleOf(role)) {
+                    return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: ' + role)
                 }
             }
             return true
         } else {
-             return  accessDenied(STATUS_UNAUTHORISED,'Forbidden, user login required!')
+            return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, user login required!')
         }
     }
 
@@ -100,7 +101,7 @@ class LoginInterceptor {
     }
 
     boolean accessDenied(status, message) {
-        log.debug("Access denied : " + controllerName +"->" + actionName ?: "index")
+        log.debug("Access denied : " + controllerName + "->" + actionName ?: "index")
 
         if (!request.getHeader("accept")?.toLowerCase().contains("application/json")) {
             String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +

@@ -373,6 +373,7 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def deleteUpload(String id) {
         delete(id, "uploads")
     }
@@ -382,6 +383,7 @@ class ManageLayersController {
      * @param id
      * @return
      */
+    @RequireAdmin
     def deleteLayer(String id) {
         delete(id, "layers")
     }
@@ -638,8 +640,6 @@ class ManageLayersController {
             field.enabled = true
             fieldDao.updateField(field)
         }
-
         render ''
     }
-
 }
