@@ -77,7 +77,7 @@ class TasksService {
     }
 
     @Transactional(readOnly = false)
-    def update(id, newValues) {
+    synchronized def update(id, newValues) {
         Task.withNewTransaction {
             _update(id, newValues)
         }

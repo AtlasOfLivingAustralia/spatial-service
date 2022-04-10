@@ -27,7 +27,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "1.0.4"
+version "1.0.5"
 group "au.org.ala"
 
 apply plugin:"eclipse"
@@ -147,7 +147,7 @@ dependencies {
     compile "org.codehaus.jackson:jackson-core-asl:1.8.6"
     compile "org.codehaus.jackson:jackson-mapper-asl:1.8.6"
 
-    compile("au.org.ala:layers-store:2.0.9") {
+    compile("au.org.ala:layers-store:2.0.10") {
         exclude module: "spring-context"
         exclude module: "spring-jdbc"
         exclude module: "spring-orm"
@@ -157,7 +157,7 @@ dependencies {
     }
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
-    compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.0'
 
     compile 'jfree:jfreechart:1.0.13'
     compile 'com.thoughtworks.xstream:xstream:1.4.2' // TODO Upgrade to latest version due to CVEs

@@ -421,15 +421,14 @@ class Util {
                 task.outputGobbler = outputGobbler
             }
 
-            int exitVal = proc.waitForOrKill(timeout)
+            proc.waitForOrKill(timeout)
 
             errorGobbler.interrupt()
             outputGobbler.interrupt()
 
-            // any error???
-            exitValue = exitVal
         } catch (Exception e) {
             log.error(e.getMessage(), e)
+            exitValue = 1
         } finally {
             // remove cmd object from task
             if (task) {

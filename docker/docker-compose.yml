@@ -16,18 +16,18 @@ services:
     ports:
       - "8079:8080"
   postgis:
-    image: mdillon/postgis:9.6-alpine
+    image: kartoza/postgis:12.4
     container_name: postgis
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASS=postgres
     networks:
       - geoserver_postgis
     ports:
       - "5432:5432"
     volumes:
-      - /data/spatial-db:/data/spatial-db
-      - ./env/postgis/pg_hba.conf:/etc/postgresql/9.6/main/pg_hba.conf
+#      - /data/spatial-db:/data/spatial-db
+      - /data/spatial-db:/var/lib/postgresql
+#      - ./env/postgis/pg_hba.conf:/etc/postgresql/12/main/pg_hba.conf
       - ./env/postgis/layersdb.sql:/docker-entrypoint-initdb.d/layersdb.sql
-#volumes:
-#  data_geoserver:
-#  data_spatialservice:
-#  db_data_postgis:
 version: "2"
