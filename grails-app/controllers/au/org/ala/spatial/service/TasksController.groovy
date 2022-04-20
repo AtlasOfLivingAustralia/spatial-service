@@ -22,6 +22,7 @@ import au.org.ala.spatial.slave.TaskService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.grails.web.json.JSONObject
+import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor
 
 @Transactional(readOnly = true)
 class TasksController {
@@ -155,11 +156,19 @@ class TasksController {
         //Validate input. It may update input
         def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
 
+        def userId = authService.getUserId() ?: params.userId
+        def email = params.email
+
+        if (userId) {
+            def user = authService.getUserForUserId(userId, false);
+            email = user.email;
+        }
+
         if (errors) {
             response.status = 400
             render errors as JSON
         } else {
-            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, authService.getUserId() ?: params.userId, params.email)
+            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, email)
             render task as JSON
         }
     }
@@ -392,4 +401,9 @@ class TasksController {
         [tasks: tasks]
     }
 
+    @RequireAdmin
+    def getUserById(String id) {
+        def user = authService.getUserForUserId(id, false)
+        render user as JSON
+    }
 }
