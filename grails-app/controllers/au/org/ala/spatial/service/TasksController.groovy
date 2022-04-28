@@ -22,7 +22,6 @@ import au.org.ala.spatial.slave.TaskService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.grails.web.json.JSONObject
-import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor
 
 @Transactional(readOnly = true)
 class TasksController {
@@ -159,7 +158,7 @@ class TasksController {
         def userId = authService.getUserId() ?: params.userId
         def email = params.email
 
-        if (userId) {
+        if (userId && !email) {
             def user = authService.getUserForUserId(userId, false);
             email = user.email;
         }
@@ -404,6 +403,11 @@ class TasksController {
     @RequireAdmin
     def getUserById(String id) {
         def user = authService.getUserForUserId(id, false)
-        render user as JSON
+        if (user) {
+            render user as JSON
+        } else {
+            def message = [error: "No user found for id: " + id +", or no permission to access user details!"]
+            render message as JSON
+        }
     }
 }
