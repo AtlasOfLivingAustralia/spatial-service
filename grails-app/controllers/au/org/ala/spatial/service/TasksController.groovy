@@ -155,11 +155,19 @@ class TasksController {
         //Validate input. It may update input
         def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
 
+        def userId = authService.getUserId() ?: params.userId
+        def email = params.email
+
+        if (userId && !email) {
+            def user = authService.getUserForUserId(userId, false);
+            email = user.email;
+        }
+
         if (errors) {
             response.status = 400
             render errors as JSON
         } else {
-            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, authService.getUserId() ?: params.userId, params.email)
+            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, email)
             render task as JSON
         }
     }
@@ -392,4 +400,14 @@ class TasksController {
         [tasks: tasks]
     }
 
+    @RequireAdmin
+    def getUserById(String id) {
+        def user = authService.getUserForUserId(id, false)
+        if (user) {
+            render user as JSON
+        } else {
+            def message = [error: "No user found for id: " + id +", or no permission to access user details!"]
+            render message as JSON
+        }
+    }
 }

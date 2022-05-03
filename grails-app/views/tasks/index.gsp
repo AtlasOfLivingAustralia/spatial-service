@@ -111,9 +111,7 @@
 
             <g:sortableColumn property="history"
                               title="${message(code: 'task.history.label', default: 'History (last 4 entries)')}"/>
-
-            <th></th>
-
+            <td><i class="fa fa-user"></i></td>
             <th></th>
         </thead>
         <tbody>
@@ -126,7 +124,7 @@
 
                 <td><g:if test="${taskInstance.status < 2}">${fieldValue(bean: taskInstance, field: "url")}</g:if></td>
 
-                <td>${fieldValue(bean: taskInstance, field: "name")}</td>
+                <td>${fieldValue(bean: taskInstance, field: "name")} </td>
 
                 <td>${fieldValue(bean: taskInstance, field: "tag") && fieldValue(bean: taskInstance, field: "tag") != 'null' ?  fieldValue(bean: taskInstance, field: "tag") : ''}</td>
 
@@ -138,8 +136,12 @@
                     <g:formatDate date="${h.key}" format="dd/MM/yy hh:mm:ss"/>=${h.value}<br/>
                 </g:each></td>
 
-                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link></td>
-                <td><g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
+                <td><g:link action="getUserById"
+                            id="${taskInstance.userId}"><g:if test = "${taskInstance?.email != "null"}">${taskInstance?.email}</g:if><g:else>${taskInstance?.userId}</g:else></g:link></td>
+
+                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link>
+                <g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
+
 
             </tr>
         </g:each>
