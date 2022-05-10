@@ -46,6 +46,7 @@ class LayerDistancesCreate extends SlaveProcess {
         }
 
         task.message = 'getting layer distances'
+        task.history.put(System.currentTimeMillis(), 'Collecting layer distances..')
         slaveService.getFile('/public/layerDistances.properties')
 
         File f = new File(grailsApplication.config.data.dir.toString() + '/public/layerDistances.properties')
@@ -60,6 +61,7 @@ class LayerDistancesCreate extends SlaveProcess {
         }
 
         task.message = 'identify missing layer distances'
+        task.history.put(System.currentTimeMillis(), 'Identifying missing layer distances..')
         validFields.eachWithIndex { field1, idx1 ->
             Map layer1 = findLayer(layers, field1.spid.toString())
             if (layer1 != null && layer1.type == 'Environmental') {
@@ -79,6 +81,7 @@ class LayerDistancesCreate extends SlaveProcess {
                                 }
                             }
                         } catch (err) {
+                            task.history.put(System.currentTimeMillis(), "error comparing layer distance candidates " + field1.id + " and " + field2.id)
                             log.error "error comparing layer distance candidates " + field1.id + " and " + field2.id, err
                         }
                     }
@@ -88,6 +91,7 @@ class LayerDistancesCreate extends SlaveProcess {
 
         task.message = distances.size() + ' missing distances'
         task.message = 'preparing LayerDistancesCreateOne tasks'
+        task.history.put(System.currentTimeMillis(), "preparing LayerDistancesCreateOne tasks for " + distances.size() + ' missing distances')
 
         Map count = [:]
         for (int i = 0; i < all.size(); i++) {

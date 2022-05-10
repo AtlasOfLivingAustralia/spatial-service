@@ -50,4 +50,12 @@ class Task {
     Process proc
     StreamGobbler errorGobbler
     StreamGobbler outputGobbler
+
+    void addHistory(String key, String value) {
+        if (history.containsKey(key)) {
+            String pre = history.get(key)
+            value = pre + "\r\n" + value
+        }
+        history.put(key, value)
+    }
 }

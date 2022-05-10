@@ -47,6 +47,7 @@ class TabulationCreateOne extends SlaveProcess {
         Map layer1 = getLayer(layerId1)
         Map layer2 = getLayer(layerId2)
 
+        task.history.put(System.currentTimeMillis(), 'Processing intersection of ' + layer1.name + ' and ' +  layer2.name)
         String intersectPath = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
 
         //lock files that will be created and can be created by other threads
@@ -85,7 +86,8 @@ class TabulationCreateOne extends SlaveProcess {
 
             importTabulation()
         } catch (err) {
-            task.history.put(System.currentTimeMillis(), 'unknown error')
+            task.history.put(System.currentTimeMillis(), 'Runtime error:' + err)
+            task.history.put(System.currentTimeMillis(), "failed to produce tabulation for: " + fieldId1 + " and " + fieldId2)
             log.error "failed to produce tabulation for: " + fieldId1 + " and " + fieldId2, err
         }
 

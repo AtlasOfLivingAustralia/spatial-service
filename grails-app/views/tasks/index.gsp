@@ -45,6 +45,7 @@
             <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
             <li><g:link controller="tasks" action="activeThreads">Show active Tasks</g:link></li>
             <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+            <li><g:link controller="manageLayers" action="verify">Checking missing resolution layers</g:link></li>
         </div>
     </div>
 </div>
@@ -99,8 +100,6 @@
 
             <g:sortableColumn property="message" title="${message(code: 'task.message.label', default: 'Message')}"/>
 
-            <g:sortableColumn property="url" title="${message(code: 'task.url.label', default: 'Url')}"/>
-
             <g:sortableColumn property="name" title="${message(code: 'task.name.label', default: 'Name')}"/>
 
             <g:sortableColumn property="tag" title="${message(code: 'task.tag.label', default: 'Tag')}"/>
@@ -120,9 +119,7 @@
             <tr class="${(i % 2) == 0 ? 'odd' : 'even'}">
 
                 <td><g:link action="show"
-                            id="${taskInstance.id}">${fieldValue(bean: taskInstance, field: "message")}</g:link></td>
-
-                <td><g:if test="${taskInstance.status < 2}">${fieldValue(bean: taskInstance, field: "url")}</g:if></td>
+                            id="${taskInstance.id}">${taskInstance.id}</g:link></td>
 
                 <td>${fieldValue(bean: taskInstance, field: "name")} </td>
 

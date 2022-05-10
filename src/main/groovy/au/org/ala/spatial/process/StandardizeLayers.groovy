@@ -34,105 +34,116 @@ class StandardizeLayers extends SlaveProcess {
         String fieldId = task.input.fieldId
 
         task.message = 'running: getting fields'
-        List fields = getFields()
 
+        List fields = getFields()
+        task.history.put(System.currentTimeMillis(), 'Collected ' + fields.size() + ' fields.')
         int shpCount = 0
         int grdCount = 0
 
         fields.each { Map f ->
             try {
                 if (f.analysis && (fieldId == null || f.id.equals(fieldId))) {
+                    Map l
+                    if (f.spid) {
+                        l = getLayer(f.spid)
+                        if (l) {
+                            task.addHistory(f.id , 'Checking layer: ' + l.name)
+                            if ('c'.equals(f.type) && slaveService.peekFile('/layer/' + l.name + '.shp')[0].exists) {
+                                boolean shpFileRetrieved = false
+                                boolean hasTxt = false
+                                def shpFile
 
-                    Map l = getLayer(f.spid)
+                                shpResolutions.each { res ->
+                                    String path = '/standard_layer/' + res + '/' + f.id + '.grd'
+                                    if (!slaveService.peekFile(path)[0].exists) {
+                                        task.addHistory(f.id , 'Making for resolution ' + res)
 
+                                        if (!shpFileRetrieved) {
+                                            shpFile = File.createTempFile(f.id.toString(), '')
 
-                    if ('c'.equals(f.type) && slaveService.peekFile('/layer/' + l.name + '.shp')[0].exists) {
+                                            task.message = 'running: getting field ' + f.id
+                                            hasTxt = fieldToShapeFile(f.id.toString(), shpFile.getPath())
+                                            shpFileRetrieved = true
+                                        }
 
-                        boolean shpFileRetrieved = false
-                        boolean hasTxt = false
-                        def shpFile
+                                        // standardized file is missing, make for this shapefile
+                                        if (hasTxt && shp2Analysis(shpFile.getPath(),
+                                                grailsApplication.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id,
+                                                new Double(res),
+                                                grailsApplication.config.gdal.dir.toString())) {
 
-                        shpResolutions.each { res ->
-                            String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (!slaveService.peekFile(path)[0].exists) {
-                                task.message = 'running: making for field ' + f.id + ' and resolution ' + res
+                                            addOutput('file', '/standard_layer/' + res + '/' + f.id + '.grd')
+                                            addOutput('file', '/standard_layer/' + res + '/' + f.id + '.gri')
+                                            addOutput('file', '/standard_layer/' + res + '/' + f.id + '.txt')
 
-                                if (!shpFileRetrieved) {
-                                    shpFile = File.createTempFile(f.id.toString(), '')
+                                            task.addHistory(f.id , 'Finished standardizing for resolution ' + res)
+                                            log.debug 'finished standardizing for field: ' + f.id + ' @ ' + res
 
-                                    task.message = 'running: getting field ' + f.id
-                                    hasTxt = fieldToShapeFile(f.id.toString(), shpFile.getPath())
-                                    shpFileRetrieved = true
-                                }
-
-                                // standardized file is missing, make for this shapefile
-                                if (hasTxt && shp2Analysis(shpFile.getPath(),
-                                        grailsApplication.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id,
-                                        new Double(res),
-                                        grailsApplication.config.gdal.dir.toString())) {
-
-                                    addOutput('file', '/standard_layer/' + res + '/' + f.id + '.grd')
-                                    addOutput('file', '/standard_layer/' + res + '/' + f.id + '.gri')
-                                    addOutput('file', '/standard_layer/' + res + '/' + f.id + '.txt')
-
-                                    log.debug 'finished standardizing for field: ' + f.id + ' @ ' + res
-
-                                    shpCount++
-                                } else {
-                                    log.error 'failed standardizing for field: ' + f.id + ' @ ' + res
-                                }
-                            }
-                        }
-
-                        [shpFile.getPath() + '.shp', shpFile.getPath() + '.shx', shpFile.getPath() + '.prj',
-                         shpFile.getPath() + '.dbf', shpFile.getPath() + '.txt', shpFile.getPath() + '.fix',
-                         shpFile.getPath()].each {
-                            def fd = new File(it)
-                            if (fd.exists()) {
-                                fd.delete()
-                            }
-                        }
-                    } else if (('e'.equals(f.type) || 'a'.equals(f.type) || 'b'.equals(f.type)) &&
-                            slaveService.peekFile('/layer/' + l.name + '.grd')[0].exists) {
-
-                        // standardized file is missing, make for this grid file
-                        slaveService.getFile('/layer/' + l.name + '.grd')
-                        slaveService.getFile('/layer/' + l.name + '.gri')
-
-                        Grid g = new Grid(grailsApplication.config.data.dir.toString() + '/layer/' + l.name)
-                        double minRes = Math.min(g.xres, g.yres)
-
-                        int count = 0
-                        double nearestSmallerDRes = -1
-                        double nearestSmallerRes = 1
-                        grdResolutions.each { Double res ->
-                            String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (!slaveService.peekFile(path)[0].exists) {
-                                task.message = 'running: making for field ' + f.id + ' and resolution ' + res
-
-                                // no need to make for this resolution if it is < the actual grid resolution (and not close)
-                                double dres = res.doubleValue()
-                                if (minRes < dres * 1.2) {
-                                    standardizeGrid(f as Map, l as Map, res, dres)
-                                    count++
-                                    grdCount++
-                                } else {
-                                    if (nearestSmallerDRes == -1 || nearestSmallerDRes < dres) {
-                                        nearestSmallerDRes = dres
-                                        nearestSmallerRes = res
+                                            shpCount++
+                                        } else {
+                                            task.addHistory(f.id , 'Failed standardizing for resolution ' + res)
+                                            log.error 'Failed standardizing for field: ' + f.id + ' @ ' + res
+                                        }
+                                    } else {
+                                        task.addHistory(f.id , 'Ignored. Resolution ' + res +" exists.")
                                     }
                                 }
-                            } else {
-                                count++
+                                if (shpFile){
+                                    [shpFile.getPath() + '.shp', shpFile.getPath() + '.shx', shpFile.getPath() + '.prj',
+                                     shpFile.getPath() + '.dbf', shpFile.getPath() + '.txt', shpFile.getPath() + '.fix',
+                                     shpFile.getPath()].each {
+                                        def fd = new File(it)
+                                        if (fd.exists()) {
+                                            fd.delete()
+                                        }
+                                    }
+                                }
+                            } else if (('e'.equals(f.type) || 'a'.equals(f.type) || 'b'.equals(f.type)) &&
+                                    slaveService.peekFile('/layer/' + l.name + '.grd')[0].exists) {
+
+                                // standardized file is missing, make for this grid file
+                                slaveService.getFile('/layer/' + l.name + '.grd')
+                                slaveService.getFile('/layer/' + l.name + '.gri')
+
+                                Grid g = new Grid(grailsApplication.config.data.dir.toString() + '/layer/' + l.name)
+                                double minRes = Math.min(g.xres, g.yres)
+
+                                int count = 0
+                                double nearestSmallerDRes = -1
+                                double nearestSmallerRes = 1
+                                grdResolutions.each { Double res ->
+                                    String path = '/standard_layer/' + res + '/' + f.id + '.grd'
+                                    if (!slaveService.peekFile(path)[0].exists) {
+                                        task.addHistory(f.id , 'Making for resolution ' + res)
+
+                                        // no need to make for this resolution if it is < the actual grid resolution (and not close)
+                                        double dres = res.doubleValue()
+                                        if (minRes < dres * 1.2) {
+                                            standardizeGrid(f as Map, l as Map, res, dres)
+                                            count++
+                                            grdCount++
+                                        } else {
+                                            if (nearestSmallerDRes == -1 || nearestSmallerDRes < dres) {
+                                                nearestSmallerDRes = dres
+                                                nearestSmallerRes = res
+                                            }
+                                        }
+                                    } else {
+                                        count++
+                                        task.addHistory(f.id , 'Ignored. Resolution ' + res +" exists.")
+                                    }
+                                }
+                                //if no standard_layer is produced, use the nearest one found
+                                if (count == 0) {
+                                    standardizeGrid(f as Map, l as Map, nearestSmallerRes, nearestSmallerDRes)
+                                }
                             }
                         }
-                        //if no standard_layer is produced, use the nearest one found
-                        if (count == 0) {
-                            standardizeGrid(f as Map, l as Map, nearestSmallerRes, nearestSmallerDRes)
-                        }
                     }
+
                 }
             } catch (err) {
+                task.addHistory(f.id, 'Error in standardizing: ' + err)
                 log.error 'error standardizing: ' + f.id, err
             }
         }

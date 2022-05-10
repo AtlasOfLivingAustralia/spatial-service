@@ -26,7 +26,7 @@ class TabulationCreate extends SlaveProcess {
         Set all = [] as Set
         List fields = getFields()
         List tabulations = getTabulations()
-
+        task.history.put(System.currentTimeMillis(), 'Collected ' + fields.size() + ' fields.')
         fields.eachWithIndex { field1, idx1 ->
             fields.eachWithIndex { field2, idx2 ->
                 if (idx1 < idx2) {
@@ -55,6 +55,7 @@ class TabulationCreate extends SlaveProcess {
                             }
                         }
                     } catch (err) {
+                        task.history.put(System.currentTimeMillis(), "error comparing tabulation candidates " + field1.id + " and " + field2.id)
                         log.error "error comparing tabulation candidates " + field1.id + " and " + field2.id, err
                     }
                 }
@@ -69,6 +70,7 @@ class TabulationCreate extends SlaveProcess {
             all.remove(key)
         }
 
+        task.history.put(System.currentTimeMillis(), 'Processing TabulationCreateOne ..')
         all.each { s ->
             def m = [fieldId1: s.toString().split(" ")[0], fieldId2: s.toString().split(" ")[1]]
             addOutput("process", "TabulationCreateOne " + (m as JSON))

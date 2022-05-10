@@ -81,7 +81,11 @@ class TasksController {
 
             item.history.keySet().sort().reverse().each { key ->
                 if (hist.size() < 4) {
-                    hist.put(new Date(Long.parseLong(key)), item.history.get(key))
+                    try {
+                        hist.put(new Date(Long.parseLong(key)), item.history.get(key))
+                    }catch(Exception e) {
+                        //ignored
+                    }
                 }
             }
             item.history = hist

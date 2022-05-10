@@ -90,7 +90,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
                 values.add(null)
             }
         }
-
+        task.history.put(System.currentTimeMillis(), 'Found ' + found + ' grid files. Skip the process if less then 2 grid files.')
         if (found >= 2) {
             task.message = 'init batch objects'
             int batchSize = 1000000
@@ -123,6 +123,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
                             }
                         } catch (err) {
                             //error
+                            task.history.put(System.currentTimeMillis(), 'failed to calc distance for fields ' + fieldIds[i] + ' and ' + fieldIds[j])
                             log.error 'failed to calc distance for fields ' + fieldIds[i] + ' and ' + fieldIds[j], err
                         }
                     }

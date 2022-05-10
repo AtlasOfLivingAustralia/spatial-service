@@ -642,4 +642,46 @@ class ManageLayersController {
         }
         render ''
     }
+
+    /**
+     * search missing layers on different resolutions
+     */
+    @RequireAdmin
+    def verify() {
+        def missingLayers = []
+        List fields =  fieldDao.getFields();
+        String folder = String.valueOf(grailsApplication.config.data.dir + '/standard_layer/')
+        double[] gridResolutions = [0.05, 0.01,0.1,0.25,0.5] //el
+        double[] shpResolutions = [0.05,0.1,0.25,0.5] //cl
+
+        for (field in fields) {
+            def fid = field.id
+            def missingRes = []
+            if (fid.startsWith('c')) {
+                for(res in shpResolutions) {
+                    File file = new File(folder + res + "/" +fid+".gri")
+                    if (!file.exists()) {
+                        missingRes.add(res)
+                    }
+                }
+            } else if (fid.startsWith('e')){
+                for(res in gridResolutions) {
+                    File file = new File(folder + res + "/" +fid+".gri")
+                    if (!file.exists()) {
+                        missingRes.add(res)
+                    }
+                }
+            }
+
+            if (missingRes) {
+                missingLayers.add([id:fid, res:missingRes])
+            }
+        }
+        render missingLayers as JSON
+    }
+
+    def standardize(String id) {
+        manageLayersService.standardizeLayer(id)
+    }
+
 }
