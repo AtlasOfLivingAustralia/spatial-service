@@ -133,11 +133,17 @@
                     <g:formatDate date="${h.key}" format="dd/MM/yy hh:mm:ss"/>=${h.value}<br/>
                 </g:each></td>
 
-                <td><g:link action="getUserById"
-                            id="${taskInstance.userId}"><g:if test = "${taskInstance?.email != "null"}">${taskInstance?.email}</g:if><g:else>${taskInstance?.userId}</g:else></g:link></td>
-
-                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link>
-                <g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
+                <td>
+                    <g:if test = "${taskInstance?.userId != 'null'}">
+                       <g:link action="getUserById"
+                            id="${taskInstance.userId}"><g:if test = "${taskInstance?.email != "null"}">${taskInstance?.email}</g:if><g:else>${taskInstance?.userId}</g:else></g:link>
+                    </g:if>
+                    <g:else>System</g:else>
+                </td>
+                <td>
+                    <g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link>
+                    <g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}">cancel</g:link>
+                </td>
 
 
             </tr>

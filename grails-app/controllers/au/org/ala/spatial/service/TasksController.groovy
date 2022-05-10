@@ -186,7 +186,6 @@ class TasksController {
     @RequirePermission
     cancel(Task task) {
         if (task?.status < 2) tasksService.cancel(task)
-
         if (request.contentType?.equalsIgnoreCase("application/json")) {
             render task as JSON
         } else {
