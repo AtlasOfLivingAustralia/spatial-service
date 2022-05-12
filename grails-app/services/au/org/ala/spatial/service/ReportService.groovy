@@ -6,6 +6,7 @@ import grails.gorm.transactions.Transactional
 @Transactional
 class ReportService {
     def authService
+    def grailsApplication
 
     //Generate User usage report
     def report(){
@@ -76,22 +77,23 @@ class ReportService {
     }
 
     //Generate Task based on report
-    def taskBasedReport(){
+    def taskBasedReport(includeAll){
+        def excludedUsers = grailsApplication.config.reporting.excludedUsers
 
-        String[] idsInALA = "1901,92092,71707,1493,53099,34,9965,47075,27078,44,9200,82292,10549,9048,11359,61,35022,13,28057,19807,27583,27190,35,48604,47326,35774,8443,8516,46293,4228,89299,89300,28712".split(',').collect{ '"' + it + '"'}
-        String idSql = idsInALA.join(',')
+        String sql = "SELECT CONCAT(category1, '->', category2) as name, count(*) as count,extract(YEAR from created) AS year,  extract(MONTH from created) AS month  " +
+                        "FROM Log "
+        //Exclude ALA internal users
+        if (!includeAll) {
+           String idSql ="'"+excludedUsers.join("','") +"'"
+            sql += " WHERE user_id NOT IN ("+ idSql+")"
+        }
 
-        String sql = "SELECT CONCAT(category1, '->', category2) as name, count(*) as count, YEAR(created) AS year,  MONTH(created) AS month " +
-                        "FROM Log " +
-                        "WHERE user_id NOT IN ("+ idSql+")"+
-                        "GROUP BY CONCAT(category1, '->', category2), YEAR(created), MONTH(created) " +
-                        "ORDER BY CONCAT(category1, '->', category2), YEAR(created), MONTH(created) DESC"
+        sql +="GROUP BY CONCAT(category1, '->', category2), extract(YEAR from created),  extract(MONTH from created)  " +
+        "ORDER BY CONCAT(category1, '->', category2), extract(YEAR from created),  extract(MONTH from created)  DESC"
 
         List results = Log.executeQuery(sql)
-
         //init Unique Task name
         List headers = ['task','count','year', 'month']
-
         results.add(0, headers)
         return results
     }
