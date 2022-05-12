@@ -43,12 +43,14 @@ class ReportController {
                     outputStream << report.join(',') + "\r\n"
             }
         } catch (IOException e) {
+            //Discard possible error reports
             null
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close()
                 } catch (IOException e) {
+                    log.error("Unexpected IO error in task reporting.")
                     null
                 }
             }
