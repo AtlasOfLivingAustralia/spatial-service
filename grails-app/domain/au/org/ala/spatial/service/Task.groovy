@@ -16,9 +16,11 @@
 package au.org.ala.spatial.service
 
 class Task {
+    static transients = [ "lastRan" ]
 
     // date/time created
     Date created = new Date(System.currentTimeMillis())
+    Date lastRan = new Date(System.currentTimeMillis())
 
     // name identifier
     String name

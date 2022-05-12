@@ -50,7 +50,11 @@ class Task {
     Process proc
     StreamGobbler errorGobbler
     StreamGobbler outputGobbler
-
+    /**
+     * Implemented ONLY for better tracing procerss of creating different resolution layers
+     * @param key
+     * @param value
+     */
     void addHistory(String key, String value) {
         if (history.containsKey(key)) {
             String pre = history.get(key)

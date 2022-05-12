@@ -97,19 +97,14 @@
     </div>
     <table class="table table-bordered table-striped" name="tasks">
         <thead>
-
-            <g:sortableColumn property="message" title="${message(code: 'task.message.label', default: 'Message')}"/>
-
+            <g:sortableColumn property="message" title="${message(code: 'task.message.id', default: 'Id')}"/>
             <g:sortableColumn property="name" title="${message(code: 'task.name.label', default: 'Name')}"/>
-
             <g:sortableColumn property="tag" title="${message(code: 'task.tag.label', default: 'Tag')}"/>
-
-            <g:sortableColumn property="created" title="${message(code: 'task.created.label', default: 'Created')}"/>
-
+            <g:sortableColumn property="created" title="${message(code: 'task.created.label', default: 'Last run')}"/>
             <g:sortableColumn property="status" title="${message(code: 'task.status.label', default: 'Status')}"/>
-
             <g:sortableColumn property="history"
                               title="${message(code: 'task.history.label', default: 'History (last 4 entries)')}"/>
+            <g:sortableColumn property="created" title="${message(code: 'task.created.label', default: 'Created')}"/>
             <td><i class="fa fa-user"></i></td>
             <th></th>
         </thead>
@@ -124,15 +119,14 @@
                 <td>${fieldValue(bean: taskInstance, field: "name")} </td>
 
                 <td>${fieldValue(bean: taskInstance, field: "tag") && fieldValue(bean: taskInstance, field: "tag") != 'null' ?  fieldValue(bean: taskInstance, field: "tag") : ''}</td>
-
-                <td><g:formatDate date="${taskInstance.created}" format="dd/MM/yy hh:mm:ss"/></td>
+                <td><g:formatDate date="${taskInstance.lastRan}" format="dd/MM/yy hh:mm:ss"/></td>
                 <g:set var="statusIdx" value="${fieldValue(bean: taskInstance, field: "status")}"/>
                 <td>${status[statusIdx.toInteger()]}</td>
 
                 <td><g:each in="${taskInstance.history}" var="h">
                     <g:formatDate date="${h.key}" format="dd/MM/yy hh:mm:ss"/>=${h.value}<br/>
                 </g:each></td>
-
+                <td><g:formatDate date="${taskInstance.created}" format="dd/MM/yy hh:mm:ss"/></td>
                 <td>
                     <g:if test = "${taskInstance?.userId != 'null'}">
                        <g:link action="getUserById"
