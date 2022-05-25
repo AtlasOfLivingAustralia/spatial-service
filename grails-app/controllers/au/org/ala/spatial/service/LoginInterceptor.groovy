@@ -21,13 +21,14 @@ class LoginInterceptor {
     static final int STATUS_FORBIDDEN = 403
 
     ServiceAuthService serviceAuthService
+    def authService
 
     LoginInterceptor() {
         match controller: '*'
     }
 
     boolean before() {
-        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {
+        if (!grailsApplication.config.security.oidc.enabled.toBoolean()) {
             return true
         }
 
@@ -104,9 +105,7 @@ class LoginInterceptor {
         log.debug("Access denied : " + controllerName + "->" + actionName ?: "index")
 
         if (!request.getHeader("accept")?.toLowerCase().contains("application/json")) {
-            String redirectUrl = grailsApplication.config.security.cas.loginUrl + "?service=" +
-                    grailsApplication.config.security.cas.appServerName + request.forwardURI + (request.queryString ? '?' + request.queryString : '')
-            render view: "/login.gsp", model: [status: status, url: redirectUrl, message: message]
+            redirect(absolute: true, uri: authService.loginUrl(request))
 
             return false
         } else {

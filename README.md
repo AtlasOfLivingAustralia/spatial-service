@@ -128,8 +128,7 @@ Disable authentication when running locally by creating the configuration
 file `/data/spatial-service/config/spatial-service-config.properties` with the contents:
 
 ```
-security.cas.bypass=true
-security.cas.disableCAS=true
+security.oidc.enabled=false
 ```
 
 # PDF area report
