@@ -410,8 +410,8 @@ environments:
                 defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
 
 openapi:
-  title: UserDetails REST services
-  description: REST services for interacting with the user details webapp
+  title: SpatialService REST services
+  description: REST services for interacting with the spatial-service webapp
   terms: https://www.ala.org.au/terms
   contact:
     name: Support
