@@ -105,7 +105,7 @@ class LoginInterceptor {
         log.debug("Access denied : " + controllerName + "->" + actionName ?: "index")
 
         if (!request.getHeader("accept")?.toLowerCase().contains("application/json")) {
-            redirect(absolute: true, uri: authService.loginUrl(request))
+            redirect(absolute: false, uri: authService.loginUrl(request))
 
             return false
         } else {

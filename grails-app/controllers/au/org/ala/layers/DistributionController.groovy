@@ -18,21 +18,55 @@ package au.org.ala.layers
 import au.org.ala.layers.dto.AttributionDTO
 import au.org.ala.layers.dto.Distribution
 import au.org.ala.layers.dto.MapDTO
+import au.org.ala.plugins.openapi.Path
 import au.org.ala.spatial.util.AttributionCache
 import grails.converters.JSON
 import groovy.json.JsonSlurper
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 import org.json.simple.parser.ParseException
 
+import javax.ws.rs.Produces
 import java.nio.charset.StandardCharsets
 import java.util.stream.Collectors
+
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
 class DistributionController {
 
     def distributionsService
     def distributionDao
 
+    @Operation(
+            method = "GET",
+            tags = "expertDistributions",
+            operationId = "getDistributions",
+            summary = "Get list of expert distributions",
+            description = "Get a list of expert distributions",
+            parameters = [],
+            responses = [
+                    @ApiResponse(
+                            description = "List of expert distributions",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Distribution))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("distributions")
+    @Produces("application/json")
     def index() {
         def list = distributionsService.index(params, Distribution.EXPERT_DISTRIBUTION)
 
@@ -76,6 +110,44 @@ class DistributionController {
         }
     }
 
+    @Operation(
+            method = "GET",
+            tags = "expertDistributions",
+            operationId = "getExpertDistributionById",
+            summary = "Get an expert distribution by Id",
+            description = "Get an expert distribution by Id",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Id of the expert distribution",
+                            schema = @Schema(implementation = Long),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "nowkt",
+                            in = QUERY,
+                            description = "true to exclude WKT from the response",
+                            schema = @Schema(implementation = Boolean),
+                            required = false
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "expert distribution",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = Distribution)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("distribution/{id}")
+    @Produces("application/json")
     def show(Long id) {
         if (id == null) {
             render status: 400, text: "Path parameter `id` is not an integer."
@@ -119,6 +191,44 @@ class DistributionController {
         }
     }
 
+    @Operation(
+            method = "GET",
+            tags = "expertDistributions",
+            operationId = "getExpertDistributionsByLsid",
+            summary = "Get expert distributions by LSID",
+            description = "Get expert distributions by LSID",
+            parameters = [
+                    @Parameter(
+                            name = "lsid",
+                            in = PATH,
+                            schema = @Schema(implementation = String),
+                            description = "LSID of the expert distribution",
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "nowkt",
+                            in = QUERY,
+                            schema = @Schema(implementation = Boolean),
+                            description = "true to exclude WKT from the response",
+                            required = false
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "List of LSIDs and the number of associated expert distributions",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Distribution))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("distribution/lsids/{lsid}")
+    @Produces("application/json")
     def lsids(String lsid) {
         lsid = URLDecoder.decode(lsid, StandardCharsets.UTF_8.toString())
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
@@ -278,6 +388,36 @@ class DistributionController {
     }
 
 
+    @Operation(
+            method = "GET",
+            tags = "expertDistributions",
+            operationId = "getExpertDistributionImageById",
+            summary = "Get expert distribution image by id",
+            description = "Get expert distribution image by id",
+            parameters = [
+                    @Parameter(
+                            name = "imageId",
+                            in = PATH,
+                            schema = @Schema(oneOf = Integer),
+                            description = "LSID of the expert distribution",
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Overview image of the expert distribution in the Australian region",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "image/png"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("distribution/map/png/{imageId}")
+    @Produces("image/png")
     def overviewMapPng(String geomIdx) {
         map(geomIdx)
     }
