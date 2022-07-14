@@ -19,12 +19,6 @@ import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.layers.grid.Grid2Shape
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.spatial.Util
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.geom.GeometryCollection
-import com.vividsolutions.jts.geom.GeometryFactory
-import com.vividsolutions.jts.geom.MultiPolygon
-import com.vividsolutions.jts.io.WKTReader
-import com.vividsolutions.jts.io.WKTWriter
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DefaultTransaction
 import org.geotools.data.FileDataStore
@@ -39,8 +33,8 @@ import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder
-import org.geotools.geometry.jts.FactoryFinder
 import org.geotools.geometry.jts.JTS
+import org.geotools.geometry.jts.JTSFactoryFinder
 import org.geotools.geometry.jts.ReferencedEnvelope
 import org.geotools.map.FeatureLayer
 import org.geotools.map.MapContent
@@ -50,7 +44,13 @@ import org.geotools.renderer.GTRenderer
 import org.geotools.renderer.lite.StreamingRenderer
 import org.geotools.styling.SLD
 import org.geotools.styling.Style
-import org.geotools.xml.Parser
+import org.geotools.xsd.Parser
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.geom.GeometryCollection
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.io.WKTReader
+import org.locationtech.jts.io.WKTWriter
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
 import org.opengis.referencing.crs.CoordinateReferenceSystem
@@ -524,7 +524,7 @@ class SpatialUtils {
             if (geometries.size() == 1) {
                 mergedGeometry = geometries.get(0)
             } else {
-                GeometryFactory factory = FactoryFinder.getGeometryFactory(null)
+                GeometryFactory factory = JTSFactoryFinder.getGeometryFactory(null)
                 GeometryCollection geometryCollection = (GeometryCollection) factory.buildGeometry(geometries)
 
                 // note the following geometry collection may be invalid (say with overlapping polygons)

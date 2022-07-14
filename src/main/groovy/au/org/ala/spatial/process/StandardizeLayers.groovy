@@ -3,8 +3,6 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.AnalysisLayerUtil
 import au.org.ala.layers.util.Bil2diva
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.io.WKTReader
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataUtilities
@@ -20,6 +18,8 @@ import org.geotools.feature.FeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.geometry.jts.ReferencedEnvelope
 import org.geotools.referencing.crs.DefaultGeographicCRS
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.io.WKTReader
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
 

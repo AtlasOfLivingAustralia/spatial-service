@@ -15,11 +15,6 @@
 
 package au.org.ala.spatial.util;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.operation.polygonize.Polygonizer;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Transaction;
@@ -30,6 +25,11 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.operation.polygonize.Polygonizer;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -67,7 +67,7 @@ public class GeomMakeValid {
 
             reader.close();
             sds.dispose();
-            
+
             /*
          * Get an output file name and create the new shapefile
          */
@@ -77,13 +77,13 @@ public class GeomMakeValid {
             params.put("url", newFile.toURI().toURL());
             params.put("create spatial index", Boolean.TRUE);
             ShapefileDataStore newDataStore = (ShapefileDataStore) dataStoreFactory.createDataStore(params);
-            
+
         /*
          * TYPE is used as a template to describe the file contents
          */
 
             newDataStore.createSchema(TYPE);
-            
+
             /*
          * Write the features to the shapefile
          */
@@ -96,9 +96,9 @@ public class GeomMakeValid {
          * The Shapefile format has a couple limitations:
          * - "the_geom" is always first, and used for the geometry attribute name
          * - "the_geom" must be of type Point, MultiPoint, MuiltiLineString, MultiPolygon
-         * - Attribute names are limited in length 
+         * - Attribute names are limited in length
          * - Not all data types are supported (example Timestamp represented as Date)
-         * 
+         *
          * Each data store has different limitations so check the resulting SimpleFeatureType.
          */
             System.out.println("SHAPE:" + SHAPE_TYPE);

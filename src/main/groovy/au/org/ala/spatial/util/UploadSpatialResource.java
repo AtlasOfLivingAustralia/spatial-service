@@ -14,9 +14,9 @@
 package au.org.ala.spatial.util;
 
 import au.org.ala.spatial.Util;
-import org.apache.commons.httpclient.methods.FileRequestEntity;
-import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -54,11 +54,11 @@ public class UploadSpatialResource {
     public static String loadResource(String url, String extra, String username, String password, String resourcepath) {
         File input = new File(resourcepath);
 
-        // Request content will be retrieved directly 
-        // from the input stream 
-        RequestEntity entity = new FileRequestEntity(input, "application/zip");
+        // Request content will be retrieved directly
+        // from the input stream
+        HttpEntity entity = new FileEntity(input, "application/zip");
 
-        // Execute the request 
+        // Execute the request
         return processResponse(Util.urlResponse("PUT", url, null, null, entity,
                 true, username, password));
     }
@@ -68,7 +68,7 @@ public class UploadSpatialResource {
 
         // Request content will be retrieved directly
         // from the input stream
-        RequestEntity entity = new FileRequestEntity(input, "application/vnd.ogc.sld+xml");
+        HttpEntity entity = new FileEntity(input, "application/vnd.ogc.sld+xml");
 
         // Execute the request
         return processResponse(Util.urlResponse("PUT", url, null, null, entity,
@@ -91,11 +91,11 @@ public class UploadSpatialResource {
     public static String loadCreateStyle(String url, String extra, String username, String password, String name) {
         // Request content will be retrieved directly
         // from the input stream
-        RequestEntity entity = null;
+        HttpEntity entity = null;
         try {
             File file = File.createTempFile("sld", "xml");
             FileUtils.writeStringToFile(file, "<style><name>" + name + "</name><filename>" + name + ".sld</filename></style>", "UTF-8");
-            entity = new FileRequestEntity(file, "text/xml");
+            entity = new FileEntity(file, "text/xml");
         } catch (Exception e) {
             logger.error(name, e);
         }
@@ -106,13 +106,13 @@ public class UploadSpatialResource {
     }
 
     public static String assignSld(String url, String extra, String username, String password, String data) {
-        RequestEntity entity = null;
+        HttpEntity entity = null;
         try {
             // Request content will be retrieved directly
             // from the input stream
             File file = File.createTempFile("sld", "xml");
             FileUtils.writeStringToFile(file, data, "UTF-8");
-            entity = new FileRequestEntity(file, "text/xml");
+            entity = new FileEntity(file, "text/xml");
         } catch (Exception e) {
             logger.error(data, e);
         }
@@ -159,13 +159,13 @@ public class UploadSpatialResource {
         if (conf != null && !conf.contains("<string>" + styleName + "</string>")) {
             conf = conf.replace("</values>", "<string>" + styleName + "</string></values>");
 
-            RequestEntity entity = null;
+            HttpEntity entity = null;
             try {
                 // Request content will be retrieved directly
                 // from the input stream
                 File file = File.createTempFile("tmp", "xml");
                 FileUtils.writeStringToFile(file, conf, "UTF-8");
-                entity = new FileRequestEntity(file, "text/xml");
+                entity = new FileEntity(file, "text/xml");
 
                 return processResponse(Util.urlResponse("POST", url, null, null, entity,
                         true, username, password));
