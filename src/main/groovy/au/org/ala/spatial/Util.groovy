@@ -18,40 +18,24 @@ package au.org.ala.spatial
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.slave.Task
 import grails.converters.JSON
+import org.apache.commons.httpclient.*
+import org.apache.commons.httpclient.auth.AuthScope
+import org.apache.commons.httpclient.methods.*
+import org.apache.commons.httpclient.params.HttpClientParams
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-import org.apache.http.HttpEntity
-import org.apache.http.NameValuePair
-import org.apache.http.auth.AuthScope
-import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.HttpClient
-import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.client.methods.HttpDelete
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpPut
-import org.apache.http.client.methods.HttpRequestBase
-import org.apache.http.client.params.HttpClientParams
 import org.apache.http.client.utils.URIBuilder
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.HttpClients
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.http.message.BasicNameValuePair
-import org.apache.http.util.EntityUtils
 import org.apache.log4j.Logger
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
-import org.springframework.http.RequestEntity
 import org.springframework.util.MultiValueMap
-import org.springframework.util.StreamUtils
 import org.springframework.web.util.UriComponentsBuilder
-
-import java.net.http.HttpRequest
-import java.nio.charset.StandardCharsets
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -62,7 +46,7 @@ class Util {
         urlResponse("GET", url)?.text
     }
 
-    static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null, RequestEntity entity = null) {
+    static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null,RequestEntity entity = null) {
         urlResponse("POST", url, nameValues, headers, entity)?.text
     }
 
@@ -76,21 +60,20 @@ class Util {
         }
     }
 
-    static Map<String, Object> getStream(String url) {
+    static Map<String, Object> getStream(url) {
         HttpClient client = null
-        InputStream inputStream = null
-        CloseableHttpResponse response = null
+        HttpMethodBase call = null
         try {
-            client = HttpClientBuilder.create()
+            client = new HttpClient()
 
             HttpClientParams httpParams = client.getParams()
+            httpParams.setSoTimeout(60000)
             httpParams.setConnectionManagerTimeout(10000)
 
             try {
-                HttpGet get = new HttpGet(url)
+                call = new GetMethod(url)
 
-                response = client.execute(get)
-                inputStream = response.getEntity().content
+                client.executeMethod(call)
             } catch (Exception e) {
                 log.error url, e
             }
@@ -98,24 +81,31 @@ class Util {
             log.error url, e
         }
 
-        return [client: client, response: response, stream: inputStream]
+        return [client: client, call: call]
     }
 
     static void closeStream(streamObj) {
         try {
-            if (streamObj?.stream) {
-                streamObj.stream.close()
+            if (streamObj?.call) {
+                streamObj.call.releaseConnection()
             }
         } catch (Exception e) {
             log.error e.getMessage(), e
         }
         try {
-            if (streamObj?.client) {
-                streamObj.client.connectionManager.shutdown()
+            if (streamObj?.client &&
+                    ((SimpleHttpConnectionManager) streamObj?.client.getHttpConnectionManager()) instanceof SimpleHttpConnectionManager) {
+                ((SimpleHttpConnectionManager) streamObj?.client.getHttpConnectionManager()).shutdown()
             }
         } catch (Exception e) {
             log.error e.getMessage(), e
         }
+    }
+
+    static MultiThreadedHttpConnectionManager mgr = new MultiThreadedHttpConnectionManager();
+    {
+        mgr.setMaxConnectionsPerHost(50)
+        mgr.setMaxTotalConnections(100)
     }
 
     /**
@@ -131,77 +121,139 @@ class Util {
      * @return
      */
     static Map<String, Object> urlResponse(String type, String url, NameValuePair[] nameValues = null,
-                                           Map<String, String> headers = null, HttpEntity entity = null,
+                                           Map<String, String> headers = null, RequestEntity entity = null,
                                            Boolean doAuthentication = null, String username = null, String password = null) {
-
-        CloseableHttpClient httpclient = HttpClients.createDefault()
+        HttpClient client
         try {
-            HttpEntityEnclosingRequestBase httpRequest
-            if ("POST".equals(type)) {
-                httpRequest = new HttpPost(url)
-            } else if ("GET".equals(type)) {
-                httpRequest = new HttpGet(url)
-            }
+            client = new HttpClient(new HttpClientParams(), mgr)
 
-            if (nameValues) {
-                List<NameValuePair> nvps = new ArrayList<>()
-                nameValues.each {
-                    nvps.add(new BasicNameValuePair(it.name, it.value))
-                }
-                httpRequest.setEntity(new UrlEncodedFormEntity(nvps))
-            }
-
-            if (headers) {
-                headers.each {
-                    httpRequest.addHeader(it.key, it.value)
-                }
-            }
-
-            if (entity) {
-                httpRequest.setEntity(entity)
-            }
+            HttpClientParams httpParams = client.getParams()
+            httpParams.setSoTimeout(300000)
+            httpParams.setConnectionManagerTimeout(300000)
 
             if (username != null && password != null) {
-                byte[] credentials = Base64.encoder.encode((username + ":" + password).getBytes(StandardCharsets.UTF_8))
-                httpRequest.addHeader("Authorization", "Basic " + new String(credentials, StandardCharsets.UTF_8))
+                client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
             }
 
-            CloseableHttpResponse response = httpclient.execute(httpRequest)
-            try {
-                HttpEntity responseEntity = response.getEntity()
-                return [statusCode: response.statusCode, text:  StreamUtils.copyToString(responseEntity.content), headers: response.headers]
-            } finally {
-                response.close()
+            //nvList will be added into queryString in GET
+            //but in body when POST
+            List<BasicNameValuePair> nvList = new ArrayList();
+            if (nameValues) {
+                nameValues.each {
+                    nvList.add(new BasicNameValuePair(it.getName(), it.getValue()));
+                }
             }
-        } finally {
-            httpclient.close()
+
+            //Parse target url, decouple params in queryString and base url
+            List<BasicNameValuePair> queryParams = new ArrayList();
+            def targetUriBuilder = UriComponentsBuilder.fromUriString(url).build()
+            MultiValueMap<String, String> targetParams = targetUriBuilder.getQueryParams()
+            //remove requestQuery from url
+            String targetUrl = new java.net.URI(targetUriBuilder.getScheme() ,targetUriBuilder.getUserInfo(), targetUriBuilder.getHost(), targetUriBuilder.getPort(),targetUriBuilder.getPath(),null, null).toString()
+            Iterator<String> it = targetParams.keySet().iterator()
+            while(it.hasNext()){
+                String key = (String)it.next()
+                //list always
+                //Support: fq=a&fq=b etc
+                def value = targetParams.get(key)
+
+                value.each { i ->
+                    String item = String.valueOf(i)
+                    if (item) {
+                        queryParams.add(new BasicNameValuePair(key, URLDecoder.decode(item, "UTF-8")));
+                    }
+                }
+            }
+
+            HttpMethodBase call = null
+
+            try {
+
+                if (type == HttpGet.METHOD_NAME) {
+                    HttpGet httpGet = new HttpGet(targetUrl);
+                    queryParams.addAll(nvList) //Combine name: value
+                    java.net.URI uri = new URIBuilder(httpGet.getURI())
+                            .setParameters(queryParams)
+                            .build();
+                    call = new GetMethod(uri.toString())
+                }else if (type == "DELETE") {
+                    HttpGet httpGet = new HttpGet(targetUrl);
+                    queryParams.addAll(nvList) //Combine name: value
+                    java.net.URI uri = new URIBuilder(httpGet.getURI())
+                            .setParameters(queryParams)
+                            .build();
+                    call = new DeleteMethod(uri.toString())
+                } else {
+                    HttpPut httpGet = new HttpPut(targetUrl);
+                    java.net.URI uri = new URIBuilder(httpGet.getURI())
+                            .setParameters(queryParams)
+                            .build();
+                    if (type == HttpPut.METHOD_NAME) {
+                        call = new PutMethod(uri.toString())
+                    } else if (type == HttpPost.METHOD_NAME) {
+                        call = new PostMethod(uri.toString())
+                        if (nameValues) {
+                            ((PostMethod)call).addParameters(nameValues)
+                        }
+
+                    }
+
+                    if (entity) {
+                        ((EntityEnclosingMethod) call).setRequestEntity(entity)
+                    }
+                }
+
+
+                if (doAuthentication != null) {
+                    call.setDoAuthentication(doAuthentication)
+                }
+
+                if (headers) {
+                    headers.each { k, v ->
+                        call.addRequestHeader(k, v)
+                    }
+                }
+
+                client.executeMethod(call)
+
+                BufferedInputStream bis = new BufferedInputStream(call.getResponseBodyAsStream())
+                return [statusCode: call.statusCode, text:  IOUtils.toString(bis), headers: call.responseHeaders]
+            } catch (Exception e) {
+                log.error url, e
+            } finally {
+                if (call) {
+                    call.releaseConnection()
+                }
+            }
+        } catch (Exception e) {
+            log.error url, e
         }
 
-        null
+        return null
     }
 
     static makeQid(query) {
         List<NameValuePair> params = new ArrayList<>()
 
         if (query.q instanceof List) {
-            params.add(new BasicNameValuePair('q', ((List)query.q)[0].toString()))
+            params.add(new NameValuePair('q', ((List)query.q)[0].toString()))
             if (query.q.size() > 1) query.q.subList(1, query.q.size()).each {
-                params.add(new BasicNameValuePair('fq', it.toString()))
+                params.add(new NameValuePair('fq', it.toString()))
             }
         } else {
-            params.add(new BasicNameValuePair('q', query.q.toString()))
+            params.add(new NameValuePair('q', query.q.toString()))
             if (query.fq) query.fq.each {
                 if (it instanceof String) {
-                    params.add(new BasicNameValuePair('fq', it))
+                    params.add(new NameValuePair('fq', it))
                 }
             }
         }
 
         if (query.wkt) {
-            params.add(new BasicNameValuePair('wkt', query.wkt.toString()))
+            params.add(new NameValuePair('wkt', query.wkt.toString()))
         }
 
-        params.add(new BasicNameValuePair('bbox', 'true'))
+        params.add(new NameValuePair('bbox', 'true'))
 
         return postUrl("${query.bs}/webportal/params", (NameValuePair[]) params.toArray(new NameValuePair[0]))
     }
@@ -236,8 +288,8 @@ class Util {
                 String intersectArea = jo.containsKey('intersectArea') ? String.valueOf(Math.round(jo.get('intersectArea') / 1000000)) : ""
 
                 lines[i + 1] = spcode + "," + wrap(scientific) + "," + wrap(auth) + "," + wrap(common) + "," +
-                    wrap(family) + "," + wrap(genus) + "," + wrap(name) + "," + min + "," + max +
-                    "," + wrap(md) + "," + wrap(lsid) + "," + wrap(areaName) + "," + wrap(areaKm) +
+                        wrap(family) + "," + wrap(genus) + "," + wrap(name) + "," + min + "," + max +
+                        "," + wrap(md) + "," + wrap(lsid) + "," + wrap(areaName) + "," + wrap(areaKm) +
                         "," + wrap(dataResourceUid) + "," + wrap(intersectArea)
             }
 
@@ -289,20 +341,20 @@ class Util {
         List<NameValuePair> params = new ArrayList<>()
 
         if (wkt != null) {
-            params.add(new BasicNameValuePair('wkt', wkt))
+            params.add(new NameValuePair('wkt', wkt))
         }
         if (lsids != null) {
-            params.add(new BasicNameValuePair('lsids', lsids))
+            params.add(new NameValuePair('lsids', lsids))
         }
         if (geomIdx != null) {
-            params.add(new BasicNameValuePair('geom_idx', geomIdx))
+            params.add(new NameValuePair('geom_idx', geomIdx))
         }
         if (dataResourceId != null) {
-            params.add(new BasicNameValuePair('dataResourceUid', dataResourceId))
+            params.add(new NameValuePair('dataResourceUid', dataResourceId))
         }
         if (familyLsids != null) {
             for (String f : familyLsids) {
-                params.add(new BasicNameValuePair('familyLsid', f))
+                params.add(new NameValuePair('familyLsid', f))
             }
         }
 

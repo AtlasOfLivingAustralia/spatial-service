@@ -37,7 +37,7 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
         proc.fileLockService = Mock(FileLockService)
 
         // gdal installation is required for 'PointsToGrid'
-        grailsApplication.config.gdal.dir = '/usr/bin'
+        grailsApplication.config.gdal.dir = '/opt/homebrew/bin'
         gdalInstalled = TestUtil.GDALInstalled(grailsApplication.config.gdal.dir)
     }
 
