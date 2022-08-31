@@ -213,6 +213,8 @@ ala.baseURL: 'https://www.ala.org.au'
 bie.baseURL: 'https://bie.ala.org.au'
 bie.searchPath: '/search'
 
+namematching.url: 'https://namematching-ws.ala.org.au'
+
 records.url: 'https://archives.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
 api_key: ''
