@@ -3,7 +3,6 @@ package au.org.ala.spatial.service
 import au.org.ala.layers.dto.*
 import au.org.ala.layers.grid.GridCutter
 import au.org.ala.layers.intersect.IntersectConfig
-import au.org.ala.spatial.service.Task
 import grails.config.Config
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
@@ -15,12 +14,10 @@ class BootStrap {
 
     def monitorService
     def slaveService
-    def slaveConnectService
     def grailsApplication
     def masterService
     def tasksService
     def legacyService
-    def fieldDao
     def groovySql
     def messageSource
 
@@ -40,8 +37,8 @@ class BootStrap {
         masterService._tasksService = tasksService
 
         //layers-store and domain classes requiring an updated marshaller
-        [AnalysisLayer, Distribution, Facet, Field, Layer, Objects, SearchObject, Tabulation,
-            Task, Log, InputParameter, OutputParameter].each { clazz ->
+        [AnalysisLayer, Distributions, Facet, Field, Layer, Objects, SearchObject, Tabulation,
+         Task, Log, InputParameter, OutputParameter].each { clazz ->
             JSON.registerObjectMarshaller(clazz) { i ->
                 i.properties.findAll {
                     it.value != null && it.key != 'class' && it.key != '_ref' &&

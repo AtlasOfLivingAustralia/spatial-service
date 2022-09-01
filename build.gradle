@@ -118,7 +118,7 @@ dependencies {
     testCompile "org.seleniumhq.selenium:selenium-remote-driver:3.14.0"
     testCompile "org.seleniumhq.selenium:selenium-api:3.14.0"
     testCompile "org.seleniumhq.selenium:selenium-support:3.14.0"
-    testRuntime "org.seleniumhq.selenium:selenium-chrome-driver:3.14.0"
+    //testRuntime "org.seleniumhq.selenium:selenium-chrome-driver:3.14.0"
     testRuntime "org.seleniumhq.selenium:selenium-firefox-driver:3.14.0"
 
     compile 'org.grails.plugins:converters'
@@ -188,8 +188,8 @@ configurations {
 
 bootRun {
     jvmArgs(
-        '-Dspring.output.ansi.enabled=always', 
-        '-noverify', 
+        '-Dspring.output.ansi.enabled=always',
+        '-noverify',
         '-XX:TieredStopAtLevel=1',
         '-Xmx2048m')
     sourceResources sourceSets.main
@@ -206,12 +206,12 @@ assets {
 
 ext {
     // The drivers we want to use
-    drivers = ["firefox", "chrome", "chromeHeadless"]
+    drivers = ["firefox" /*, "chrome", "chromeHeadless"*/ ]
 }
 
 webdriverBinaries {
-    chromedriver '2.45.0'
-    geckodriver '0.24.0'
+    //chromedriver '2.45.0'
+    //geckodriver '0.24.0'
 }
 
 tasks.getByName("integrationTest") {

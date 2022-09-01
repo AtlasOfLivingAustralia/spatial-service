@@ -15,101 +15,88 @@
 
 package au.org.ala.layers
 
-import au.org.ala.layers.dao.DistributionDAO
-import au.org.ala.layers.dao.ObjectDAO
-import au.org.ala.layers.dto.Distribution
 import grails.converters.JSON
+import au.org.ala.spatial.service.Distributions
+import au.org.ala.spatial.service.Objects
 
 class ChecklistController {
 
     def distributionsService
-    DistributionDAO distributionDao
-    ObjectDAO objectDao
 
     def index() {
         String wkt = params?.wkt
-        if (params?.wkt && params.wkt.toString().isNumber()) {
-            wkt = objectDao.getObjectsGeometryById(params.wkt.toString(), "wkt")
-        }
-        if (!wkt) wkt = ''
-
-        Double min_depth = params.containsKey('min_depth') ? params.min_depth : -1.0
-        Double max_depth = params.containsKey('max_depth') ? params.max_depth : -1.0
-        String lsids = params.containsKey('lsids') ? params.lsids : ''
-        Integer geom_idx = params.containsKey('geom_idx') ? params.geom_idx : -1
-        String pid = params.containsKey('pid') ? params.pid : ''
-
-        if (pid.length() > 0) {
-            wkt = objectDao.getObjectsGeometryById(pid, 'wkt')
+        String pid = params?.pid
+        if (pid) {
+            wkt = Objects.findById(pid)?.geometry
+        } else if (wkt && wkt.toString().isNumber()) {
+            wkt = Objects.findById(wkt)?.geometry
         }
 
-        List checklists = distributionDao.queryDistributions(wkt, min_depth, max_depth, geom_idx, lsids, Distribution.SPECIES_CHECKLIST, null as String[], null as Boolean)
+        List checklists
+        if (wkt) {
+            checklists = distributionsService.areaQuery(Distributions.SPECIES_CHECKLIST, wkt)
+        } else {
+            checklists = distributionsService.checklistsById.values()
+        }
 
         render checklists as JSON
     }
 
     def show(Long id) {
-        if (id == null) {
-            render status: 400, text: "Path parameter `id` is not an integer."
-            return
+        boolean noWkt = params.containsKey('nowkt') ? params.nowkt.toString().toBoolean() : false
+
+        def distribution
+        if (noWkt) {
+            distribution = distributionsService.checklistsById.get(id)
+        } else {
+            distribution = Distributions.findBySpcodeAndType(id, Distributions.SPECIES_CHECKLIST)
         }
 
-        boolean noWkt = params.containsKey('nowkt') ? params.nowkt.toString().toBoolean() : false
-        Distribution distribution = distributionDao.getDistributionBySpcode(id, Distribution.SPECIES_CHECKLIST, noWkt)
-
-        if (distribution == null) {
+        if (distribution) {
             render(status: 404, text: 'invalid distribution spcode')
         } else {
-            addImageUrl(distribution)
+            distributionsService.addImageUrl(distribution)
             render distribution as JSON
         }
     }
 
-    void addImageUrl(Distribution d) {
-        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
-    }
+    def lsid(String lsid) {
+        boolean noWkt = params.containsKey('nowkt') ? params.nowkt.toString().toBoolean() : false
 
-    def uniqueLsids() {
-        List distributions = distributionDao.queryDistributions(null, -1, -1,
-                null, null, null, null, null, null, null, null, null,
-                null, null, Distribution.SPECIES_CHECKLIST, null, null)
-
-        def lsids = [:]
-
-        distributions.each { map ->
-            def c = 1
-            if (lsids.containsKey(map.lsid)) c += lsids.get(map.lsid)
-            lsids.put(map.lsid, c)
+        def distribution
+        if (noWkt) {
+            distribution = distributionsService.checklistsByLsid.get(lsid)
+        } else {
+            distribution = Distributions.findByLsidAndType(lsid, Distributions.SPECIES_CHECKLIST)
         }
 
-        render lsids as JSON
-    }
+        if (distribution instanceof List && distribution.size() > 0) {
+            distribution = distribution[0]
+        }
 
-    def lsid(String lsid) {
-        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
-        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
-        if (distributions != null && !distributions.isEmpty()) {
-            distributionsService.addImageUrl(distributions.get(0))
-            render distributions.get(0).toMap().findAll {
-                i -> i.value != null && "class" != i.key
-            } as JSON
+        if (!distribution) {
+            render(status: 404, text: 'invalid checklist lsid')
         } else {
-            render(status: 404, text: 'no records for this lsid')
+            distributionsService.addImageUrl(distribution)
+            render distribution as JSON
         }
     }
 
     def lsids(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
-        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
-        if (distributions != null && !distributions.isEmpty()) {
-            distributionsService.addImageUrls(distributions)
-            render distributions.collect {
-                it.toMap().findAll {
-                    i -> i.value != null && "class" != i.key
-                }
-            } as JSON
+
+        def distributions
+        if (noWkt) {
+            distributions = distributionsService.checklistsByLsid.get(lsid)
         } else {
-            render(status: 404, text: 'no records for this lsid')
+            distributions = Distributions.findAllByLsidAndType(lsid, Distributions.SPECIES_CHECKLIST)
+        }
+
+        if (!distributions) {
+            render(status: 404, text: 'invalid checklist lsid')
+        } else {
+            distributionsService.addImageUrls(distributions)
+            render distributions as JSON
         }
     }
 }

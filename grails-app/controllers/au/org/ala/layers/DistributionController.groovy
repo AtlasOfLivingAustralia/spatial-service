@@ -18,62 +18,38 @@ package au.org.ala.layers
 import au.org.ala.layers.dto.AttributionDTO
 import au.org.ala.layers.dto.Distribution
 import au.org.ala.layers.dto.MapDTO
+import au.org.ala.spatial.service.Distributions
+import au.org.ala.spatial.service.Objects
 import au.org.ala.spatial.util.AttributionCache
 import grails.converters.JSON
-import groovy.json.JsonSlurper
-import org.json.simple.JSONObject
-import org.json.simple.parser.JSONParser
-import org.json.simple.parser.ParseException
-
-import java.nio.charset.StandardCharsets
-import java.util.stream.Collectors
 
 class DistributionController {
 
     def distributionsService
-    def distributionDao
 
     def index() {
-        def list = distributionsService.index(params, Distribution.EXPERT_DISTRIBUTION)
+        String wkt = params?.wkt
+        String pid = params?.pid
+        if (pid) {
+            wkt = Objects.findById(pid)?.geometry
+        } else if (wkt && wkt.toString().isNumber()) {
+            wkt = Objects.findById(wkt)?.geometry
+        }
 
-        render list as JSON
+        List checklists
+        if (wkt) {
+            checklists = distributionsService.areaQuery(Distributions.EXPERT_DISTRIBUTION, wkt)
+        } else {
+            checklists = distributionsService.checklistsById.values()
+        }
+
+        render checklists as JSON
     }
 
     def listLsids() {
-        def lsids = distributionsService.listLsids(Distribution.EXPERT_DISTRIBUTION)
+        def lsids = distributionsService.distributionsByLsid.keySet()
 
         render lsids as JSON
-    }
-
-    /**
-     * index family count
-     * @return
-     */
-    def count() {
-        def distributions = distributionsService.count(params, Distribution.EXPERT_DISTRIBUTION)
-
-        render distributions as JSON
-    }
-
-    def pointRadius() {
-
-        def distributions = distributionsService.pointRadius(params, Distribution.EXPERT_DISTRIBUTION)
-
-        if (distributions instanceof String) {
-            render(status: 404, text: distributions)
-        } else {
-            render distributions as JSON
-        }
-    }
-
-    def pointRadiusCount() {
-        def distributions = distributionsService.pointRadiusCount(params, Distribution.EXPERT_DISTRIBUTION)
-
-        if (distributions instanceof String) {
-            render(status: 404, text: distributions)
-        } else {
-            render distributions as JSON
-        }
     }
 
     def show(Long id) {
@@ -91,59 +67,54 @@ class DistributionController {
         }
     }
 
-    def lsidFirst(String lsid) {
-        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
-        List distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
-        if (distributions != null && !distributions.isEmpty()) {
-            Distribution d = distributions.get(0)
-            distributionsService.addImageUrl(d)
-            render d.toMap().findAll {
-                i -> i.value != null && "class" != i.key
-            } as JSON
-        } else {
-            render(status: 404, text: 'no records for this lsid')
-        }
-    }
-
-
     def lsid(String lsid) {
-        Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
-        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
-        if (distributions != null && !distributions.isEmpty()) {
-            distributionsService.addImageUrl(distributions.get(0))
-            render distributions.get(0).toMap().findAll {
-                i -> i.value != null && "class" != i.key
-            } as JSON
+        boolean noWkt = params.containsKey('nowkt') ? params.nowkt.toString().toBoolean() : false
+
+        def distribution
+        if (noWkt) {
+            distribution = distributionsService.distributionsByLsid.get(lsid)
         } else {
-            render text:[] as JSON
+            distribution = Distributions.findByLsidAndType(lsid, Distributions.EXPERT_DISTRIBUTION)
+        }
+
+        if (distribution instanceof List && distribution.size() > 0) {
+            distribution = distribution[0]
+        }
+
+        if (!distribution) {
+            render(status: 404, text: 'invalid distribution lsid')
+        } else {
+            distributionsService.addImageUrl(distribution)
+            render distribution as JSON
         }
     }
 
     def lsids(String lsid) {
-        lsid = URLDecoder.decode(lsid, StandardCharsets.UTF_8.toString())
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
-        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
-        if (distributions != null && !distributions.isEmpty()) {
-            distributionsService.addImageUrls(distributions)
-            render distributions.collect {
-                it.toMap().findAll {
-                    i -> i.value != null && "class" != i.key
-                }
-            } as JSON
+
+        def distributions
+        if (noWkt) {
+            distributions = distributionsService.distributionsByLsid.get(lsid)
         } else {
-            render text:[] as JSON
+            distributions = Distributions.findAllByLsidAndType(lsid, Distributions.EXPERT_DISTRIBUTION)
+        }
+
+        if (!distributions) {
+            render(status: 404, text: 'invalid distributions lsid')
+        } else {
+            distributionsService.addImageUrls(distributions)
+            render distributions as JSON
         }
     }
 
     /*
      * get one distribution map by lsid
      */
-
     def lsidMapFirst(String lsid) {
 
         MapDTO m = new MapDTO()
 
-        Distribution distribution = distributionDao.findDistributionByLSIDOrName(lsid, Distribution.EXPERT_DISTRIBUTION)
+        Distribution distribution = distributionsService.distributionsByLsid(lsid)
 
         if (distribution != null) {
             m.setDataResourceUID(distribution.getData_resource_uid())
@@ -163,42 +134,8 @@ class DistributionController {
         render m as JSON
     }
 
-    def lsidMaps(String lsid) {
-
-        List found = []
-
-        List distributions = distributionDao.findDistributionsByLSIDOrName(lsid, Distribution.EXPERT_DISTRIBUTION)
-
-        if (distributions != null) {
-            distributions.each { Distribution distribution ->
-                MapDTO m = new MapDTO()
-                m.setDataResourceUID(distribution.getData_resource_uid())
-                m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
-                // set the attribution info
-                AttributionDTO dto = AttributionCache.getCache().getAttributionFor(distribution.getData_resource_uid())
-                m.setAvailable(true)
-                m.setDataResourceName(dto.getName())
-                m.setLicenseType(dto.getLicenseType())
-                m.setLicenseVersion(dto.getLicenseVersion())
-                m.setRights(dto.getRights())
-                m.setDataResourceUrl(dto.getWebsiteUrl())
-                m.setMetadataUrl(dto.getAlaPublicUrl())
-
-                found.add(m)
-            }
-        }
-
-        render found as JSON
-    }
-
     def clearAttributionCache() {
         AttributionCache.getCache().clear()
-    }
-
-    def cacheMaps() {
-        distributionsService.cacheMaps(Distribution.EXPERT_DISTRIBUTION)
-
-        render(status: 200, text: 'started caching')
     }
 
     def map(String geomIdx) {
@@ -218,65 +155,6 @@ class DistributionController {
             }
         }
     }
-
-    /**
-     * For a given set of points and an lsid, identify the points which do not
-     * fall within the expert distribution associated with the lsid.
-     *
-     * @param lsid  URLEncoded REQUIRED. the lsid associated with the expert distribution
-     * @param pointsJson the points to test in JSON format. This must be a map whose
-     *                   keys are point ids (strings - typically these will be
-     *                   occurrence record ids). The values are maps containing the
-     *                   point's decimal latitude (with key "decimalLatitude") and
-     *                   decimal longitude (with key "decimalLongitude"). The decimal
-     *                   latitude and longitude values must be numbers.
-     *
-     *                   ALSO, the points can be in POST BODY
-     * @param response the http response
-     * @return A map containing the distance outside the expert distribution for
-     * each point which falls outside the area defined by the
-     * distribution. Keys are point ids, values are the distances
-     * @throws Exception
-     */
-    def outliers(String lsid) {
-        JSONObject pointsMap
-        lsid = URLDecoder.decode(lsid, StandardCharsets.UTF_8.toString())
-
-        def pointsJson = params.get('pointsJson', null)
-
-        if (pointsJson == null) {
-            pointsMap = request.getJSON()
-        } else {
-            pointsMap = (JSONObject) new JSONParser().parse(pointsJson as String)
-        }
-
-        if (pointsMap == null) {
-            render(status: 400, text: 'missing parameter pointsJson / no points via post body')
-            return
-        }
-
-        //Check if it has EDL
-        log.info("Calculating the distance to ELD for " + lsid )
-        List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
-        if (distributions.size() > 0) {
-            try {
-                Map outlierDistances = distributionDao.identifyOutlierPointsForDistribution(lsid, pointsMap,
-                        Distribution.EXPERT_DISTRIBUTION)
-                render outlierDistances as JSON
-            } catch (Exception e) {
-                log.error('Runtime error in calculating outliers of lsid: ' + lsid)
-                log.error('Details: ' + pointsMap)
-                Writer buffer = new StringWriter()
-                PrintWriter pw = new PrintWriter(buffer)
-                e.printStackTrace(pw)
-                log.error(e.toString());
-                render(status: 400, text: 'Spatial encounters runtime error when calculating outlier of lsid: ' + lsid)
-            }
-        } else {
-            render [:] as JSON
-        }
-    }
-
 
     def overviewMapPng(String geomIdx) {
         map(geomIdx)
@@ -317,11 +195,11 @@ class DistributionController {
 
         try {
             if (spcode != null) {
-                geomIdx = distributionDao.getDistributionBySpcode(spcode, Distribution.EXPERT_DISTRIBUTION, true)?.getGeom_idx()
+                geomIdx = distributionsService.distributionsById.get(spcode)?.geom_idx
             } else if (lsid != null) {
-                geomIdx = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)?.get(0)?.getGeom_idx()
+                geomIdx = distributionsService.distributionsByLsid.get(lsid)?.get(0)?.geom_idx()
             } else if (scientificName != null) {
-                geomIdx = distributionDao.findDistributionByLSIDOrName(scientificName, Distribution.EXPERT_DISTRIBUTION)?.getGeom_idx()
+                geomIdx = distributionsService.distributionsByLsid.get(lsid)?.get(0)?.geom_idx()
             }
         } catch (err) {
             log.error 'no distribution found:' + lsid + ',' + spcode + ',' + scientificName, err
