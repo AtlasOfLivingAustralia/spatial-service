@@ -18,17 +18,17 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.tabulation.Intersection
 import au.org.ala.layers.tabulation.TabulationGenerator
 import au.org.ala.layers.util.SpatialUtil
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.geom.GeometryCollection
-import com.vividsolutions.jts.geom.MultiPolygon
-import com.vividsolutions.jts.geom.Polygon
-import com.vividsolutions.jts.io.WKTReader
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataStore
 import org.geotools.data.DataStoreFinder
 import org.geotools.data.FeatureSource
 import org.geotools.feature.FeatureIterator
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.geom.GeometryCollection
+import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Polygon
+import org.locationtech.jts.io.WKTReader
 import org.opengis.feature.simple.SimpleFeature
 
 import java.util.zip.ZipInputStream

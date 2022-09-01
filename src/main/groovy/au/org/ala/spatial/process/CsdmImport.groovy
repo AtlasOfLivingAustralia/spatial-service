@@ -18,8 +18,6 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.GeomMakeValid
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.geom.Polygon
 import grails.converters.JSON
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
@@ -27,6 +25,8 @@ import org.geotools.feature.FeatureCollection
 import org.geotools.feature.FeatureIterator
 import org.geotools.geojson.feature.FeatureJSON
 import org.json.simple.JSONObject
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.geom.Polygon
 
 import java.text.MessageFormat
 

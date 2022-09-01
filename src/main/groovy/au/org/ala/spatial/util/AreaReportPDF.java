@@ -2,7 +2,6 @@ package au.org.ala.spatial.util;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.spatial.Util;
-import com.vividsolutions.jts.io.WKTReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -11,6 +10,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.WKTReader;
 import org.springframework.util.StreamUtils;
 
 import java.awt.*;
@@ -580,9 +581,9 @@ public class AreaReportPDF {
             String wkt = pid;
             if (StringUtils.trimToNull(area) != null) {
                 WKTReader reader = new WKTReader();
-                com.vividsolutions.jts.geom.Geometry g1 = reader.read(getWkt(pid));
-                com.vividsolutions.jts.geom.Geometry g2 = reader.read(getWkt(area));
-                com.vividsolutions.jts.geom.Geometry g3 = g1.intersection(g2);
+                Geometry g1 = reader.read(getWkt(pid));
+                Geometry g2 = reader.read(getWkt(area));
+                Geometry g3 = g1.intersection(g2);
                 if (g3.getArea() > 0) {
                     wkt = g3.toString();
                     csv = initDistributionsCsv(table, wkt, dataResourceId, StringUtils.trimToNull(kingdom));

@@ -56,7 +56,7 @@ class ServiceAuthService {
      */
     boolean isAdmin(params) {
         // login disabled
-        if (grailsApplication.config.security.cas.disableCAS.toBoolean() || grailsApplication.config.security.cas.bypass.toBoolean()) {
+        if (!grailsApplication.config.security.oidc.enabled.toBoolean()) {
             return true
         }
 

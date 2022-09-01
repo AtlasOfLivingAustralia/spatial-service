@@ -21,9 +21,6 @@ import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.io.ParseException
-import com.vividsolutions.jts.io.WKTReader
 import grails.converters.JSON
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.io.FileUtils
@@ -37,11 +34,13 @@ import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.geojson.geom.GeometryJSON
-import org.geotools.graph.util.ZipUtil
 import org.geotools.kml.KML
 import org.geotools.kml.KMLConfiguration
-import org.geotools.xml.Encoder
+import org.geotools.xsd.Encoder
 import org.grails.web.json.JSONObject
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.io.ParseException
+import org.locationtech.jts.io.WKTReader
 import org.opengis.feature.simple.SimpleFeatureType
 import org.springframework.dao.DataAccessException
 import org.springframework.web.multipart.MultipartFile

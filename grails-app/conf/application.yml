@@ -191,18 +191,33 @@ taskTimeoutTime: 900000
 #  NOTE: Some of these will be ignored if default_config exists
 security:
   cas:
-    casServerName: 'https://auth.ala.org.au'
-    uriFilterPattern: ['/alaAdmin/?.*']
-    uriExclusionFilterPattern: ['/portal/q/*','/portal/messages/*','/portal/sessionCache/*','/static/*','/assets/*']
-    authenticateOnlyIfLoggedInPattern: ['/portal/*','/','/portal/config/*','/portal/i18n/*','/hub/[a-zA-Z0-9]+']
-    loginUrl: 'https://auth.ala.org.au/cas/login'
-    logoutUrl: 'https://auth.ala.org.au/cas/logout'
-    gateway: false
-    casServerUrlPrefix: 'https://auth.ala.org.au/cas'
+    casServerName: 'https://auth-test.ala.org.au'
+    loginUrl: 'https://auth-test.ala.org.au/cas/login'
+    logoutUrl: 'https://auth-test.ala.org.au/cas/logout'
+    casServerUrlPrefix: 'https://auth-test.ala.org.au/cas'
     bypass: false # set to true for non-ALA deployment
-    disableCAS: false
+    gateway: false
+    uriExclusionFilterPattern: ['/assets.*', '/images.*', '/css.*', '/js.*', '/less.*']
+    uriFilterPattern: ['/alaAdmin/*', '/alaAdmin']
+    #if false, ticket params always proceed
+    #true, only processes urls listed in authenticateOnlyIfLoggedInFilterPattern
+    applyUriFiltersToTicketValidation: false
+    authenticateOnlyIfLoggedInFilterPattern: ['/master', '/master/*', '/manageLayers', '/manageLayers/*', '/admin', '/admin/*', '/layers/view/more/*', '/layer/download/*', '/workflow/*', '/workflow']
+    disableCAS: true
     ignoreCase: true
     authCookieName: ALA-Auth
+    enabled: false
+  oidc:
+    enabled: true
+    discovery-uri: 'https://auth-test.ala.org.au/cas/oidc/.well-known'
+    clientId: 'change me'
+    secret: 'change me'
+    allowUnsignedIdTokens: true
+    scope: 'openid profile email ala roles'
+  jwt:
+    enabled: true
+    discoveryUri: https://auth-test.ala.org.au/cas/oidc/.well-known
+    fallbackToLegacyBehaviour: true
 
 auth.admin_role: "ROLE_ADMIN"
 app.http.header.userId: "X-ALA-userId"
@@ -396,3 +411,16 @@ environments:
                 testOnReturn: false
                 jdbcInterceptors: ConnectionState
                 defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
+
+openapi:
+  title: SpatialService REST services
+  description: REST services for interacting with the spatial-service webapp
+  terms: https://www.ala.org.au/terms
+  contact:
+    name: Support
+    email: support@ala.org.au
+  license:
+    name: Mozilla Public License 1.1
+    url: https://www.mozilla.org/en-US/MPL/1.1/
+  version: '@info.app.version@'
+  cachetimeoutms: 4000
