@@ -65,7 +65,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         grailsApplication.config.geoserver.canDeploy = false
 
         // gdal installation is required for 'processUpload'
-        grailsApplication.config.gdal.dir = '/usr/bin'
+        grailsApplication.config.gdal.dir = '/opt/homebrew/bin'
         gdalInstalled = TestUtil.GDALInstalled(grailsApplication.config.gdal.dir)
     }
 

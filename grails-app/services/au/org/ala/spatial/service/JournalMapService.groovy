@@ -15,12 +15,12 @@
 
 package au.org.ala.spatial.service
 
-import com.vividsolutions.jts.geom.Geometry
 import org.apache.commons.io.FileUtils
 import org.geotools.geometry.jts.WKTReader2
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
+import org.locationtech.jts.geom.Geometry
 
 class JournalMapService {
 

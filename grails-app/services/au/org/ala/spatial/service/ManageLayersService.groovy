@@ -24,9 +24,9 @@ import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.methods.FileRequestEntity
-import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
+import org.apache.http.entity.FileEntity
+import org.apache.http.entity.StringEntity
 import org.codehaus.jackson.map.ObjectMapper
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.json.simple.JSONObject
@@ -157,7 +157,7 @@ class ManageLayersService {
             }
         }
 
-        //no upload dir, look in existing layers, at layer.id 
+        //no upload dir, look in existing layers, at layer.id
         if (!upload.containsKey("raw_id")) {
             try {
                 Layer layer = layerDao.getLayerById(Integer.parseInt(uploadId))
@@ -326,10 +326,10 @@ class ManageLayersService {
         def entity = null
         if (resourcepath != null) {
             def input = new File(resourcepath)
-            entity = new FileRequestEntity(input, contenttype)
+            entity = new FileEntity(input, contenttype)
         } else if (resourcestr != null) {
             try {
-                entity = new StringRequestEntity(resourcestr, contenttype, "UTF-8")
+                entity = new StringEntity(resourcestr, contenttype, "UTF-8")
             } catch (UnsupportedEncodingException e) {
                 log.error 'failed to encode contenttype: ' + contenttype, e
             }
@@ -1073,7 +1073,7 @@ class ManageLayersService {
 
                 //update select values
                 try {
-                    //flag background processes that need running 
+                    //flag background processes that need running
                     boolean updateIntersect = field.intersect != null && field.intersect != originalField.isIntersect() && field.intersect
                     boolean updateNameSearch = field.namesearch != null && "on".equalsIgnoreCase(field.namesearch.toString()) != originalField.isNamesearch()
 
@@ -1594,4 +1594,4 @@ class ManageLayersService {
     }
 }
 
-    
+

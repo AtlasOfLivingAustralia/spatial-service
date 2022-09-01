@@ -121,8 +121,8 @@ class Util {
      * @return
      */
     static Map<String, Object> urlResponse(String type, String url, NameValuePair[] nameValues = null,
-                           Map<String, String> headers = null, RequestEntity entity = null,
-                           Boolean doAuthentication = null, String username = null, String password = null) {
+                                           Map<String, String> headers = null, RequestEntity entity = null,
+                                           Boolean doAuthentication = null, String username = null, String password = null) {
         HttpClient client
         try {
             client = new HttpClient(new HttpClientParams(), mgr)
@@ -288,8 +288,8 @@ class Util {
                 String intersectArea = jo.containsKey('intersectArea') ? String.valueOf(Math.round(jo.get('intersectArea') / 1000000)) : ""
 
                 lines[i + 1] = spcode + "," + wrap(scientific) + "," + wrap(auth) + "," + wrap(common) + "," +
-                    wrap(family) + "," + wrap(genus) + "," + wrap(name) + "," + min + "," + max +
-                    "," + wrap(md) + "," + wrap(lsid) + "," + wrap(areaName) + "," + wrap(areaKm) +
+                        wrap(family) + "," + wrap(genus) + "," + wrap(name) + "," + min + "," + max +
+                        "," + wrap(md) + "," + wrap(lsid) + "," + wrap(areaName) + "," + wrap(areaKm) +
                         "," + wrap(dataResourceUid) + "," + wrap(intersectArea)
             }
 
