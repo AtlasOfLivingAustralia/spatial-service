@@ -116,8 +116,8 @@ dependencies {
     testCompile "org.seleniumhq.selenium:selenium-remote-driver:3.14.0"
     testCompile "org.seleniumhq.selenium:selenium-api:3.14.0"
     testCompile "org.seleniumhq.selenium:selenium-support:3.14.0"
-    testRuntime "org.seleniumhq.selenium:selenium-chrome-driver:3.14.0"
-    testRuntime "org.seleniumhq.selenium:selenium-firefox-driver:3.14.0"
+//    testRuntime "org.seleniumhq.selenium:selenium-chrome-driver:3.14.0"
+//    testRuntime "org.seleniumhq.selenium:selenium-firefox-driver:3.14.0"
 
     compile 'org.grails.plugins:converters'
     //compile 'org.grails.plugins:grails-java8:1.2.2'
@@ -208,10 +208,10 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-webdriverBinaries {
-    chromedriver '2.45.0'
-    geckodriver '0.24.0'
-}
+//webdriverBinaries {
+//    chromedriver '2.45.0'
+//    geckodriver '0.24.0'
+//}
 
 tasks.getByName("integrationTest") {
     group JavaBasePlugin.VERIFICATION_GROUP
