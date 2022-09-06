@@ -28,6 +28,7 @@ class TasksController {
 
     TasksService tasksService
     TaskService taskService
+    TasksCacheService tasksCacheService
 
     def serviceAuthService
     def authService
@@ -159,9 +160,9 @@ class TasksController {
         def email = params.email
 
         if (userId && !email) {
-            def user = authService.getUserForUserId(userId, false);
+            def user = authService.getUserForUserId(userId, false)
             if (user) {
-                email = user.email;
+                email = user.email
             }
         }
 
@@ -170,6 +171,11 @@ class TasksController {
             render errors as JSON
         } else {
             Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, email)
+
+            tasksCacheService.transientTasks.put(task.id, task)
+
+            taskService.start(task)
+
             render task as JSON
         }
     }
@@ -239,8 +245,25 @@ class TasksController {
     @RequireAdmin
     reRun(Task task) {
         if (task != null) {
-            def history = [:]
-            history.put(String.valueOf(System.currentTimeMillis()), 'restarting task')
+            //reset output
+            OutputParameter.withNewTransaction {
+                OutputParameter.findAllByTask(task).each {
+                    it.delete()
+                }
+            }
+
+            //clear history
+            au.org.ala.spatial.service.Task.withTransaction {
+                if (task.history) {
+                    task.history.clear()
+                    if (!task.save()) {
+                        it.errors.each {
+                            log.error it
+                        }
+                    }
+                }
+            }
+
             tasksService.update(task.id, [status: 0, slave: null, url: null, message: 'in queue', history: history])
         }
 
@@ -339,8 +362,8 @@ class TasksController {
             }
 
             if (ok) {
-                response.setContentLength((int) f.length());
-                response.addHeader("Content-Disposition", "attachment");
+                response.setContentLength((int) f.length())
+                response.addHeader("Content-Disposition", "attachment")
 
                 OutputStream os = response.getOutputStream()
                 InputStream is = new BufferedInputStream(new FileInputStream(f))

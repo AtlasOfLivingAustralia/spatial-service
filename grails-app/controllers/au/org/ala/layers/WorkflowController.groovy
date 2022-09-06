@@ -47,9 +47,9 @@ class WorkflowController {
         def description = data.description?.toString()
         def metadata = data.metadata?.toString()
 
-        def header;
+        def header
 
-        String errorMsg;
+        String errorMsg
         if ("true".equalsIgnoreCase(data?.doi?.toString())) {
             // test for minimum data for a DOI
             errorMsg = getErrorForDoi(data)
@@ -149,7 +149,7 @@ class WorkflowController {
     def search() {
         String user_id = authService.getUserId()
 
-        String isPublic = authService.userInRole(grailsApplication.config.auth.admin_role) ? null : PUBLIC;
+        String isPublic = authService.userInRole(grailsApplication.config.auth.admin_role) ? null : PUBLIC
 
         def list = userDataDao.searchDescAndTypeOr('%' + params.q + '%', RECORD_TYPE, user_id, isPublic, null, Integer.parseInt(params.start ?: '0'), Integer.parseInt(params.limit ?: '10'))
 

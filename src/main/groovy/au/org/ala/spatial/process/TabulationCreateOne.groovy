@@ -49,22 +49,6 @@ class TabulationCreateOne extends SlaveProcess {
 
         String intersectPath = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
 
-        //lock files that will be created and can be created by other threads
-        List filesForLocking = []
-        if (!new File(grailsApplication.config.data.dir.toString() + intersectPath).exists() && !slaveService.peekFile(intersectPath)[0].exists) {
-            filesForLocking.add(grailsApplication.config.data.dir + intersectPath)
-        }
-
-        if (filesForLocking.size() > 0) {
-            Object lock = fileLockService.lock(filesForLocking, task)
-            if (lock != null) {
-                synchronized (lock) {
-                    lock.wait()
-                    log.debug 'lock released on task:' + task.id
-                }
-            }
-        }
-
         try {
             slaveService.getFile('/layer/' + layer1.name)
             slaveService.getFile('/layer/' + layer2.name)
@@ -87,11 +71,6 @@ class TabulationCreateOne extends SlaveProcess {
         } catch (err) {
             task.history.put(System.currentTimeMillis(), 'unknown error')
             log.error "failed to produce tabulation for: " + fieldId1 + " and " + fieldId2, err
-        }
-
-        if (filesForLocking.size() > 0) {
-            log.debug 'releasing files locked by task: ' + task.id
-            fileLockService.release(filesForLocking)
         }
     }
 

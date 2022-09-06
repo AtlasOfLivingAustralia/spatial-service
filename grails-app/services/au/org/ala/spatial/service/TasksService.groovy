@@ -232,21 +232,6 @@ class TasksService {
         def newValues = [:]
         if (spec.history != null && spec.history.size() > 0) newValues.put('history', spec.history)
 
-        // remove any existing outputs
-        if (task.output) {
-            Task.withTransaction {
-                for (def o : task.output) {
-                    o.delete()
-                }
-                task.output.clear()
-                if (!task.save(flush: true)) {
-                    it.errors.each {
-                        log.error it
-                    }
-                }
-            }
-        }
-
         def formattedOutput = []
         spec.output.each { k, out ->
             if (k.equals('layers') || k.equals('layer')) {

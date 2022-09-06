@@ -17,15 +17,13 @@ package au.org.ala.spatial.service
 
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.json.JsonOutput
 import org.apache.http.entity.FileEntity
 import org.apache.http.entity.StringEntity
 
-import java.util.concurrent.ConcurrentHashMap
-
 class MasterService {
 
-    def grailsApplication
     def publishService
 
     def taskService
@@ -33,51 +31,12 @@ class MasterService {
     //avoid circular reference
     def _tasksService
 
-    Map<String, Slave> slaves = [:] as ConcurrentHashMap
-
-    def register(json) {
-        def cap = [:]
-        json.capabilities.each { k ->
-            cap.put(k.name, k)
-        }
-
-        def limits = [:]
-        json.limits.queue.each { name, lim ->
-            def pool = [:]
-            if (lim.containsKey('pool') != null) {
-                lim.pool.each { pk, pv ->
-                    pool.put(pk, pv)
-                }
-            }
-
-            limits.put(name, [total: lim.total, pool: pool, tasks: [:]])
-        }
-
-
-        Slave slave = slaves.get(json.url)
-
-        if (slave == null) {
-            slave = new Slave([url         : json.url,
-                               capabilities: cap,
-                               limits      : [queue: limits, priority: json.limits?.priority ?: [:]],
-                               key         : json.key,
-                               created     : new Date()])
-        } else {
-            slave.capabilities = cap
-            slave.created = new Date()
-        }
-
-        slaves.put(json.url.toString(), slave)
-
-        slave
-    }
-
     // start the task on the slave. return status url
     def start(slave, task, input) {
         try {
             def map = [taskId: task.id, name: task.name, input: input]
 
-            if (slave.url.equals(grailsApplication.config.grails.serverURL)) {
+            if (slave.url.equals(Holders.config.grails.serverURL)) {
                 def t = taskService.create(map, null)
                 return t
             } else {
@@ -110,7 +69,7 @@ class MasterService {
         def url = task.url
 
         try {
-            if (url.startsWith(grailsApplication.config.grails.serverURL + "/task/status/" + task.id + "?")) {
+            if (url.startsWith(Holders.config.grails.serverURL + "/task/status/" + task.id + "?")) {
                 updateTask(task, taskService.status(task.id))
                 return true
             } else {
@@ -126,88 +85,18 @@ class MasterService {
         return false
     }
 
-    // update a task with status
-    def updateTask(task, status) {
-
-        def newValues = [:]
-        if (status?.status?.finished) {
-            newValues.put('status', 4)
-        }
-
-        if (status?.status?.err) {
-            newValues.put('status', 4)
-
-            //append to log
-            def e = status.status.error.toString()
-            def m = [:]
-            m.put(String.valueOf(System.currentTimeMillis()), e.substring(0, Math.min(e.length(), 255)))
-            newValues.put('err', m)
-        }
-
-        if (status?.status?.message) {
-            if (!status.status.message.equals(task.message))
-                newValues.put('message', status.status.message)
-        }
-
-        if (status?.status?.history) {
-            //append to log
-            newValues.put('history', status.status.history)
-        }
-
-        if (status?.error) {
-            //cancel slave allocation
-
-            newValues.put('url', null)
-            newValues.put('status', 0)
-            newValues.put('slave', null)
-        }
-
-        if (newValues.size() > 0) {
-            _tasksService.update(task.id, newValues)
-
-            if (task.status == 4 || (newValues.containsKey('status') && newValues.status == 4)) {
-                finishTask(task)
-            }
-        }
-    }
-
-    // is the slave alive? return true/false
-    def ping(slave) {
-        try {
-            if (slave.url.equals(grailsApplication.config.grails.serverURL)) {
-                return true
-            } else {
-                def url = slave.url + "/slave/ping" + "?api_key=" + slave.key
-                def txt = Util.getUrl(url)
-                def response = grails.converters.JSON.parse(txt)
-                if ("alive".equalsIgnoreCase(response.status)) {
-                    return true
-                }
-            }
-        } catch (err) {
-            log.error "failed to ping slave: " + slave.url
-        }
-        return false
-    }
-
-    // do any task cleanup
-    def finishTask(task) {
-        //TODO: something to do with email for background tasks
-    }
+    def _spec = [:]
+    def _specAdmin = [:]
 
     def spec(boolean includePrivate) {
+        if (!_spec) {
+            _specAdmin = taskService.allSpec(true)
 
-        def list = slaves
 
-        def mergedSpec = [:]
-        list.each { url, slave ->
-            slave.capabilities.each { name, cap ->
-                if (mergedSpec.containsKey(name)) {
-                    // do version comparison
-                } else {
-                    boolean iPrivate = includePrivate || !cap.containsKey('private') || !cap.private.containsKey('public') || cap.private.public
+            taskService.allSpec(false).each { name, cap ->
+                    boolean iPrivate = !cap.containsKey('private') || !cap.private.containsKey('public') || cap.private.public
                     if (iPrivate) {
-                        mergedSpec.put(name, cap.findAll { i ->
+                        _spec.put(name, cap.findAll { i ->
                             if (!includePrivate && i.key.equals('private')) {
                                 null
                             } else {
@@ -216,20 +105,20 @@ class MasterService {
                         })
                     }
                 }
-            }
+
         }
 
-        mergedSpec
-    }
-
-    def getSlave(url) {
-        slaves[url]
+        if (includePrivate) {
+            _specAdmin
+        } else {
+            _spec
+        }
     }
 
     Map publish(isPublic, id, request) {
         Map map = [:]
 
-        String pth = grailsApplication.config.data.dir + "/" + (isPublic ? 'public' : 'private') + "/" + id + "/"
+        String pth = Holders.config.data.dir + "/" + (isPublic ? 'public' : 'private') + "/" + id + "/"
 
         String file = "${pth}${id}.zip"
         File f = new File(file)
@@ -255,7 +144,7 @@ class MasterService {
                 // save stream as a zip
                 if (!f.exists()) {
                     //May need to swap public/private if slave is local to master service
-                    pth = grailsApplication.config.data.dir + "/" + (!isPublic ? 'public' : 'private') + "/" + id + "/"
+                    pth = Holders.config.data.dir + "/" + (!isPublic ? 'public' : 'private') + "/" + id + "/"
                     file = "${pth}${id}.zip"
                     f = new File(file)
                 }

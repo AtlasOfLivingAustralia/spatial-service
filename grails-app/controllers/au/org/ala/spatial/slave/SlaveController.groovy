@@ -14,75 +14,11 @@
  */
 
 package au.org.ala.spatial.slave
-
-import grails.converters.JSON
-
 import javax.imageio.ImageIO
-
-import static grails.async.Promises.onComplete
-import static grails.async.Promises.task
 
 class SlaveController {
 
     def slaveService
-    def taskService
-    def fileLockService
-    def slaveAuthService
-
-    def reRegister() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        onComplete([task { slaveService.registerWithMaster() }]) { result ->
-        }
-
-        def map = [status: "requested re-register"]
-        render map as JSON
-    }
-
-    def capabilities() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        def m = taskService.allSpec
-
-        render m as JSON
-    }
-
-    //TODO: limits vs running tasks, active threads resources, etc
-    def status() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        def map = [limits    : slaveService.getLimits(), tasks: taskService.running,
-                   file_locks: [
-                           tasks_waiting: fileLockService.locks.collect { k, v -> [id: v.task.id, files: v.files] },
-                           locked_files : fileLockService.filesList.collect { k, v -> [file: k, id: v.id] }]]
-
-        render map as JSON
-    }
-
-    //TODO: check tasks are alive
-    def ping() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        def map = [status: "alive"]
-
-        render map as JSON
-    }
 
     /**
      * pdf area report
@@ -149,7 +85,7 @@ class SlaveController {
                 }
             }
         }
-        String s;
+        String s
         sb.append("</ol>")
 
         if (!bookmarks && pages.size() > 0) {
@@ -271,7 +207,7 @@ class SlaveController {
                     }
                 }
             }
-            String s;
+            String s
             sb.append("</ol>")
 
             if (!bookmarks) {

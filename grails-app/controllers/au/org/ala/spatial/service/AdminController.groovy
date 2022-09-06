@@ -23,7 +23,6 @@ class AdminController {
 
     def masterService
     def serviceAuthService
-    def fieldDao
     def authService
     def manageLayersService
 
@@ -36,56 +35,6 @@ class AdminController {
      */
     def capabilities() {
         render masterService.spec(serviceAuthService.isAdmin(params)) as JSON
-    }
-
-    /**
-     * information about all registered slaves
-     *
-     * admin only
-     *
-     * @return
-     */
-    @RequirePermission
-    def slaves() {
-        render masterService.slaves as JSON
-    }
-
-    /**
-     * information about all tasks waiting and running
-     *
-     * @return
-     */
-    @RequirePermission
-    def tasks() {
-        params.max = params?.max ?: 10
-
-        List list
-        if (params.containsKey('all')) {
-            list = Task.list(params)
-        } else {
-            list = Task.findAllByStatusOrStatus(0, 1)
-        }
-        render list as JSON
-    }
-
-    /**
-     * trigger slave re-register
-     *
-     * admin only
-     *
-     * @return
-     */
-    @RequirePermission
-    def reRegisterSlaves() {
-        int count = 0
-        masterService.slaves.each { url, slave ->
-            if (masterService.reRegister(slave)) {
-                count++
-            }
-        }
-
-        Map map = [slavesReRegistered: count]
-        render map as JSON
     }
 
     /**

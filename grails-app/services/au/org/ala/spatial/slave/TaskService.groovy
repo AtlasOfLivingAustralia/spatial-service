@@ -16,116 +16,41 @@
 package au.org.ala.spatial.slave
 
 import au.org.ala.spatial.process.SlaveProcess
+import au.org.ala.spatial.service.Task
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import grails.converters.JSON
-import grails.core.GrailsApplication
-import org.apache.commons.io.FileUtils
+import grails.util.Holders
 
-import java.text.SimpleDateFormat
-import java.util.concurrent.ConcurrentHashMap
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import java.util.Map
+import javax.annotation.PostConstruct
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class TaskService {
 
-    GrailsApplication grailsApplication
-    FileLockService fileLockService
     ThreadGroup threadGroup = new ThreadGroup("SpatialServiceTasks")
-    def tasksService
-    def authService
+    def masterService
 
+    ExecutorService generalEecutor
+    ExecutorService adminExecutor
 
+    @PostConstruct
+    def init() {
+        generalEecutor = Executors.newFixedThreadPool(Holders.config.tasks.general.threadCount,
+                new ThreadFactoryBuilder().setNameFormat("general-tasks-%d").setPriority(Thread.NORM_PRIORITY).build());
 
-
-    private getSlaveService() {
-        grailsApplication.mainContext.slaveService
+        adminExecutor = Executors.newFixedThreadPool(Holders.config.tasks.admin.threadCount,
+                new ThreadFactoryBuilder().setNameFormat("general-tasks-%d").setPriority(Thread.NORM_PRIORITY).build());
     }
 
-    // tasks do not persist in the slave
-    Map tasks = [:] as ConcurrentHashMap
-    final Object createTaskLock = new Object()
+    void start(Task task) {
+        def isAdminTask = task.spec.private.public == false
 
-    Map running = [:] as ConcurrentHashMap
+        def wrappedTask = wrapTask(task)
 
-    def getActiveThreads() {
-        Map ts = [:]
-        int activeCounts = threadGroup.activeCount()
-        Thread[] threads = new Thread[activeCounts];
-        threadGroup.enumerate(threads)
-
-
-        for(Thread t in threads) {
-            if (t instanceof TaskThread) {
-                TaskThread thread = (TaskThread)t
-                ts.put( thread.taskId, ["name":thread.name, "created":thread.created])
-            }
-        }
-        return ts
-    }
-
-    def getActiveTasks() {
-        Map tasks = [:]
-        Map threads = getActiveThreads()
-
-        //Attach threads to task
-        //
-        this.running.each {
-            Map result = [:]
-            //cp objects
-            Task task = it.value["request"]
-            String taskId = task.taskId
-
-            task.properties.each { prop, val ->
-                if(prop in ["metaClass","class"]) return
-                result[prop] = val
-            }
-
-            if (threads.get(taskId)) {
-                result["activeThread"] = threads.get(taskId)? threads.get(taskId)["created"] : null
-                threads.remove(taskId) //remove from threads if exists
-            }
-
-            tasks[taskId] = result
-        }
-
-        //Cross check in case active threads deattached from tasks
-        threads.each {
-            tasks[it.key] = it.value
-        }
-
-        //return a collection
-        return tasks.values()
-    }
-
-    void start(Task req) {
-        try {
-
-            Task request = req
-            TaskThread t = new TaskThread(this, request)
-            t.start()
-
-            //find spec
-            getAllSpec().each { spec ->
-                if (spec.name.equalsIgnoreCase(request.name)) {
-                    req.spec = spec
-                }
-            }
-
-            running.put(request.id, [request: request, thread: t, startTime: System.currentTimeMillis(),
-                                     isAdminTask: req.spec.private.public == false])
-        } catch (err) {
-            log.error "failed to start thread for task: " + req.id, err
-            req.output.put(System.currentTimeMillis(), "unknown error (id:${req.id})")
-            req.message = 'error'
-            req.status = 3
-
-            try {
-                slaveService.signalMasterImmediately(req)
-            } catch (Exception ex) {
-                log.error("problem signaling master that task is cancelled: " + taskId, ex)
-            }
-
-            running.remove(request.id)
+        if (isAdminTask) {
+            adminExecutor.submit(new TaskThread(wrappedTask))
+        } else {
+            generalEecutor.submit(new TaskThread(wrappedTask))
         }
     }
 
@@ -175,88 +100,8 @@ class TaskService {
         list
     }
 
-    def getZip(task) {
-        String zipFile = "${getBasePath(task)}${task.id}.zip"
-
-        //open zip for writing
-        ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))
-
-        task.output.each { name, files ->
-            files.each { file ->
-                //skip zipping when this is the master service and the file does not need to be moved
-                if (!grailsApplication.config.service.enable.toBoolean()) {
-                    //it is a task dir file if it does not start with '/'
-                    def inputFile = file.startsWith('/') ? grailsApplication.config.data.dir + file : "${getBasePath(task)}${file}"
-                    def flist = [:]
-                    if (new File(inputFile).exists()) {
-                        flist.put(inputFile, file)
-                    } else {
-                        //match with inputFile as prefix
-                        def prefixFile = new File(inputFile)
-                        def list = prefixFile.getParentFile().listFiles()
-                        list.each { f ->
-                            if (f.getName().startsWith(prefixFile.getName() + ".")) {
-                                def extension = f.getPath().substring(inputFile.length())
-                                flist.put(inputFile + extension, file + extension)
-                            }
-                        }
-                    }
-                    flist.each { k, v ->
-                        //add to zip
-                        ZipEntry ze = new ZipEntry(v.toString())
-                        zos.putNextEntry(ze)
-
-                        //open and stream
-                        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(k.toString()))
-                        byte[] bytes = new byte[1024]
-                        int size
-                        while ((size = bis.read(bytes)) > 0) {
-                            zos.write(bytes, 0, size)
-                        }
-
-                        //close file and entry
-                        zos.flush()
-                        zos.closeEntry()
-                        bis.close()
-                    }
-                }
-            }
-        }
-
-        // add a zip entry containing the spec.json
-        ZipEntry ze = new ZipEntry('spec.json')
-        zos.putNextEntry(ze)
-        def map = task.spec
-
-        //remove private parameters
-        if (map.containsKey('private')) {
-            map.remove('private')
-        }
-
-        //insert final log
-        map['history'] = task.history
-
-        //insert output files into spec.output
-        if (map.containsKey('output')) {
-            map.output.each { k, v ->
-                if (task.output.containsKey(k)) {
-                    v.put('files', task.output.get(k))
-                }
-            }
-        }
-        def json = map as JSON
-        zos.write(json.toString().bytes)
-        zos.closeEntry()
-
-        //close
-        zos.flush()
-        zos.close()
-
-        zipFile
-    }
-
     def getResourcePath(inputSpec, value) {
-        def dir = grailsApplication.config.data.dir
+        def dir = Holders.config.data.dir
 
         // look in cache dir and return this file name if it is missing
         if ('area'.equalsIgnoreCase(inputSpec.type.toString())) {
@@ -277,99 +122,61 @@ class TaskService {
     }
 
     def getBasePath(task) {
-        String url = grailsApplication.config.data.dir + '/public/' + task.taskId + '/'
+        String url = Holders.config.data.dir + '/public/' + task.taskId + '/'
         return url
     }
 
-    def getStatus(task) {
-        def map = [history: task.history, message: task.message]
-        if (task.finished) map.put('finished', true)
+    TaskWrapper wrapTask(Task task) {
+        TaskWrapper wrapper = new TaskWrapper(taskId: task.id, input: task.input, name: task.name, id: Long.parseLong(task.id.toString()), task: task)
 
-        map
-    }
-
-    def cancel(taskId) {
-        def successful = true
-        def info = running.get(taskId)
-        if (info) {
-            try {
-                if (info.request) {
-                    info.request.message = 'cancelled'
-                    info.request.status = 2 //2==cancelled
+        //format inputs
+        def i = [:]
+        wrapper.input.each { k ->
+            if (i.containsKey(k.name)) {
+                def old = i.get(k.name)
+                if (old instanceof List) {
+                    old.add(k.value)
+                } else {
+                    old = [old, k.value]
                 }
-
-                info.thread.interrupt();
-            } catch (Exception e) {
-                log.error("problem cancelling task: " + taskId, e)
-
-                if (info.request) {
-                    info.request.message = 'error'
-                    info.request.status = 3 //3==error
-                }
-
-                successful = false
-            } finally {
-                try {
-                    slaveService.signalMasterImmediately(request)
-                } catch (Exception ex) {
-                    log.error("problem signaling master that task is cancelled: " + taskId, ex)
-                }
-
-            }
-        }
-
-        running.remove(taskId)
-
-        successful
-    }
-
-    def newTask(params) {
-        def task
-        synchronized (createTaskLock) {
-            log.debug "creating task: ${params.taskId}"
-
-            task = new Task(taskId: params.taskId, input: params.input, name: params.name, id: Long.parseLong(params.taskId.toString()))
-
-            // don't add if already running
-            if (!tasks.containsKey(task.taskId)) {
-                tasks.put(task.id, task)
-            }
-        }
-
-        task
-    }
-
-    def status(id) {
-        if (id == null) {
-            [:]
-        } else {
-            def t = tasks.get(id)
-            if (t == null) {
-                [error: "no task for id: " + id]
+                i.put(k.name, old)
             } else {
-                [status: getStatus(t)]
+                i.put(k.name, k.value)
             }
         }
-    }
 
-    Object create(json, api_key) {
-        Task task = newTask(json)
-
-        def errors = tasksService.validateInput(task)
-
-        if (errors) {
-            task.output.put(System.currentTimeMillis(), "input errors: " + errors.toString())
-            task.message = 'failed'
-            task.status = 3 //3==failed
-
-            // save as cancelled
-            [failed: true, id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
-        } else {
-            // start
-            start(task)
-
-            [status: getStatus(task), id: task.id, url: grailsApplication.config.grails.serverURL + '/task/status/' + task.id + "?api_key=" + api_key]
+        //add default inputs
+        def shpResolutions = Holders.config.shpResolutions
+        if (!(shpResolutions instanceof List)) {
+            // comma separated or JSON list
+            if (shpResolutions.toString().startsWith("[")) {
+                shpResolutions = new org.json.simple.parser.JSONParser().parse(shpResolutions.toString())
+            } else {
+                shpResolutions = Arrays.asList(shpResolutions.toString().split(","))
+            }
         }
+        def grdResolutions = Holders.config.grdResolutions
+        if (!(grdResolutions instanceof List)) {
+            // comma separated or JSON list
+            if (grdResolutions.toString().startsWith("[")) {
+                grdResolutions = new org.json.simple.parser.JSONParser().parse(grdResolutions.toString())
+            } else {
+                grdResolutions = Arrays.asList(grdResolutions.toString().split(","))
+            }
+        }
+        i.put('layersServiceUrl', Holders.config.grails.serverURL)
+        i.put('bieUrl', Holders.config.bie.baseURL)
+        i.put('biocacheServiceUrl', Holders.config.biocacheServiceUrl)
+        i.put('phyloServiceUrl', Holders.config.phyloServiceUrl)
+        i.put('shpResolutions', shpResolutions)
+        i.put('grdResolutions', grdResolutions)
+        i.put('sandboxHubUrl', Holders.config.sandboxHubUrl)
+        i.put('sandboxBiocacheServiceUrl', Holders.config.sandboxBiocacheServiceUrl)
+        i.put('namematchingUrl', Holders.config.namematching.url)
+        i.put('geoserverUrl', Holders.config.geoserver.url)
+        i.put('userId', task.userId)
+
+        wrapper
     }
 
     class TaskThread extends Thread {
@@ -378,9 +185,8 @@ class TaskService {
         Date created
         String taskId
 
-        TaskThread(TaskService taskService, Task task) {
+        TaskThread(TaskService taskService, TaskWrapper task) {
             super(taskService.threadGroup, task.name) // insert into threadGroup
-            this.taskService = taskService
             this.request = task
             this.created = new Date(System.currentTimeMillis())
             this.taskId = task.taskId
@@ -410,17 +216,11 @@ class TaskService {
                 }
 
                 request.message = 'getting resources'
-                log.debug "task:${request.id} getting resources"
-                taskService.slaveService.getResources(request)
-
-                tasksService.validateInput(request)
 
                 //init
                 operator.task = request
                 operator.taskService = taskService
                 operator.slaveService = taskService.slaveService
-                operator.grailsApplication = taskService.grailsApplication
-                operator.fileLockService = taskService.fileLockService
 
                 //start
                 request.history.put(System.currentTimeMillis(), "running (id:${request.id})")
@@ -431,7 +231,7 @@ class TaskService {
 
                 request.message = 'publishing'
                 log.debug "task:${request.id} publishing"
-                taskService.slaveService.publishResults(request)
+                masterService.publishResults(request)
 
                 request.finished = true
                 request.message = 'finished'
@@ -468,11 +268,6 @@ class TaskService {
             log.debug 'about to remove running task'
 
             taskService.running.remove(request.id)
-
-            //delete from public dir if master service is remote
-            if (!grailsApplication.config.service.enable.toBoolean()) {
-                FileUtils.deleteDirectory(new File("${grailsApplication.config.data.dir.toString()}/public/${request.id}"))
-            }
         }
     }
 }

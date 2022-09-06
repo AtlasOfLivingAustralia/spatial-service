@@ -56,35 +56,9 @@ class LayerController {
     }
 
     def img(String id) {
-        File f = new File(grailsApplication.config.data.dir.toString() + '/public/thumbnail/' + id + '.jpg')
-        if (f.exists()) {
-            OutputStream os = null
-            InputStream is = null
-
-            try {
-                response.setContentType("image/jpg")
-                os = response.outputStream
-                is = new BufferedInputStream(new FileInputStream(f))
-                IOUtils.copy(is, os)
-                os.flush()
-            } catch (Exception err) {
-                log.debug 'failed to write layer image : ' + id, err
-            } finally {
-                if (os != null) {
-                    try {
-                        os.close()
-                    } catch (Exception err1) {
-                        log.trace(err1.getMessage(), err1)
-                    }
-                }
-                if (is != null) {
-                    try {
-                        is.close()
-                    } catch (Exception err2) {
-                        log.trace(err2.getMessage(), err2)
-                    }
-                }
-            }
+        if (layerDao.getLayerByName(id)) {
+            File f = new File(grailsApplication.config.data.dir.toString() + '/public/thumbnail/' + id + '.jpg')
+            render(file: f, fileName: "${id}.jpg")
         } else {
             response.sendError(404, "$id not found")
             return

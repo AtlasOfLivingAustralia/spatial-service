@@ -22,18 +22,15 @@ import au.org.ala.layers.legend.GridLegend
 import au.org.ala.layers.legend.Legend
 import au.org.ala.layers.legend.LegendEqualArea
 import au.org.ala.layers.util.LayerFilter
-import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.slave.FileLockService
 import au.org.ala.spatial.slave.SlaveService
-import au.org.ala.spatial.slave.Task
+import au.org.ala.spatial.slave.TaskWrapper
 import au.org.ala.spatial.slave.TaskService
 import au.org.ala.spatial.util.OccurrenceData
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
 import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.WKTReader2
@@ -51,8 +48,7 @@ class SlaveProcess {
     TaskService taskService
     SlaveService slaveService
     GrailsApplication grailsApplication
-    FileLockService fileLockService
-    Task task
+    TaskWrapper task
 
     // start the task
     void start() {}

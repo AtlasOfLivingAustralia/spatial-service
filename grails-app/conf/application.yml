@@ -185,6 +185,12 @@ retryTime: 30000
 # taskTimeoutTime
 taskTimeoutTime: 900000
 
+task:
+  general:
+    threads: 10
+  admin:
+    threads: 4
+
 #
 #  CAS SETTINGS
 #

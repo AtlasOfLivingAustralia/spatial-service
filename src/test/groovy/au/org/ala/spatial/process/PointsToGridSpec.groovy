@@ -4,7 +4,6 @@ import au.org.ala.layers.intersect.SimpleRegion
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.analysis.layers.Records
 import au.org.ala.spatial.service.TestUtil
-import au.org.ala.spatial.slave.FileLockService
 import au.org.ala.spatial.slave.SlaveService
 import au.org.ala.spatial.slave.TaskService
 import org.apache.commons.io.FileUtils
@@ -34,7 +33,7 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
         proc.taskService = Mock(TaskService)
         proc.slaveService = Mock(SlaveService)
         proc.grailsApplication = grailsApplication
-        proc.fileLockService = Mock(FileLockService)
+
 
         // gdal installation is required for 'PointsToGrid'
         grailsApplication.config.gdal.dir = '/opt/homebrew/bin'

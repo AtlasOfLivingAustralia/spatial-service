@@ -16,7 +16,7 @@
 package au.org.ala.spatial
 
 import au.com.bytecode.opencsv.CSVReader
-import au.org.ala.spatial.slave.Task
+import au.org.ala.spatial.slave.TaskWrapper
 import grails.converters.JSON
 import org.apache.commons.httpclient.*
 import org.apache.commons.httpclient.auth.AuthScope
@@ -393,7 +393,7 @@ class Util {
         return runCmd(cmd, false, null, timeout)
     }
 
-    static int runCmd(String[] cmd, Boolean logToTask, Task task, Long timeout) {
+    static int runCmd(String[] cmd, Boolean logToTask, TaskWrapper task, Long timeout) {
         int exitValue = 1
 
         ProcessBuilder builder = new ProcessBuilder(cmd)

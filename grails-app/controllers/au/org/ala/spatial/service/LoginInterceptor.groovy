@@ -41,7 +41,7 @@ class LoginInterceptor {
         }
 
         //Calculating the required permission.
-        def permissionLevel = null;
+        def permissionLevel = null
         //Permission on method has the top priority
         if (method?.isAnnotationPresent(RequirePermission.class)) {
             permissionLevel = RequirePermission

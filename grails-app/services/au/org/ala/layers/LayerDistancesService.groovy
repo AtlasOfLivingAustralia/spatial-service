@@ -26,7 +26,6 @@ class LayerDistancesService {
     /*
      * Produces layer distances CSV with type= 'name' or 'displayname' layer table column labels
      */
-
     def makeCSV(String type) {
         def map = loadDistances()
 

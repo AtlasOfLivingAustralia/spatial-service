@@ -379,7 +379,7 @@ class DistributionController {
                 Writer buffer = new StringWriter()
                 PrintWriter pw = new PrintWriter(buffer)
                 e.printStackTrace(pw)
-                log.error(e.toString());
+                log.error(e.toString())
                 render(status: 400, text: 'Spatial encounters runtime error when calculating outlier of lsid: ' + lsid)
             }
         } else {

@@ -61,25 +61,6 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
     def cleanup() {
     }
 
-    void "list all tasks"() {
-        when:
-        params.all = ""
-        params.api_key = "valid"
-        controller.tasks()
-
-        then:
-        (JSON.parse(response.text) as Map).size() == 3
-    }
-
-    void "list open tasks"() {
-        when:
-        params.api_key = "valid"
-        controller.tasks()
-
-        then:
-        (JSON.parse(response.text) as Map).size() == 2
-    }
-
     void "get capabilites"() {
         when:
         setup()
@@ -89,13 +70,4 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
         (JSON.parse(response.text) as Map).size() > 0
     }
 
-    void "get slaves"() {
-        when:
-        setup()
-        params.api_key = "valid"
-        controller.slaves()
-
-        then:
-        (JSON.parse(response.text) as Map).size() > 0
-    }
 }

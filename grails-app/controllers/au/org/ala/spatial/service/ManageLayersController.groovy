@@ -40,7 +40,6 @@ class ManageLayersController {
     FileService fileService
     TasksService tasksService
     GrailsApplication grailsApplication
-    ServiceAuthService serviceAuthService
 
     /**
      * admin only or api_key
@@ -616,8 +615,8 @@ class ManageLayersController {
      */
     @RequireAdmin
     def copy() {
-        def spatialServiceUrl = params.spatialServiceUrl;
-        def fieldId = params.fieldId;
+        def spatialServiceUrl = params.spatialServiceUrl
+        def fieldId = params.fieldId
 
         manageLayersService.updateFromRemote(spatialServiceUrl, fieldId)
         redirect(controller: "Tasks", action: "index")

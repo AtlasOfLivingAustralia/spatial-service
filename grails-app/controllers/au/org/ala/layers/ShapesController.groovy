@@ -218,7 +218,7 @@ class ShapesController {
                 })
 
                 File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, 'area', filename, ids.join(','))
-                FileUtils.copyFile(zippedShapeFile, os);
+                FileUtils.copyFile(zippedShapeFile, os)
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'shp')
             }
@@ -809,12 +809,12 @@ class ShapesController {
             if (!file.exists()) {
                 ZipUtil.zip(filePrefix + "-shp.zip", (String[]) [filePrefix + ".shp", filePrefix + ".shx", filePrefix + ".dbf", filePrefix + ".fix"])
             }
-            InputStream is;
+            InputStream is
             try {
                 is = FileUtils.openInputStream(new File(filePrefix + "-shp.zip"))
 
-                int len;
-                byte[] bytes = new byte[1024];
+                int len
+                byte[] bytes = new byte[1024]
                 while ((len = is.read(bytes)) > 0) {
                     os.write(bytes, 0, len)
                 }

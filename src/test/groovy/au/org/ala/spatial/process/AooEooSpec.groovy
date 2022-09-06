@@ -2,7 +2,6 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.service.TestUtil
-import au.org.ala.spatial.slave.FileLockService
 import au.org.ala.spatial.slave.SlaveService
 import au.org.ala.spatial.slave.TaskService
 import org.apache.commons.io.FileUtils
@@ -30,7 +29,6 @@ class AooEooSpec extends Specification implements GrailsUnitTest {
         proc.taskService = Mock(TaskService)
         proc.slaveService = Mock(SlaveService)
         proc.grailsApplication = grailsApplication
-        proc.fileLockService = Mock(FileLockService)
     }
 
     def cleanup() {
