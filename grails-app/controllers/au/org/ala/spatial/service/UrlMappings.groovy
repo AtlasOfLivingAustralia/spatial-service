@@ -139,7 +139,7 @@ class UrlMappings {
         }
 
 
-        "/"(controller: "main", action: "index")
+        "/"(view: "/index")
         "500"(view: '/error')
         "404"(view: '/blank')
     }

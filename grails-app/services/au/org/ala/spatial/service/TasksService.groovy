@@ -19,94 +19,53 @@ import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Objects
 import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.process.SlaveProcess
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
+import grails.util.Holders
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 
 class TasksService {
 
-    def masterService
     def objectDao
-    def grailsApplication
     def fieldDao
     def layerIntersectDao
 
-    def taskService
+    def publishService
+    def taskQueueService
 
-    def cancel(task) {
-        try {
-            def response = null
+    def transientTasks = [:]
 
-            if (task?.slave) {
-                if (task.slave.equals(grailsApplication.config.grails.serverURL)) {
-                    taskService.cancel(task.id)
-                    response = true
-                } else {
-                    def url = task.slave + "/task/cancel/" + task.id
-                    response = grails.converters.JSON.parse(Util.getUrl(url))
-                }
-            }
-
-            // TODO: confirm the task is not finished before setting as cancelled
-            update(task.id, [status: 2, message: 'cancelled'])
-
-            if (response != null) {
-                return true
-            }
-        } catch (Exception e) {
-            log.error("failed to cancel task: " + task?.id, e)
-        }
-
-        return false
+    def cancel(taskId) {
+        taskQueueService.cancel(taskId)
     }
 
-    def getStatus(Task task) {
-        def map = [status: task.status, message: task.message, id: task.id, name: task.name]
-
-        if (task.history) {
-            map.history = task.history
+    def getStatus(taskId) {
+        def task = transientTasks.get(taskId)
+        if (!task) {
+            task = Task.get(taskId)
         }
+        if (task) {
+            def map = [status: task.status, message: task.message, id: task.id, name: task.name]
 
-        if (task.output) {
-            // TODO: cleanup task.output, add resource information for each type,
-            // e.g. .zip requires a download URL, .html requires link URL, .tif and .shp require mappable information
-            map.put('output', task.output)
-        }
+            if (task.history) {
+                map.history = task.history
+            }
 
-        map
-    }
+            if (task.output) {
+                // e.g. .zip requires a download URL, .html requires link URL, .tif and .shp require mappable information
+                map.put('output', task.output)
+            }
 
-    @Transactional(readOnly = false)
-    synchronized def update(id, newValues) {
-        Task.withNewTransaction {
-            _update(id, newValues)
+            map
+        } else {
+            null
         }
     }
 
     private trimString(str, len) {
         return str.toString().substring(0, Math.min(len, str.toString().length()))
-    }
-
-    synchronized def _update(id, newValues) {
-        Task t = Task.get(id)
-        if (t != null) {
-            newValues.each { k, v ->
-                if ('status'.equals(k)) t.status = Integer.parseInt("" + v)
-                else if ('message'.equals(k)) t.message = v
-                else if ('url'.equals(k)) t.url = v
-                else if ('history'.equals(k)) {
-                    v.each { k1, v1 ->
-                        t.history.put("" + k1, trimString(v1, 254))
-                    }
-                } else if ('slave'.equals(k)) t.slave = v
-                else if ('output'.equals(k)) t.output = v
-            }
-        }
-        if (!t.save(flush: true)) {
-            t.errors.each {
-                log.error 'failed update status for task:' + id
-            }
-        }
     }
 
     def create(name, identifier, input) {
@@ -123,7 +82,7 @@ class TasksService {
         if (input == null) input = [:] as Map
 
         //get task spec
-        def spec = masterService.spec(true).get(name)
+        def spec = spec(true).get(name)
 
         if (spec == null) {
             log.error("failed to find spec for: " + name)
@@ -197,6 +156,10 @@ class TasksService {
             }
         }
 
+        transientTasks.put(task.id, task)
+
+        taskQueueService.queue(task)
+
         task
     }
 
@@ -226,8 +189,7 @@ class TasksService {
     @Transactional(readOnly = false)
     def afterPublish(taskId, spec) {
 
-        def task = Task.read(taskId)
-        //task.err = spec.err
+        Task task = transientTasks.get(taskId)
 
         def newValues = [:]
         if (spec.history != null && spec.history.size() > 0) newValues.put('history', spec.history)
@@ -276,6 +238,8 @@ class TasksService {
             }
 
         }
+
+        // flush outputs
         OutputParameter.withTransaction {
             formattedOutput.each {
                 if (!it.save(flush: true)) {
@@ -286,24 +250,16 @@ class TasksService {
             }
         }
 
-        if (formattedOutput.size() > 0) newValues.put('output', formattedOutput)
-
-
-        if (newValues.size() > 0) {
-            Task.withTransaction {
-                _update(taskId, newValues)
+        // flush task because it is finished
+        Task.withTransaction {
+            if (!task.save(flush: true)) {
+                task.errors.each {
+                    log.error it
+                }
             }
         }
     }
 
-    def validateInput(request) {
-        try {
-            validateInput(request.name, request.input, true)
-        } catch (err) {
-            log.error(err.getMessage(), err)
-            [generalError: err.getMessage()]
-        }
-    }
     /**
      * Validate input against name's spec.
      *
@@ -317,7 +273,7 @@ class TasksService {
         if (input == null) input = [:] as Map
 
         //get task spec
-        def spec = masterService.spec(isAdmin).get(name)
+        def spec = spec(isAdmin).get(name)
 
         def errors = [:]
 
@@ -426,7 +382,7 @@ class TasksService {
                     }
 
                     if ("upload".equals(v.type)) {
-                        if (!new File(grailsApplication.config.data.dir + "/uploads/" + i).exists()) {
+                        if (!new File(Holders.config.data.dir + "/uploads/" + i).exists()) {
                             errors.put(k, "Input parameter $k=$i has no upload directory.")
                         }
                     }
@@ -500,5 +456,132 @@ class TasksService {
         }
 
         errors
+    }
+
+    def reRun(Task task) {
+        //reset output
+        OutputParameter.withNewTransaction {
+            OutputParameter.findAllByTask(task).each {
+                it.delete()
+            }
+        }
+
+        //clear history
+        au.org.ala.spatial.service.Task.withTransaction {
+            if (task.history) {
+                task.history.clear()
+                if (!task.save()) {
+                    it.errors.each {
+                        log.error it
+                    }
+                }
+            }
+        }
+
+        task.status = 0
+        task.message = "restarting"
+
+        transientTasks.put(task.id, task)
+
+        taskQueueService.queue(task)
+    }
+
+    def _spec = [:]
+    def _specAdmin = [:]
+
+    def spec(boolean includePrivate) {
+        if (!_spec) {
+            _specAdmin = taskQueueService.getAllSpec(true)
+
+            getAllSpec(false).each { name, cap ->
+                boolean iPrivate = !cap.containsKey('private') || !cap.private.containsKey('public') || cap.private.public
+                if (iPrivate) {
+                    _spec.put(name, cap.findAll { i ->
+                        if (!includePrivate && i.key.equals('private')) {
+                            null
+                        } else {
+                            i
+                        }
+                    })
+                }
+            }
+
+        }
+
+        if (includePrivate) {
+            _specAdmin
+        } else {
+            _spec
+        }
+    }
+
+    private List getAllSpec() {
+        List list = []
+
+        def resource = TaskQueueService.class.getResource("/processes/")
+        def dir = new File(resource.getPath())
+
+        // default processes
+        for (File f : dir.listFiles()) {
+            if (f.getName().endsWith(".json") && !f.getName().equals("limits.json")) {
+                String name = "au.org.ala.spatial.process." + f.getName().substring(0, f.getName().length() - 5)
+                try {
+                    Class clazz = Class.forName(name)
+                    list.add(((SlaveProcess) clazz.newInstance()).spec(null))
+                } catch (err) {
+                    log.error("unable to instantiate $name. ${err.getMessage()}", err)
+                }
+            }
+        }
+
+        // Additional SlaveProcesses can be initialized with an external spec with a unique filename:
+        // - /data/spatial-service/config/processes/n.ProcessName.json
+        // Where:
+        // - `n` is a value that makes the filename unique
+        // - `ProcessName` is a valid class that extends SlaveProcess
+        for (File f : new File('/data/spatial-service/config/processes').listFiles()) {
+            // `ProcessName`
+            def fname = f.getName().substring(f.getName().indexOf('.') + 1)
+
+            // `n`
+            def funqiue = f.getName().substring(0, f.getName().indexOf('.'))
+
+            // add process class with this spec file
+            if (f.getName().endsWith(".json") && !f.getName().equals("limits.json")) {
+                String name = "au.org.ala.spatial.process." + fname.substring(0, fname.length() - 5)
+                try {
+                    Class clazz = Class.forName(name)
+                    list.add(((SlaveProcess) clazz.newInstance()).spec(JSON.parse(f.text) as Map))
+                } catch (err) {
+                    log.error("unable to instantiate $name. ${err.getMessage()}", err)
+                }
+            }
+        }
+
+        list
+    }
+
+    Map publish(isPublic, id) {
+        Map map = [:]
+
+        String path = Holders.config.data.dir + "/" + (isPublic ? 'public' : 'private') + "/" + id + "/"
+
+        try {
+            // read spec.json
+            def spec = grails.converters.JSON.parse(FileUtils.readFileToString(new File(path + '/spec.json')))
+
+            // do publishing
+            publishService.publish(path, spec)
+
+            //update log and outputs
+            afterPublish(id, spec)
+
+            map.put('status', 'published')
+        } catch (err) {
+            log.error 'failed to publish files', err
+            map.put('status', 'failed')
+        }
+
+        map
     }
 }

@@ -33,18 +33,9 @@ class PublishService {
     // Unpacks a published zip file and performs some actions.
     // Run time should be kept to a minimum because a spatial-slave is waiting for this to complete
     // before flagging task as finished.
-    // 
+    //
     // returns error map
-    Map publish(zip) {
-        //TODO: use a queue
-
-        // unpack zip
-        fileService.unzip(zip.getPath(), zip.getParent(), false)
-
-        // read spec.json
-        def path = zip.getParent()
-        def spec = grails.converters.JSON.parse(FileUtils.readFileToString(new File(path + '/spec.json')))
-
+    Map publish(path, spec) {
         // deploy outputs
         spec.output.each { k, output ->
             if ('file'.equalsIgnoreCase(k) || 'metadata'.equalsIgnoreCase(k)) {
@@ -117,9 +108,6 @@ class PublishService {
         if (spec.name == 'LayerCopy' || spec.name == 'FieldCreation') {
             manageLayersService.fixLayerStyles()
         }
-
-        //delete zip
-        zip.delete()
 
         spec
     }

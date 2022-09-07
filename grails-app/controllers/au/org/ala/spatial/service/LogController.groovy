@@ -28,7 +28,6 @@ class LogController {
     final Logger logger = Logger.getLogger(LogController.class)
 
     def logService
-    AuthService authService
     def serviceAuthService
 
     /**

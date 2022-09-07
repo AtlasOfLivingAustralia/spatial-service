@@ -15,8 +15,6 @@ import grails.converters.JSON
  * TODO use ALA standard apiKey method: store apiKey in hearder
  */
 class LoginInterceptor {
-
-    static final String LOCALHOST_IP = '127.0.0.1'
     static final int STATUS_UNAUTHORISED = 401
     static final int STATUS_FORBIDDEN = 403
 

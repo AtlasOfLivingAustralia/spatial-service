@@ -2,8 +2,8 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.service.TestUtil
-import au.org.ala.spatial.slave.SlaveService
-import au.org.ala.spatial.slave.TaskService
+
+import au.org.ala.spatial.service.TaskQueueService
 import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
@@ -26,7 +26,7 @@ class AooEooSpec extends Specification implements GrailsUnitTest {
     def proc = new AooEoo()
 
     def setup() {
-        proc.taskService = Mock(TaskService)
+        proc.taskService = Mock(TaskQueueService)
         proc.slaveService = Mock(SlaveService)
         proc.grailsApplication = grailsApplication
     }
@@ -54,7 +54,7 @@ class AooEooSpec extends Specification implements GrailsUnitTest {
             return 'other'
         }
 
-        proc.task = [spec : Mock(TaskService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
+        proc.task = [spec : Mock(TaskQueueService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
                      input: [area: "[{}]", species: "{\"q\": \"\", \"name\": \"test species\"}", resolution: "0.02", coverage: "2", radius: 5000]]
 
         proc.start()

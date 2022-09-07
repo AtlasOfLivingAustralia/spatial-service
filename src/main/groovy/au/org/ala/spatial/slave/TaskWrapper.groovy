@@ -44,6 +44,12 @@ class TaskWrapper {
     // status message
     String message = "starting"
 
+    // isPublic
+    Boolean isPublic
+
+    // path to working directory
+    String path
+
     Process proc
     StreamGobbler errorGobbler
     StreamGobbler outputGobbler

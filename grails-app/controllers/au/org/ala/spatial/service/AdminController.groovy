@@ -26,9 +26,6 @@ class AdminController {
     def authService
     def manageLayersService
 
-    def index() {
-    }
-
     /**
      * get collated capabilities specs from all registered slaves
      * @return

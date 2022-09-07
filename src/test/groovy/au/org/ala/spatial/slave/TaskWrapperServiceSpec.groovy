@@ -15,17 +15,15 @@
 
 package au.org.ala.spatial.slave
 
-import au.org.ala.spatial.service.LayerDistancesServiceSpec
+import au.org.ala.spatial.service.TaskQueueService
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
 
 import javax.sql.DataSource
-import java.util.zip.ZipFile
 
-class TaskWrapperServiceSpec extends Specification implements ServiceUnitTest<TaskService>, DataTest {
+class TaskWrapperServiceSpec extends Specification implements ServiceUnitTest<TaskQueueService>, DataTest {
 
     @Override
     Closure doWithSpring() {{ ->

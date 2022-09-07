@@ -18,7 +18,6 @@ package au.org.ala.spatial.service
 import au.org.ala.RequireAdmin
 import au.org.ala.RequirePermission
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.slave.TaskService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.grails.web.json.JSONObject
@@ -27,12 +26,9 @@ import org.grails.web.json.JSONObject
 class TasksController {
 
     TasksService tasksService
-    TaskService taskService
-    TasksCacheService tasksCacheService
 
     def serviceAuthService
     def authService
-
 
     /**
      * admin only or api_key
@@ -46,38 +42,10 @@ class TasksController {
         if (!params?.order) params.order = "desc"
         if (!params?.offset) params.offset = 0
 
-        def list = Task.createCriteria().list(params) {
-            and {
-                if (params?.q) {
-                    or {
-                        ilike("message", "%${params.q}%")
-                        ilike("name", "%${params.q}%")
-                        ilike("tag", "%${params.q}%")
-                    }
-                }
-                if (params?.status) {
-                    eq("status", params.status.toInteger())
-                }
-            }
-            readOnly(true)
-        }
-        def count = Task.createCriteria().count() {
-            and {
-                if (params?.q) {
-                    or {
-                        ilike("message", "%${params.q}%")
-                        ilike("name", "%${params.q}%")
-                        ilike("tag", "%${params.q}%")
-                    }
-                }
-                if (params?.status) {
-                    eq("status", params.status.toInteger())
-                }
-            }
-        }
+        def list = []
 
         // limit history and format time
-        list.each { item ->
+        tasksService.transientTasks.each { id, item ->
             def hist = [:]
 
             item.history.keySet().sort().reverse().each { key ->
@@ -85,10 +53,18 @@ class TasksController {
                     hist.put(new Date(Long.parseLong(key)), item.history.get(key))
                 }
             }
-            item.history = hist
+
+            list.add([
+                    created: item.created,
+                    name: item.name,
+                    history: hist,
+                    status: item.status,
+                    email: item.email,
+                    userId: item.userId
+            ])
         }
 
-        [taskInstanceList: list, taskInstanceCount: count]
+        [taskInstanceList: list, taskInstanceCount: tasksService.transientTasks.size()]
     }
 
     /**
@@ -131,7 +107,8 @@ class TasksController {
      * @return
      */
     @RequirePermission
-    def show(Task task) {
+    def show(Long id) {
+        def task = tasksService.get(id)
         if (task) {
             task.history = task.history.sort { a, b ->
                 a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
@@ -157,24 +134,12 @@ class TasksController {
         def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
 
         def userId = authService.getUserId() ?: params.userId
-        def email = params.email
-
-        if (userId && !email) {
-            def user = authService.getUserForUserId(userId, false)
-            if (user) {
-                email = user.email
-            }
-        }
 
         if (errors) {
             response.status = 400
             render errors as JSON
         } else {
             Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, email)
-
-            tasksCacheService.transientTasks.put(task.id, task)
-
-            taskService.start(task)
 
             render task as JSON
         }
@@ -188,8 +153,8 @@ class TasksController {
      */
     @Transactional(readOnly = false)
     @RequirePermission
-    cancel(Task task) {
-        if (task?.status < 2) tasksService.cancel(task)
+    cancel(Long id) {
+        def task = tasksService.cancel(id)
 
         if (request.contentType?.equalsIgnoreCase("application/json")) {
             render task as JSON
@@ -214,27 +179,6 @@ class TasksController {
     }
 
     /**
-     * Internal use
-     *
-     * login required
-     *
-     * data.dir or publish.dir?
-     * get zip of all task outputs (zip received from slave/publish)
-     * @param task
-     * @return
-     */
-    @RequirePermission
-    def downloadReport(String taskId) {
-        def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
-
-        response.setHeader("Content-Type", "application/octet-stream")
-        response.setHeader("Content-disposition", "attachment;filename=${file.name}")
-        response.setContentLengthLong(file.size())
-        response.outputStream << file.bytes
-
-    }
-
-    /**
      *
      * admin only or api_key
      *
@@ -243,31 +187,10 @@ class TasksController {
      */
     @Transactional(readOnly = false)
     @RequireAdmin
-    reRun(Task task) {
-        if (task != null) {
-            //reset output
-            OutputParameter.withNewTransaction {
-                OutputParameter.findAllByTask(task).each {
-                    it.delete()
-                }
-            }
+    reRun(Long id) {
+        def task = tasksService.reRun(id)
 
-            //clear history
-            au.org.ala.spatial.service.Task.withTransaction {
-                if (task.history) {
-                    task.history.clear()
-                    if (!task.save()) {
-                        it.errors.each {
-                            log.error it
-                        }
-                    }
-                }
-            }
-
-            tasksService.update(task.id, [status: 0, slave: null, url: null, message: 'in queue', history: history])
-        }
-
-        if (request.contentType?.equalsIgnoreCase("application/json")) {
+        if (task) {
             render task as JSON
         } else {
             redirect(action: "index", params: params)
@@ -378,61 +301,6 @@ class TasksController {
         } else {
             render('File does not exist: ' + file, contentType: "text/html", encoding: "UTF-8")
             return
-        }
-    }
-
-    /**
-     * admin required
-     *
-     * @return
-     */
-    @Transactional(readOnly = false)
-    @RequireAdmin
-    def cancelAll() {
-        def list = Task.createCriteria().list() {
-            and {
-                if (params?.q) {
-                    or {
-                        ilike("message", "%${params.q}%")
-                        ilike("name", "%${params.q}%")
-                        ilike("tag", "%${params.q}%")
-                    }
-                }
-                if (params?.status) {
-                    eq("status", params.status.toInteger())
-                }
-            }
-        }
-
-        def cancelled = []
-        list.each {
-            //try to cancel tasks that are in queue or running
-            if (it.status == 0 || it.status == 1) {
-                cancelled.push(it)
-                tasksService.cancel(it)
-            }
-        }
-
-        if (request.contentType?.equalsIgnoreCase("application/json")) {
-            render cancelled as JSON
-        } else {
-            redirect(action: "index", params: params)
-        }
-    }
-
-    def activeThreads() {
-        List tasks = new ArrayList(taskService.getActiveTasks())
-        [tasks: tasks]
-    }
-
-    @RequireAdmin
-    def getUserById(String id) {
-        def user = authService.getUserForUserId(id, false)
-        if (user) {
-            render user as JSON
-        } else {
-            def message = [error: "No user found for id: " + id +", or no permission to access user details!"]
-            render message as JSON
         }
     }
 }

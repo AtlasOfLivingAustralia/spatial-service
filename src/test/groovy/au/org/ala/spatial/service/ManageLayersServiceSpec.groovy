@@ -19,7 +19,7 @@ import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.LayerDAO
 import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
-import au.org.ala.spatial.slave.SlaveService
+
 import grails.config.Config
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.services.ServiceUnitTest

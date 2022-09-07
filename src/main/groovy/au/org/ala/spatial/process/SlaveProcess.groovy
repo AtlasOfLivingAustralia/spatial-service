@@ -23,12 +23,13 @@ import au.org.ala.layers.legend.Legend
 import au.org.ala.layers.legend.LegendEqualArea
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.slave.SlaveService
+import au.org.ala.spatial.service.TasksService
 import au.org.ala.spatial.slave.TaskWrapper
-import au.org.ala.spatial.slave.TaskService
+import au.org.ala.spatial.service.TaskQueueService
 import au.org.ala.spatial.util.OccurrenceData
 import grails.converters.JSON
 import grails.core.GrailsApplication
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.FeatureReader
@@ -45,9 +46,7 @@ import java.util.zip.ZipInputStream
 @Slf4j
 class SlaveProcess {
 
-    TaskService taskService
-    SlaveService slaveService
-    GrailsApplication grailsApplication
+    TasksService tasksService
     TaskWrapper task
 
     // start the task
@@ -77,11 +76,11 @@ class SlaveProcess {
     }
 
     String getTaskPath() {
-        taskService.getBasePath(task)
+        task.path
     }
 
     String getTaskPathById(taskId) {
-        taskService.getBasePath([taskId: taskId])
+        Holders.config.data.dir + '/public/' + taskId + '/'
     }
 
     List getLayers() {
@@ -210,8 +209,6 @@ class SlaveProcess {
 
         try {
             String taskId = objectId.replace("ENVELOPE", "")
-
-            slaveService.getFile('/public/' + taskId + "/envelope")
 
             def file = new File(grailsApplication.config.data.dir + "/public/" + taskId + "/" + taskId + ".shp")
 
