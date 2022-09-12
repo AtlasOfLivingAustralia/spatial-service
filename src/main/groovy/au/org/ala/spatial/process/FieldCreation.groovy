@@ -63,7 +63,7 @@ class FieldCreation extends SlaveProcess {
 //        slaveService.getFile('/layer/' + layer.name + '.sld')
 
         //upload shp into layersdb in a table with name layer.id
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
         File shpExisting = new File(dir + "/layer/" + layer.name + ".shp")
 
         //get layer short name
@@ -121,7 +121,7 @@ class FieldCreation extends SlaveProcess {
     }
 
     def createContextualFieldStyle(String fieldId, String fieldSid, String name) {
-        String path = grailsApplication.config.data.dir + '/layer/'
+        String path = Holders.config.data.dir + '/layer/'
 
         //sld
         String sld = createContextualLayerSlds(fieldSid.toString(), path + name + '.shp')
@@ -291,7 +291,7 @@ class FieldCreation extends SlaveProcess {
 
             slaveService.getFile('/layer/' + layername + '.shp')
 
-            File file = new File(grailsApplication.config.data.dir.toString() + '/layer/' + layername + '.shp')
+            File file = new File(Holders.config.data.dir.toString() + '/layer/' + layername + '.shp')
             ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
             FeatureReader reader = sds.featureReader
 

@@ -17,11 +17,12 @@ package au.org.ala.spatial.service
 
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 
 class PublishService {
 
-    def grailsApplication
+
     def manageLayersService
     def tasksService
     def fileService
@@ -69,7 +70,7 @@ class PublishService {
                     def idx = output.files.get(0).indexOf('?')
                     def file = output.files.get(0).substring(0, idx)
                     def append = output.files.get(0).substring(idx + 1) + '\n'
-                    FileUtils.writeStringToFile(new File(grailsApplication.config.data.dir + file), append, true)
+                    FileUtils.writeStringToFile(new File(Holders.config.data.dir + file), append, true)
                 }
             }
         }
@@ -115,15 +116,15 @@ class PublishService {
     def addStyle(output, path) {
         def errors = [:]
         try {
-            if (grailsApplication.config.geoserver.canDeploy.toBoolean()) {
+            if (Holders.config.geoserver.canDeploy.toBoolean()) {
 
-                def geoserverUrl = grailsApplication.config.geoserver.url
-                def geoserverUsername = grailsApplication.config.geoserver.username
-                def geoserverPassword = grailsApplication.config.geoserver.password
+                def geoserverUrl = Holders.config.geoserver.url
+                def geoserverUsername = Holders.config.geoserver.username
+                def geoserverPassword = Holders.config.geoserver.password
 
                 output.files.each { file ->
 
-                    def p = (file.startsWith('/') ? grailsApplication.config.data.dir + file : path + '/' + file)
+                    def p = (file.startsWith('/') ? Holders.config.data.dir + file : path + '/' + file)
                     def name = new File(p).getName().replace(".sld", "")
 
                     //Create style
@@ -190,7 +191,7 @@ class PublishService {
         try {
             output.files.each { file ->
 
-                def p = (file.startsWith('/') ? grailsApplication.config.data.dir + file : path + '/' + file)
+                def p = (file.startsWith('/') ? Holders.config.data.dir + file : path + '/' + file)
                 def f = new File(p)
                 if (f.exists()) {
                     try {
@@ -215,7 +216,7 @@ class PublishService {
             output.files.each { json ->
 
                 def values = JSON.parse(json)
-                def p = (values.file.startsWith('/') ? grailsApplication.config.data.dir + values.file : path + '/' + values.file)
+                def p = (values.file.startsWith('/') ? Holders.config.data.dir + values.file : path + '/' + values.file)
 
                 String wkt = FileUtils.readFileToString(new File(p))
 
@@ -238,7 +239,7 @@ class PublishService {
         def statement = conn.createStatement()
         try {
             output.files.each { file ->
-                def p = (file.startsWith('/') ? grailsApplication.config.data.dir + file : path + '/' + file)
+                def p = (file.startsWith('/') ? Holders.config.data.dir + file : path + '/' + file)
                 try {
                     statement.execute(FileUtils.readFileToString(new File(p)))
                 } catch (err) {
@@ -261,17 +262,17 @@ class PublishService {
 
     def callGeoserver(String type, String urlPath, String file, String resource) {
         return manageLayersService.httpCall(type,
-                grailsApplication.config.geoserver.url + urlPath,
-                grailsApplication.config.geoserver.username,
-                grailsApplication.config.geoserver.password,
+                Holders.config.geoserver.url + urlPath,
+                Holders.config.geoserver.username,
+                Holders.config.geoserver.password,
                 file, resource, "text/plain")
     }
 
     def callGeoserver(String type, String urlPath, String file, String resource, String contentType) {
         return manageLayersService.httpCall(type,
-                grailsApplication.config.geoserver.url + urlPath,
-                grailsApplication.config.geoserver.username,
-                grailsApplication.config.geoserver.password,
+                Holders.config.geoserver.url + urlPath,
+                Holders.config.geoserver.username,
+                Holders.config.geoserver.password,
                 file, resource, contentType)
     }
 
@@ -288,20 +289,20 @@ class PublishService {
 
     def layerToGeoserver(output, path) {
         def errors = [:]
-        if (grailsApplication.config.geoserver.canDeploy.toBoolean()) {
+        if (Holders.config.geoserver.canDeploy.toBoolean()) {
 
-            def geoserverUrl = grailsApplication.config.geoserver.url
-            def geoserverUsername = grailsApplication.config.geoserver.username
-            def geoserverPassword = grailsApplication.config.geoserver.password
+            def geoserverUrl = Holders.config.geoserver.url
+            def geoserverUsername = Holders.config.geoserver.username
+            def geoserverPassword = Holders.config.geoserver.password
 
             output.files.each { f ->
-                def p = path == null ? f : (f.startsWith('/') ? grailsApplication.config.data.dir + f : path + '/' + f)
+                def p = path == null ? f : (f.startsWith('/') ? Holders.config.data.dir + f : path + '/' + f)
                 def file = f
 
                 if (f.startsWith("{")) {
                     // parse 'file' out of JSON
                     def values = JSON.parse(f)
-                    p = (values.file.startsWith('/') ? grailsApplication.config.data.dir + values.file : path + '/' + values.file)
+                    p = (values.file.startsWith('/') ? Holders.config.data.dir + values.file : path + '/' + values.file)
                     file = values.file
                 }
                 if (!file.endsWith('.tif') && !file.endsWith('.shp')) {
@@ -329,7 +330,7 @@ class PublishService {
                             //attempt to delete
                             callGeoserverDelete("/rest/workspaces/ALA/coveragestores/" + name)
 
-                            if (grailsApplication.config.geoserver.remote.geoserver_data_dir) {
+                            if (Holders.config.geoserver.remote.geoserver_data_dir) {
                                 // delete the tif file if it exists
                                 callGeoserverDelete("/rest/resource/data/" + name + ".tif")
 
@@ -341,7 +342,7 @@ class PublishService {
 
                                 // create the layer
                                 callGeoserver("PUT", "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
-                                        null, "file://" + grailsApplication.config.geoserver.remote.geoserver_data_dir + "/data/" + name + ".tif")
+                                        null, "file://" + Holders.config.geoserver.remote.geoserver_data_dir + "/data/" + name + ".tif")
 
                                 // upload the prj file
                                 if (tmpPrj.exists()) {
@@ -396,7 +397,7 @@ class PublishService {
 
                     callGeoserverDelete("/rest/workspaces/ALA/datastores/" + name)
 
-                    if (grailsApplication.config.geoserver.remote.geoserver_data_dir) {
+                    if (Holders.config.geoserver.remote.geoserver_data_dir) {
                         for (String filetype : ["shp", "prj", "shx", "dbf", "fix", "sbn", "sbx", "fbn", "fbx", "qix", "cpg", "shp.xml", "atx", "mxs", "ixs", "ain", "aih"]) {
                             // delete file if it exists
                             callGeoserverDelete("/rest/resource/data/" + name + "." + filetype)
@@ -413,7 +414,7 @@ class PublishService {
                                 null, "file://" + shp.getPath())
                     } else {
 
-                        if (grailsApplication.config.geoserver.spatialservice.colocated.toBoolean()) {
+                        if (Holders.config.geoserver.spatialservice.colocated.toBoolean()) {
 
                             String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
                                     null, "file://" + shp.getPath())

@@ -19,6 +19,7 @@ import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
+import grails.util.Holders
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
 
@@ -41,9 +42,9 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
         new Task(name: "test2", status: 0).save()
         new Task(name: "test3", status: 1).save()
 
-        grailsApplication.config.serverName = ""
-        grailsApplication.config.cas.server.LoginUrl = ""
-        grailsApplication.config.auth.admin_role = ""
+        Holders.config.serverName = ""
+        Holders.config.cas.server.LoginUrl = ""
+        Holders.config.auth.admin_role = ""
 
         controller.serviceAuthService = Mock(ServiceAuthService)
         controller.serviceAuthService.isValid(_) >> true

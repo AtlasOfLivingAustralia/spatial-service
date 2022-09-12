@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.slave.SpatialUtils
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
@@ -52,11 +53,11 @@ class Classification extends SlaveProcess {
 
         def cutDataPath = cutGrid(envnameslist, resolution, region, envelope, null);
 
-        String[] cmd = ["java", "-Xmx" + String.valueOf(grailsApplication.config.aloc.xmx),
-                        "-jar", grailsApplication.config.data.dir + '/modelling/aloc/aloc.jar',
-                        cutDataPath, String.valueOf(groups), String.valueOf(grailsApplication.config.aloc.threads), getTaskPath()]
+        String[] cmd = ["java", "-Xmx" + String.valueOf(Holders.config.aloc.xmx),
+                        "-jar", Holders.config.data.dir + '/modelling/aloc/aloc.jar',
+                        cutDataPath, String.valueOf(groups), String.valueOf(Holders.config.aloc.threads), getTaskPath()]
 
-        runCmd(cmd, true, grailsApplication.config.aloc.timeout)
+        runCmd(cmd, true, Holders.config.aloc.timeout)
 
         def replaceMap = [:] as LinkedHashMap
         envnameslist.each {
@@ -65,39 +66,39 @@ class Classification extends SlaveProcess {
         }
         replaceMap.put('http://spatial.ala.org.au', taskWrapper.input.layersServiceUrl)
 
-        cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
+        cmd = [Holders.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                getTaskPath() + "aloc.asc", getTaskPath() + taskWrapper.id + "_aloc.tif"]
         taskWrapper.message = "asc > tif"
-        runCmd(cmd, true, grailsApplication.config.aloc.timeout)
+        runCmd(cmd, true, Holders.config.aloc.timeout)
 
         if (new File(getTaskPath() + taskWrapper.id + "aloc.sld").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
+            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + taskWrapper.id + "_aloc.sld"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.sld")
         }
         if (new File(getTaskPath() + "aloc.sld").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
+            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.sld"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.sld")
         }
         if (new File(getTaskPath() + taskWrapper.id + "_aloc.tif").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.tif")
+            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.tif")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + taskWrapper.id + "_aloc.tif"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.tif")
         }
 
         if (new File(getTaskPath() + "aloc.grd").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.grd")
+            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.grd")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.grd"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.grd")
         }
         if (new File(getTaskPath() + "aloc.gri").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.gri")
+            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.gri")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.gri"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.gri")

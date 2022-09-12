@@ -22,6 +22,7 @@ import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.GeomMakeValid
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -41,7 +42,7 @@ class LayerCreation extends SlaveProcess {
         }
 
         //upload shp into layersdb in a table with name layer.id
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
         File shpUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".shp")
         File bilUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".bil")
         File tifUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".tif")
@@ -58,31 +59,31 @@ class LayerCreation extends SlaveProcess {
 
             //reproject to 4326
             String[] cmd = [
-                    grailsApplication.config.gdal.dir + "/gdalwarp",
+                    Holders.config.gdal.dir + "/gdalwarp",
                     "-t_srs", "EPSG:4326"
                     , srcPath
                     , outPath + "_tmp.bil"]
             taskWrapper.message = 'reprojecting shp'
             try {
-                runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                runCmd(cmd, true, Holders.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (1)", e)
             }
-            cmd = [grailsApplication.config.gdal.dir + "/gdalinfo",
+            cmd = [Holders.config.gdal.dir + "/gdalinfo",
                    "-hist"
                    , outPath + "_tmp.bil"]
             try {
-                runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                runCmd(cmd, true, Holders.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (2)", e)
             }
             // make .hdr
-            cmd = [grailsApplication.config.gdal.dir + "/gdal_translate",
+            cmd = [Holders.config.gdal.dir + "/gdal_translate",
                    "-of", "Ehdr"
                    , outPath + "_tmp.bil"
                    , outPath + ".bil"]
             try {
-                runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                runCmd(cmd, true, Holders.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (3)", e)
             }
@@ -135,7 +136,7 @@ class LayerCreation extends SlaveProcess {
             //bil 2 geotiff (?)
             taskWrapper.message = 'bil > geotiff'
             try {
-                SpatialUtils.toGeotiff(grailsApplication.config.gdal.dir, outPath + ".bil")
+                SpatialUtils.toGeotiff(Holders.config.gdal.dir, outPath + ".bil")
             } catch (Exception e) {
                 log.error("error making geotiff", e)
             }
@@ -155,11 +156,11 @@ class LayerCreation extends SlaveProcess {
                 GeomMakeValid.makeValidShapefile(shpUploaded.getPath(), dst.getPath() + ".shp")
 
                 taskWrapper.message = 'moving files'
-                String[] cmd = [grailsApplication.config.gdal.dir + '/ogrinfo',
+                String[] cmd = [Holders.config.gdal.dir + '/ogrinfo',
                                 dst.getPath() + ".shp", "-sql", "CREATE SPATIAL INDEX ON " + layer.name]
                 taskWrapper.message = 'shp spatial index'
                 try {
-                    runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                    runCmd(cmd, true, Holders.config.admin.timeout)
                 } catch (Exception e) {
                     log.error("error running shp spatial index", e)
                 }
@@ -169,7 +170,7 @@ class LayerCreation extends SlaveProcess {
         }
 
         //delete from uploads dir if master service is remote
-        if (!grailsApplication.config.service.enable.toBoolean()) {
+        if (!Holders.config.service.enable.toBoolean()) {
             FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
         }
         addOutput("process", "Thumbnails " + ([] as JSON))

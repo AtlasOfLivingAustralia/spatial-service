@@ -3,6 +3,7 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.AnalysisLayerUtil
 import au.org.ala.layers.util.Bil2diva
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataUtilities
@@ -67,9 +68,9 @@ class StandardizeLayers extends SlaveProcess {
 
                                 // standardized file is missing, make for this shapefile
                                 if (hasTxt && shp2Analysis(shpFile.getPath(),
-                                        grailsApplication.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id,
+                                        Holders.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id,
                                         new Double(res),
-                                        grailsApplication.config.gdal.dir.toString())) {
+                                        Holders.config.gdal.dir.toString())) {
 
                                     addOutput('file', '/standard_layer/' + res + '/' + f.id + '.grd')
                                     addOutput('file', '/standard_layer/' + res + '/' + f.id + '.gri')
@@ -99,7 +100,7 @@ class StandardizeLayers extends SlaveProcess {
                         slaveService.getFile('/layer/' + l.name + '.grd')
                         slaveService.getFile('/layer/' + l.name + '.gri')
 
-                        Grid g = new Grid(grailsApplication.config.data.dir.toString() + '/layer/' + l.name)
+                        Grid g = new Grid(Holders.config.data.dir.toString() + '/layer/' + l.name)
                         double minRes = Math.min(g.xres, g.yres)
 
                         int count = 0
@@ -147,10 +148,10 @@ class StandardizeLayers extends SlaveProcess {
 
     void standardizeGrid(Map f, Map l, double res, double dres) {
         if (AnalysisLayerUtil.diva2Analysis(
-                String.valueOf(grailsApplication.config.data.dir + '/layer/' + l.name),
-                String.valueOf(grailsApplication.config.data.dir + '/standard_layer/' + res + '/' + f.id),
+                String.valueOf(Holders.config.data.dir + '/layer/' + l.name),
+                String.valueOf(Holders.config.data.dir + '/standard_layer/' + res + '/' + f.id),
                 new Double(dres),
-                String.valueOf(grailsApplication.config.gdal.dir),
+                String.valueOf(Holders.config.gdal.dir),
                 false)) {
 
             addOutput('file', '/standard_layer/' + res + '/' + f.id + '.grd')
@@ -159,8 +160,8 @@ class StandardizeLayers extends SlaveProcess {
             //copy txt for 'a' and 'b'
             if (slaveService.peekFile('/layer/' + l.name + '.txt')[0].exists) {
                 slaveService.getFile('/layer/' + l.name + '.txt')
-                FileUtils.copyFile(new File(grailsApplication.config.data.dir.toString() + '/layer/' + l.name + '.txt'),
-                        new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id + '.txt'))
+                FileUtils.copyFile(new File(Holders.config.data.dir.toString() + '/layer/' + l.name + '.txt'),
+                        new File(Holders.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id + '.txt'))
                 addOutput('file', '/standard_layer/' + res + '/' + f.id + '.txt')
             }
 

@@ -17,6 +17,7 @@ package au.org.ala.spatial.service
 
 import au.org.ala.spatial.Util
 import grails.testing.services.ServiceUnitTest
+import grails.util.Holders
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
 
@@ -36,8 +37,8 @@ class ServiceAuthServiceSpec extends Specification implements ServiceUnitTest<Se
 
     def setup() {
         ExpandoMetaClass.enableGlobally()
-        grailsApplication.config.serviceKey = 'localKey'
-        grailsApplication.config.apiKeyCheckUrlTemplate = "{0}"
+        Holders.config.serviceKey = 'localKey'
+        Holders.config.apiKeyCheckUrlTemplate = "{0}"
         Util.metaClass.static.getUrl = { String url ->
             if (url.contains('test valid key')) return '"valid":true'
             return 'is not valid'

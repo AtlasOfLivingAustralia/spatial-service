@@ -23,6 +23,7 @@ import au.org.ala.spatial.service.Log
 import au.org.ala.spatial.service.Task
 import grails.converters.JSON
 import grails.io.IOUtils
+import grails.util.Holders
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.ArrayUtils
@@ -57,7 +58,7 @@ class LayerController {
 
     def img(String id) {
         if (layerDao.getLayerByName(id)) {
-            File f = new File(grailsApplication.config.data.dir.toString() + '/public/thumbnail/' + id + '.jpg')
+            File f = new File(Holders.config.data.dir.toString() + '/public/thumbnail/' + id + '.jpg')
             render(file: f, fileName: "${id}.jpg")
         } else {
             response.sendError(404, "$id not found")
@@ -250,7 +251,7 @@ class LayerController {
                     for (String p : pid.split("~")) {
                         def obj = objectDao.getObjectByPid(p)
                         if (obj) {
-                            if (obj.fid != grailsApplication.config.userObjectsField) {
+                            if (obj.fid != Holders.config.userObjectsField) {
                                 layers.put(obj.fid, layers.getOrDefault(obj.fid, 0) + 1)
                             }
                         }
@@ -380,7 +381,7 @@ class LayerController {
 
                     // When a geotiff exists, only download the geotiff
                     def path = "/layer/${layer.name}"
-                    def geotiff = new File(grailsApplication.config.data.dir + path + ".tif")
+                    def geotiff = new File(Holders.config.data.dir + path + ".tif")
                     if (geotiff.exists()) {
                         path += ".tif"
                     }
@@ -407,7 +408,7 @@ class LayerController {
     }
 
     private downloadAllowed(layer) {
-        return grailsApplication.config.getProperty('download.layer.licence_levels', String, '').contains(layer.licence_level)
+        return Holders.config.getProperty('download.layer.licence_levels', String, '').contains(layer.licence_level)
     }
 
     def more(String id) {

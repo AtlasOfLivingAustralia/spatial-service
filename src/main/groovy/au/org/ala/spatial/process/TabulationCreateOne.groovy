@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.tabulation.Intersection
 import au.org.ala.layers.tabulation.TabulationGenerator
 import au.org.ala.layers.util.SpatialUtil
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataStore
@@ -40,7 +41,7 @@ class TabulationCreateOne extends SlaveProcess {
         String fieldId1 = taskWrapper.input.fieldId1
         String fieldId2 = taskWrapper.input.fieldId2
 
-        String layersDir = grailsApplication.config.data.dir + '/layer/'
+        String layersDir = Holders.config.data.dir + '/layer/'
 
         String layerId1 = getField(fieldId1).spid
         String layerId2 = getField(fieldId2).spid
@@ -55,13 +56,13 @@ class TabulationCreateOne extends SlaveProcess {
 
             File file1 = new File(layersDir + layer1.name + ".shp")
             File file2 = new File(layersDir + layer2.name + ".shp")
-            File file3 = new File(grailsApplication.config.data.dir.toString() + intersectPath)
+            File file3 = new File(Holders.config.data.dir.toString() + intersectPath)
 
             //create an intersection file if both shapefiles exist and the intesection file does not
             if (file1.exists() && file2.exists() && !file3.exists()) {
-                new File(grailsApplication.config.data.dir.toString() + "/intersect/").mkdirs()
+                new File(Holders.config.data.dir.toString() + "/intersect/").mkdirs()
                 Intersection.intersectShapefiles(file1.getPath(), Arrays.asList(file2.getPath()),
-                        grailsApplication.config.data.dir.toString() + "/intersect/")
+                        Holders.config.data.dir.toString() + "/intersect/")
 
                 //keep the intersection file for use with other fields that use the same 2 layers (layers can have >1 field)
                 addOutput('file', intersectPath)
@@ -84,7 +85,7 @@ class TabulationCreateOne extends SlaveProcess {
         Map layer1 = getLayer(layerId1)
         Map layer2 = getLayer(layerId2)
 
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
         String intersectFile = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
         slaveService.getFile(intersectFile)
 

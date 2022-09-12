@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.http.message.BasicNameValuePair
 
@@ -71,13 +72,13 @@ class GeneratePoints extends SlaveProcess {
                 new BasicNameValuePair("separator", ","),
                 new BasicNameValuePair("firstLineIsData", "false"),
                 new BasicNameValuePair("customIndexedFields", ""),
-                new BasicNameValuePair("uiUrl", grailsApplication.config.spatialServiceUrl.toString()),
+                new BasicNameValuePair("uiUrl", Holders.config.spatialServiceUrl.toString()),
                 new BasicNameValuePair("alaId", userId.toString())
         ]
 
         taskWrapper.history.put(System.currentTimeMillis() as String, "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
 
-        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
+        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/".toString(),
                 nameValuePairs.toArray(new BasicNameValuePair[0]))
 
         if (response) {

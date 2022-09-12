@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.tabulation.TabulationGenerator
+import grails.util.Holders
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
@@ -34,7 +35,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
         taskWrapper.message = 'getting layerDistances.properties'
         slaveService.getFile('/public/layerDistances.properties')
 
-        File f = new File(grailsApplication.config.data.dir.toString() + '/public/layerDistances.properties')
+        File f = new File(Holders.config.data.dir.toString() + '/public/layerDistances.properties')
         if (!f.exists()) FileUtils.writeStringToFile(f, '')
         Map distances = [:]
         FileReader fr = new FileReader(f)
@@ -71,7 +72,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
         List<Double> ranges = []
 
         for (int i = 0; i < files.size(); i++) {
-            String f1 = grailsApplication.config.data.dir + files[i].getPath()
+            String f1 = Holders.config.data.dir + files[i].getPath()
             f1 = f1.substring(0, f1.length() - 4)
 
             Grid g1 = Grid.getGrid(f1)

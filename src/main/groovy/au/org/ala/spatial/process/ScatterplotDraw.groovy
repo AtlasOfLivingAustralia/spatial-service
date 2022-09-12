@@ -19,6 +19,7 @@ import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.scatterplot.ScatterplotStyleDTO
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 
 @Slf4j
@@ -40,7 +41,7 @@ class ScatterplotDraw extends SlaveProcess {
 
         def taskId = taskWrapper.input.scatterplotId
 
-        File dataFile = new File(grailsApplication.config.data.dir.toString() + '/public/' + taskId + "/data.xml")
+        File dataFile = new File(Holders.config.data.dir.toString() + '/public/' + taskId + "/data.xml")
         slaveService.getFile('/public/' + taskId + '/data.xml')
 
         Scatterplot scatterplot = Scatterplot.load(dataFile)
@@ -85,7 +86,7 @@ class ScatterplotDraw extends SlaveProcess {
         image.putAt("scatterplotId", taskWrapper.id)
         def imgFile = new File(scatterplot.getImagePath())
         image.putAt("scatterplotUrl",
-                imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
+                imgFile.path.replace(Holders.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
                         .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name))
 
         //style

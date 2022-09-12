@@ -15,11 +15,12 @@
 
 package au.org.ala.layers
 
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 
 class LayerDistancesService {
 
-    def grailsApplication
+
     def fieldDao
     def layerDao
 
@@ -93,7 +94,7 @@ class LayerDistancesService {
         def map = [:]
 
         def br = null
-        def path = grailsApplication.config.data.dir + "/public/layerDistances.properties"
+        def path = Holders.config.data.dir + "/public/layerDistances.properties"
         try {
             def file = new File(path)
             if (!file.exists()) {

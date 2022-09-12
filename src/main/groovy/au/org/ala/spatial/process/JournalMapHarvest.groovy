@@ -16,6 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.http.Header
 import org.json.simple.JSONArray
@@ -30,8 +31,8 @@ class JournalMapHarvest extends SlaveProcess {
 
         try {
 
-            String journalMapUrl = grailsApplication.config.journalmap.url
-            String journalMapKey = grailsApplication.config.journalmap.api_key
+            String journalMapUrl = Holders.config.journalmap.url
+            String journalMapKey = Holders.config.journalmap.api_key
 
             List<JSONObject> journalMapArticles = new ArrayList()
 
@@ -101,7 +102,7 @@ class JournalMapHarvest extends SlaveProcess {
             }
 
             //save to disk cache
-            def jaFile = new File("${grailsApplication.config.data.dir}/journalmap.json")
+            def jaFile = new File("${Holders.config.data.dir}/journalmap.json")
             FileWriter fw = new FileWriter(jaFile)
             JSONValue.writeJSONString(journalMapArticles, fw)
             fw.flush()

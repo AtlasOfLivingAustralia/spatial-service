@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.tabulation.TabulationGenerator
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -48,7 +49,7 @@ class LayerDistancesCreate extends SlaveProcess {
         taskWrapper.message = 'getting layer distances'
         slaveService.getFile('/public/layerDistances.properties')
 
-        File f = new File(grailsApplication.config.data.dir.toString() + '/public/layerDistances.properties')
+        File f = new File(Holders.config.data.dir.toString() + '/public/layerDistances.properties')
         if (!f.exists()) FileUtils.writeStringToFile(f, '')
         Map distances = [:]
         FileReader fr = new FileReader(f)

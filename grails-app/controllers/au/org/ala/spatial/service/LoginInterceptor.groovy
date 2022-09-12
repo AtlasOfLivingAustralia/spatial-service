@@ -6,6 +6,7 @@ import au.org.ala.RequirePermission
 import au.org.ala.SkipSecurityCheck
 import com.google.common.base.Strings
 import grails.converters.JSON
+import grails.util.Holders
 
 /**
  * Copy and simplify from plugin "ala-ws-security-plugin:2.0"
@@ -26,7 +27,7 @@ class LoginInterceptor {
     }
 
     boolean before() {
-        if (!grailsApplication.config.security.oidc.enabled.toBoolean()) {
+        if (!Holders.config.security.oidc.enabled.toBoolean()) {
             return true
         }
 
@@ -71,7 +72,7 @@ class LoginInterceptor {
             if (serviceAuthService.hasValidApiKey())
                 return true
 
-            role = grailsApplication.config.getProperty('auth.admin_role', String, 'ROLE_ADMIN')
+            role = Holders.config.getProperty('auth.admin_role', String, 'ROLE_ADMIN')
         } else if (permissionLevel == RequireLogin) {
             RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
             role = requireAuthentication?.role()

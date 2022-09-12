@@ -20,6 +20,7 @@ import au.org.ala.layers.dto.IntersectionFile
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.util.RecordsSmall
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -43,7 +44,7 @@ class TabulationCounts extends SlaveProcess {
 
         // load records
         taskWrapper.message = 'getting records'
-        String dir = grailsApplication.config.data.dir + File.separator + "sample"
+        String dir = Holders.config.data.dir + File.separator + "sample"
         RecordsSmall.fileList().each { filename ->
             slaveService.getFile(dir + File.separator + filename)
         }
@@ -212,10 +213,10 @@ class TabulationCounts extends SlaveProcess {
     def sample(double[][] points, Map field) {
 
         //create new sampling file when one does not already exist
-        File file = new File(grailsApplication.config.data.dir.toString() + '/sample/' + field.spid + '.' + field.sname + '.pid')
+        File file = new File(Holders.config.data.dir.toString() + '/sample/' + field.spid + '.' + field.sname + '.pid')
         String fieldName = field.sname
         Map l = getLayer(field.spid)
-        String filename = grailsApplication.config.data.dir + '/layer/' + l.name
+        String filename = Holders.config.data.dir + '/layer/' + l.name
 
         if (!file.exists()) {
             try {

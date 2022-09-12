@@ -20,6 +20,7 @@ import au.org.ala.layers.dto.Distribution
 import au.org.ala.layers.dto.MapDTO
 import au.org.ala.spatial.util.AttributionCache
 import grails.converters.JSON
+import grails.util.Holders
 
 class TrackController {
 
@@ -137,7 +138,7 @@ class TrackController {
 
         if (distribution != null) {
             m.setDataResourceUID(distribution.getData_resource_uid())
-            m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
+            m.setUrl((Holders.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
 
             // set the attribution info
             AttributionDTO dto = AttributionCache.getCache().getAttributionFor(distribution.getData_resource_uid())
@@ -163,7 +164,7 @@ class TrackController {
             distributions.each { Distribution distribution ->
                 MapDTO m = new MapDTO()
                 m.setDataResourceUID(distribution.getData_resource_uid())
-                m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
+                m.setUrl((Holders.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
                 // set the attribution info
                 AttributionDTO dto = AttributionCache.getCache().getAttributionFor(distribution.getData_resource_uid())
                 m.setAvailable(true)

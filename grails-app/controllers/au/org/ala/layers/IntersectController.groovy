@@ -24,6 +24,7 @@ import au.org.ala.spatial.util.BatchConsumer
 import au.org.ala.spatial.util.BatchProducer
 import grails.converters.JSON
 import grails.core.GrailsApplication
+import grails.util.Holders
 import org.geotools.geojson.geom.GeometryJSON
 import org.locationtech.jts.geom.Geometry
 
@@ -50,9 +51,9 @@ class IntersectController {
     }
 
     def batch() {
-        File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
+        File dir = new File((Holders.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads.toInteger())
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), Holders.config.sampling.threads.toInteger())
 
         //help get params when they don't pick up automatically from a POST
         String fids = params.containsKey('fids') ? params.fids : ''
@@ -85,9 +86,9 @@ class IntersectController {
             // get limits
             int pointsLimit, fieldsLimit
 
-            String[] passwords = grailsApplication.config.batch_sampling_passwords.toString().split(',')
-            pointsLimit = grailsApplication.config.batch_sampling_points_limit.toInteger()
-            fieldsLimit = grailsApplication.config.batch_sampling_fields_limit.toInteger()
+            String[] passwords = Holders.config.batch_sampling_passwords.toString().split(',')
+            pointsLimit = Holders.config.batch_sampling_points_limit.toInteger()
+            fieldsLimit = Holders.config.batch_sampling_fields_limit.toInteger()
 
             String password = params.containsKey('pw') ? params.pw : null
             for (int i = 0; password != null && i < passwords.length; i++) {
@@ -118,7 +119,7 @@ class IntersectController {
 
                 map.put("batchId", batchId)
                 BatchProducer.addInfoToMap(dir.getPath(), batchId, map)
-                map.put("statusUrl", grailsApplication.config.grails.serverURL + '/intersect/batch/' + batchId)
+                map.put("statusUrl", Holders.config.grails.serverURL + '/intersect/batch/' + batchId)
             }
 
                 render map as JSON
@@ -132,15 +133,15 @@ class IntersectController {
     }
 
     def batchStatus(String id) {
-        File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
+        File dir = new File((Holders.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads.toInteger())
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), Holders.config.sampling.threads.toInteger())
 
         Map map = new HashMap()
         try {
             BatchProducer.addInfoToMap(dir.getPath(), id, map)
             if (map.get("finished") != null) {
-                map.put("downloadUrl", grailsApplication.config.grails.serverURL + '/intersect/batch/download/' + id)
+                map.put("downloadUrl", Holders.config.grails.serverURL + '/intersect/batch/download/' + id)
             }
         } catch (err) {
             log.error 'failed to get batch status: ' + id, err
@@ -152,9 +153,9 @@ class IntersectController {
     def batchDownload(String id) {
         Boolean csv = params.containsKey('csv') ? params.csv.toString().toBoolean() : false
 
-        File dir = new File((grailsApplication.config.data.dir + '/intersect/batch/') as String)
+        File dir = new File((Holders.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
-        BatchConsumer.start(layerIntersectDao, dir.getPath(), grailsApplication.config.sampling.threads.toInteger())
+        BatchConsumer.start(layerIntersectDao, dir.getPath(), Holders.config.sampling.threads.toInteger())
 
         OutputStream os = null
         BufferedInputStream bis = null

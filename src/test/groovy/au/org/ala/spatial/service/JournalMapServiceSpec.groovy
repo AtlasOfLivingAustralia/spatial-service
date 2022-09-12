@@ -44,7 +44,6 @@ class JournalMapServiceSpec extends Specification implements ServiceUnitTest<Jou
     }}
 
     def setup() {
-//        grailsApplication.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent()
     }
 
     def cleanup() {

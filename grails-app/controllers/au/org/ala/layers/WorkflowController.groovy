@@ -18,6 +18,7 @@ package au.org.ala.layers
 import au.org.ala.layers.dao.UserDataDAO
 import au.org.ala.web.AuthService
 import grails.converters.JSON
+import grails.util.Holders
 
 class WorkflowController {
 
@@ -109,7 +110,7 @@ class WorkflowController {
         // check authorisation
         if (header.userId == user_id ||
                 !header.isPrivate ||
-                authService.userInRole(grailsApplication.config.auth.admin_role)) {
+                authService.userInRole(Holders.config.auth.admin_role)) {
             // keep metadata details
         } else {
             header.metadata = null
@@ -118,7 +119,7 @@ class WorkflowController {
         if (header.metadata && 'true'.equalsIgnoreCase(params.open)) {
             def hub = params.hub ? '/hub/' + params.hub : ''
 
-            redirect url: grailsApplication.config.spatialHubUrl + hub + '?workflow=' + header.id
+            redirect url: Holders.config.spatialHubUrl + hub + '?workflow=' + header.id
         } else if (request.getHeader('accept')?.contains('application/json')) {
             render header as JSON
         } else {
@@ -133,7 +134,7 @@ class WorkflowController {
 
         // check authorisation and that it is not minted (no analysis_id)
         if ((metadata.user_id == user_id ||
-                authService.userInRole(grailsApplication.config.auth.admin_role)) &&
+                authService.userInRole(Holders.config.auth.admin_role)) &&
                 metadata.analysis_id == null) {
 
             userDataDao.delete(id)
@@ -149,7 +150,7 @@ class WorkflowController {
     def search() {
         String user_id = authService.getUserId()
 
-        String isPublic = authService.userInRole(grailsApplication.config.auth.admin_role) ? null : PUBLIC
+        String isPublic = authService.userInRole(Holders.config.auth.admin_role) ? null : PUBLIC
 
         def list = userDataDao.searchDescAndTypeOr('%' + params.q + '%', RECORD_TYPE, user_id, isPublic, null, Integer.parseInt(params.start ?: '0'), Integer.parseInt(params.limit ?: '10'))
 
@@ -167,6 +168,6 @@ class WorkflowController {
         return [id     : header.ud_header_id, mintId: header.analysis_id, name: header.description,
                 userId : header.user_id, isPrivate: !PUBLIC.equalsIgnoreCase(header.data_path),
                 created: header.upload_dt, metadata: header.metadata,
-                url    : grailsApplication.config.grails.serverURL + '/workflow/show/' + header.ud_header_id]
+                url    : Holders.config.grails.serverURL + '/workflow/show/' + header.ud_header_id]
     }
 }

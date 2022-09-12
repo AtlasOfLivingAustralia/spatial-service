@@ -19,6 +19,7 @@ import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.scatterplot.ScatterplotDTO
 import au.org.ala.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 
 @Slf4j
@@ -85,7 +86,7 @@ class ScatterplotCreate extends SlaveProcess {
                 species1.putAt("scatterplotId", taskWrapper.id)
                 def imgFile = new File(scatterplot.getImagePath())
                 species1.putAt("scatterplotUrl",
-                        imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
+                        imgFile.path.replace(Holders.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
                                 .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name))
 
                 //style

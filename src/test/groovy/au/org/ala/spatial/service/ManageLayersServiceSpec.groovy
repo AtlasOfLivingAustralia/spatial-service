@@ -23,6 +23,7 @@ import au.org.ala.layers.dao.ObjectDAO
 import grails.config.Config
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.services.ServiceUnitTest
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
@@ -62,11 +63,11 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         service.slaveService = Mock(SlaveService)
 
         // removes the need for a geoserver instance for testing
-        grailsApplication.config.geoserver.canDeploy = false
+        Holders.config.geoserver.canDeploy = false
 
         // gdal installation is required for 'processUpload'
-        grailsApplication.config.gdal.dir = '/opt/homebrew/bin'
-        gdalInstalled = TestUtil.GDALInstalled(grailsApplication.config.gdal.dir)
+        Holders.config.gdal.dir = '/opt/homebrew/bin'
+        gdalInstalled = TestUtil.GDALInstalled(Holders.config.gdal.dir)
     }
 
     def cleanup() {
@@ -74,7 +75,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
 
     void "listUploadedFiles"() {
         when:
-        grailsApplication.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDir"
+        Holders.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDir"
 
         if (taskStatus > 0) new Task(name: "LayerCreation", tag: uploadId, status: taskStatus).save()
 
@@ -108,7 +109,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         if (gdalInstalled) {
             tmpDir = File.createTempDir()
             FileUtils.copyDirectory(new File(new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDirLayerCreation"), tmpDir)
-            grailsApplication.config.data.dir = tmpDir.getPath()
+            Holders.config.data.dir = tmpDir.getPath()
 
             result = service.processUpload(new File(tmpDir.getPath() + "/uploads/" + dir), dir)
         }
@@ -138,7 +139,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
 
     void "fieldMapDefault"() {
         when:
-        grailsApplication.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDir"
+        Holders.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent() + "/dataDir"
 
         service.fieldDao.getFieldsByDB() >> [[id:"cl1", spid:"cl1"]]
         service.layerDao.getLayerById(_, _) >> [id:"1", displayname: "name1", type:"contextual"]

@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.service
 
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.IOUtils
 
@@ -26,7 +27,7 @@ import java.util.zip.ZipOutputStream
 @Slf4j
 class FileService {
 
-    def grailsApplication
+
 
     /**
      * Write all files matching 'path' and 'path.ext' to a zip file
@@ -58,10 +59,10 @@ class FileService {
             map = []
             list.each { file ->
                 if (file.isDirectory()) {
-                    String relativePath = file.getPath().substring(grailsApplication.config.data.dir.toString().length(), file.getPath().length())
+                    String relativePath = file.getPath().substring(Holders.config.data.dir.toString().length(), file.getPath().length())
                     map.addAll(info(relativePath))
                 } else {
-                    map.add([path  : file.getPath().replace(grailsApplication.config.data.dir.toString(), ''),
+                    map.add([path  : file.getPath().replace(Holders.config.data.dir.toString(), ''),
                              exists: file.exists(), lastModified: file.lastModified(), size: file.length()])
                 }
             }
@@ -87,7 +88,7 @@ class FileService {
      */
     def getFilesFromBase(name, targetDir = null, exact = false) {
         boolean dataDir = name.startsWith('/')
-        def e = dataDir ? grailsApplication.config.data.dir + name : "$targetDir/${name}"
+        def e = dataDir ? Holders.config.data.dir + name : "$targetDir/${name}"
 
         //only include path once
         def file = new File(e)
@@ -146,7 +147,7 @@ class FileService {
         def entry
         while ((entry = zf.getNextEntry()) != null) {
             def e = !upload && entry.getName().startsWith('/') ?
-                    grailsApplication.config.data.dir + entry.getName() : "$path/${entry.getName()}"
+                    Holders.config.data.dir + entry.getName() : "$path/${entry.getName()}"
             if (e.endsWith('/')) {
                 new File(e).mkdirs()
             } else {
@@ -258,7 +259,7 @@ class FileService {
 
     def zipEntryName(String path, String prefix) {
         //default to data.dir location
-        int length = grailsApplication.config.data.dir.toString().length()
+        int length = Holders.config.data.dir.toString().length()
 
         if (prefix != null && path.startsWith(prefix)) {
             //location is in prefix dir

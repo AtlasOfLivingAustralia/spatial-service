@@ -20,6 +20,7 @@ import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.slave.SpatialUtils
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -70,7 +71,7 @@ class Envelope extends SlaveProcess {
         if ((areaSqKm = GridCutter.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
 
             SpatialUtils.divaToAsc(dir.getPath() + File.separator + filename)
-            SpatialUtils.toGeotiff(grailsApplication.config.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
+            SpatialUtils.toGeotiff(Holders.config.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
             SpatialUtils.save4326prj(dir.getPath() + File.separator + filename + ".prj")
 
             addOutput("files", filename + ".asc")

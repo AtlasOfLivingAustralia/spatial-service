@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.grid.GridCutter
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -69,11 +70,11 @@ class Maxent extends SlaveProcess {
             //TODO: error
         }
         taskLog("Run Maxent model")
-        def cmd = ["java", "-mx" + String.valueOf(grailsApplication.config.maxent.mx),
-                   "-jar", grailsApplication.config.data.dir + '/modelling/maxent/maxent.jar',
+        def cmd = ["java", "-mx" + String.valueOf(Holders.config.maxent.mx),
+                   "-jar", Holders.config.data.dir + '/modelling/maxent/maxent.jar',
                    "-e", cutDataPath, "-s", speciesPath.get(0), "-a", "tooltips=false",
                    "nowarnings", "noprefixes", "-z",
-                   "threads=" + grailsApplication.config.maxent.threads, "randomtestpoints=" + (int) (testPercentage * 50),
+                   "threads=" + Holders.config.maxent.threads, "randomtestpoints=" + (int) (testPercentage * 50),
                    "-o", getTaskPath()]
         if (jackknife) cmd.add("-J")
         if (responseCurves) cmd.add("-P")
@@ -87,7 +88,7 @@ class Maxent extends SlaveProcess {
         cmd.eachWithIndex { def entry, int i ->
             cmdList[i] = entry
         }
-        runCmd(cmdList, true, grailsApplication.config.maxent.timeout)
+        runCmd(cmdList, true, Holders.config.maxent.timeout)
 
         //format output
 
@@ -176,9 +177,9 @@ class Maxent extends SlaveProcess {
             //writeProjectionFile(getTaskPath());
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "species.asc", "${grailsApplication.config.data.dir}/layer/${taskWrapper.id}_species")
+            convertAsc(getTaskPath() + "species.asc", "${Holders.config.data.dir}/layer/${taskWrapper.id}_species")
         }
-        writeMaxentsld(grailsApplication.config.data.dir + "/layer/" + taskWrapper.id + "_species.sld")
+        writeMaxentsld(Holders.config.data.dir + "/layer/" + taskWrapper.id + "_species.sld")
         addOutput("layers", "/layer/" + taskWrapper.id + "_species.sld")
 
         addOutput("layers", "/layer/" + taskWrapper.id + "_species.tif")
@@ -204,13 +205,13 @@ class Maxent extends SlaveProcess {
         addOutput("files", "maxent.log", true)
 
         if (new File(getTaskPath() + "species.grd").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_species.grd")
+            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_species.grd")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "_species.grd"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_species.grd")
         }
         if (new File(getTaskPath() + "species.gri").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_species.gri")
+            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_species.gri")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "_species.gri"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_species.gri")

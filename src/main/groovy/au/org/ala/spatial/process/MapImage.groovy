@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.PrintMapComposer
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -53,8 +54,8 @@ class MapImage extends SlaveProcess {
 
         //test for pid
         def imageBytes = new PrintMapComposer(
-                grailsApplication.config.geoserver.url.toString(),
-                grailsApplication.config.openstreetmap.url.toString(),
+                Holders.config.geoserver.url.toString(),
+                Holders.config.openstreetmap.url.toString(),
                 baseMap,
                 mapLayers,
                 bbox,
@@ -63,7 +64,7 @@ class MapImage extends SlaveProcess {
                 comment,
                 outputType,
                 resolution,
-                grailsApplication.config.data.dir, grailsApplication.config.google.apikey).get()
+                Holders.config.data.dir, Holders.config.google.apikey).get()
 
         if (outputType == 'pdf') {
             FileUtils.writeByteArrayToFile(new File(getTaskPath() + taskWrapper.id + ".jpg"), imageBytes)
@@ -71,7 +72,7 @@ class MapImage extends SlaveProcess {
             File pdf = new File(getTaskPath() + taskWrapper.id + ".pdf")
             def outputStream = FileUtils.openOutputStream(pdf)
 
-            InputStream stream = new URL(grailsApplication.config.grails.serverURL + '/slave/exportMap/' + taskWrapper.id).openStream()
+            InputStream stream = new URL(Holders.config.grails.serverURL + '/slave/exportMap/' + taskWrapper.id).openStream()
             outputStream << stream
             outputStream.flush()
             outputStream.close()

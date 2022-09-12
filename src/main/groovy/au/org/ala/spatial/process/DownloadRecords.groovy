@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.util.RecordsSmall
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 
 import java.util.zip.ZipInputStream
@@ -25,12 +26,12 @@ import java.util.zip.ZipInputStream
 class DownloadRecords extends SlaveProcess {
 
     void start() {
-        File file = new File(grailsApplication.config.data.dir.toString() + '/sample/records.csv')
+        File file = new File(Holders.config.data.dir.toString() + '/sample/records.csv')
         file.getParentFile().mkdirs()
 
         taskWrapper.message = 'downloading new records'
         try {
-            ZipInputStream zis = new ZipInputStream(new URL(grailsApplication.config.records.url.toString()).openConnection().getInputStream())
+            ZipInputStream zis = new ZipInputStream(new URL(Holders.config.records.url.toString()).openConnection().getInputStream())
 
             //only 1 file in the download zip
             zis.getNextEntry()
@@ -59,7 +60,7 @@ class DownloadRecords extends SlaveProcess {
         taskWrapper.message = 'making small records files'
 
         //small records file
-        RecordsSmall records = new RecordsSmall(grailsApplication.config.data.dir.toString() + '/sample/')
+        RecordsSmall records = new RecordsSmall(Holders.config.data.dir.toString() + '/sample/')
         records.close()
         RecordsSmall.fileList().each { filename ->
             addOutput('file', '/sample/' + filename)

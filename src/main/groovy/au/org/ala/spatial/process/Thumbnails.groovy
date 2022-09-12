@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.springframework.util.StreamUtils
 
@@ -32,7 +33,7 @@ class Thumbnails extends SlaveProcess {
             taskWrapper.message = 'checking thumbnail: ' + layer.name
             if (!hasThumbnail(layer.name.toString(), path)) {
                 taskWrapper.message = 'getting thumbnail: ' + layer.name
-                one(layer, grailsApplication.config.data.dir + path)
+                one(layer, Holders.config.data.dir + path)
             }
             addOutput('file', path + layer.name + '.jpg')
         }

@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.json.simple.JSONObject
 
@@ -51,8 +52,8 @@ class LayerCopy extends SlaveProcess {
         //get standardized files
         taskLog("get standardized files")
         def resolutions
-        if (layer.type == 'Contextual') resolutions = grailsApplication.config.shpResolutions
-        else resolutions = grailsApplication.config.grdResolutions
+        if (layer.type == 'Contextual') resolutions = Holders.config.shpResolutions
+        else resolutions = Holders.config.grdResolutions
         if (!(resolutions instanceof List)) {
             // comma separated or JSON list
             if (resolutions.toString().startsWith("[")) {

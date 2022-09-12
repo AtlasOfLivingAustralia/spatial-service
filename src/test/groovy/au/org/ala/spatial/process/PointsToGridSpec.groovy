@@ -6,6 +6,7 @@ import au.org.ala.spatial.analysis.layers.Records
 import au.org.ala.spatial.service.TestUtil
 
 import au.org.ala.spatial.service.TaskQueueService
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
@@ -36,8 +37,8 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
 
 
         // gdal installation is required for 'PointsToGrid'
-        grailsApplication.config.gdal.dir = '/opt/homebrew/bin'
-        gdalInstalled = TestUtil.GDALInstalled(grailsApplication.config.gdal.dir)
+        Holders.config.gdal.dir = '/opt/homebrew/bin'
+        gdalInstalled = TestUtil.GDALInstalled(Holders.config.gdal.dir)
     }
 
     def cleanup() {
@@ -54,7 +55,7 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
 
             new File("${tmpDir}/layer").mkdirs()
 
-            grailsApplication.config.data.dir = tmpDir.getPath()
+            Holders.config.data.dir = tmpDir.getPath()
             proc.taskService.getBasePath(_) >> tmpDir.getPath() + '/public/'
 
             System.out.println(tmpDir.getPath())

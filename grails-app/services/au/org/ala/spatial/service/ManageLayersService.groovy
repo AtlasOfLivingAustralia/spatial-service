@@ -23,6 +23,7 @@ import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.http.entity.FileEntity
@@ -42,7 +43,7 @@ import java.nio.file.attribute.BasicFileAttributes
 @Slf4j
 class ManageLayersService {
 
-    def grailsApplication
+
     def layerIntersectDao
     def fieldDao
     def layerDao
@@ -51,14 +52,14 @@ class ManageLayersService {
     def slaveService
 
     PublishService getPublishService() {
-        grailsApplication.mainContext.publishService
+        Holders.mainContext.publishService
     }
 
     def listUploadedFiles() {
         def list = []
 
         //get all uploaded files
-        def layersDir = grailsApplication.config.data.dir
+        def layersDir = Holders.config.data.dir
         def path = new File(layersDir + "/uploads/")
 
         if (path.exists()) {
@@ -80,7 +81,7 @@ class ManageLayersService {
 
         def upload = [:]
 
-        def layersDir = grailsApplication.config.data.dir
+        def layersDir = Holders.config.data.dir
         def f = new File(layersDir + "/uploads/" + uploadId)
 
         List fields = []
@@ -289,7 +290,7 @@ class ManageLayersService {
                     map.put("columns", columns)
                     map.put("test_id", newName)
                     map.put("test_url",
-                            grailsApplication.config.geoserver.url.toString() +
+                            Holders.config.geoserver.url.toString() +
                                     "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + newName +
                                     "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
 
@@ -361,7 +362,7 @@ class ManageLayersService {
 
         log.info("BIL conversion to GeoTIFF with gdal_translate...")
         //bil 2 geotiff (?)
-        String[] cmd = [grailsApplication.config.gdal.dir.toString() + "/gdal_translate", "-of", "GTiff",
+        String[] cmd = [Holders.config.gdal.dir.toString() + "/gdal_translate", "-of", "GTiff",
                         "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                         bil.getPath(), geotiff.getPath()]
 
@@ -375,7 +376,7 @@ class ManageLayersService {
             log.error "error running gdal_translate", e
         }
 
-        cmd = [grailsApplication.config.gdal.dir + '/gdaladdo',
+        cmd = [Holders.config.gdal.dir + '/gdaladdo',
                "-r", "cubic"
                , geotiff.getPath()
                , "2", "4", "8", "16", "32"]
@@ -438,7 +439,7 @@ class ManageLayersService {
     }
 
     def layerMap(layerId) {
-        String layersDir = grailsApplication.config.data.dir
+        String layersDir = Holders.config.data.dir
 
         //fetch info
         def map = [:]
@@ -463,7 +464,7 @@ class ManageLayersService {
                 //TODO: stop this failing when the table is not yet created
                 //map.put("columns", layerDao.getLayerColumns(l.getId()));
                 map.put("test_url",
-                        grailsApplication.config.geoserver.url +
+                        Holders.config.geoserver.url +
                                 "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
                                 "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
             } catch (Exception e2) {
@@ -536,10 +537,10 @@ class ManageLayersService {
 
     def deleteLayer(String id) {
 
-        String layersDir = grailsApplication.config.data.dir
-        String geoserverUrl = grailsApplication.config.geoserver.url
-        String geoserverUsername = grailsApplication.config.geoserver.username
-        String geoserverPassword = grailsApplication.config.geoserver.password
+        String layersDir = Holders.config.data.dir
+        String geoserverUrl = Holders.config.geoserver.url
+        String geoserverUsername = Holders.config.geoserver.username
+        String geoserverPassword = Holders.config.geoserver.password
 
         Map map = null
         try {
@@ -623,7 +624,7 @@ class ManageLayersService {
         def allUploads = listUploadedFiles()
         allUploads.each {
             if (it.containsKey('layer_id') && it.layer_id.equals(id)) {
-                new File(grailsApplication.config.data.dir.toString() + "/uploads/" + it.raw_id + "/layer.id").delete()
+                new File(Holders.config.data.dir.toString() + "/uploads/" + it.raw_id + "/layer.id").delete()
             }
         }
 
@@ -692,7 +693,7 @@ class ManageLayersService {
     def fieldMapDefault(String layerId) {
         def layerMap = layerMap(layerId)
 
-        String layersDir = grailsApplication.config.data.dir
+        String layersDir = Holders.config.data.dir
 
         Map fieldMap = new HashMap()
         fieldMap.putAll(layerMap)
@@ -771,9 +772,9 @@ class ManageLayersService {
     }
 
     double[] getExtents(String rawId) {
-        String geoserverUrl = grailsApplication.config.geoserver.url
-        String geoserverUsername = grailsApplication.config.geoserver.username
-        String geoserverPassword = grailsApplication.config.geoserver.password
+        String geoserverUrl = Holders.config.geoserver.url
+        String geoserverUsername = Holders.config.geoserver.username
+        String geoserverPassword = Holders.config.geoserver.password
 
         double[] extents = null
 
@@ -868,7 +869,7 @@ class ManageLayersService {
             Integer intId = null
             try {
                 //look for upload layer.id to use instead of upload id
-                File idfile = new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id")
+                File idfile = new File(Holders.config.data.dir.toString() + "/uploads/" + id + "/layer.id")
                 if (idfile.exists()) {
                     //update id
                     layer.id = FileUtils.readFileToString(idfile)
@@ -905,7 +906,7 @@ class ManageLayersService {
                     layerDao.updateLayer(originalLayer)
 
                     //record layer.id
-                    FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(originalLayer.getId()))
+                    FileUtils.write(new File(Holders.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(originalLayer.getId()))
 
                     retMap.put('message', 'Layer updated')
                 } catch (err) {
@@ -941,7 +942,7 @@ class ManageLayersService {
                     }
 
                     //default values from the name
-                    layer.displayPath = grailsApplication.config.geoserver.url +
+                    layer.displayPath = Holders.config.geoserver.url +
                             "/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" +
                             layer.name + "&format=image/png&styles="
 
@@ -981,7 +982,7 @@ class ManageLayersService {
                     } else {
                         if ("environmental".equalsIgnoreCase(layer.type.toString())) {
                             newLayer.setPath_orig('layer/' + layer.name)
-                        } else if (new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/" + id + ".shp").exists()) {
+                        } else if (new File(Holders.config.data.dir.toString() + "/uploads/" + id + "/" + id + ".shp").exists()) {
                             newLayer.setPath_orig('layer/' + layer.name)
                         } else {
                             newLayer.setPath_orig('layer/' + layer.name)
@@ -1003,7 +1004,7 @@ class ManageLayersService {
                     }
 
                     //record layer.id
-                    FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
+                    FileUtils.write(new File(Holders.config.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
 
                     if (createTask) {
                         tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)], null, null, null)
@@ -1262,7 +1263,7 @@ class ManageLayersService {
     }
 
     def distributionMap(String uploadId) {
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
 
         //fetch info
         Map map = [:]
@@ -1290,7 +1291,7 @@ class ManageLayersService {
     }
 
     def checklistMap(String uploadId) {
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
 
         //fetch info
         Map map = [:]
@@ -1332,7 +1333,7 @@ class ManageLayersService {
                 //CREATE
 
                 //record data_resource_uid
-                FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + uploadId + "/distribution.id"),
+                FileUtils.write(new File(Holders.config.data.dir.toString() + "/uploads/" + uploadId + "/distribution.id"),
                         data.data_resource_uid.toString())
 
                 tasksService.create('DistributionCreation', uploadId,
@@ -1356,7 +1357,7 @@ class ManageLayersService {
             //CREATE
 
             //record data_resource_uid
-            FileUtils.write(new File(grailsApplication.config.data.dir.toString() + "/uploads/" + uploadId + "/checklist.id"),
+            FileUtils.write(new File(Holders.config.data.dir.toString() + "/uploads/" + uploadId + "/checklist.id"),
                     data.data_resource_uid.toString())
 
             tasksService.create('ChecklistCreation', uploadId,
@@ -1383,7 +1384,7 @@ class ManageLayersService {
         }
 
         try {
-            def f = new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/distribution.id")
+            def f = new File(Holders.config.data.dir.toString() + "/uploads/" + id + "/distribution.id")
             if (f.exists()) {
                 f.delete()
             }
@@ -1406,7 +1407,7 @@ class ManageLayersService {
         }
 
         try {
-            def f = new File(grailsApplication.config.data.dir.toString() + "/uploads/" + id + "/checklist.id")
+            def f = new File(Holders.config.data.dir.toString() + "/uploads/" + id + "/checklist.id")
             if (f.exists()) {
                 f.delete()
             }
@@ -1445,7 +1446,7 @@ class ManageLayersService {
 
         //fix displaypath
         def origDisplayPath = layer.displaypath
-        layer.displaypath = grailsApplication.config.geoserver.url + layer.displaypath.substring(layer.displaypath.indexOf("/gwc/"))
+        layer.displaypath = Holders.config.geoserver.url + layer.displaypath.substring(layer.displaypath.indexOf("/gwc/"))
 
         //create as disabled if creating
         if (!layerDao.getLayerById(layer.id, false)) {
@@ -1472,9 +1473,9 @@ class ManageLayersService {
     // Create a linear/none linear style for each Raster layer
     @Scheduled(initialDelay = 3000000L, fixedDelay = Long.MAX_VALUE)
     def fixLayerStyles() {
-        def geoserverUrl = grailsApplication.config.geoserver.url
-        def geoserverUsername = grailsApplication.config.geoserver.username
-        def geoserverPassword = grailsApplication.config.geoserver.password
+        def geoserverUrl = Holders.config.geoserver.url
+        def geoserverUsername = Holders.config.geoserver.username
+        def geoserverPassword = Holders.config.geoserver.password
 
         // create outline style
         def data = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
@@ -1549,7 +1550,7 @@ class ManageLayersService {
 
     private def getLinearStyle(String name, boolean reversed) {
 
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
         def diva = new Grid(dir + "/layer/" + name)
 
         def min = diva.minval.round(2)

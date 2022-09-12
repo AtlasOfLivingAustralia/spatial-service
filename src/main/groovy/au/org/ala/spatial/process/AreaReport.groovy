@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.AreaReportPDF
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.json.simple.JSONArray
@@ -81,7 +82,7 @@ class AreaReport extends SlaveProcess {
 
         def area = JSON.parse(taskWrapper.input.area.toString())
 
-        def allSpecies = [bs: grailsApplication.config.biocacheServiceUrl.toString(), q: "*:*"]
+        def allSpecies = [bs: Holders.config.biocacheServiceUrl.toString(), q: "*:*"]
         def speciesQuery = getSpeciesArea(allSpecies, area)
 
         //qid for this area
@@ -101,27 +102,27 @@ class AreaReport extends SlaveProcess {
         def ignoredPages = JSON.parse(taskWrapper.input.ignoredPages)
 
         //test for pid
-        new AreaReportPDF(grailsApplication.config.geoserver.url.toString(),
-                grailsApplication.config.openstreetmap.url.toString(),
-                grailsApplication.config.biocacheServiceUrl.toString(),
-                grailsApplication.config.biocacheUrl.toString(),
-                grailsApplication.config.bie.baseURL.toString(),
-                grailsApplication.config.lists.url.toString(),
+        new AreaReportPDF(Holders.config.geoserver.url.toString(),
+                Holders.config.openstreetmap.url.toString(),
+                Holders.config.biocacheServiceUrl.toString(),
+                Holders.config.biocacheUrl.toString(),
+                Holders.config.bie.baseURL.toString(),
+                Holders.config.lists.url.toString(),
                 q,
                 area[0].pid.toString(),
                 area[0].name.toString(),
                 area[0].area_km.toString(),
                 taskWrapper.history,
-                grailsApplication.config.spatialService.url.toString(),
+                Holders.config.spatialService.url.toString(),
                 getTaskPath(),
-                grailsApplication.config.journalmap.url.toString(),
-                grailsApplication.config.data.dir.toString(),
+                Holders.config.journalmap.url.toString(),
+                Holders.config.data.dir.toString(),
                 configPath, ignoredPages)
 
         File pdf = new File(getTaskPath() + "areaReport" + taskWrapper.id + ".pdf")
         def outputStream = FileUtils.openOutputStream(pdf)
 
-        InputStream stream = new URL(grailsApplication.config.grails.serverURL + '/slave/areaReport/' + taskWrapper.id).openStream()
+        InputStream stream = new URL(Holders.config.grails.serverURL + '/slave/areaReport/' + taskWrapper.id).openStream()
         outputStream << stream
         outputStream.flush()
         outputStream.close()

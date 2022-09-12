@@ -20,6 +20,7 @@ import au.org.ala.RequirePermission
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
+import grails.util.Holders
 import org.grails.web.json.JSONObject
 
 @Transactional(readOnly = true)
@@ -229,7 +230,7 @@ class TasksController {
      */
     @RequirePermission
     def download(Task task) {
-        String file = grailsApplication.config.publish.dir + task.id + ".zip"
+        String file = Holders.config.publish.dir + task.id + ".zip"
 
         render file: file, contentType: 'application/zip'
     }
@@ -262,7 +263,7 @@ class TasksController {
      * @return
      */
     def output() {
-        def path = "${grailsApplication.config.data.dir}/public"
+        def path = "${Holders.config.data.dir}/public"
         def p1 = params.p1
         def p2 = params.p2
         def p3 = params.p3

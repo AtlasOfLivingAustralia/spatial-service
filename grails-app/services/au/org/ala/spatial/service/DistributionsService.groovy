@@ -19,6 +19,7 @@ import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.layers.dto.Distribution
 import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.spatial.util.MapCache
+import grails.util.Holders
 import org.apache.commons.lang.StringUtils
 
 import javax.annotation.PostConstruct
@@ -27,13 +28,13 @@ class DistributionsService {
 
     def distributionDao
     def objectDao
-    def grailsApplication
+
 
     Map<String, List<Distribution>> lsidMapDistribution = new HashMap()
     Map<String, List<Distribution>> spcodeMapDistribution = new HashMap()
     Map<String, List<Distribution>> lsidMapChecklist = new HashMap()
     Map<String, List<Distribution>> spcodeMapChecklist = new HashMap()
-    
+
     @PostConstruct
     void init() {
         refresh(Distribution.EXPERT_DISTRIBUTION)
@@ -185,25 +186,25 @@ class DistributionsService {
     String[] getDistributionsOrChecklists(String type, String wkt) {
         List<Distribution> list = distributionDao.queryDistributions(wkt, -1, -1, null, null, null, null,
                 null, -1, null, null, null, null, null, type, null, null)
-                
+
         String[] lines = new String[list.size() + 1]
         lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM"
         for (int i = 0; i < list.size(); i++) {
             Distribution d = list.get(i)
-            String spcode = d.spcode 
-            String scientific = d.scientific 
-            String auth = d.authority_ 
-            String common = d.common_nam  
-            String family = d.family 
-            String genus = d.genus_name 
-            String name = d.specific_n 
-            String min = d.min_depth 
-            String max = d.max_depth 
+            String spcode = d.spcode
+            String scientific = d.scientific
+            String auth = d.authority_
+            String common = d.common_nam
+            String family = d.family
+            String genus = d.genus_name
+            String name = d.specific_n
+            String min = d.min_depth
+            String max = d.max_depth
 
-            String md = d.metadata_u 
-            String lsid = d.lsid 
-            String areaName = d.area_name 
-            String areaKm = d.area_km 
+            String md = d.metadata_u
+            String lsid = d.lsid
+            String areaName = d.area_name
+            String areaKm = d.area_km
             String dataResourceUid = d.data_resource_uid
 
             lines[i + 1] = spcode + "," + wrap(scientific) + "," + wrap(auth) + "," + wrap(common) + "," +
@@ -226,12 +227,12 @@ class DistributionsService {
     }
 
     void addImageUrl(Distribution d) {
-        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
+        d.setImageUrl(Holders.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
     }
 
     def mapCache() {
-        return MapCache.getMapCache(grailsApplication.config.distributions.cache.dir,
-                grailsApplication.config.geoserver.url + grailsApplication.config.distributions.geoserver.image.url)
+        return MapCache.getMapCache(Holders.config.distributions.cache.dir,
+                Holders.config.geoserver.url + Holders.config.distributions.geoserver.image.url)
     }
 
     def cacheMaps(String type) {

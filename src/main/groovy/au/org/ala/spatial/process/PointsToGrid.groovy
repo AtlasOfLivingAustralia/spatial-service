@@ -23,6 +23,7 @@ import au.org.ala.spatial.analysis.layers.Records
 import au.org.ala.spatial.analysis.layers.SitesBySpecies
 import au.org.ala.spatial.analysis.layers.SpeciesDensity
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -131,11 +132,11 @@ class PointsToGrid extends SlaveProcess {
             od.write(records, getTaskPath(), "occurrence_density", 1, true, true)
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "occurrence_density.asc", grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_occurrence_density", true)
+            convertAsc(getTaskPath() + "occurrence_density.asc", Holders.config.data.dir + '/layer/' + taskWrapper.id + "_occurrence_density", true)
             try {
-                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density.png'),
+                FileUtils.moveFile(new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density.png'),
                         new File(getTaskPath() + 'occurrence_density.png'))
-                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density_legend.png'),
+                FileUtils.moveFile(new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density_legend.png'),
                         new File(getTaskPath() + 'occurrence_density_legend.png'))
 
                 addOutput("files", "occurrence_density.png", true)
@@ -158,11 +159,11 @@ class PointsToGrid extends SlaveProcess {
             SpeciesDensity sd = new SpeciesDensity(movingAverage, gridCellSize, bbox)
             sd.write(records, getTaskPath(), "species_richness", 1, true, true)
 
-            convertAsc(getTaskPath() + "species_richness.asc", "${grailsApplication.config.data.dir}/layer/${taskWrapper.id}_species_richness", true)
+            convertAsc(getTaskPath() + "species_richness.asc", "${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness", true)
             try {
-                FileUtils.moveFile(new File("${grailsApplication.config.data.dir}/layer/${taskWrapper.id}_species_richness.png"),
+                FileUtils.moveFile(new File("${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness.png"),
                         new File(getTaskPath() + 'species_richness.png'))
-                FileUtils.moveFile(new File("${grailsApplication.config.data.dir}/layer/${taskWrapper.id}_species_richness_legend.png"),
+                FileUtils.moveFile(new File("${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness_legend.png"),
                         new File(getTaskPath() + 'species_richness_legend.png'))
 
                 addOutput("files", "species_richness.png", true)

@@ -19,6 +19,7 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.GeomMakeValid
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.geotools.feature.FeatureCollection
@@ -88,22 +89,22 @@ class CsdmImport extends SlaveProcess {
                         FileUtils.copyURLToFile(new URL(resource.url), raster)
 
                         String[] cmd = [
-                                grailsApplication.config.gdal.dir + "gdalwarp",
+                                Holders.config.gdal.dir + "gdalwarp",
                                 "-t_srs", "EPSG:4326"
                                 , raster.path
                                 , reprojected.path]
 
                         try {
-                            runCmd(cmd, false, grailsApplication.config.admin.timeout)
+                            runCmd(cmd, false, Holders.config.admin.timeout)
                         } catch (Exception e) {
                             log.error("error running gdalwarp (1)", e)
                         }
-                        cmd = [grailsApplication.config.gdal.dir + "gdal_polygonize.py",
+                        cmd = [Holders.config.gdal.dir + "gdal_polygonize.py",
                                 "-f","GeoJSON"
                                , reprojected.path
                                , geojson.path]
                         try {
-                            runCmd(cmd, false, grailsApplication.config.admin.timeout)
+                            runCmd(cmd, false, Holders.config.admin.timeout)
                         } catch (Exception e) {
                             log.error("error running gdal_polygonize (2)", e)
                         }
@@ -188,14 +189,14 @@ class CsdmImport extends SlaveProcess {
             sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and distributions.pid is null;"
             sql += "\nINSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch, area_km, bbox) " +
                     "(select nextval('objects_id_seq'), max(spcode), max(area_name), '', '" +
-                    grailsApplication.config.userObjectsField + "', the_geom, false, " +
+                    Holders.config.userObjectsField + "', the_geom, false, " +
                     "(st_area(ST_GeogFromWKB(st_asbinary(the_geom)), true)/1000000), ST_ASTEXT(ST_EXTENT(the_geom)) " +
                     "from distributions where pid is null group by the_geom);"
             sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                    "distributions.pid is null and fid = '" + grailsApplication.config.userObjectsField + "' and " +
+                    "distributions.pid is null and fid = '" + Holders.config.userObjectsField + "' and " +
                     "o.id = '' || distributions.spcode;"
             sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                    "distributions.pid is null and o.fid = '" + grailsApplication.config.userObjectsField + "';"
+                    "distributions.pid is null and o.fid = '" + Holders.config.userObjectsField + "';"
 
             FileUtils.writeStringToFile(new File(getTaskPath() + 'finish.sql'), sql)
             addOutput('sql', 'finish.sql')

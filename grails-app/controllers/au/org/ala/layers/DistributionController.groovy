@@ -21,6 +21,7 @@ import au.org.ala.layers.dto.MapDTO
 import au.org.ala.plugins.openapi.Path
 import au.org.ala.spatial.util.AttributionCache
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.json.JsonSlurper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -257,7 +258,7 @@ class DistributionController {
 
         if (distribution != null) {
             m.setDataResourceUID(distribution.getData_resource_uid())
-            m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
+            m.setUrl((Holders.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
 
             // set the attribution info
             AttributionDTO dto = AttributionCache.getCache().getAttributionFor(distribution.getData_resource_uid())
@@ -283,7 +284,7 @@ class DistributionController {
             distributions.each { Distribution distribution ->
                 MapDTO m = new MapDTO()
                 m.setDataResourceUID(distribution.getData_resource_uid())
-                m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
+                m.setUrl((Holders.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
                 // set the attribution info
                 AttributionDTO dto = AttributionCache.getCache().getAttributionFor(distribution.getData_resource_uid())
                 m.setAvailable(true)

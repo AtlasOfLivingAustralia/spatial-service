@@ -24,11 +24,7 @@ import au.org.ala.spatial.slave.TaskWrapper
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.springframework.scheduling.annotation.Scheduled
-
-import javax.annotation.PostConstruct
 
 class TasksService {
 

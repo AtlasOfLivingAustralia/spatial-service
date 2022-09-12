@@ -16,6 +16,7 @@
 package au.org.ala.spatial.service
 
 import au.org.ala.spatial.Util
+import grails.util.Holders
 import org.grails.web.util.WebUtils
 
 import java.text.MessageFormat
@@ -24,7 +25,7 @@ class ServiceAuthService {
     static final String[] USERID_HEADER_NAME = ["X-ALA-userId", "userId", "user_id"]
     static final String[] API_KEY_HEADER_NAME = ["apiKey", "api_key", "api-key"]
 
-    def grailsApplication
+
     def authService
 
     def testedKeys = [:]
@@ -41,9 +42,9 @@ class ServiceAuthService {
         Boolean result = testedKeys.get(key)
 
         if (result == null) {
-            String url = MessageFormat.format(grailsApplication.config.apiKeyCheckUrlTemplate.toString(), key)
+            String url = MessageFormat.format(Holders.config.apiKeyCheckUrlTemplate.toString(), key)
 
-            result = key == grailsApplication.config.serviceKey || Util.getUrl(url).contains('"valid":true')
+            result = key == Holders.config.serviceKey || Util.getUrl(url).contains('"valid":true')
             testedKeys.put(key, result)
         }
 
@@ -56,7 +57,7 @@ class ServiceAuthService {
      */
     boolean isAdmin(params) {
         // login disabled
-        if (!grailsApplication.config.security.oidc.enabled.toBoolean()) {
+        if (!Holders.config.security.oidc.enabled.toBoolean()) {
             return true
         }
 
@@ -66,7 +67,7 @@ class ServiceAuthService {
         }
 
         // user is admin
-        if (authService.userInRole(grailsApplication.config.auth.admin_role)) {
+        if (authService.userInRole(Holders.config.auth.admin_role)) {
             return true
         }
 

@@ -19,6 +19,7 @@ import au.org.ala.layers.dao.DistributionDAO
 import au.org.ala.layers.dao.ObjectDAO
 import au.org.ala.layers.dto.Distribution
 import grails.converters.JSON
+import grails.util.Holders
 
 class ChecklistController {
 
@@ -66,7 +67,7 @@ class ChecklistController {
     }
 
     void addImageUrl(Distribution d) {
-        d.setImageUrl(grailsApplication.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
+        d.setImageUrl(Holders.config.grails.serverURL.toString() + "/distribution/map/png/" + d.getGeom_idx())
     }
 
     def uniqueLsids() {

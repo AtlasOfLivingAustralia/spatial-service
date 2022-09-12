@@ -22,6 +22,7 @@ import au.org.ala.layers.dao.LayerDAO
 import grails.converters.JSON
 import grails.converters.XML
 import grails.core.GrailsApplication
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -69,7 +70,7 @@ class ManageLayersController {
      */
     @RequireAdmin
     def remote() {
-        if (!params?.remoteUrl) params.remoteUrl = grailsApplication.config.spatialService.remote
+        if (!params?.remoteUrl) params.remoteUrl = Holders.config.spatialService.remote
 
         def remote = manageLayersService.getAllLayers(params?.remoteUrl)
         def local = manageLayersService.getAllLayers(null)
@@ -114,7 +115,7 @@ class ManageLayersController {
         map.put("layersRemoteOnly", layersRemoteOnly)
         map.put("layersBoth", layersBoth)
         map.put("spatialServiceUrl", params.remoteUrl)
-        map.put("localUrl", grailsApplication.config.grails.serverURL)
+        map.put("localUrl", Holders.config.grails.serverURL)
 
         map
     }
@@ -154,7 +155,7 @@ class ManageLayersController {
             render task as JSON
         }
 
-        File f = new File((grailsApplication.config.data.dir + '/sampling/records.csv') as String)
+        File f = new File((Holders.config.data.dir + '/sampling/records.csv') as String)
         if (f.exists()) {
             map.put("last_refreshed", new SimpleDateFormat("dd/MM/yyyy hh:mm:ss").format(new Date(f.lastModified())))
         } else {
@@ -192,8 +193,8 @@ class ManageLayersController {
         try {
             file = request.getFile('file')
             log.info("Receiving upload of zip file: " + file)
-            File uploadPath = new File((grailsApplication.config.data.dir + '/uploads/' + id) as String)
-            File uploadFile = new File((grailsApplication.config.data.dir + '/uploads/' + id + '/id.zip') as String)
+            File uploadPath = new File((Holders.config.data.dir + '/uploads/' + id) as String)
+            File uploadFile = new File((Holders.config.data.dir + '/uploads/' + id + '/id.zip') as String)
             uploadPath.mkdirs()
             file.transferTo(uploadFile)
 
@@ -203,7 +204,7 @@ class ManageLayersController {
 
             //delete uploaded zip now that it has been unzipped
             uploadFile.delete()
-            log.info("Deleting original zip. File moved to: " + grailsApplication.config.data.dir + '/uploads/' + id )
+            log.info("Deleting original zip. File moved to: " + Holders.config.data.dir + '/uploads/' + id )
 
             def result = manageLayersService.processUpload(uploadFile.getParentFile(), id)
             if (result.error){
@@ -249,7 +250,7 @@ class ManageLayersController {
             input.put(key, jo.get(key))
         }
 
-        String dir = grailsApplication.config.data.dir + '/uploads/' + id
+        String dir = Holders.config.data.dir + '/uploads/' + id
         File uploadDir = new File(dir)
 
         if (!uploadDir.exists()) {
