@@ -77,7 +77,7 @@ class GeneratePoints extends SlaveProcess {
 
         task.history.put(System.currentTimeMillis(), "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
 
-        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
+        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/".toString(),
                 nameValuePairs.toArray(new BasicNameValuePair[0]))
 
         if (response) {
