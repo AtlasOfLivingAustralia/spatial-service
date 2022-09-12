@@ -24,12 +24,12 @@ import org.json.simple.JSONObject
 class LayerCopy extends SlaveProcess {
 
     void start() {
-        def layerId = task.input.layerId
-        def fieldId = task.input.fieldId
-        def sourceUrl = task.input.sourceUrl
+        def layerId = taskWrapper.input.layerId
+        def fieldId = taskWrapper.input.fieldId
+        def sourceUrl = taskWrapper.input.sourceUrl
 
         //TODO: fetch default sld from geoserver
-        def displayPath = task.input.displayPath
+        def displayPath = taskWrapper.input.displayPath
 
         def field = getField(fieldId)
         def layer = getLayer(layerId)

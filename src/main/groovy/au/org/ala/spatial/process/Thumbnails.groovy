@@ -29,9 +29,9 @@ class Thumbnails extends SlaveProcess {
         List layers = getLayers()
         layers.each { layer ->
             String path = '/public/thumbnail/'
-            task.message = 'checking thumbnail: ' + layer.name
+            taskWrapper.message = 'checking thumbnail: ' + layer.name
             if (!hasThumbnail(layer.name.toString(), path)) {
-                task.message = 'getting thumbnail: ' + layer.name
+                taskWrapper.message = 'getting thumbnail: ' + layer.name
                 one(layer, grailsApplication.config.data.dir + path)
             }
             addOutput('file', path + layer.name + '.jpg')

@@ -39,7 +39,7 @@ class JournalMapHarvest extends SlaveProcess {
             int maxpage = 0
             List<String> publicationsIds = new ArrayList<String>()
             while (page == 1 || page <= maxpage) {
-                task.message = "fetching publications page: " + page
+                taskWrapper.message = "fetching publications page: " + page
 
                 String url = journalMapUrl + "api/publications.json?version=1.0&key=" + journalMapKey + "&page=" + page
                 page = page + 1
@@ -70,7 +70,7 @@ class JournalMapHarvest extends SlaveProcess {
                     page = 1
                     maxpage = 0
                     while (page == 1 || page <= maxpage) {
-                        task.message = "fetching articles for publication: " + publicationsId + " page: " + page
+                        taskWrapper.message = "fetching articles for publication: " + publicationsId + " page: " + page
 
                         String url = journalMapUrl + "api/articles.json?version=1.0&key=" + journalMapKey + "&page=" + page + "&publication_id=" + publicationsId
                         page = page + 1

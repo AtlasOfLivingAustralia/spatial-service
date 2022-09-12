@@ -27,12 +27,12 @@ class GeneratePoints extends SlaveProcess {
     void start() {
 
         //area to restrict
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
 
-        def distance = task.input.distance.toString().toDouble()
-        def userId = task.input.userId
-        def sandboxBiocacheServiceUrl = task.input.sandboxBiocacheServiceUrl
-        def sandboxHubUrl = task.input.sandboxHubUrl
+        def distance = taskWrapper.input.distance.toString().toDouble()
+        def userId = taskWrapper.input.userId
+        def sandboxBiocacheServiceUrl = taskWrapper.input.sandboxBiocacheServiceUrl
+        def sandboxHubUrl = taskWrapper.input.sandboxHubUrl
 
         double[] bbox = area[0].bbox
 
@@ -40,7 +40,7 @@ class GeneratePoints extends SlaveProcess {
         def simpleArea = SimpleShapeFile.parseWKT(wkt)
 
         // dump the data to a file
-        task.message = "Loading area ..."
+        taskWrapper.message = "Loading area ..."
 
         def points = []
         for (double x = bbox[0]; x <= bbox[2]; x += distance) {
@@ -50,7 +50,7 @@ class GeneratePoints extends SlaveProcess {
                 }
             }
         }
-        task.history.put(System.currentTimeMillis(), points.size() + " points have been created.")
+        taskWrapper.history.put(System.currentTimeMillis() as String, points.size() + " points have been created.")
 
         uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points, area.name, distance)
     }
@@ -75,32 +75,32 @@ class GeneratePoints extends SlaveProcess {
                 new BasicNameValuePair("alaId", userId.toString())
         ]
 
-        task.history.put(System.currentTimeMillis(), "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
+        taskWrapper.history.put(System.currentTimeMillis() as String, "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
 
         def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
                 nameValuePairs.toArray(new BasicNameValuePair[0]))
 
         if (response) {
             if (response.statusCode != 200) {
-                task.message = "Error"
-                task.history.put(System.currentTimeMillis(), response.statusCode + " : " + response.text)
+                taskWrapper.message = "Error"
+                taskWrapper.history.put(System.currentTimeMillis() as String, response.statusCode + " : " + response.text)
                 return
             }
             def dataResourceUid = JSON.parse(response.text).uid
-            task.history.put(System.currentTimeMillis(), "Sandbox data resource uid:" + dataResourceUid)
+            taskWrapper.history.put(System.currentTimeMillis() as String, "Sandbox data resource uid:" + dataResourceUid)
             //wait
             def statusUrl = "${sandboxBiocacheServiceUrl}/upload/status/${dataResourceUid}"
             def start = System.currentTimeMillis()
             def maxTime = 60 * 60 * 1000 //2hr
-            task.message = "Uploading ..."
+            taskWrapper.message = "Uploading ..."
             while (start + maxTime > System.currentTimeMillis()) {
                 Thread.sleep(10000) // 10s
-                task.history.put(System.currentTimeMillis(), "checking status of " + statusUrl)
+                taskWrapper.history.put(System.currentTimeMillis() as String,  "checking status of " + statusUrl)
                 def txt = Util.getUrl(statusUrl)
                 if (txt == null) {
                     // retry
                 } else if (txt.contains("COMPLETE")) {
-                        task.history.put(System.currentTimeMillis(), "Uploading completed")
+                        taskWrapper.history.put(System.currentTimeMillis() as String, "Uploading completed")
                         //add species layer
                         def species = [q   : "data_resource_uid:${dataResourceUid}",
                                        ws  : sandboxHubUrl,
@@ -111,12 +111,12 @@ class GeneratePoints extends SlaveProcess {
                         break
                 } else if (txt.contains("FAILED")) {
                         log.error(txt)
-                        task.message = "failed upload " + statusUrl
+                        taskWrapper.message = "failed upload " + statusUrl
                         break
                 } else {
                         log.error(txt)
                         def json = JSON.parse(txt)
-                        task.message = json.status + ": " + json.description
+                        taskWrapper.message = json.status + ": " + json.description
                 }
             }
         }

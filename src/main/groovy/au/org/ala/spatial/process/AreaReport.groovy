@@ -79,7 +79,7 @@ class AreaReport extends SlaveProcess {
 
     void start() {
 
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
 
         def allSpecies = [bs: grailsApplication.config.biocacheServiceUrl.toString(), q: "*:*"]
         def speciesQuery = getSpeciesArea(allSpecies, area)
@@ -88,17 +88,17 @@ class AreaReport extends SlaveProcess {
         def q = "qid:" + Util.makeQid(speciesQuery)
 
         //override config path
-        def configPath = task.spec.private.configPath ?: '/data/spatial-service/config'
-        if (task.spec.private.configPath && !'/data/spatial-service/config'.equals(task.spec.private.configPath)) {
+        def configPath = taskWrapper.spec.private.configPath ?: '/data/spatial-service/config'
+        if (taskWrapper.spec.private.configPath && !'/data/spatial-service/config'.equals(taskWrapper.spec.private.configPath)) {
             //copy resources to task dir when using a custom config
-            for (File file : new File(task.spec.private.configPath).listFiles()) {
+            for (File file : new File(taskWrapper.spec.private.configPath).listFiles()) {
                 if (file.isFile() && !file.getName().endsWith(".json")) {
                     FileUtils.copyFileToDirectory(file, new File(getTaskPath()))
                 }
             }
         }
 
-        def ignoredPages = JSON.parse(task.input.ignoredPages)
+        def ignoredPages = JSON.parse(taskWrapper.input.ignoredPages)
 
         //test for pid
         new AreaReportPDF(grailsApplication.config.geoserver.url.toString(),
@@ -111,17 +111,17 @@ class AreaReport extends SlaveProcess {
                 area[0].pid.toString(),
                 area[0].name.toString(),
                 area[0].area_km.toString(),
-                task.history,
+                taskWrapper.history,
                 grailsApplication.config.spatialService.url.toString(),
                 getTaskPath(),
                 grailsApplication.config.journalmap.url.toString(),
                 grailsApplication.config.data.dir.toString(),
                 configPath, ignoredPages)
 
-        File pdf = new File(getTaskPath() + "areaReport" + task.id + ".pdf")
+        File pdf = new File(getTaskPath() + "areaReport" + taskWrapper.id + ".pdf")
         def outputStream = FileUtils.openOutputStream(pdf)
 
-        InputStream stream = new URL(grailsApplication.config.grails.serverURL + '/slave/areaReport/' + task.id).openStream()
+        InputStream stream = new URL(grailsApplication.config.grails.serverURL + '/slave/areaReport/' + taskWrapper.id).openStream()
         outputStream << stream
         outputStream.flush()
         outputStream.close()
@@ -129,9 +129,9 @@ class AreaReport extends SlaveProcess {
         File dir = new File(getTaskPath())
 
         if (dir.listFiles().length == 0) {
-            task.history.put(System.currentTimeMillis(), "Failed.")
+            taskWrapper.history.put(System.currentTimeMillis() as String, "Failed.")
         } else if (!pdf.exists() || pdf.length() <= 0) {
-            task.history.put(System.currentTimeMillis(), "Failed to make PDF. Exporting html instead.")
+            taskWrapper.history.put(System.currentTimeMillis() as String, "Failed to make PDF. Exporting html instead.")
         }
 
         //all for download

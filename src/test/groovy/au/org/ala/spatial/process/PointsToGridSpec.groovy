@@ -83,8 +83,8 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
             }
 
 
-            proc.task = [spec : Mock(TaskQueueService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
-                         input: [area         : "[{\"wkt\": \"POLYGON((120 -15,154 -15,154 -40,120 -40,120 -15))\", \"bbox\": [120,-15,154,-40]}]",
+            proc.taskWrapper = [spec : Mock(TaskQueueService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
+                                input: [area         : "[{\"wkt\": \"POLYGON((120 -15,154 -15,154 -40,120 -40,120 -15))\", \"bbox\": [120,-15,154,-40]}]",
                                  species      : "{\"q\": \"\", \"name\": \"test species\"}", resolution: 0.02,
                                  gridCellSize : 1, sitesBySpecies: true, occurrenceDensity: true, speciesRichness: true,
                                  movingAverage: "1x1"]]

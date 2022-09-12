@@ -6,6 +6,7 @@ import au.org.ala.layers.intersect.IntersectConfig
 import au.org.ala.spatial.service.Task
 import grails.config.Config
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 
 import java.lang.reflect.Array
@@ -13,14 +14,8 @@ import java.lang.reflect.Array
 @Slf4j
 class BootStrap {
 
-    def monitorService
-    def slaveService
-    def slaveConnectService
     def grailsApplication
-    def masterService
-    def tasksService
     def legacyService
-    def fieldDao
     def groovySql
     def messageSource
 
@@ -35,9 +30,6 @@ class BootStrap {
         layersStoreConfig(grailsApplication.config)
 
         legacyService.apply()
-
-        //avoid circular reference
-        masterService._tasksService = tasksService
 
         //layers-store and domain classes requiring an updated marshaller
         [AnalysisLayer, Distribution, Facet, Field, Layer, Objects, SearchObject, Tabulation,
@@ -57,13 +49,6 @@ class BootStrap {
         //return dates consistent with layers-service
         JSON.registerObjectMarshaller(Date) {
             return it?.getTime()
-        }
-
-        if (grailsApplication.config.service.enable.toBoolean()) {
-            monitorService.monitor()
-        }
-        if (grailsApplication.config.slave.enable.toBoolean()) {
-            slaveService.monitor()
         }
 
         //create database required by layers-store

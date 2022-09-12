@@ -30,7 +30,7 @@ class Maxent extends SlaveProcess {
         slaveService.getFile('/modelling/maxent/maxent.jar')
 
         //list of layers
-        def layers = JSON.parse(task.input.layer.toString())
+        def layers = JSON.parse(taskWrapper.input.layer.toString())
         def contextualLayers = []
         layers.each { layer ->
             if (layer.endsWith('_aloc')) {
@@ -44,20 +44,20 @@ class Maxent extends SlaveProcess {
         }
 
         //area to restrict
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
         def (region, envelope) = processArea(area[0])
 
         //target resolution
-        def resolution = task.input.resolution
+        def resolution = taskWrapper.input.resolution
 
         //number of target species
-        def species = JSON.parse(task.input.species.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
 
         def speciesArea = getSpeciesArea(species, area)
 
-        def jackknife = task.input.jackknife.toString().toBoolean()
-        def responseCurves = task.input.responseCurves.toString().toBoolean()
-        def testPercentage = task.input.testPercentage.toString().toDouble()
+        def jackknife = taskWrapper.input.jackknife.toString().toBoolean()
+        def responseCurves = taskWrapper.input.responseCurves.toString().toBoolean()
+        def testPercentage = taskWrapper.input.testPercentage.toString().toDouble()
 
         new File(getTaskPath()).mkdirs()
 
@@ -100,7 +100,7 @@ class Maxent extends SlaveProcess {
 
             replaceMap.put("Maxent model for species", "Maxent model for " + speciesArea.name)
 
-            String paramlist = "Model reference number: " + task.id + "<br>Species: " + speciesArea.name + "<br>Layers: <ul>"
+            String paramlist = "Model reference number: " + taskWrapper.id + "<br>Species: " + speciesArea.name + "<br>Layers: <ul>"
 
             layers.each {
                 def field = getField(it)
@@ -176,12 +176,12 @@ class Maxent extends SlaveProcess {
             //writeProjectionFile(getTaskPath());
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "species.asc", "${grailsApplication.config.data.dir}/layer/${task.id}_species")
+            convertAsc(getTaskPath() + "species.asc", "${grailsApplication.config.data.dir}/layer/${taskWrapper.id}_species")
         }
-        writeMaxentsld(grailsApplication.config.data.dir + "/layer/" + task.id + "_species.sld")
-        addOutput("layers", "/layer/" + task.id + "_species.sld")
+        writeMaxentsld(grailsApplication.config.data.dir + "/layer/" + taskWrapper.id + "_species.sld")
+        addOutput("layers", "/layer/" + taskWrapper.id + "_species.sld")
 
-        addOutput("layers", "/layer/" + task.id + "_species.tif")
+        addOutput("layers", "/layer/" + taskWrapper.id + "_species.tif")
 
         if (new File(getTaskPath() + "species.asc").exists()) {
             addOutput("files", "species.asc", true)
@@ -204,16 +204,16 @@ class Maxent extends SlaveProcess {
         addOutput("files", "maxent.log", true)
 
         if (new File(getTaskPath() + "species.grd").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + task.id + "_species.grd")
+            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_species.grd")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "_species.grd"), target)
-            addOutput("layers", "/layer/" + task.id + "_species.grd")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_species.grd")
         }
         if (new File(getTaskPath() + "species.gri").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + task.id + "_species.gri")
+            File target = new File(grailsApplication.config.data.dir + '/layer/' + taskWrapper.id + "_species.gri")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "_species.gri"), target)
-            addOutput("layers", "/layer/" + task.id + "_species.gri")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_species.gri")
         }
     }
 

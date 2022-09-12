@@ -35,8 +35,8 @@ import java.text.MessageFormat
 class FieldCreation extends SlaveProcess {
 
     void start() {
-        String fieldId = task.input.fieldId
-        def ignoreNullObjects = task.input.ignoreNullObjects
+        String fieldId = taskWrapper.input.fieldId
+        def ignoreNullObjects = taskWrapper.input.ignoreNullObjects
         //TODO: check if we need to skip SLD creation from input params
         // Query geoserver to check - SlaveService.peekFile to check
 
@@ -44,7 +44,7 @@ class FieldCreation extends SlaveProcess {
         Map field = getField(fieldId)
 
         if (field == null) {
-            task.err.put(System.currentTimeMillis(), 'field not found for ' + fieldId)
+            taskWrapper.err.put(System.currentTimeMillis(), 'field not found for ' + fieldId)
             return
         }
 
@@ -52,7 +52,7 @@ class FieldCreation extends SlaveProcess {
         Map layer = getLayer(layerId)
 
         // get upload dir contents, and the existing files
-        task.message = 'getting layer files'
+        taskWrapper.message = 'getting layer files'
         slaveService.getFile('/layer/' + layer.name)
 //        slaveService.getFile('/layer/' + layer.name + '.gri')
 //        slaveService.getFile('/layer/' + layer.name + '.prj')
@@ -74,9 +74,9 @@ class FieldCreation extends SlaveProcess {
         } else if ("c".equalsIgnoreCase(field.type.toString())) {
             //create objects table values
             if (shpExisting.exists()) {
-                task.message = 'cleanup scripts'
+                taskWrapper.message = 'cleanup scripts'
                 String fname = 'fixNullNamedObjects.sql'
-                FileUtils.writeStringToFile(new File(taskService.getBasePath(task) + fname),
+                FileUtils.writeStringToFile(new File(taskService.getBasePath(taskWrapper) + fname),
                         "UPDATE objects SET name = '' WHERE name IS NULL; " +
                                 "DELETE FROM objects WHERE fid = '" + sqlEscapeString(field.id) + "';")
                 addOutput("sql", fname)
@@ -95,14 +95,14 @@ class FieldCreation extends SlaveProcess {
                     formattedDesc = 'null'
                 }
 
-                task.message = 'aggregating shapes'
+                taskWrapper.message = 'aggregating shapes'
 
                 aggregateShapes(layer.name.toString(), field.sid.toString(), field.sname.toString(),
                         (field.sdesc != null) ? field.sdesc.toString() : null, field.id.toString(), field.namesearch.toString(),
                         ignoreNullObjects)
 
                 //Todo ignoreSLDCreation check
-                task.message = 'creating sld'
+                taskWrapper.message = 'creating sld'
                 createContextualFieldStyle(field.id.toString(), field.sid.toString(), name)
 
                 if (layer.namesearch) {
@@ -189,7 +189,7 @@ class FieldCreation extends SlaveProcess {
                     }
                     //test
                     if (confirmedColName == null) {
-                        task.err.put(System.currentTimeMillis(), 'column not found: ' + colName)
+                        taskWrapper.err.put(System.currentTimeMillis(), 'column not found: ' + colName)
                         log.error shapeFilePath + ' does not have column ' + colName
                         confirmedColName = colName
                     }
@@ -302,7 +302,7 @@ class FieldCreation extends SlaveProcess {
             String confirmedSid = null
             String confirmedSname = null
             String confirmedSdesc = null
-            task.message = "reading shapefile"
+            taskWrapper.message = "reading shapefile"
             int countMissing = 0
             while (reader.hasNext()) {
                 def f = reader.next()
@@ -344,13 +344,13 @@ class FieldCreation extends SlaveProcess {
                 }
             }
             if (countMissing > 0) {
-                log.warn 'task:' + task.id + ', no value for ' + countMissing + ' records (sid:' + confirmedSid + ') in layer ' + layername
+                log.warn 'task:' + taskWrapper.id + ', no value for ' + countMissing + ' records (sid:' + confirmedSid + ') in layer ' + layername
             }
             reader.close()
             sds.dispose()
             if (retrievedFieldValues.size() == 0) {
-                log.error 'task:' + task.id + ', no valid objects found for sid:' + confirmedSid
-                task.err.put(System.currentTimeMillis(), 'no valid objects found for sid:' + confirmedSid)
+                log.error 'task:' + taskWrapper.id + ', no valid objects found for sid:' + confirmedSid
+                taskWrapper.err.put(System.currentTimeMillis(), 'no valid objects found for sid:' + confirmedSid)
                 return
             }
 
@@ -358,7 +358,7 @@ class FieldCreation extends SlaveProcess {
             int sqlCount = 0
             int count = 1
             retrievedFieldValues.each { k, v ->
-                task.message = "aggregating shapes: " + k + ", " + count + " of " + retrievedFieldValues.size()
+                taskWrapper.message = "aggregating shapes: " + k + ", " + count + " of " + retrievedFieldValues.size()
                 count++
 
                 List<Polygon> union = new ArrayList();
@@ -371,7 +371,7 @@ class FieldCreation extends SlaveProcess {
                             g = GeomMakeValid.makeValid(g)
                         } catch (err) {
                             log.warn.put(System.currentTimeMillis(), 'some invalid objects ignored (' + i + ')')
-                            log.error 'task: ' + task.id + ' failed validating wkt', err
+                            log.error 'task: ' + taskWrapper.id + ' failed validating wkt', err
                         }
                     }
                     if (g != null) {
@@ -383,7 +383,7 @@ class FieldCreation extends SlaveProcess {
                             union.add((Polygon) g)
                         }
                     } else {
-                        log.error 'task:' + task.id + ', invalid geometry at: ' + k + ', ' + layername + ', ' + sid
+                        log.error 'task:' + taskWrapper.id + ', invalid geometry at: ' + k + ', ' + layername + ', ' + sid
                     }
                 }
 
@@ -397,7 +397,7 @@ class FieldCreation extends SlaveProcess {
                     } else if (union.size() == 1) {
                         newg = union.get(0)
                     } else {
-                        log.error 'task:' + task.id + ', >1 non-Polygon geometry at: ' + k + ', ' + layername + ', ' + sid
+                        log.error 'task:' + taskWrapper.id + ', >1 non-Polygon geometry at: ' + k + ', ' + layername + ', ' + sid
                     }
 
                     double area = newg.getArea() == 0 ? 0 : SpatialUtil.calculateArea(newg.toText()) / 1000000.0
@@ -438,7 +438,7 @@ class FieldCreation extends SlaveProcess {
             FileUtils.writeStringToFile(sqlFile, sql, false)
 
         } catch (IOException e) {
-            task.err.put(System.currentTimeMillis(), 'failed aggregation')
+            taskWrapper.err.put(System.currentTimeMillis(), 'failed aggregation')
             log.error("failed to aggregate objects for field: " + id, e)
         }
     }

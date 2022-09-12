@@ -28,7 +28,7 @@ class DownloadRecords extends SlaveProcess {
         File file = new File(grailsApplication.config.data.dir.toString() + '/sample/records.csv')
         file.getParentFile().mkdirs()
 
-        task.message = 'downloading new records'
+        taskWrapper.message = 'downloading new records'
         try {
             ZipInputStream zis = new ZipInputStream(new URL(grailsApplication.config.records.url.toString()).openConnection().getInputStream())
 
@@ -56,7 +56,7 @@ class DownloadRecords extends SlaveProcess {
 
         addOutput('file', '/sample/records.csv')
 
-        task.message = 'making small records files'
+        taskWrapper.message = 'making small records files'
 
         //small records file
         RecordsSmall records = new RecordsSmall(grailsApplication.config.data.dir.toString() + '/sample/')
@@ -65,7 +65,7 @@ class DownloadRecords extends SlaveProcess {
             addOutput('file', '/sample/' + filename)
         }
 
-        task.message = 'identify contextual layer sampling files for deletion'
+        taskWrapper.message = 'identify contextual layer sampling files for deletion'
 
         //delete any existing contextual layer sampling files
         List fields = getFields()

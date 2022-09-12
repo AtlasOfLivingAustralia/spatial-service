@@ -27,10 +27,10 @@ class MergeAreas extends SlaveProcess {
     void start() {
 
         //area to restrict
-        def areas = JSON.parse(task.input.area.toString())
-        def name = task.input.name
-        def description = task.input.description
-        def type = task.input.type
+        def areas = JSON.parse(taskWrapper.input.area.toString())
+        def name = taskWrapper.input.name
+        def description = taskWrapper.input.description
+        def type = taskWrapper.input.type
 
         new File(getTaskPath()).mkdirs()
 

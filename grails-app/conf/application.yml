@@ -190,7 +190,7 @@ task:
     threads: 10
   admin:
     threads: 4
-
+  continueOnRestart: true
 #
 #  CAS SETTINGS
 #
@@ -214,14 +214,14 @@ security:
     authCookieName: ALA-Auth
     enabled: false
   oidc:
-    enabled: true
+    enabled: false
     discovery-uri: 'https://auth-test.ala.org.au/cas/oidc/.well-known'
     clientId: 'change me'
     secret: 'change me'
     allowUnsignedIdTokens: true
     scope: 'openid profile email ala roles'
   jwt:
-    enabled: true
+    enabled: false
     discoveryUri: https://auth-test.ala.org.au/cas/oidc/.well-known
     fallbackToLegacyBehaviour: true
 

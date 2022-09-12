@@ -26,19 +26,19 @@ class ScatterplotDraw extends SlaveProcess {
 
     void start() {
         //optional area to restrict
-        def area = JSON.parse(task.input?.wkt ?: '[]')
+        def area = JSON.parse(taskWrapper.input?.wkt ?: '[]')
         def wkt = area.size() > 0 ? getAreaWkt(area[0]) : null
 
-        def layersServiceUrl = task.input.layersServiceUrl
+        def layersServiceUrl = taskWrapper.input.layersServiceUrl
 
-        def colour = task.input.color.toString()
-        def colourMode = task.input.colorType.toString()
-        def size = task.input.size.toString().toInteger()
-        def opacity = task.input.opacity.toString().toDouble()
+        def colour = taskWrapper.input.color.toString()
+        def colourMode = taskWrapper.input.colorType.toString()
+        def size = taskWrapper.input.size.toString().toInteger()
+        def opacity = taskWrapper.input.opacity.toString().toDouble()
 
-        def selection = task.input.selection.toString().split(',')
+        def selection = taskWrapper.input.selection.toString().split(',')
 
-        def taskId = task.input.scatterplotId
+        def taskId = taskWrapper.input.scatterplotId
 
         File dataFile = new File(grailsApplication.config.data.dir.toString() + '/public/' + taskId + "/data.xml")
         slaveService.getFile('/public/' + taskId + '/data.xml')
@@ -82,11 +82,11 @@ class ScatterplotDraw extends SlaveProcess {
                 !existingStyle.getHighlightWkt() != newStyle.getHighlightWkt())
 
         def image = [:]
-        image.putAt("scatterplotId", task.id)
+        image.putAt("scatterplotId", taskWrapper.id)
         def imgFile = new File(scatterplot.getImagePath())
         image.putAt("scatterplotUrl",
                 imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
-                        .replace(imgFile.name, "Scatterplot%20(" + task.id + ").png?filename=" + imgFile.name))
+                        .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name))
 
         //style
         image.putAt('red', newStyle.red)

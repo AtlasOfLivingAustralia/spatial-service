@@ -35,9 +35,9 @@ class CsdmImport extends SlaveProcess {
 
     void start() {
         try {
-            String csdmUrl = task.input.csdmUrl
-            String data_resource_uid = task.input.data_resource_uid
-            Long startIdx = task.input.start_id
+            String csdmUrl = taskWrapper.input.csdmUrl
+            String data_resource_uid = taskWrapper.input.data_resource_uid
+            Long startIdx = taskWrapper.input.start_id
 
             //get dataset ids from CKAN
             JSONObject datasets = JSON.parse(Util.getUrl(csdmUrl + "/api/3/action/package_list"))
@@ -131,7 +131,7 @@ class CsdmImport extends SlaveProcess {
                                         try {
                                             g = GeomMakeValid.makeValid(g)
                                         } catch (err) {
-                                            log.error 'task: ' + task.id + ' failed validating wkt', err
+                                            log.error 'task: ' + taskWrapper.id + ' failed validating wkt', err
                                         }
                                     }
 

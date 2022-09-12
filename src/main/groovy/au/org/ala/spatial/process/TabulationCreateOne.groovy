@@ -37,8 +37,8 @@ import java.util.zip.ZipInputStream
 class TabulationCreateOne extends SlaveProcess {
 
     void start() {
-        String fieldId1 = task.input.fieldId1
-        String fieldId2 = task.input.fieldId2
+        String fieldId1 = taskWrapper.input.fieldId1
+        String fieldId2 = taskWrapper.input.fieldId2
 
         String layersDir = grailsApplication.config.data.dir + '/layer/'
 
@@ -69,14 +69,14 @@ class TabulationCreateOne extends SlaveProcess {
 
             importTabulation()
         } catch (err) {
-            task.history.put(System.currentTimeMillis(), 'unknown error')
+            taskWrapper.history.put(System.currentTimeMillis() as String, 'unknown error')
             log.error "failed to produce tabulation for: " + fieldId1 + " and " + fieldId2, err
         }
     }
 
     void importTabulation() {
-        String fieldId1 = task.input.fieldId1
-        String fieldId2 = task.input.fieldId2
+        String fieldId1 = taskWrapper.input.fieldId1
+        String fieldId2 = taskWrapper.input.fieldId2
         Map field1 = getField(fieldId1)
         Map field2 = getField(fieldId2)
         String layerId1 = field1.spid
@@ -265,7 +265,7 @@ class TabulationCreateOne extends SlaveProcess {
                 addOutput('sql', fname)
             }
         } catch (err) {
-            task.history.put(System.currentTimeMillis(), 'unknown error')
+            taskWrapper.history.put(System.currentTimeMillis() as String, 'unknown error')
             log.error 'failed tabulation create one for :' + fieldId1 + ', ' + fieldId2, err
         }
 

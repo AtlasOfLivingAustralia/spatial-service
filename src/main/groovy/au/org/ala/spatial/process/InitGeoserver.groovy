@@ -31,14 +31,14 @@ class InitGeoserver extends SlaveProcess {
     String postgresqlPassword
 
     void start() {
-        geoserverUrl = task.input.geoserverUrl ?: grailsApplication.config.geoserver.url
-        username = task.input.geoserverUser ?: grailsApplication.config.geoserver.username
-        password = task.input.geoserverPassword ?: grailsApplication.config.geoserver.password
+        geoserverUrl = taskWrapper.input.geoserverUrl ?: grailsApplication.config.geoserver.url
+        username = taskWrapper.input.geoserverUser ?: grailsApplication.config.geoserver.username
+        password = taskWrapper.input.geoserverPassword ?: grailsApplication.config.geoserver.password
 
         // default url is jdbc:postgres://localhost/layersdb, get the path
-        postgresqlPath = task.input.postgresqlPath ?: grailsApplication.config.dataSource.url.split("/")[2]
-        postgresqlUser = task.input.postgresqlUser ?: grailsApplication.config.dataSource.username
-        postgresqlPassword = task.input.postgresqlPassword ?: grailsApplication.config.dataSource.password
+        postgresqlPath = taskWrapper.input.postgresqlPath ?: grailsApplication.config.dataSource.url.split("/")[2]
+        postgresqlUser = taskWrapper.input.postgresqlUser ?: grailsApplication.config.dataSource.username
+        postgresqlPassword = taskWrapper.input.postgresqlPassword ?: grailsApplication.config.dataSource.password
 
         changeGeoserverPassword()
 

@@ -20,13 +20,12 @@ import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringUtils
-import org.json.simple.JSONObject
 
 @Slf4j
 class DistributionRematchLsid extends SlaveProcess {
 
     void start() {
-        String updateAll = 'true'.equalsIgnoreCase(String.valueOf(task.input.updateAll))
+        String updateAll = 'true'.equalsIgnoreCase(String.valueOf(taskWrapper.input.updateAll))
 
         List distributions = getDistributions()
         distributions.addAll(getChecklists())
@@ -36,7 +35,7 @@ class DistributionRematchLsid extends SlaveProcess {
         int count = 0
         distributions.each { d ->
             count = count + 1
-            task.message = "Processing ${count} of ${distributions.size()}"
+            taskWrapper.message = "Processing ${count} of ${distributions.size()}"
 
             String spcode = d.spcode
 
@@ -77,7 +76,7 @@ class DistributionRematchLsid extends SlaveProcess {
         def input = net.sf.json.JSONObject.fromObject(data)
         StringRequestEntity requestEntity = new StringRequestEntity(input.toString(), 'application/json', 'UTF-8')
 
-        def url = task.input.namematchingUrl
+        def url = taskWrapper.input.namematchingUrl
 
         def response = Util.urlResponse("POST", url + "/api/searchByClassification", null, null, requestEntity)
 

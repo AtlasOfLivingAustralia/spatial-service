@@ -20,11 +20,15 @@ import au.org.ala.layers.dto.Objects
 import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.process.SlaveProcess
+import au.org.ala.spatial.slave.TaskWrapper
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
+import org.springframework.scheduling.annotation.Scheduled
+
+import javax.annotation.PostConstruct
 
 class TasksService {
 
@@ -105,6 +109,8 @@ class TasksService {
                              userId: String.valueOf(userId), sessionId: String.valueOf(sessionId),
                              email : String.valueOf(email)])
 
+            task.history.put(System.currentTimeMillis() as String, "created")
+
             if (!task.save()) {
                 task.errors.each {
                     log.error it
@@ -156,7 +162,7 @@ class TasksService {
             }
         }
 
-        transientTasks.put(task.id, task)
+        transientTasks.put(task.id as Long, task)
 
         taskQueueService.queue(task)
 
@@ -187,56 +193,59 @@ class TasksService {
 
     // attach final log, message and outputs to a task
     @Transactional(readOnly = false)
-    def afterPublish(taskId, spec) {
-
-        Task task = transientTasks.get(taskId)
-
-        def newValues = [:]
-        if (spec.history != null && spec.history.size() > 0) newValues.put('history', spec.history)
+    def afterPublish(TaskWrapper taskWrapper) {
 
         def formattedOutput = []
-        spec.output.each { k, out ->
+        taskWrapper.spec.output.each { k, out ->
             if (k.equals('layers') || k.equals('layer')) {
                 out.files.each { f1 ->
                     if (f1.endsWith('.tif')) {
                         //an environmental file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     } else if (f1.endsWith('.shp')) {
                         //contextual file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     }
                 }
             } else if (k.equals('metadata')) {
                 out.files.each { f1 ->
                     if (f1.endsWith('.html')) {
                         //a metadata file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     }
                 }
             } else if (k.equals('download')) {
                 //a download zip exists
-                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: task))
+                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: taskWrapper.task))
             } else if (k.equals('areas') || k.equals('envelopes')) {
                 out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: task))
+                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: taskWrapper.task))
                 }
             } else if (k.equals('species')) {
                 out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: task))
+                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: taskWrapper.task))
                 }
             } else if (k.equals('csv')) {
                 out.files.each { f1 ->
                     if (f1.endsWith('.csv')) {
                         //a csv file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     }
                 }
             } else {
                 out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: task))
+                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: taskWrapper.task))
                 }
             }
+        }
 
+        // flush task because it is finished
+        Task.withTransaction {
+            if (!taskWrapper.task.save(flush: true)) {
+                taskWrapper.task.errors.each {
+                    log.error it
+                }
+            }
         }
 
         // flush outputs
@@ -250,14 +259,8 @@ class TasksService {
             }
         }
 
-        // flush task because it is finished
-        Task.withTransaction {
-            if (!task.save(flush: true)) {
-                task.errors.each {
-                    log.error it
-                }
-            }
-        }
+        // fetch and include outputs, inputs, history
+        taskWrapper.task.output = formattedOutput
     }
 
     /**
@@ -480,10 +483,11 @@ class TasksService {
 
         task.status = 0
         task.message = "restarting"
+        task.history.put(System.currentTimeMillis() as String, "restarted")
 
-        transientTasks.put(task.id, task)
+        transientTasks.put(task.id as Long, task)
 
-        taskQueueService.queue(task)
+        taskQueueService.queue(task, spec(true)[task.name])
     }
 
     def _spec = [:]
@@ -491,9 +495,11 @@ class TasksService {
 
     def spec(boolean includePrivate) {
         if (!_spec) {
-            _specAdmin = taskQueueService.getAllSpec(true)
 
-            getAllSpec(false).each { name, cap ->
+            getAllSpec().each { it ->
+                def name = it.name
+                def cap = it
+                _specAdmin.put(name, cap)
                 boolean iPrivate = !cap.containsKey('private') || !cap.private.containsKey('public') || cap.private.public
                 if (iPrivate) {
                     _spec.put(name, cap.findAll { i ->
@@ -561,20 +567,21 @@ class TasksService {
         list
     }
 
-    Map publish(isPublic, id) {
+    Map publish(TaskWrapper taskWrapper) {
         Map map = [:]
-
-        String path = Holders.config.data.dir + "/" + (isPublic ? 'public' : 'private') + "/" + id + "/"
-
         try {
-            // read spec.json
-            def spec = grails.converters.JSON.parse(FileUtils.readFileToString(new File(path + '/spec.json')))
+            // update spec.output.files for files to add to download.zip
+            taskWrapper.spec.output.each { k, v ->
+                if (taskWrapper.output.containsKey(k)) {
+                    v.put('files', taskWrapper.output.get(k))
+                }
+            }
 
             // do publishing
-            publishService.publish(path, spec)
+            publishService.publish(taskWrapper.path, taskWrapper.spec)
 
             //update log and outputs
-            afterPublish(id, spec)
+            afterPublish(taskWrapper)
 
             map.put('status', 'published')
         } catch (err) {

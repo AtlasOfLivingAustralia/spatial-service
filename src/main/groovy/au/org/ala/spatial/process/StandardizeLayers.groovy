@@ -27,13 +27,13 @@ import org.opengis.feature.simple.SimpleFeatureType
 class StandardizeLayers extends SlaveProcess {
 
     void start() {
-        double[] shpResolutions = task.input.shpResolutions as double[]
-        double[] grdResolutions = task.input.grdResolutions as double[]
+        double[] shpResolutions = taskWrapper.input.shpResolutions as double[]
+        double[] grdResolutions = taskWrapper.input.grdResolutions as double[]
 
         //optional fieldId
-        String fieldId = task.input.fieldId
+        String fieldId = taskWrapper.input.fieldId
 
-        task.message = 'running: getting fields'
+        taskWrapper.message = 'running: getting fields'
         List fields = getFields()
 
         int shpCount = 0
@@ -55,12 +55,12 @@ class StandardizeLayers extends SlaveProcess {
                         shpResolutions.each { res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
                             if (!slaveService.peekFile(path)[0].exists) {
-                                task.message = 'running: making for field ' + f.id + ' and resolution ' + res
+                                taskWrapper.message = 'running: making for field ' + f.id + ' and resolution ' + res
 
                                 if (!shpFileRetrieved) {
                                     shpFile = File.createTempFile(f.id.toString(), '')
 
-                                    task.message = 'running: getting field ' + f.id
+                                    taskWrapper.message = 'running: getting field ' + f.id
                                     hasTxt = fieldToShapeFile(f.id.toString(), shpFile.getPath())
                                     shpFileRetrieved = true
                                 }
@@ -108,7 +108,7 @@ class StandardizeLayers extends SlaveProcess {
                         grdResolutions.each { Double res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
                             if (!slaveService.peekFile(path)[0].exists) {
-                                task.message = 'running: making for field ' + f.id + ' and resolution ' + res
+                                taskWrapper.message = 'running: making for field ' + f.id + ' and resolution ' + res
 
                                 // no need to make for this resolution if it is < the actual grid resolution (and not close)
                                 double dres = res.doubleValue()

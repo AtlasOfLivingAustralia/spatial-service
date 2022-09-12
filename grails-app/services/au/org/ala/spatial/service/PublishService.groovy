@@ -100,7 +100,7 @@ class PublishService {
         // create download zip
         spec.output.each { k, output ->
             if ('download'.equalsIgnoreCase(k)) {
-                fileService.zip(zip.getParent() + File.separator + "download.zip", zip.getParent(), output.files)
+                fileService.zip(path + File.separator + "download.zip", path, output.files)
             }
         }
 
@@ -110,30 +110,6 @@ class PublishService {
         }
 
         spec
-    }
-
-    def runSqlStatement(sql) {
-        def errors = [:]
-        def conn = dataSource.getConnection()
-        def statement = conn.createStatement()
-        try {
-            try {
-                statement.execute(sql)
-            } catch (err) {
-                errors.put(String.valueOf(System.currentTimeMillis()), 'failed to run sql: ' + sql)
-                log.error 'failed to run sql: ' + sql, err
-            }
-        } catch (err) {
-            log.error err
-        } finally {
-            if (statement != null) {
-                statement.close()
-            }
-            if (conn != null) {
-                conn.close()
-            }
-        }
-        errors
     }
 
     def addStyle(output, path) {

@@ -20,23 +20,22 @@ import au.org.ala.scatterplot.ScatterplotDTO
 import au.org.ala.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import sun.reflect.annotation.ExceptionProxy
 
 @Slf4j
 class ScatterplotCreate extends SlaveProcess {
 
     void start() {
 
-        Boolean grid = task.input.grid.toString().toBoolean()
+        Boolean grid = taskWrapper.input.grid.toString().toBoolean()
 
         //area to restrict (only interested in area.q part)
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
 
-        String layersServiceUrl = task.input.layersServiceUrl
+        String layersServiceUrl = taskWrapper.input.layersServiceUrl
 
-        def species1 = JSON.parse(task.input.species1.toString())
-        def species2 = JSON.parse(task.input.species2.toString())
-        def layerList = JSON.parse(task.input.layer.toString())
+        def species1 = JSON.parse(taskWrapper.input.species1.toString())
+        def species2 = JSON.parse(taskWrapper.input.species2.toString())
+        def layerList = JSON.parse(taskWrapper.input.layer.toString())
 
         def speciesArea1 = getSpeciesArea(species1, area)
         def speciesArea2 = species2?.q ? getSpeciesArea(species2, area) : null
@@ -71,7 +70,7 @@ class ScatterplotCreate extends SlaveProcess {
             ScatterplotStyleDTO style = new ScatterplotStyleDTO()
             taskLog("Creating scatter plot.....")
             log.info("Creating scatter plot.")
-            Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString(), task.input.layersServiceUrl)
+            Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), taskWrapper.input.resolution.toString(), taskWrapper.input.layersServiceUrl)
 
             if (layers.length <= 2) {
                 taskLog("Generate plot style")
@@ -83,11 +82,11 @@ class ScatterplotCreate extends SlaveProcess {
                 File csvFile = new File(getTaskPath() + "data.csv")
                 scatterplot.saveCsv(csvFile)
 
-                species1.putAt("scatterplotId", task.id)
+                species1.putAt("scatterplotId", taskWrapper.id)
                 def imgFile = new File(scatterplot.getImagePath())
                 species1.putAt("scatterplotUrl",
                         imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
-                                .replace(imgFile.name, "Scatterplot%20(" + task.id + ").png?filename=" + imgFile.name))
+                                .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name))
 
                 //style
                 species1.putAt('red', style.red)

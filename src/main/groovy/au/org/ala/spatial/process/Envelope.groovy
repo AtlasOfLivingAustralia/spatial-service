@@ -27,10 +27,10 @@ import org.apache.commons.io.FileUtils
 class Envelope extends SlaveProcess {
 
     void start() {
-        List envelope = JSON.parse(task.input.envelope.toString())
-        String resolution = task.input.resolution
-        String makeShapefile = Boolean.parseBoolean(task.input.shp)
-        String geoserverUrl = task.input.geoserverUrl
+        List envelope = JSON.parse(taskWrapper.input.envelope.toString())
+        String resolution = taskWrapper.input.resolution
+        String makeShapefile = Boolean.parseBoolean(taskWrapper.input.shp)
+        String geoserverUrl = taskWrapper.input.geoserverUrl
 
         LayerFilter[] filter = new LayerFilter[envelope.length()]
         if (envelope) {
@@ -55,7 +55,7 @@ class Envelope extends SlaveProcess {
         File dir = new File(getTaskPath())
         dir.mkdirs()
 
-        String filename = task.id
+        String filename = taskWrapper.id
 
         File grid = new File(dir.getPath() + File.separator + filename)
 
@@ -88,8 +88,8 @@ class Envelope extends SlaveProcess {
                           area_km    : areaSqKm,
                           type       : "envelope",
                           file       : filename + ".tif",
-                          id         : task.id,
-                          wmsurl     : geoserverUrl + "/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + task.id]
+                          id         : taskWrapper.id,
+                          wmsurl     : geoserverUrl + "/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + taskWrapper.id]
             addOutput("envelopes", (values as JSON).toString(), true)
 
             String metadata = "<html><body>Extents: " + g.xmin + "," + g.ymin + "," + g.xmax + "," + g.ymax + "<br>Area (sq km): " + areaSqKm + "</body></html>"

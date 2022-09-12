@@ -28,8 +28,8 @@ import java.text.MessageFormat
 class ChecklistCreation extends SlaveProcess {
 
     void start() {
-        String uploadId = task.input.uploadId
-        String data_resource_uid = task.input.data_resource_uid
+        String uploadId = taskWrapper.input.uploadId
+        String data_resource_uid = taskWrapper.input.data_resource_uid
 
         //upload shp into layersdb in a table with name layer.id
         String dir = grailsApplication.config.data.dir
@@ -73,7 +73,7 @@ class ChecklistCreation extends SlaveProcess {
                                   family_exe    : ['family_exemplar', 'b'],
                                   image_qual    : ['image_quality', 's']]
 
-        task.message = "reading shapefile"
+        taskWrapper.message = "reading shapefile"
         String sqlCount = 0
         while (reader.hasNext()) {
             def f = reader.next()
@@ -114,7 +114,7 @@ class ChecklistCreation extends SlaveProcess {
                     try {
                         g = GeomMakeValid.makeValid(g)
                     } catch (err) {
-                        log.error 'task: ' + task.id + ' failed validating wkt', err
+                        log.error 'task: ' + taskWrapper.id + ' failed validating wkt', err
                     }
                 }
 

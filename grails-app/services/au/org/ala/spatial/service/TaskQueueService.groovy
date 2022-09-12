@@ -18,7 +18,6 @@ package au.org.ala.spatial.service
 import au.org.ala.spatial.process.SlaveProcess
 import au.org.ala.spatial.slave.TaskWrapper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import grails.converters.JSON
 import grails.util.Holders
 
 import javax.annotation.PostConstruct
@@ -30,12 +29,14 @@ class TaskQueueService {
     ExecutorService generalEecutor
     ExecutorService adminExecutor
 
+    def tasksService
+
     @PostConstruct
     def init() {
-        generalEecutor = Executors.newFixedThreadPool(Holders.config.tasks.general.threadCount,
+        generalEecutor = Executors.newFixedThreadPool(Holders.config.task.general.threads,
                 new ThreadFactoryBuilder().setNameFormat("general-tasks-%d").setPriority(Thread.NORM_PRIORITY).build());
 
-        adminExecutor = Executors.newFixedThreadPool(Holders.config.tasks.admin.threadCount,
+        adminExecutor = Executors.newFixedThreadPool(Holders.config.task.admin.threads,
                 new ThreadFactoryBuilder().setNameFormat("general-tasks-%d").setPriority(Thread.NORM_PRIORITY).build());
     }
 
@@ -43,9 +44,9 @@ class TaskQueueService {
         def wrappedTask = wrapTask(task, spec)
 
         if (wrappedTask.isPublic) {
-            generalEecutor.submit(new TaskThread(wrappedTask))
+            generalEecutor.submit(new TaskThread(tasksService, wrappedTask))
         } else {
-            adminExecutor.submit(new TaskThread(wrappedTask))
+            adminExecutor.submit(new TaskThread(tasksService, wrappedTask))
         }
     }
 
@@ -133,7 +134,7 @@ class TaskQueueService {
         Date created
 
         TaskThread(TasksService tasksService, TaskWrapper taskWrapper) {
-            super(TaskQueueService.name, taskWrapper.name) // insert into threadGroup
+            super(new ThreadGroup(TaskQueueService.name), taskWrapper.name) // insert into threadGroup
             this.taskWrapper = taskWrapper
             this.created = new Date(System.currentTimeMillis())
             this.tasksService = tasksService
@@ -148,24 +149,26 @@ class TaskQueueService {
                 SlaveProcess operator = Class.forName(taskWrapper.spec.private.classname.toString()).newInstance()
 
                 if (operator == null) {
-                    throw new Exception("missing process for task: ${taskWrapper.name}")
+                    throw new Exception("missing process for task: ${taskWrapper.task.name}")
                 }
 
                 //init
-                operator.task = taskWrapper
+                operator.taskWrapper = taskWrapper
                 operator.tasksService = tasksService
 
                 //start
                 operator.start()
 
-                //finish
-                tasksService.publish(!taskWrapper.isPublic, taskWrapper.taskId)
+                //finished
+                taskWrapper.task.status = 4
+                taskWrapper.task.message = 'finished'
+                taskWrapper.task.history.put(System.currentTimeMillis() as String, "finished (id:${taskWrapper.taskId})" as String)
 
-                taskWrapper.message = 'finished'
-                taskWrapper.history.put(System.currentTimeMillis(), "finished (id:${taskWrapper.taskId})")
+                //publish
+                tasksService.publish(taskWrapper)
             } catch (err) {
                 if (err instanceof InterruptedException) {
-                    taskWrapper.history[System.currentTimeMillis()] = "cancelled (id:${taskWrapper.taskId})"
+                    taskWrapper.task.history[System.currentTimeMillis() as String] = "cancelled (id:${taskWrapper.taskId})" as String
 
                     // attempt to cancel Util.cmd
                     if (taskWrapper.proc) {
@@ -180,11 +183,13 @@ class TaskQueueService {
 
                 } else {
                     log.error "error running request: ${taskWrapper.taskId}", err
-                    taskWrapper.history.put(System.currentTimeMillis(), "failed (id:${taskWrapper.taskId}): " + err.message)
+                    taskWrapper.history.put(System.currentTimeMillis() as String, ("failed (id:${taskWrapper.taskId}): " + err.message) as String)
                 }
 
-                taskWrapper.finished = true
-                taskWrapper.message = 'failed'
+                taskWrapper.task.status = 3
+                taskWrapper.task.message = 'failed'
+
+                tasksService.publish(taskWrapper)
             }
         }
     }

@@ -28,11 +28,11 @@ class LayerDistancesCreate extends SlaveProcess {
         List fields = getFields()
         List layers = getLayers()
 
-        String[] grdResolutions = task.input.grdResolutions
+        String[] grdResolutions = taskWrapper.input.grdResolutions
 
         //get highest resolution standardized layer files
         //only want valid fields
-        task.message = 'find suitable layers'
+        taskWrapper.message = 'find suitable layers'
         List validFields = []
         fields.each { field ->
             for (int i = grdResolutions.length - 1; i >= 0; i--) {
@@ -45,7 +45,7 @@ class LayerDistancesCreate extends SlaveProcess {
             }
         }
 
-        task.message = 'getting layer distances'
+        taskWrapper.message = 'getting layer distances'
         slaveService.getFile('/public/layerDistances.properties')
 
         File f = new File(grailsApplication.config.data.dir.toString() + '/public/layerDistances.properties')
@@ -59,7 +59,7 @@ class LayerDistancesCreate extends SlaveProcess {
             }
         }
 
-        task.message = 'identify missing layer distances'
+        taskWrapper.message = 'identify missing layer distances'
         validFields.eachWithIndex { field1, idx1 ->
             Map layer1 = findLayer(layers, field1.spid.toString())
             if (layer1 != null && layer1.type == 'Environmental') {
@@ -86,8 +86,8 @@ class LayerDistancesCreate extends SlaveProcess {
             }
         }
 
-        task.message = distances.size() + ' missing distances'
-        task.message = 'preparing LayerDistancesCreateOne tasks'
+        taskWrapper.message = distances.size() + ' missing distances'
+        taskWrapper.message = 'preparing LayerDistancesCreateOne tasks'
 
         Map count = [:]
         for (int i = 0; i < all.size(); i++) {

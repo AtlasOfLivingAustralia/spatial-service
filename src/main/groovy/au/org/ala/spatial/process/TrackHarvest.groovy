@@ -29,8 +29,8 @@ class TrackHarvest extends SlaveProcess {
 
         try {
 
-            String biocacheServiceUrl = task.input.biocacheServiceUrl.toString()
-            String[] dataProviderIds = task.input.dataProviders.toString().split(",")
+            String biocacheServiceUrl = taskWrapper.input.biocacheServiceUrl.toString()
+            String[] dataProviderIds = taskWrapper.input.dataProviders.toString().split(",")
 
             StringBuilder sb = new StringBuilder()
             sb.append("DELETE FROM distributions WHERE type = 't';\n")

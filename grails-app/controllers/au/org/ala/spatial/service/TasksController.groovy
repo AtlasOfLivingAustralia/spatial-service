@@ -48,11 +48,13 @@ class TasksController {
         tasksService.transientTasks.each { id, item ->
             def hist = [:]
 
-            item.history.keySet().sort().reverse().each { key ->
-                if (hist.size() < 4) {
-                    hist.put(new Date(Long.parseLong(key)), item.history.get(key))
+            try {
+                item.history.keySet().sort().reverse().each { key ->
+                    if (hist.size() < 4) {
+                        hist.put(new Date(Long.parseLong(key)), item.history.get(key))
+                    }
                 }
-            }
+            } catch (err) {}
 
             list.add([
                     created: item.created,
@@ -60,11 +62,65 @@ class TasksController {
                     history: hist,
                     status: item.status,
                     email: item.email,
-                    userId: item.userId
+                    userId: item.userId,
+                    message: item.message,
+                    id: item.id
             ])
         }
 
         [taskInstanceList: list, taskInstanceCount: tasksService.transientTasks.size()]
+    }
+
+    @RequireAdmin
+    def all () {
+        if (!params?.max) params.max = 10
+        if (!params?.sort) params.sort = "created"
+        if (!params?.order) params.order = "desc"
+        if (!params?.offset) params.offset = 0
+
+        def list = Task.createCriteria().list(params) {
+            and {
+                if (params?.q) {
+                    or {
+                        ilike("message", "%${params.q}%")
+                        ilike("name", "%${params.q}%")
+                        ilike("tag", "%${params.q}%")
+                    }
+                }
+                if (params?.status) {
+                    eq("status", params.status.toInteger())
+                }
+            }
+            readOnly(true)
+        }
+        def count = Task.createCriteria().count() {
+            and {
+                if (params?.q) {
+                    or {
+                        ilike("message", "%${params.q}%")
+                        ilike("name", "%${params.q}%")
+                        ilike("tag", "%${params.q}%")
+                    }
+                }
+                if (params?.status) {
+                    eq("status", params.status.toInteger())
+                }
+            }
+        }
+
+        // limit history and format time
+        list.each { item ->
+            def hist = [:]
+
+            item.history.keySet().sort().reverse().each { key ->
+                if (hist.size() < 4) {
+                    hist.put(new Date(Long.parseLong(key)), item.history.get(key))
+                }
+            }
+            item.history = hist
+        }
+
+        [taskInstanceList: list, taskInstanceCount: count]
     }
 
     /**
@@ -74,8 +130,8 @@ class TasksController {
      * @param task
      * @return
      */
-    def status(Task task) {
-        def status = tasksService.getStatus(task)
+    def status(Long id) {
+        def status = tasksService.getStatus(id)
 
         if (params.containsKey('last')) {
             def hist = [:]
@@ -108,7 +164,7 @@ class TasksController {
      */
     @RequirePermission
     def show(Long id) {
-        def task = tasksService.get(id)
+        def task = tasksService.getStatus(id)
         if (task) {
             task.history = task.history.sort { a, b ->
                 a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
@@ -188,7 +244,9 @@ class TasksController {
     @Transactional(readOnly = false)
     @RequireAdmin
     reRun(Long id) {
-        def task = tasksService.reRun(id)
+        def t = Task.get(id)
+        t.history
+        def task = tasksService.reRun(t)
 
         if (task) {
             render task as JSON

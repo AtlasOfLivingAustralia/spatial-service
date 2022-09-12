@@ -120,16 +120,16 @@
             <tr class="${(i % 2) == 0 ? 'odd' : 'even'}">
 
                 <td><g:link action="show"
-                            id="${taskInstance.id}">${taskInstance.message}</g:link></td>
+                            id="${taskInstance.id}">${fieldValue(bean: taskInstance, field: "message")}</g:link></td>
 
-                <td><g:if test="${taskInstance.status < 2}">${taskInstance.status}</g:if></td>
+                <td><g:if test="${taskInstance.status < 2}">${fieldValue(bean: taskInstance, field: "url")}</g:if></td>
 
-                <td>${taskInstance.name} </td>
+                <td>${fieldValue(bean: taskInstance, field: "name")} </td>
 
-                <td></td>
+                <td>${fieldValue(bean: taskInstance, field: "tag") && fieldValue(bean: taskInstance, field: "tag") != 'null' ?  fieldValue(bean: taskInstance, field: "tag") : ''}</td>
 
                 <td><g:formatDate date="${taskInstance.created}" format="dd/MM/yy hh:mm:ss"/></td>
-                <g:set var="statusIdx" value="${taskInstance.status}"/>
+                <g:set var="statusIdx" value="${fieldValue(bean: taskInstance, field: "status")}"/>
                 <td>${status[statusIdx.toInteger()]}</td>
 
                 <td><g:each in="${taskInstance.history}" var="h">

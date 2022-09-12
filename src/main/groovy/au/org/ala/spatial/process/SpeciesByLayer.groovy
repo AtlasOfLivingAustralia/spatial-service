@@ -32,8 +32,8 @@ class SpeciesByLayer extends SlaveProcess {
 
     void start() {
 
-        def species = JSON.parse(task.input.species.toString())
-        def fields = JSON.parse(task.input.layer.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
+        def fields = JSON.parse(taskWrapper.input.layer.toString())
 
         HashMap<String, Integer> speciesMap = new HashMap()
 
@@ -111,7 +111,7 @@ class SpeciesByLayer extends SlaveProcess {
                 // no area_km
                 def count = new SpeciesByLayerCount(-1)
 
-                task.message = "Getting species for area " + (n + 1) + " of " + steps
+                taskWrapper.message = "Getting species for area " + (n + 1) + " of " + steps
 
                 def lowerBound = (min + n * step)
                 def upperBound = n == steps - 1 ? max : (min + (n + 1) * step)
