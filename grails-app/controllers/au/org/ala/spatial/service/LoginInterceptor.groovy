@@ -63,16 +63,15 @@ class LoginInterceptor {
 
         //Permission check
         def role  // if require a certain level of ROLE
-        if (permissionLevel == RequirePermission) {
-            if (serviceAuthService.isLoggedIn() || serviceAuthService.hasValidApiKey()) {
+        if (serviceAuthService.hasValidApiKey()) {
+            return true
+        } else if (permissionLevel == RequirePermission) {
+            if (serviceAuthService.isLoggedIn()) {
                 return true
             } else {
                 return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, ApiKey or user login required!')
             }
         } else if (permissionLevel == RequireAdmin) {
-            if (serviceAuthService.hasValidApiKey())
-                return true
-
             role = grailsApplication.config.getProperty('auth.admin_role', String, 'ROLE_ADMIN')
         } else if (permissionLevel == RequireLogin) {
             RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
