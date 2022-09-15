@@ -54,8 +54,8 @@ class AooEoo extends SlaveProcess {
         taskLog("fetching unique coordinates")
         def points = facet("lat_long", speciesArea)
 
-        if (points.size() == 0) {
-            throw new Exception("No occurrences are found in the defined area!")
+        if (points.size() < 3) {
+            throw new Exception("Fewer than 3 occurrences are found in the defined area.")
         }
 
         StringBuilder eWkt = new StringBuilder()

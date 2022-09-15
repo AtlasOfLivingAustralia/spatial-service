@@ -1214,6 +1214,10 @@ class SlaveProcess {
 
         HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
 
+        if (response.statusCode() != 200) {
+            throw new Exception ("Error reading from biocache-service: " + response.statusCode())
+        }
+
         InputStream inputStream = null
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
         byte[] buffer = new byte[1024]

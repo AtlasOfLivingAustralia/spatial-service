@@ -246,7 +246,9 @@ class TasksController {
     @RequireAdmin
     reRun(Long id) {
         def t = Task.get(id)
-        t.history
+        t.history.each { it -> it }
+        t.output.each { it -> it }
+        t.input.each { it -> it }
         def task = tasksService.reRun(t)
 
         if (task) {
