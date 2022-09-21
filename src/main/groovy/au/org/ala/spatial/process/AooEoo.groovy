@@ -46,7 +46,7 @@ class AooEoo extends SlaveProcess {
         def species = JSON.parse(task.input.species.toString())
 
         // concave hull coverage parameter
-        def alpha = task.input.coverage
+        def alpha = (Double) task.input.coverage
 
         def speciesArea = getSpeciesArea(species, area[0])
 
@@ -92,7 +92,7 @@ class AooEoo extends SlaveProcess {
             String aWkt = aUnion.toText().replace(" (", "(").replace(", ", ",")
 
             //concave hull
-            Geometry concaveHull = buildConcaveHull(g, Double.parseDouble(alpha))
+            Geometry concaveHull = buildConcaveHull(g, alpha)
             String concaveWkt = concaveHull.toText().replace(" (", "(").replace(", ", ",")
             double alphaHull = SpatialUtil.calculateArea(concaveWkt) / 1000000.0
 

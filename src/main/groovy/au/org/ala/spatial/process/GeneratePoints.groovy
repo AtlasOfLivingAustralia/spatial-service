@@ -19,7 +19,7 @@ import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.apache.http.message.BasicNameValuePair
+import org.apache.commons.httpclient.NameValuePair
 
 @Slf4j
 class GeneratePoints extends SlaveProcess {
@@ -65,20 +65,20 @@ class GeneratePoints extends SlaveProcess {
 
         def name = "Points in ${areaName} on ${distance} degree grid"
         List nameValuePairs = [
-                new BasicNameValuePair("csvData", sb.toString()),
-                new BasicNameValuePair("headers", "decimalLongitude,decimalLatitude"),
-                new BasicNameValuePair("datasetName", name),
-                new BasicNameValuePair("separator", ","),
-                new BasicNameValuePair("firstLineIsData", "false"),
-                new BasicNameValuePair("customIndexedFields", ""),
-                new BasicNameValuePair("uiUrl", grailsApplication.config.spatialServiceUrl.toString()),
-                new BasicNameValuePair("alaId", userId.toString())
+                new NameValuePair("csvData", sb.toString()),
+                new NameValuePair("headers", "decimalLongitude,decimalLatitude"),
+                new NameValuePair("datasetName", name),
+                new NameValuePair("separator", ","),
+                new NameValuePair("firstLineIsData", "false"),
+                new NameValuePair("customIndexedFields", ""),
+                new NameValuePair("uiUrl", grailsApplication.config.spatialServiceUrl.toString()),
+                new NameValuePair("alaId", userId.toString())
         ]
 
         task.history.put(System.currentTimeMillis(), "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
 
-        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/".toString(),
-                nameValuePairs.toArray(new BasicNameValuePair[0]))
+        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
+                nameValuePairs.toArray(new NameValuePair[0]))
 
         if (response) {
             if (response.statusCode != 200) {

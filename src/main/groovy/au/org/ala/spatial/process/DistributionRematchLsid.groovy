@@ -19,7 +19,6 @@ import au.org.ala.spatial.Util
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang.StringUtils
 import org.json.simple.JSONObject
 
 @Slf4j
@@ -75,7 +74,7 @@ class DistributionRematchLsid extends SlaveProcess {
 
     public def processRecord(def data) {
         def input = net.sf.json.JSONObject.fromObject(data)
-        StringRequestEntity requestEntity = new StringRequestEntity(input.toString(), 'application/json', 'UTF-8')
+        StringRequestEntity requestEntity = new StringRequestEntity(input.toString())
 
         def url = task.input.namematchingUrl
 

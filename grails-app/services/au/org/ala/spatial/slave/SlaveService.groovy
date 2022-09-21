@@ -18,10 +18,11 @@ package au.org.ala.spatial.slave
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.json.JsonOutput
+import org.apache.commons.httpclient.methods.StringRequestEntity
+import org.apache.commons.httpclient.methods.multipart.FilePart
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
+import org.apache.commons.httpclient.methods.multipart.Part
 import org.apache.commons.io.IOUtils
-import org.apache.http.HttpEntity
-import org.apache.http.entity.FileEntity
-import org.apache.http.entity.StringEntity
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipInputStream
@@ -99,7 +100,7 @@ class SlaveService {
             } else {
                 def response = Util.urlResponse("POST", url, null,
                         ["Content-Type": "application/json; charset=UTF-8"],
-                        new StringEntity(json, "application/json; charset=UTF-8", "UTF-8"))
+                        new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
 
                 log.debug('master register url: ' + url + ', json: ' + json)
 
@@ -146,7 +147,7 @@ class SlaveService {
 
                 def response = Util.urlResponse("POST", url, null,
                         ["Content-Type": "application/json; charset=UTF-8"],
-                        new StringEntity(json, "application/json; charset=UTF-8", "UTF-8"))
+                        new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8"))
 
                 if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
                     if (JSON.parse(response?.text) != null) {
@@ -255,7 +256,7 @@ class SlaveService {
                 def streamObj = Util.getStream(url)
                 try {
                     if (streamObj?.call) {
-                        os << streamObj?.stream
+                        os << streamObj?.call?.getResponseBodyAsStream()
                     }
                     os.flush()
                     os.close()
@@ -343,11 +344,12 @@ class SlaveService {
 
             // POST the analysis bundle to spatial-service
             //do not post if master service is local
-            HttpEntity requestEntity = null
+            MultipartRequestEntity requestEntity = null
             if (!grailsApplication.config.service.enable.toBoolean()) {
                 def f = new File(file)
 
-                requestEntity = new FileEntity(f, null)
+                Part[] parts = [new FilePart('file', f)]
+                requestEntity = new MultipartRequestEntity(parts, null)
 
                 def response = Util.urlResponse("POST", url, null, [:], requestEntity)
 

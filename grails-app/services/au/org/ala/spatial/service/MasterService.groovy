@@ -18,8 +18,8 @@ package au.org.ala.spatial.service
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.json.JsonOutput
-import org.apache.http.entity.FileEntity
-import org.apache.http.entity.StringEntity
+import org.apache.commons.httpclient.methods.StringRequestEntity
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -85,7 +85,7 @@ class MasterService {
 
                 JsonOutput jsonOutput = new JsonOutput()
                 def json = jsonOutput.toJson(map)
-                StringEntity entity = new StringEntity(json, "application/json; charset=UTF-8", "UTF-8")
+                StringRequestEntity entity = new StringRequestEntity(json, "application/json; charset=UTF-8", "UTF-8")
 
                 String text = Util.urlResponse("POST", url, null,
                         ["Content-Type": "application/json; charset=UTF-8"], entity)?.text
@@ -239,11 +239,15 @@ class MasterService {
             // save steam as a zip
             def out
             try {
-                if (request != null && request instanceof FileEntity)
-                    request.writeTo(out)
+                if (request != null && request instanceof MultipartRequestEntity)
+                    out = request.getFile('file')
             } catch (e) {
                 log.error(e.getMessage(), e)
                 //ignore, may not exist when slave is local to master service
+            }
+
+            if (out != null) {
+                out.transferTo(f)
             }
         } catch (err) {
             log.error 'failed to receive published files', err
