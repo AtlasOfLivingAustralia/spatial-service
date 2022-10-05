@@ -76,10 +76,9 @@ class DistributionRematchLsid extends SlaveProcess {
         def input = net.sf.json.JSONObject.fromObject(data)
         StringRequestEntity requestEntity = new StringRequestEntity(input.toString())
 
-        // use sandbox biocache-service before biocache-service
-        def url = task.input.sandboxBiocacheServiceUrl ?: task.input.biocacheServiceUrl
+        def url = task.input.namematchingUrl
 
-        def response = Util.urlResponse("POST", url + "/process/adhoc", null, null, requestEntity)
+        def response = Util.urlResponse("POST", url + "/api/searchByClassification", null, null, requestEntity)
 
         def output = net.sf.json.JSONObject.fromObject(response.text)
 
@@ -88,19 +87,21 @@ class DistributionRematchLsid extends SlaveProcess {
         def genusID = ''
         def ignoreTaxonMatch = false
 
-        for (def c : output.getJSONArray('values')) {
-            def name = ((JSONObject) c).get('name')
-            def value = ((JSONObject) c).get('processed')
-            if ('taxonConceptID'.equalsIgnoreCase(name)) {
-                taxonConceptID = value
-            } else if ('familyID'.equalsIgnoreCase(name)) {
-                familyID = value
-            } else if ('genusID'.equalsIgnoreCase(name)) {
-                genusID = value
-            } else if ('taxonomicIssue'.equalsIgnoreCase(name)) {
-                ignoreTaxonMatch = ('' + value).indexOf('excluded') >= 0
-            }
+        def value = output.get('taxonConceptID')
+        if (StringUtils.isNotBlank(value)) {
+            taxonConceptID = value
         }
+        value = output.get('familyID')
+        if (StringUtils.isNotBlank(value)) {
+            familyID = value
+        }
+        value = output.get('genusID')
+        if (StringUtils.isNotBlank(value)) {
+            genusID = value
+        }
+
+        value = output.get('issues')
+        ignoreTaxonMatch = ('' + value).indexOf('excluded') >= 0
 
         if (ignoreTaxonMatch) {
             taxonConceptID = ''

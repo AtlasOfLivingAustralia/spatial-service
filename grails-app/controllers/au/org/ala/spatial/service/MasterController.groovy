@@ -26,7 +26,6 @@ class MasterController {
     def fileService
     def publishService
     def masterService
-    def serviceAuthService
     def tasksService
 
     /**

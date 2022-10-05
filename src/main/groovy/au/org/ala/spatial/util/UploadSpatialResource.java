@@ -54,11 +54,11 @@ public class UploadSpatialResource {
     public static String loadResource(String url, String extra, String username, String password, String resourcepath) {
         File input = new File(resourcepath);
 
-        // Request content will be retrieved directly 
-        // from the input stream 
+        // Request content will be retrieved directly
+        // from the input stream
         RequestEntity entity = new FileRequestEntity(input, "application/zip");
 
-        // Execute the request 
+        // Execute the request
         return processResponse(Util.urlResponse("PUT", url, null, null, entity,
                 true, username, password));
     }

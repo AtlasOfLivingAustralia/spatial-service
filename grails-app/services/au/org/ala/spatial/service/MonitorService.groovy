@@ -58,7 +58,7 @@ class MonitorService {
         }
     }
 
-    // inform monitoring thread that a change has occurred 
+    // inform monitoring thread that a change has occurred
     def signal() {
         synchronized (lock) {
             lock.notify()
@@ -228,6 +228,7 @@ class MonitorService {
                             i.put('grdResolutions', grdResolutions)
                             i.put('sandboxHubUrl', grailsApplication.config.sandboxHubUrl)
                             i.put('sandboxBiocacheServiceUrl', grailsApplication.config.sandboxBiocacheServiceUrl)
+                            i.put('namematchingUrl', grailsApplication.config.namematching.url)
                             i.put('geoserverUrl', grailsApplication.config.geoserver.url)
                             i.put('userId', nextTask.userId)
 

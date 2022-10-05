@@ -157,7 +157,7 @@ class ManageLayersService {
             }
         }
 
-        //no upload dir, look in existing layers, at layer.id 
+        //no upload dir, look in existing layers, at layer.id
         if (!upload.containsKey("raw_id")) {
             try {
                 Layer layer = layerDao.getLayerById(Integer.parseInt(uploadId))
@@ -1073,7 +1073,7 @@ class ManageLayersService {
 
                 //update select values
                 try {
-                    //flag background processes that need running 
+                    //flag background processes that need running
                     boolean updateIntersect = field.intersect != null && field.intersect != originalField.isIntersect() && field.intersect
                     boolean updateNameSearch = field.namesearch != null && "on".equalsIgnoreCase(field.namesearch.toString()) != originalField.isNamesearch()
 
@@ -1594,4 +1594,4 @@ class ManageLayersService {
     }
 }
 
-    
+

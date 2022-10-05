@@ -1,11 +1,12 @@
 language: groovy
 jdk:
-- openjdk8
+- openjdk11
 sudo: false
 branches:
   only:
   - develop
   - master
+  - feature/oidc
 addons:
   apt:
     packages:

@@ -16,11 +16,11 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.GeomMakeValid
-import com.vividsolutions.jts.geom.Geometry
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
+import org.locationtech.jts.geom.Geometry
 
 import java.text.MessageFormat
 

@@ -18,15 +18,15 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.legend.Legend
 import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.util.GeomMakeValid
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.geom.MultiPolygon
-import com.vividsolutions.jts.geom.Polygon
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.JTSFactoryFinder
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Polygon
 
 import java.nio.charset.StandardCharsets
 import java.text.MessageFormat

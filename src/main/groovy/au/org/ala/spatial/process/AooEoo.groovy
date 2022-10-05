@@ -17,17 +17,17 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.util.SpatialConversionUtils
 import au.org.ala.layers.util.SpatialUtil
-import com.vividsolutions.jts.geom.Geometry
-import com.vividsolutions.jts.geom.GeometryFactory
-import com.vividsolutions.jts.geom.LineSegment
-import com.vividsolutions.jts.io.WKTReader
-import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.kml.KML
 import org.geotools.kml.KMLConfiguration
-import org.geotools.xml.Encoder
+import org.geotools.xsd.Encoder
+import org.locationtech.jts.geom.Geometry
+import org.locationtech.jts.geom.GeometryFactory
+import org.locationtech.jts.geom.LineSegment
+import org.locationtech.jts.io.WKTReader
+import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder
 
 import java.awt.geom.Point2D
 
@@ -46,7 +46,7 @@ class AooEoo extends SlaveProcess {
         def species = JSON.parse(task.input.species.toString())
 
         // concave hull coverage parameter
-        def alpha = task.input.coverage
+        def alpha = (Double) task.input.coverage
 
         def speciesArea = getSpeciesArea(species, area[0])
 
@@ -92,7 +92,7 @@ class AooEoo extends SlaveProcess {
             String aWkt = aUnion.toText().replace(" (", "(").replace(", ", ",")
 
             //concave hull
-            Geometry concaveHull = buildConcaveHull(g, Double.parseDouble(alpha))
+            Geometry concaveHull = buildConcaveHull(g, alpha)
             String concaveWkt = concaveHull.toText().replace(" (", "(").replace(", ", ",")
             double alphaHull = SpatialUtil.calculateArea(concaveWkt) / 1000000.0
 

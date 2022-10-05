@@ -160,7 +160,9 @@ class TasksController {
 
         if (userId && !email) {
             def user = authService.getUserForUserId(userId, false);
-            email = user.email;
+            if (user) {
+                email = user.email;
+            }
         }
 
         if (errors) {

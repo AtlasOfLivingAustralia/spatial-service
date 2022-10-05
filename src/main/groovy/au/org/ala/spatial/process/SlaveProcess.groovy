@@ -29,7 +29,6 @@ import au.org.ala.spatial.slave.SlaveService
 import au.org.ala.spatial.slave.Task
 import au.org.ala.spatial.slave.TaskService
 import au.org.ala.spatial.util.OccurrenceData
-import com.vividsolutions.jts.geom.Geometry
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import groovy.util.logging.Slf4j
@@ -41,6 +40,7 @@ import org.geotools.geometry.jts.WKTReader2
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
+import org.locationtech.jts.geom.Geometry
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream

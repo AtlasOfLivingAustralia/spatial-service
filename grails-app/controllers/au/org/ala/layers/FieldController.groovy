@@ -17,15 +17,50 @@ package au.org.ala.layers
 
 import au.org.ala.layers.dao.FieldDAO
 import au.org.ala.layers.dao.ObjectDAO
+import au.org.ala.plugins.openapi.Path
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Objects
 import grails.converters.JSON
+
+import javax.ws.rs.Produces
+
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
 class FieldController {
 
     FieldDAO fieldDao
     ObjectDAO objectDao
 
+    @Operation(
+            method = "GET",
+            tags = "fields",
+            operationId = "getFields",
+            summary = "Get list of fields",
+            description = "Get a list of fields",
+            parameters = [],
+            responses = [
+                    @ApiResponse(
+                            description = "List of fields",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Field))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("fields")
+    @Produces("application/json")
     def index() {
         if (params.containsKey('q')) {
             search()
@@ -38,6 +73,29 @@ class FieldController {
      * list fields table with db only records
      * @return
      */
+    @Operation(
+            method = "GET",
+            tags = "fields",
+            operationId = "getFieldsForIndex",
+            summary = "Get list of fields for indexing",
+            description = "Get a list of fields for indexing",
+            parameters = [],
+            responses = [
+                    @ApiResponse(
+                            description = "List of fields for indexing",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Field))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("fieldsdb")
+    @Produces("application/json")
     def db() {
         render fieldDao.getFieldsByDB() as JSON
     }
@@ -50,6 +108,58 @@ class FieldController {
      * @param id
      * @return
      */
+    @Operation(
+            method = "GET",
+            tags = "field",
+            operationId = "getFieldById",
+            summary = "Get a field by Id",
+            description = "Get a field by Id. Includes all objects associated with the field.",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Id of the field",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "start",
+                            in = QUERY,
+                            description = "starting index for associated objects",
+                            schema = @Schema(implementation = Long),
+                            required = false
+                    ),
+                    @Parameter(
+                            name = "pageSize",
+                            in = QUERY,
+                            description = "number of associated objects to return",
+                            schema = @Schema(implementation = Long),
+                            required = false
+                    ),
+                    @Parameter(
+                            name = "q",
+                            in = QUERY,
+                            description = "restrict to associated object names that contain this value",
+                            schema = @Schema(implementation = String),
+                            required = false
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "field",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = Field)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("field/{id}")
+    @Produces("application/json")
     def show(String id) {
         Integer start = params.containsKey('start') ? Integer.parseInt(params.start.toString()) : 0
         Integer pageSize = params.containsKey('pageSize') ? Integer.parseInt(params.pageSize.toString()) : -1
@@ -79,6 +189,37 @@ class FieldController {
         }
     }
 
+    @Operation(
+            method = "GET",
+            tags = "field",
+            operationId = "searchField",
+            summary = "search for fields",
+            description = "Search for fields ",
+            parameters = [
+                    @Parameter(
+                            name = "q",
+                            in = QUERY,
+                            description = "restrict to field names that contain this value",
+                            schema = @Schema(implementation = String),
+                            required = false
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "field",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = Field)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("fields/search")
+    @Produces("application/json")
     def search() {
         def q = params.containsKey('q') ? params.q.toString() : ''
         render fieldDao.getFieldsByCriteria(q) as JSON
