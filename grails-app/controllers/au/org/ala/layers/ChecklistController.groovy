@@ -88,6 +88,12 @@ class ChecklistController {
     def lsid(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
+
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
+        }
+
+
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrl(distributions.get(0))
             render distributions.get(0).toMap().findAll {
@@ -101,6 +107,11 @@ class ChecklistController {
     def lsids(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
+
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], Distribution.SPECIES_CHECKLIST, noWkt)
+        }
+
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrls(distributions)
             render distributions.collect {
