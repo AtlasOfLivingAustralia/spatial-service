@@ -25,9 +25,9 @@ import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
 import grails.util.Holders
 import groovy.util.logging.Slf4j
+import org.apache.commons.httpclient.methods.FileRequestEntity
+import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
-import org.apache.http.entity.FileEntity
-import org.apache.http.entity.StringEntity
 import org.codehaus.jackson.map.ObjectMapper
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.json.simple.JSONObject
@@ -327,10 +327,10 @@ class ManageLayersService {
         def entity = null
         if (resourcepath != null) {
             def input = new File(resourcepath)
-            entity = new FileEntity(input, contenttype)
+            entity = new FileRequestEntity(input, contenttype)
         } else if (resourcestr != null) {
             try {
-                entity = new StringEntity(resourcestr, contenttype, "UTF-8")
+                entity = new StringRequestEntity(resourcestr, contenttype, "UTF-8")
             } catch (UnsupportedEncodingException e) {
                 log.error 'failed to encode contenttype: ' + contenttype, e
             }

@@ -664,10 +664,20 @@ public class AreaReportPDF {
 
         try {
             if (values == null) {
-                String txt = (String) Util.urlResponse("GET", listsUrl + "/speciesListItems/" + dr + "?includeKVP=true").get("text");
+                boolean hasAnotherPage = true;
+                int max = 400;
+                int offset = 0;
 
-                JSONParser jp = new JSONParser();
-                values = (JSONArray) jp.parse(txt);
+                while (hasAnotherPage) {
+                    String txt = (String) Util.urlResponse("GET", listsUrl + "/speciesListItems/" + dr + "?includeKVP=true&max=" + max + "&offset=" + offset).get("text");
+
+                    JSONParser jp = new JSONParser();
+                    JSONArray newValues = (JSONArray) jp.parse(txt);
+                    values.addAll(newValues);
+
+                    hasAnotherPage = newValues.size() == max;
+                    offset += max;
+                }
 
                 speciesListValues.put(dr, values);
             }

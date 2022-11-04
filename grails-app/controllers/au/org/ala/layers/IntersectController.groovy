@@ -17,6 +17,7 @@ package au.org.ala.layers
 
 
 import au.org.ala.RequirePermission
+import au.org.ala.SkipSecurityCheck
 import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
 import au.org.ala.spatial.service.ServiceAuthService
@@ -50,6 +51,7 @@ class IntersectController {
         render layerIntersectDao.samplingFull(ids, lng, lat) as JSON
     }
 
+    @SkipSecurityCheck // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
     def batch() {
         File dir = new File((Holders.config.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
@@ -232,10 +234,12 @@ class IntersectController {
         render objectDao.getObjectsWithinRadius(fid, lat, lng, radius) as JSON
     }
 
+    @SkipSecurityCheck // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
     def wktGeometryIntersect(String fid) {
         render objectDao.getObjectsIntersectingWithGeometry(fid, request.reader.text) as JSON
     }
 
+    @SkipSecurityCheck // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
     def geojsonGeometryIntersect(String fid) {
         String wkt = geoJsonToWkt(request.reader.text)
         render objectDao.getObjectsIntersectingWithGeometry(fid, wkt) as JSON

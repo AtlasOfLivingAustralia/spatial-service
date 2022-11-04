@@ -18,7 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Util
 import grails.util.Holders
 import groovy.util.logging.Slf4j
-import org.apache.http.Header
+import org.apache.commons.httpclient.Header
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue

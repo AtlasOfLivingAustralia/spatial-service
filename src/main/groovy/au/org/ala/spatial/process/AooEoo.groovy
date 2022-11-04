@@ -46,7 +46,7 @@ class AooEoo extends SlaveProcess {
         def species = JSON.parse(taskWrapper.input.species.toString())
 
         // concave hull coverage parameter
-        def alpha = taskWrapper.input.coverage
+        def alpha = (Double) taskWrapper.input.coverage
 
         def speciesArea = getSpeciesArea(species, area[0])
 

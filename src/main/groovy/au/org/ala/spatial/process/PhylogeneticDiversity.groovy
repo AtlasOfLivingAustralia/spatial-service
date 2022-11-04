@@ -19,8 +19,12 @@ import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
+import org.apache.commons.httpclient.methods.RequestEntity
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity
+import org.apache.commons.httpclient.methods.multipart.Part
+import org.apache.commons.httpclient.methods.multipart.StringPart
+import org.apache.commons.httpclient.params.HttpMethodParams
 import org.apache.commons.io.FileUtils
-import org.apache.http.message.BasicNameValuePair
 import org.json.simple.JSONArray
 
 @Slf4j
@@ -65,11 +69,13 @@ class PhylogeneticDiversity extends SlaveProcess {
             taskLog("Reading phylogenetic diversity data")
             String url = phyloServiceUrl + "/phylo/getPD"
 
-            BasicNameValuePair[] parts = new BasicNameValuePair[2]
-            parts[0] = new BasicNameValuePair("noTreeText", "true")
-            parts[1] = new BasicNameValuePair("speciesList", q)
+            Part[] parts = new Part[2]
+            parts[0] = new StringPart("noTreeText", "true")
+            parts[1] = new StringPart("speciesList", q)
 
-            def pds = JSON.parse(Util.postUrl(url, parts,null, null))
+            RequestEntity entity =  new MultipartRequestEntity(parts, new HttpMethodParams())
+
+            def pds = JSON.parse(Util.postUrl(url, null,null, entity))
 
             //tree info
             taskLog("Getting expert trees")

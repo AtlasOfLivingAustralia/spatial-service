@@ -3,6 +3,8 @@ package au.org.ala.spatial.util;
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.spatial.Util;
 import au.org.ala.spatial.analysis.layers.Records;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.log4j.Logger;
 
 import java.io.StringReader;

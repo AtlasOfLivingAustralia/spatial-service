@@ -87,6 +87,11 @@ class TrackController {
 
     def lsidFirst(String lsid) {
         List distributions = distributionDao.getDistributionByLSID([lsid] as String[], 't', true)
+
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], 't', true)
+        }
+
         if (distributions != null && !distributions.isEmpty()) {
             Distribution d = distributions.get(0)
             distributionsService.addImageUrl(d)
@@ -101,6 +106,10 @@ class TrackController {
 
     def lsid(String lsid) {
         List distributions = distributionDao.getDistributionByLSID([lsid] as String[], 't', true)
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], 't', true)
+        }
+
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrl(distributions.get(0))
             render distributions.get(0).toMap().findAll {
@@ -114,6 +123,9 @@ class TrackController {
     def lsids(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], 't', noWkt)
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], 't', noWkt)
+        }
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrls(distributions)
             render distributions.collect {
@@ -135,6 +147,9 @@ class TrackController {
         MapDTO m = new MapDTO()
 
         Distribution distribution = distributionDao.findDistributionByLSIDOrName(lsid, 't')
+        if (distribution == null) {
+            distribution = distributionDao.findDistributionByLSIDOrName([lsid.replace("https:/", "https://")] as String[], 't')
+        }
 
         if (distribution != null) {
             m.setDataResourceUID(distribution.getData_resource_uid())
@@ -159,6 +174,10 @@ class TrackController {
         List found = []
 
         List distributions = distributionDao.findDistributionsByLSIDOrName(lsid, 't')
+
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.findDistributionsByLSIDOrName([lsid.replace("https:/", "https://")] as String[], 't')
+        }
 
         if (distributions != null) {
             distributions.each { Distribution distribution ->
@@ -252,6 +271,9 @@ class TrackController {
                 geomIdx = distributionDao.getDistributionBySpcode(spcode, 't', true).getGeom_idx()
             } else if (lsid != null) {
                 geomIdx = distributionDao.getDistributionByLSID([lsid] as String[], 't', true).get(0).getGeom_idx()
+                if (geomIdx == null) {
+                    geomIdx = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], 't', true).get(0).getGeom_idx()
+                }
             } else if (scientificName != null) {
                 geomIdx = distributionDao.findDistributionByLSIDOrName(scientificName, 't').getGeom_idx()
             }

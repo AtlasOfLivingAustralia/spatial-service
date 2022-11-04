@@ -167,6 +167,11 @@ class DistributionController {
     def lsidFirst(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
+
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
+        }
+
         if (distributions != null && !distributions.isEmpty()) {
             Distribution d = distributions.get(0)
             distributionsService.addImageUrl(d)
@@ -182,6 +187,11 @@ class DistributionController {
     def lsid(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
+
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
+        }
+
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrl(distributions.get(0))
             render distributions.get(0).toMap().findAll {
@@ -234,6 +244,10 @@ class DistributionController {
         lsid = URLDecoder.decode(lsid, StandardCharsets.UTF_8.toString())
         Boolean noWkt = params.containsKey('nowkt') ? Boolean.parseBoolean(params.nowkt) : false
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
+        if (distributions == null || distributions.isEmpty()) {
+            distributions = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], Distribution.EXPERT_DISTRIBUTION, noWkt)
+        }
+
         if (distributions != null && !distributions.isEmpty()) {
             distributionsService.addImageUrls(distributions)
             render distributions.collect {
@@ -255,6 +269,10 @@ class DistributionController {
         MapDTO m = new MapDTO()
 
         Distribution distribution = distributionDao.findDistributionByLSIDOrName(lsid, Distribution.EXPERT_DISTRIBUTION)
+
+        if (distribution == null) {
+            distribution = distributionDao.findDistributionByLSIDOrName(lsid.replace("https:/", "https://"), Distribution.EXPERT_DISTRIBUTION)
+        }
 
         if (distribution != null) {
             m.setDataResourceUID(distribution.getData_resource_uid())
@@ -279,6 +297,10 @@ class DistributionController {
         List found = []
 
         List distributions = distributionDao.findDistributionsByLSIDOrName(lsid, Distribution.EXPERT_DISTRIBUTION)
+
+        if (distributions == null) {
+            distributions = distributionDao.findDistributionsByLSIDOrName(lsid.replace("https:/", "https://"), Distribution.EXPERT_DISTRIBUTION)
+        }
 
         if (distributions != null) {
             distributions.each { Distribution distribution ->
@@ -369,6 +391,11 @@ class DistributionController {
         //Check if it has EDL
         log.info("Calculating the distance to ELD for " + lsid )
         List<Distribution> distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
+        if (distributions == null || distributions.isEmpty()) {
+            lsid = lsid.replace("https:/", "https://")
+            distributions = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)
+        }
+
         if (distributions.size() > 0) {
             try {
                 Map outlierDistances = distributionDao.identifyOutlierPointsForDistribution(lsid, pointsMap,
@@ -461,6 +488,10 @@ class DistributionController {
                 geomIdx = distributionDao.getDistributionBySpcode(spcode, Distribution.EXPERT_DISTRIBUTION, true)?.getGeom_idx()
             } else if (lsid != null) {
                 geomIdx = distributionDao.getDistributionByLSID([lsid] as String[], Distribution.EXPERT_DISTRIBUTION, true)?.get(0)?.getGeom_idx()
+                if (geomIdx == null) {
+                    geomIdx = distributionDao.getDistributionByLSID([lsid.replace("https:/", "https://")] as String[], Distribution.EXPERT_DISTRIBUTION, true)?.get(0)?.getGeom_idx()
+                }
+
             } else if (scientificName != null) {
                 geomIdx = distributionDao.findDistributionByLSIDOrName(scientificName, Distribution.EXPERT_DISTRIBUTION)?.getGeom_idx()
             }
