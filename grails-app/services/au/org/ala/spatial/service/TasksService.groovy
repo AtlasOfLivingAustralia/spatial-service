@@ -160,7 +160,7 @@ class TasksService {
 
         transientTasks.put(task.id as Long, task)
 
-        taskQueueService.queue(task)
+        taskQueueService.queue(task, spec)
 
         task
     }

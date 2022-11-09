@@ -371,7 +371,7 @@ class LayerController {
     def download(String id) {
         Layer layer = layerDao.getLayerByDisplayName(id)
         if (layer) {
-            if (downloadAllowed()) {
+            if (downloadAllowed(layer)) {
                 OutputStream outputStream = null
                 try {
                     outputStream = response.outputStream as OutputStream

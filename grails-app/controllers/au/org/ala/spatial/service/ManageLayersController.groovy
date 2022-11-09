@@ -313,6 +313,11 @@ class ManageLayersController {
         render map as JSON
     }
 
+    @RequireAdmin
+    def defaultGeoserverStyles() {
+        manageLayersService.fixLayerStyles()
+    }
+
     /**
      * create/update (POST) or get (GET) layer
      *
@@ -327,6 +332,7 @@ class ManageLayersController {
         Map map = [:]
         if ("POST".equalsIgnoreCase(request.method)) {
             if (params.containsKey("name")) {
+                if (!params.enabled) params.enabled = false
                 map.putAll manageLayersService.createOrUpdateLayer(params, layerId)
             } else {
                 map.putAll manageLayersService.createOrUpdateLayer(request.JSON as Map, layerId)

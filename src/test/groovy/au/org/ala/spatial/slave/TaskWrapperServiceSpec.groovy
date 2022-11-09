@@ -41,12 +41,6 @@ class TaskWrapperServiceSpec extends Specification implements ServiceUnitTest<Ta
 
     void cleanup() {}
 
-    void "getAllSpec"() {
-        when:
-        def allSpec = service.getAllSpec()
 
-        then:
-        allSpec.size() > 0
-    }
 
 }

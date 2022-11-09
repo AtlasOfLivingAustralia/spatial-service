@@ -25,7 +25,7 @@ import spock.lang.Specification
 
 import javax.sql.DataSource
 
-class AdminControllerSpec extends Specification implements ControllerUnitTest<AdminController>, DomainUnitTest<Task> {
+class TasksControllerSpec extends Specification implements ControllerUnitTest<TasksController>, DomainUnitTest<Task> {
 
     @Override
     Closure doWithSpring() {{ ->
@@ -45,10 +45,6 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
         Holders.config.serverName = ""
         Holders.config.cas.server.LoginUrl = ""
         Holders.config.auth.admin_role = ""
-
-        controller.serviceAuthService = Mock(ServiceAuthService)
-        controller.serviceAuthService.isValid(_) >> true
-        controller.serviceAuthService.isAdmin(_) >> true
 
         controller.authService = Mock(AuthService)
         controller.authService.userInRole(_) >> true

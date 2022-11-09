@@ -28,8 +28,16 @@ class TasksController {
 
     TasksService tasksService
 
-    def serviceAuthService
     def authService
+    def masterService
+
+    /**
+     * get collated capabilities specs from all registered slaves
+     * @return
+     */
+    def capabilities() {
+        render masterService.spec(authService.userInRole(Holders.config.auth.admin_role)) as JSON
+    }
 
     /**
      * admin only or api_key
@@ -188,15 +196,21 @@ class TasksController {
         }
 
         //Validate input. It may update input
-        def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
-
-        def userId = authService.getUserId() ?: params.userId
+        def errors
+        def userId
+        if (Holders.config.security.oidc.enabled || Holders.config.security.cas.enabled) {
+            errors = tasksService.validateInput(params.name, input, authService.userInRole(Holders.config.auth.admin_role))
+            userId = authService.getUserId() ?: params.userId
+        } else {
+            errors = tasksService.validateInput(params.name, input, true)
+            userId = params.userId
+        }
 
         if (errors) {
             response.status = 400
             render errors as JSON
         } else {
-            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, email)
+            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, params.email)
 
             render task as JSON
         }

@@ -20,7 +20,7 @@ import au.org.ala.RequirePermission
 import au.org.ala.SkipSecurityCheck
 import au.org.ala.layers.dao.LayerIntersectDAO
 import au.org.ala.layers.dao.ObjectDAO
-import au.org.ala.spatial.service.ServiceAuthService
+
 import au.org.ala.spatial.util.BatchConsumer
 import au.org.ala.spatial.util.BatchProducer
 import grails.converters.JSON
@@ -37,7 +37,6 @@ class IntersectController {
     ObjectDAO objectDao
     LayerIntersectDAO layerIntersectDao
     GrailsApplication grailsApplication
-    ServiceAuthService serviceAuthService
 
     def intersect(String ids, Double lat, Double lng) {
         if (lat == null) {

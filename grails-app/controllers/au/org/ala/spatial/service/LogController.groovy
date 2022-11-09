@@ -20,6 +20,7 @@ import au.org.ala.RequireLogin
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
+import grails.util.Holders
 import org.apache.log4j.Logger
 
 @RequireLogin
@@ -28,7 +29,7 @@ class LogController {
     final Logger logger = Logger.getLogger(LogController.class)
 
     def logService
-    def serviceAuthService
+    def authService
 
     /**
      * login required
@@ -57,8 +58,9 @@ class LogController {
      * @return
      */
     def search() {
-        def searchResult = logService.search(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
-        def totalCount = logService.searchCount(params, serviceAuthService.getUserId(), serviceAuthService.isAdmin(params))
+        def isAdmin = authService.userInRole(Holders.config.auth.admin_role)
+        def searchResult = logService.search(params, authService.getUserId(), isAdmin)
+        def totalCount = logService.searchCount(params, authService.getUserId(), isAdmin)
         log.info("Logs: " + totalCount)
         log.debug("Return as " + request.getHeader("accept"))
         if (request.getHeader("accept").contains("application/json") || "application/json".equals(params.accept)) {

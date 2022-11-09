@@ -19,7 +19,6 @@ class LoginInterceptor {
     static final int STATUS_UNAUTHORISED = 401
     static final int STATUS_FORBIDDEN = 403
 
-    ServiceAuthService serviceAuthService
     def authService
 
     LoginInterceptor() {
@@ -30,6 +29,8 @@ class LoginInterceptor {
         if (!Holders.config.security.oidc.enabled.toBoolean()) {
             return true
         }
+
+        def isAdmin = authService.userInRole(Holders.config.auth.admin_role)
 
         def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
         Class controllerClass = controller?.clazz
@@ -62,16 +63,14 @@ class LoginInterceptor {
 
         //Permission check
         def role  // if require a certain level of ROLE
-        if (serviceAuthService.hasValidApiKey()) {
-            return true
-        } else if (permissionLevel == RequirePermission) {
-            if (serviceAuthService.isLoggedIn()) {
+        if (permissionLevel == RequirePermission) {
+            if (authService.getUserId()) {
                 return true
             } else {
                 return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, ApiKey or user login required!')
             }
         } else if (permissionLevel == RequireAdmin) {
-            role = grailsApplication.config.getProperty('auth.admin_role', String, 'ROLE_ADMIN')
+            role = Holders.config.auth.admin_role
         } else if (permissionLevel == RequireLogin) {
             RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
             role = requireAuthentication?.role()
@@ -79,10 +78,10 @@ class LoginInterceptor {
             return true
         }
 
-        if (serviceAuthService.isAuthenticated()) {
+        if (authService.getUserId()) {
             //Check role
             if (!Strings.isNullOrEmpty(role)) {
-                if (!serviceAuthService.isRoleOf(role)) {
+                if (!authService.userInRole(role)) {
                     return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: ' + role)
                 }
             }
