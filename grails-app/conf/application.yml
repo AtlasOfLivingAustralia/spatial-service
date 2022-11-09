@@ -317,7 +317,7 @@ layers_store.FIELD_STYLES: true
 layers_store.GEONETWORK_URL: 'https://spatial.ala.org.au/geonetwork'
 
 distributions.cache.dir: "/data/${appName}/mapCache/"
-distributions.geoserver.image.url: "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&sld=https://fish.ala.org.au/data/dist.sld&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"
+distributions.geoserver.image.url: "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"
 
 #download.layer.licence_levels: ["1"]
 download.layer.licence_levels: []
