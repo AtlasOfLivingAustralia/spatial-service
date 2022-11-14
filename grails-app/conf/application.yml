@@ -164,6 +164,10 @@ gdm.dir: "/data/spatial-data/modelling/gdm/DoGdm"
 gdm.timeout: 900000
 aloc.timeout: 900000
 maxent.timeout: 900000
+
+# 30000ms
+controller.timeout: 30000
+
 # 36000000=10 hours
 admin.timeout: 36000000
 

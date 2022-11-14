@@ -65,7 +65,7 @@ class FieldController {
         if (params.containsKey('q')) {
             search()
         } else {
-            render fieldDao.getFields() as JSON
+            render fieldDao.getFields(true) as JSON
         }
     }
 

@@ -17,6 +17,7 @@ package au.org.ala.layers
 
 import au.com.bytecode.opencsv.CSVReader
 import grails.converters.JSON
+import grails.util.Holders
 
 class TabulationController {
 
@@ -48,11 +49,34 @@ class TabulationController {
         if (!params.wkt && pid) {
             pid = objectDao.getObjectsGeometryById(pid, 'wkt')
         }
-        try {
-            def tabulation = tabulationDao.getTabulationSingle(fid, pid)
-            if (tabulation)
-                render tabulationDao.getTabulationSingle(fid, pid) as JSON
-        } catch (Exception e) {
+
+        // tabulationDao.getTabulationSingle is slow, force a timeout
+
+        def tabulation
+        Thread thread = new Thread() {
+            @Override
+            void run() {
+                tabulation = tabulationDao.getTabulationSingle(fid, pid)
+            }
+        }
+
+        thread.start()
+        Thread.sleep(1000)
+
+        long start = System.currentTimeMillis()
+        while (thread.isAlive() && start + Holders.config.controller.timeout > System.currentTimeMillis()) {
+            Thread.sleep(1000)
+        }
+
+        // loop because irregular exception handling
+        while (thread.isAlive()) {
+            thread.interrupt()
+            thread.stop()
+            Thread.sleep(1000)
+        }
+
+        if (tabulation) {
+            render tabulation as JSON
         }
 
         render status: 404
