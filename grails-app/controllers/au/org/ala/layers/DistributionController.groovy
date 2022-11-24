@@ -21,6 +21,7 @@ import au.org.ala.layers.dto.MapDTO
 import au.org.ala.plugins.openapi.Path
 import au.org.ala.spatial.util.AttributionCache
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.json.JsonSlurper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -278,7 +279,7 @@ class DistributionController {
             m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
 
             // set the attribution info
-            AttributionDTO dto = AttributionCache.getCache().getAttributionFor(distribution.getData_resource_uid())
+            AttributionDTO dto = AttributionCache.getCache(Holders.config.collections.url).getAttributionFor(distribution.getData_resource_uid())
             m.setAvailable(true)
             m.setDataResourceName(dto.getName())
             m.setLicenseType(dto.getLicenseType())
@@ -307,7 +308,7 @@ class DistributionController {
                 m.setDataResourceUID(distribution.getData_resource_uid())
                 m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
                 // set the attribution info
-                AttributionDTO dto = AttributionCache.getCache().getAttributionFor(distribution.getData_resource_uid())
+                AttributionDTO dto = AttributionCache.getCache(Holders.config.collections.url).getAttributionFor(distribution.getData_resource_uid())
                 m.setAvailable(true)
                 m.setDataResourceName(dto.getName())
                 m.setLicenseType(dto.getLicenseType())

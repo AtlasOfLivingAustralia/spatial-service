@@ -16,13 +16,15 @@ public class AttributionCache {
 
     private static AttributionCache attributionCache;
     private Map<String, AttributionDTO> cache = new HashMap<String, AttributionDTO>();
+    private String collectionsUrl;
 
-    private AttributionCache() {
+    private AttributionCache(String collectionsUrl) {
+        this.collectionsUrl = collectionsUrl;
     }
 
-    public static AttributionCache getCache() {
+    public static AttributionCache getCache(String collectionsUrl) {
         if (attributionCache == null)
-            attributionCache = new AttributionCache();
+            attributionCache = new AttributionCache(collectionsUrl);
         return attributionCache;
     }
 
@@ -31,7 +33,7 @@ public class AttributionCache {
         if (a == null) {
             ObjectMapper om = new ObjectMapper();
             om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            a = om.readValue(new URL("https://collections.ala.org.au/ws/dataResource/" + dataResourceUid), AttributionDTO.class);
+            a = om.readValue(new URL(collectionsUrl + "/ws/dataResource/" + dataResourceUid), AttributionDTO.class);
             cache.put(dataResourceUid, a);
         }
         return a;
