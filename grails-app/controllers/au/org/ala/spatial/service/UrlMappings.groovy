@@ -8,7 +8,7 @@ class UrlMappings {
         //
         "/checklists(.$format)?"(controller: "checklist", action: "index")
         "/checklist/$id(.$format)?"(controller: "checklist", action: "show")
-        "/checklists/lsids(.$format)?"(controller: "checklist", action: "uniqueLsids")
+
         "/checklist/lsid/$lsid**"(controller: "checklist", action: "lsid")
         "/checklist/lsids/$lsid**"(controller: "checklist", action: "lsids")
 
@@ -19,7 +19,7 @@ class UrlMappings {
         "/distribution/lsids/$lsid**"(controller: "distribution", action: "lsids")
         "/distribution/map/$lsid**?"(controller: "distribution", action: "lsidMapFirst")
         "/distribution/map/png/$geomIdx(.$format)?"(controller: "distribution", action: "overviewMapPng")
-        "/distribution/map/seed(.$format)?"(controller: "distribution", action: "overviewMapSeed")
+        //"/distribution/map/seed(.$format)?"(controller: "distribution", action: "overviewMapSeed")
         "/distribution/outliers/$lsid**?"(controller: "distribution", action: "outliers")
         "/distribution/map/lsid/$lsid**?"(controller: "distribution", action: "overviewMapPngLsid")
         "/distribution/map/spcode/$spcode(.$format)?"(controller: "distribution", action: "overviewMapPngSpcode")
