@@ -2,11 +2,12 @@ package au.org.ala.spatial.service
 
 import au.org.ala.web.UserDetails
 import grails.gorm.transactions.Transactional
+import grails.util.Holders
 
 @Transactional
 class ReportService {
     def authService
-    def grailsApplication
+
 
     //Generate User usage report
     def report(){
@@ -78,7 +79,7 @@ class ReportService {
 
     //Generate Task based on report
     def taskBasedReport(includeAll){
-        def excludedUsers = grailsApplication.config.reporting.excludedUsers
+        def excludedUsers = Holders.config.reporting.excludedUsers
 
         String sql = "SELECT CONCAT(category1, '->', category2) as name, count(*) as count,extract(YEAR from created) AS year,  extract(MONTH from created) AS month  " +
                         "FROM Log "

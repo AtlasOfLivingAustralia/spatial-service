@@ -17,6 +17,7 @@ package au.org.ala.spatial.service
 
 import grails.config.Config
 import grails.testing.services.ServiceUnitTest
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
@@ -41,7 +42,6 @@ class FileServiceSpec extends Specification implements ServiceUnitTest<FileServi
     }}
 
     def setup() {
-//        grailsApplication.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent()
     }
 
     def cleanup() {
@@ -72,7 +72,7 @@ class FileServiceSpec extends Specification implements ServiceUnitTest<FileServi
     void 'zip unzip'() {
         when:
 
-        def origDir = grailsApplication.config.data.dir
+        def origDir = Holders.config.data.dir
 
         //setup output directories
         def tmpfile = File.createTempFile('test', '.zip')
@@ -81,17 +81,17 @@ class FileServiceSpec extends Specification implements ServiceUnitTest<FileServi
         def rootDirRemote = File.createTempDir()
         def taskDirRemote = File.createTempDir()
 
-        FileUtils.copyDirectory(new File(grailsApplication.config.data.dir), rootDirLocal)
-        FileUtils.copyDirectory(new File(grailsApplication.config.data.dir), taskDirLocal)
+        FileUtils.copyDirectory(new File(Holders.config.data.dir), rootDirLocal)
+        FileUtils.copyDirectory(new File(Holders.config.data.dir), taskDirLocal)
 
-        def srcFiles = service.getFilesFromBase(path, grailsApplication.config.data.dir)
+        def srcFiles = service.getFilesFromBase(path, Holders.config.data.dir)
 
         //zip
-        grailsApplication.config.data.dir = rootDirLocal.getPath()
+        Holders.config.data.dir = rootDirLocal.getPath()
         service.zip(tmpfile.getPath(), taskDirLocal.getPath(), [path])
 
         //unzip
-        grailsApplication.config.data.dir = rootDirRemote.getPath()
+        Holders.config.data.dir = rootDirRemote.getPath()
         service.unzip(tmpfile.getPath(), taskDirRemote.getPath(), false)
 
         // TODO: replace Thread.sleep with something more reliable.
@@ -99,7 +99,7 @@ class FileServiceSpec extends Specification implements ServiceUnitTest<FileServi
         Thread.sleep(5000)
 
         // revert data.dir change
-        grailsApplication.config.data.dir = origDir
+        Holders.config.data.dir = origDir
 
         then:
         //same number of files in each location

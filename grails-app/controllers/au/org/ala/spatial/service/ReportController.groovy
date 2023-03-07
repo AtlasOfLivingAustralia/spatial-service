@@ -24,8 +24,6 @@ class ReportController {
                 }
             }
         }
-
-        //render taskService.report() as JSON
     }
 
     def task() {
@@ -55,8 +53,6 @@ class ReportController {
                 }
             }
         }
-
-        //render taskService.report() as JSON
     }
 
 }

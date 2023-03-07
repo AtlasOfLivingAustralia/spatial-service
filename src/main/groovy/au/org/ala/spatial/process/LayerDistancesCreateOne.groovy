@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.tabulation.TabulationGenerator
+import grails.util.Holders
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 
@@ -25,16 +26,16 @@ class LayerDistancesCreateOne extends SlaveProcess {
 
     void start() {
         List fieldIds = []
-        for (int i = 0; task.input.containsKey('fieldId' + (i + 1)); i++) {
-            fieldIds.add(task.input["fieldId" + (i + 1)])
+        for (int i = 0; taskWrapper.input.containsKey('fieldId' + (i + 1)); i++) {
+            fieldIds.add(taskWrapper.input["fieldId" + (i + 1)])
         }
 
-        String[] grdResolutions = task.input.grdResolutions
+        String[] grdResolutions = taskWrapper.input.grdResolutions
 
-        task.message = 'getting layerDistances.properties'
+        taskWrapper.message = 'getting layerDistances.properties'
         slaveService.getFile('/public/layerDistances.properties')
 
-        File f = new File(grailsApplication.config.data.dir.toString() + '/public/layerDistances.properties')
+        File f = new File(Holders.config.data.dir.toString() + '/public/layerDistances.properties')
         if (!f.exists()) FileUtils.writeStringToFile(f, '')
         Map distances = [:]
         FileReader fr = new FileReader(f)
@@ -48,15 +49,15 @@ class LayerDistancesCreateOne extends SlaveProcess {
         List files = []
 
         //get highest resolution standardized layer files
-        task.message = 'get standardized layer files'
+        taskWrapper.message = 'get standardized layer files'
         int found = 0
         for (def i = grdResolutions.size() - 1; i >= 0; i--) {
             for (def j = 0; j < fieldIds.size(); j++) {
                 if (files[j] == null) {
                     String path = '/standard_layer/' + grdResolutions[i] + '/' + fieldIds[j] + '.grd'
-                    task.message = 'checking file ' + path
+                    taskWrapper.message = 'checking file ' + path
                     if (slaveService.peekFile(path)[0].exists) {
-                        task.message = 'getting file ' + path
+                        taskWrapper.message = 'getting file ' + path
                         slaveService.getFile(path)
                         files[j] = new File(path)
                         found++
@@ -71,7 +72,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
         List<Double> ranges = []
 
         for (int i = 0; i < files.size(); i++) {
-            String f1 = grailsApplication.config.data.dir + files[i].getPath()
+            String f1 = Holders.config.data.dir + files[i].getPath()
             f1 = f1.substring(0, f1.length() - 4)
 
             Grid g1 = Grid.getGrid(f1)
@@ -82,17 +83,17 @@ class LayerDistancesCreateOne extends SlaveProcess {
             long maxLength = 4000 * 4000
 
             if (((long) g1.nrows) * ((long) g1.ncols) < maxLength) {
-                task.message = 'loading grid file ' + f1
+                taskWrapper.message = 'loading grid file ' + f1
                 float[] d1 = g1.getGrid()
                 values.add(d1)
             } else {
-                task.message = 'not loading grid file ' + f1
+                taskWrapper.message = 'not loading grid file ' + f1
                 values.add(null)
             }
         }
 
         if (found >= 2) {
-            task.message = 'init batch objects'
+            taskWrapper.message = 'init batch objects'
             int batchSize = 1000000
             double[][] points = new double[batchSize][2]
 
@@ -110,7 +111,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
                             if (TabulationGenerator.isSameDomain(TabulationGenerator.parseDomain(domain1),
                                     TabulationGenerator.parseDomain(domain2))) {
 
-                                task.message = 'calculating distance for ' + fieldIds[i] + ' and ' + fieldIds[j]
+                                taskWrapper.message = 'calculating distance for ' + fieldIds[i] + ' and ' + fieldIds[j]
 
                                 double distance = calculateDistanceBatch(points, v1, v2, values[i], values[j],
                                         grids[i], grids[j], ranges[i], ranges[j])

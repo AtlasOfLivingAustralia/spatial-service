@@ -30,20 +30,20 @@ class DoubleGridding extends SlaveProcess {
 
     void start() {
         //area to restrict (only interested in area.q part)
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
         def (region, envelope) = processArea(area[0])
 
         //number of target species
-        def species = JSON.parse(task.input.species.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
 
         def speciesArea = getSpeciesArea(species, area)
 
         new File(getTaskPath()).mkdirs()
 
-        def primaryGridCellSize = task.input.primaryGridCellSize.toString().toDouble()
-        def secondaryGridCellSize = task.input.secondaryGridCellSize.toString().toDouble()
+        def primaryGridCellSize = taskWrapper.input.primaryGridCellSize.toString().toDouble()
+        def secondaryGridCellSize = taskWrapper.input.secondaryGridCellSize.toString().toDouble()
 
-        def yearSize = task.input.yearSize.toString().toInteger()
+        def yearSize = taskWrapper.input.yearSize.toString().toInteger()
 
         double[] bbox = new double[4]
         bbox[0] = -180
@@ -51,7 +51,7 @@ class DoubleGridding extends SlaveProcess {
         bbox[2] = 180
         bbox[3] = 90
 
-        String envelopeFile = getTaskPath() + "envelope_" + task.id
+        String envelopeFile = getTaskPath() + "envelope_" + taskWrapper.id
         Grid envelopeGrid = null
         if (envelope != null) {
             String[] types = new String[envelope.length]
@@ -133,7 +133,7 @@ class DoubleGridding extends SlaveProcess {
         fw.append("<html><h1>").append(title).append("</h1>")
         fw.append("<table>")
         fw.append("<tr><td>Date/time " + sdf.format(new Date()) + "</td></tr>")
-        fw.append("<tr><td>Model reference number: " + task.id + "</td></tr>")
+        fw.append("<tr><td>Model reference number: " + taskWrapper.id + "</td></tr>")
         fw.append("<tr><td>Species selection " + speciesName + "</td></tr>")
         fw.append("<tr><td>Primary grid size (decimal degrees) " + primaryGridCellSize + "</td></tr>")
         fw.append("<tr><td>Secondary grid size (decimal degrees) " + secondaryGridCellSize + "</td></tr>")

@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.json.simple.JSONObject
 
@@ -24,12 +25,12 @@ import org.json.simple.JSONObject
 class LayerCopy extends SlaveProcess {
 
     void start() {
-        def layerId = task.input.layerId
-        def fieldId = task.input.fieldId
-        def sourceUrl = task.input.sourceUrl
+        def layerId = taskWrapper.input.layerId
+        def fieldId = taskWrapper.input.fieldId
+        def sourceUrl = taskWrapper.input.sourceUrl
 
         //TODO: fetch default sld from geoserver
-        def displayPath = task.input.displayPath
+        def displayPath = taskWrapper.input.displayPath
 
         def field = getField(fieldId)
         def layer = getLayer(layerId)
@@ -51,8 +52,8 @@ class LayerCopy extends SlaveProcess {
         //get standardized files
         taskLog("get standardized files")
         def resolutions
-        if (layer.type == 'Contextual') resolutions = grailsApplication.config.shpResolutions
-        else resolutions = grailsApplication.config.grdResolutions
+        if (layer.type == 'Contextual') resolutions = Holders.config.shpResolutions
+        else resolutions = Holders.config.grdResolutions
         if (!(resolutions instanceof List)) {
             // comma separated or JSON list
             if (resolutions.toString().startsWith("[")) {

@@ -5,6 +5,7 @@ import au.org.ala.layers.grid.GridCutter
 import au.org.ala.layers.intersect.IntersectConfig
 import grails.config.Config
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 
 import java.lang.reflect.Array
@@ -12,11 +13,7 @@ import java.lang.reflect.Array
 @Slf4j
 class BootStrap {
 
-    def monitorService
-    def slaveService
-    def grailsApplication
-    def masterService
-    def tasksService
+
     def legacyService
     def groovySql
     def messageSource
@@ -29,16 +26,13 @@ class BootStrap {
                 "classpath:messages"
         )
 
-        layersStoreConfig(grailsApplication.config)
+        layersStoreConfig(Holders.config)
 
         legacyService.apply()
 
-        //avoid circular reference
-        masterService._tasksService = tasksService
-
         //layers-store and domain classes requiring an updated marshaller
         [AnalysisLayer, Distributions, Facet, Field, Layer, Objects, SearchObject, Tabulation,
-         Task, Log, InputParameter, OutputParameter].each { clazz ->
+            Task, Log, InputParameter, OutputParameter].each { clazz ->
             JSON.registerObjectMarshaller(clazz) { i ->
                 i.properties.findAll {
                     it.value != null && it.key != 'class' && it.key != '_ref' &&
@@ -56,19 +50,12 @@ class BootStrap {
             return it?.getTime()
         }
 
-        if (grailsApplication.config.service.enable.toBoolean()) {
-            monitorService.monitor()
-        }
-        if (grailsApplication.config.slave.enable.toBoolean()) {
-            slaveService.monitor()
-        }
-
         //create database required by layers-store
         try {
-            def rs = groovySql.rows("SELECT * FROM fields WHERE id = ?", [grailsApplication.config.userObjectsField])
+            def rs = groovySql.rows("SELECT * FROM fields WHERE id = ?", [Holders.config.userObjectsField])
             if (rs.size() == 0) {
                 groovySql.execute("INSERT INTO fields (id, name, \"desc\", type, indb, enabled, namesearch) VALUES " +
-                        "('${grailsApplication.config.userObjectsField}', 'user', '', 'c', false, false, false);")
+                        "('${Holders.config.userObjectsField}', 'user', '', 'c', false, false, false);")
             }
         } catch (Exception e) {
             if (!e.getMessage().contains("duplicate key value")) {

@@ -6,6 +6,7 @@ import au.org.ala.RequirePermission
 import au.org.ala.SkipSecurityCheck
 import com.google.common.base.Strings
 import grails.converters.JSON
+import grails.util.Holders
 
 /**
  * Copy and simplify from plugin "ala-ws-security-plugin:2.0"
@@ -15,12 +16,9 @@ import grails.converters.JSON
  * TODO use ALA standard apiKey method: store apiKey in hearder
  */
 class LoginInterceptor {
-
-    static final String LOCALHOST_IP = '127.0.0.1'
     static final int STATUS_UNAUTHORISED = 401
     static final int STATUS_FORBIDDEN = 403
 
-    ServiceAuthService serviceAuthService
     def authService
 
     LoginInterceptor() {
@@ -28,9 +26,11 @@ class LoginInterceptor {
     }
 
     boolean before() {
-        if (!grailsApplication.config.security.oidc.enabled.toBoolean()) {
+        if (!Holders.config.security.oidc.enabled.toBoolean()) {
             return true
         }
+
+        def isAdmin = authService.userInRole(Holders.config.auth.admin_role)
 
         def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
         Class controllerClass = controller?.clazz
@@ -41,7 +41,7 @@ class LoginInterceptor {
         }
 
         //Calculating the required permission.
-        def permissionLevel = null;
+        def permissionLevel = null
         //Permission on method has the top priority
         if (method?.isAnnotationPresent(RequirePermission.class)) {
             permissionLevel = RequirePermission
@@ -63,16 +63,14 @@ class LoginInterceptor {
 
         //Permission check
         def role  // if require a certain level of ROLE
-        if (serviceAuthService.hasValidApiKey()) {
-            return true
-        } else if (permissionLevel == RequirePermission) {
-            if (serviceAuthService.isLoggedIn()) {
+        if (permissionLevel == RequirePermission) {
+            if (authService.getUserId()) {
                 return true
             } else {
                 return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, ApiKey or user login required!')
             }
         } else if (permissionLevel == RequireAdmin) {
-            role = grailsApplication.config.getProperty('auth.admin_role', String, 'ROLE_ADMIN')
+            role = Holders.config.auth.admin_role
         } else if (permissionLevel == RequireLogin) {
             RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
             role = requireAuthentication?.role()
@@ -80,10 +78,10 @@ class LoginInterceptor {
             return true
         }
 
-        if (serviceAuthService.isAuthenticated()) {
+        if (authService.getUserId()) {
             //Check role
             if (!Strings.isNullOrEmpty(role)) {
-                if (!serviceAuthService.isRoleOf(role)) {
+                if (!authService.userInRole(role)) {
                     return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: ' + role)
                 }
             }

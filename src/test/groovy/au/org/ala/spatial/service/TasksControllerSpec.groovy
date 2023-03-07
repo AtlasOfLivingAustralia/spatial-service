@@ -19,12 +19,13 @@ import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
+import grails.util.Holders
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
 
 import javax.sql.DataSource
 
-class AdminControllerSpec extends Specification implements ControllerUnitTest<AdminController>, DomainUnitTest<Task> {
+class TasksControllerSpec extends Specification implements ControllerUnitTest<TasksController>, DomainUnitTest<Task> {
 
     @Override
     Closure doWithSpring() {{ ->
@@ -41,13 +42,9 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
         new Task(name: "test2", status: 0).save()
         new Task(name: "test3", status: 1).save()
 
-        grailsApplication.config.serverName = ""
-        grailsApplication.config.cas.server.LoginUrl = ""
-        grailsApplication.config.auth.admin_role = ""
-
-        controller.serviceAuthService = Mock(ServiceAuthService)
-        controller.serviceAuthService.isValid(_) >> true
-        controller.serviceAuthService.isAdmin(_) >> true
+        Holders.config.serverName = ""
+        Holders.config.cas.server.LoginUrl = ""
+        Holders.config.auth.admin_role = ""
 
         controller.authService = Mock(AuthService)
         controller.authService.userInRole(_) >> true
@@ -61,25 +58,6 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
     def cleanup() {
     }
 
-    void "list all tasks"() {
-        when:
-        params.all = ""
-        params.api_key = "valid"
-        controller.tasks()
-
-        then:
-        (JSON.parse(response.text) as Map).size() == 3
-    }
-
-    void "list open tasks"() {
-        when:
-        params.api_key = "valid"
-        controller.tasks()
-
-        then:
-        (JSON.parse(response.text) as Map).size() == 2
-    }
-
     void "get capabilites"() {
         when:
         setup()
@@ -89,13 +67,4 @@ class AdminControllerSpec extends Specification implements ControllerUnitTest<Ad
         (JSON.parse(response.text) as Map).size() > 0
     }
 
-    void "get slaves"() {
-        when:
-        setup()
-        params.api_key = "valid"
-        controller.slaves()
-
-        then:
-        (JSON.parse(response.text) as Map).size() > 0
-    }
 }

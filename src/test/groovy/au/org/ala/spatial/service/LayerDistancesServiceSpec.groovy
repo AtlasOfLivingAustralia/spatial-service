@@ -22,6 +22,7 @@ import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Layer
 import grails.config.Config
 import grails.testing.services.ServiceUnitTest
+import grails.util.Holders
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
 
@@ -49,7 +50,7 @@ class LayerDistancesServiceSpec extends Specification implements ServiceUnitTest
         List<Layer> layers = TestUtil.getListFromJSON('layers.json', Layer.class)
         service.layerDao.getLayers() >> layers
 
-        grailsApplication.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent()
+        Holders.config.data.dir = new File(LayerDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent()
     }
 
     def cleanup() {

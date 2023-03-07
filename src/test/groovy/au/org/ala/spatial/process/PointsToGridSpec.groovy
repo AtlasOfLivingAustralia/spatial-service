@@ -4,9 +4,9 @@ import au.org.ala.layers.intersect.SimpleRegion
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.analysis.layers.Records
 import au.org.ala.spatial.service.TestUtil
-import au.org.ala.spatial.slave.FileLockService
-import au.org.ala.spatial.slave.SlaveService
-import au.org.ala.spatial.slave.TaskService
+
+import au.org.ala.spatial.service.TaskQueueService
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
@@ -31,14 +31,14 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
     def proc = new PointsToGrid()
 
     def setup() {
-        proc.taskService = Mock(TaskService)
+        proc.taskService = Mock(TaskQueueService)
         proc.slaveService = Mock(SlaveService)
         proc.grailsApplication = grailsApplication
-        proc.fileLockService = Mock(FileLockService)
+
 
         // gdal installation is required for 'PointsToGrid'
-        grailsApplication.config.gdal.dir = '/opt/homebrew/bin'
-        gdalInstalled = TestUtil.GDALInstalled(grailsApplication.config.gdal.dir)
+        Holders.config.gdal.dir = '/opt/homebrew/bin'
+        gdalInstalled = TestUtil.GDALInstalled(Holders.config.gdal.dir)
     }
 
     def cleanup() {
@@ -55,7 +55,7 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
 
             new File("${tmpDir}/layer").mkdirs()
 
-            grailsApplication.config.data.dir = tmpDir.getPath()
+            Holders.config.data.dir = tmpDir.getPath()
             proc.taskService.getBasePath(_) >> tmpDir.getPath() + '/public/'
 
             System.out.println(tmpDir.getPath())
@@ -84,8 +84,8 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
             }
 
 
-            proc.task = [spec : Mock(TaskService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
-                         input: [area         : "[{\"wkt\": \"POLYGON((120 -15,154 -15,154 -40,120 -40,120 -15))\", \"bbox\": [120,-15,154,-40]}]",
+            proc.taskWrapper = [spec : Mock(TaskQueueService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
+                                input: [area         : "[{\"wkt\": \"POLYGON((120 -15,154 -15,154 -40,120 -40,120 -15))\", \"bbox\": [120,-15,154,-40]}]",
                                  species      : "{\"q\": \"\", \"name\": \"test species\"}", resolution: 0.02,
                                  gridCellSize : 1, sitesBySpecies: true, occurrenceDensity: true, speciesRichness: true,
                                  movingAverage: "1x1"]]

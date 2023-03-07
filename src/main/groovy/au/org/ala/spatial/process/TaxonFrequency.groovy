@@ -43,13 +43,13 @@ class TaxonFrequency extends SlaveProcess {
 
     void start() {
         //min year
-        def minYear = task.input.minYear.toInteger()
+        def minYear = taskWrapper.input.minYear.toInteger()
 
         //area to restrict
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
 
         //number of target species
-        def species1 = JSON.parse(task.input.species1.toString())
+        def species1 = JSON.parse(taskWrapper.input.species1.toString())
         def species1Name = species1.name;
         def species1Area = getSpeciesArea(species1, area[0])
 
@@ -71,7 +71,7 @@ class TaxonFrequency extends SlaveProcess {
         files.push(generateChart(count1, 'Frequency of ' + species1Name, 'frequency', false, false))
         files.push(generateChart(cumulative1, 'Cumulative frequency of ' + species1Name, 'cumulative_frequency', true, false))
 
-        def species2 = JSON.parse(task.input.species2.toString())
+        def species2 = JSON.parse(taskWrapper.input.species2.toString())
         def species2Name = species2.name;
 
         if (species2.q) {

@@ -22,18 +22,14 @@ import au.org.ala.layers.legend.GridLegend
 import au.org.ala.layers.legend.Legend
 import au.org.ala.layers.legend.LegendEqualArea
 import au.org.ala.layers.util.LayerFilter
-import au.org.ala.scatterplot.Scatterplot
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.slave.FileLockService
-import au.org.ala.spatial.slave.SlaveService
-import au.org.ala.spatial.slave.Task
-import au.org.ala.spatial.slave.TaskService
+import au.org.ala.spatial.service.TasksService
+import au.org.ala.spatial.slave.TaskWrapper
 import au.org.ala.spatial.util.OccurrenceData
 import grails.converters.JSON
-import grails.core.GrailsApplication
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
 import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.WKTReader2
@@ -42,17 +38,18 @@ import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
 import org.locationtech.jts.geom.Geometry
 
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 @Slf4j
 class SlaveProcess {
 
-    TaskService taskService
-    SlaveService slaveService
-    GrailsApplication grailsApplication
-    FileLockService fileLockService
-    Task task
+    TasksService tasksService
+    TaskWrapper taskWrapper
 
     // start the task
     void start() {}
@@ -81,18 +78,18 @@ class SlaveProcess {
     }
 
     String getTaskPath() {
-        taskService.getBasePath(task)
+        taskWrapper.path
     }
 
     String getTaskPathById(taskId) {
-        taskService.getBasePath([taskId: taskId])
+        Holders.config.data.dir + '/public/' + taskId + '/'
     }
 
     List getLayers() {
         List layers = null
 
         try {
-            String url = task.input.layersServiceUrl + '/layers'
+            String url = taskWrapper.input.layersServiceUrl + '/layers'
             layers = JSON.parse(Util.getUrl(url)) as List
         } catch (err) {
             log.error 'failed to get all layers', err
@@ -106,7 +103,7 @@ class SlaveProcess {
 
         try {
             //include layers info by using ?q=
-            String url = task.input.layersServiceUrl + '/fields?q='
+            String url = taskWrapper.input.layersServiceUrl + '/fields?q='
             fields = JSON.parse(Util.getUrl(url)) as List
         } catch (err) {
             log.error 'failed to get all fields', err
@@ -119,7 +116,7 @@ class SlaveProcess {
         List distributions = null
 
         try {
-            String url = task.input.layersServiceUrl + '/distributions'
+            String url = taskWrapper.input.layersServiceUrl + '/distributions'
             distributions = JSON.parse(Util.getUrl(url)) as List
         } catch (err) {
             log.error 'failed to get all distributions', err
@@ -132,7 +129,7 @@ class SlaveProcess {
         List checklists = null
 
         try {
-            String url = task.input.layersServiceUrl + '/checklists'
+            String url = taskWrapper.input.layersServiceUrl + '/checklists'
             checklists = JSON.parse(Util.getUrl(url)) as List
         } catch (err) {
             log.error 'failed to get all checklists', err
@@ -145,7 +142,7 @@ class SlaveProcess {
         List tabulations = null
 
         try {
-            String url = task.input.layersServiceUrl + '/tabulation/list'
+            String url = taskWrapper.input.layersServiceUrl + '/tabulation/list'
             tabulations = JSON.parse(Util.getUrl(url)) as List
         } catch (err) {
             log.error 'failed to get tabulations list', err
@@ -158,7 +155,7 @@ class SlaveProcess {
         Map layer = null
 
         try {
-            String url = task.input.layersServiceUrl + '/layer/' + id
+            String url = taskWrapper.input.layersServiceUrl + '/layer/' + id
             layer = JSON.parse(Util.getUrl(url)) as Map
         } catch (err) {
             log.error 'failed to lookup layer: ' + id, err
@@ -171,7 +168,7 @@ class SlaveProcess {
         Map field = null
 
         try {
-            String url = task.input.layersServiceUrl + '/field/show/' + id + "?pageSize=0"
+            String url = taskWrapper.input.layersServiceUrl + '/field/show/' + id + "?pageSize=0"
             field = JSON.parse(Util.getUrl(url)) as Map
         } catch (err) {
             log.error 'failed to lookup field: ' + id, err
@@ -184,7 +181,7 @@ class SlaveProcess {
         List objects = null
 
         try {
-            String url = task.input.layersServiceUrl + '/field/' + fieldId
+            String url = taskWrapper.input.layersServiceUrl + '/field/' + fieldId
             Map field = (JSONObject) JSON.parse(Util.getUrl(url))
             objects = field.objects as List
         } catch (err) {
@@ -199,7 +196,7 @@ class SlaveProcess {
 
         try {
             if (objectId != null) {
-                String url = task.input.layersServiceUrl + '/shapes/wkt/' + objectId
+                String url = taskWrapper.input.layersServiceUrl + '/shapes/wkt/' + objectId
                 wkt = Util.getUrl(url)
             }
         } catch (err) {
@@ -215,9 +212,7 @@ class SlaveProcess {
         try {
             String taskId = objectId.replace("ENVELOPE", "")
 
-            slaveService.getFile('/public/' + taskId + "/envelope")
-
-            def file = new File(grailsApplication.config.data.dir + "/public/" + taskId + "/" + taskId + ".shp")
+            def file = new File(Holders.config.data.dir + "/public/" + taskId + "/" + taskId + ".shp")
 
             ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
             FeatureReader reader = sds.featureReader
@@ -251,9 +246,9 @@ class SlaveProcess {
             addOutput("layers", value)
         }
 
-        if (!task.output.containsKey(value)) task.output.put(value, [])
+        if (!taskWrapper.output.containsKey(value)) taskWrapper.output.put(value, [])
 
-        File file = new File("${grailsApplication.config.data.dir}${fstart}")
+        File file = new File("${Holders.config.data.dir}${fstart}")
         for (File f : file.listFiles()) {
             if (f.getName().equals(fend) || f.getName().startsWith("${fend}.")) {
                 if (layers &&
@@ -270,13 +265,13 @@ class SlaveProcess {
     }
 
     void addOutput(name, value) {
-        if (!task.output.containsKey(name)) task.output.put(name, [])
-        task.output.get(name).add(value)
+        if (!taskWrapper.output.containsKey(name)) taskWrapper.output.put(name, [])
+        taskWrapper.output.get(name).add(value)
     }
 
     void addOutput(name, value, download) {
-        if (!task.output.containsKey(name)) task.output.put(name, [])
-        task.output.get(name).add(value)
+        if (!taskWrapper.output.containsKey(name)) taskWrapper.output.put(name, [])
+        taskWrapper.output.get(name).add(value)
 
         if (download && !"download".equalsIgnoreCase(name)) {
             addOutput('download', value)
@@ -317,7 +312,7 @@ class SlaveProcess {
                 return results.get(0).getAt("count")
             }
         } catch (err) {
-            log.error 'failed get facet count for: ' + task.id + ", " + url, err
+            log.error 'failed get facet count for: ' + taskWrapper.id + ", " + url, err
         }
 
         return 0
@@ -340,13 +335,12 @@ class SlaveProcess {
 
     def facet(facet, species) {
         String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q
-        String response = Util.getUrl(url)
+        String response = streamBytes(url, facet)
         if (response) {
             response.split("\n")
         } else {
             []
         }
-
     }
 
     def downloadSpecies(species) {
@@ -371,7 +365,7 @@ class SlaveProcess {
                     newFiles.add(f)
                 }
             } catch (err) {
-                log.error 'failed to create tmp species file for task ' + task.id, err
+                log.error 'failed to create tmp species file for task ' + taskWrapper.id, err
             }
         }
 
@@ -499,7 +493,7 @@ class SlaveProcess {
     }
 
     String getLayerPath(String resolution, String layer) {
-        String standardLayersDir = grailsApplication.config.data.dir + '/standard_layer/'
+        String standardLayersDir = Holders.config.data.dir + '/standard_layer/'
 
         File file = new File(standardLayersDir + resolution + '/' + layer + '.grd')
         log.debug("Get grid from: " + file.path)
@@ -582,7 +576,7 @@ class SlaveProcess {
                 String[] ids = envelopes[i].getIds()
                 for (int j = 0; j < ids.length; j++) {
                     try {
-                        String obj = Util.getUrl(task.input.layersServiceUrl.toString() + '/object/' + ids[j])
+                        String obj = Util.getUrl(taskWrapper.input.layersServiceUrl.toString() + '/object/' + ids[j])
                         double[][] bbox = SimpleShapeFile.parseWKT(obj.bbox.toString()).getBoundingBox()
                         extents = internalExtents(extents, bbox)
                     } catch (Exception e) {
@@ -670,7 +664,7 @@ class SlaveProcess {
 
                 for (int i = 0; i < ids.length; i++) {
                     srs[i] = SimpleShapeFile.parseWKT(
-                            Util.getUrl(task.input.layersServiceUrl.toString() + "/shape/wkt/" + ids[i])
+                            Util.getUrl(taskWrapper.input.layersServiceUrl.toString() + "/shape/wkt/" + ids[i])
                     )
 
                 }
@@ -805,13 +799,13 @@ class SlaveProcess {
 
     boolean existsLayerPath(String resolution, String field, boolean do_not_lower_resolution) {
 
-        File file = new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
+        File file = new File(Holders.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
 
         //move up a resolution when the file does not exist at the target resolution
         try {
             while (!file.exists() && !do_not_lower_resolution) {
                 TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>()
-                for (File dir : new File(grailsApplication.config.data.dir.toString() + '/standard_layer/').listFiles()) {
+                for (File dir : new File(Holders.config.data.dir.toString() + '/standard_layer/').listFiles()) {
                     if (dir.isDirectory()) {
                         try {
                             resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName())
@@ -827,21 +821,21 @@ class SlaveProcess {
                     break
                 } else {
                     resolution = newResolution
-                    file = new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
+                    file = new File(Holders.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
                 }
             }
         } catch (err) {
             log.error 'failed to find path for: ' + field + ' : ' + resolution, err
         }
 
-        String layerPath = grailsApplication.config.data.dir + '/standard_layer/' + File.separator + resolution + File.separator + field
+        String layerPath = Holders.config.data.dir + '/standard_layer/' + File.separator + resolution + File.separator + field
 
         return new File(layerPath + ".grd").exists()
     }
 
     void convertAsc(String asc, String grd, Boolean saveImage = false) {
         try {
-            task.message = "asc > grd"
+            taskWrapper.task.message = "asc > grd"
             //read asc
             BufferedReader br = new BufferedReader(new FileReader(asc))
             String s
@@ -916,11 +910,11 @@ class SlaveProcess {
                 }
             }
 
-            def cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
+            def cmd = [Holders.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                        "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                        asc, grd + ".tif"]
-            task.message = "asc > tif"
-            runCmd(cmd.toArray(new String[cmd.size()]), false, grailsApplication.config.admin.timeout)
+            taskWrapper.task.message = "asc > tif"
+            runCmd(cmd.toArray(new String[cmd.size()]), false, Holders.config.admin.timeout)
 
         } catch (Exception e) {
             e.printStackTrace()
@@ -1072,15 +1066,16 @@ class SlaveProcess {
     }
 
     def runCmd(String[] cmd, Boolean logToTask, Long timeout) {
-        Util.runCmd(cmd, logToTask, task, timeout)
+        Util.runCmd(cmd, logToTask, taskWrapper, timeout)
     }
 
     def setMessage(String msg) {
-        task.message = msg
+        taskWrapper.task.message = msg
     }
 
     def taskLog(String msg) {
-        task.history.put(System.currentTimeMillis(), msg)
+        taskWrapper.task.history.put(System.currentTimeMillis() as String, msg)
+        taskWrapper.task.message = msg
     }
 
     def getOccurrencesCsv(query, server, fields) {
@@ -1175,4 +1170,77 @@ class SlaveProcess {
      */
     void updateSpec(spec) {}
 
+//    String streamRows(String url, String name) {
+//        task.message = "fetching ${name}"
+//
+//        HttpClient client = HttpClient.newHttpClient()
+//        HttpRequest request = HttpRequest.newBuilder()
+//                .uri(URI.create(url))
+//                .build()
+//
+//        HttpResponse<InputStream> responseOfInputStream = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
+//
+//        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
+//        byte[] buffer = new byte[1024]
+//        try {
+//            InputStream fromIs = responseOfInputStream.body()
+//
+//            int count = 0
+//            int len
+//            while ((len = fromIs.read(buffer)) > 0) {
+//                int newlines = buffer.count('\n')
+//                if (newlines > 0) {
+//                    count += newlines
+//                    task.message = "fetching ${name}: ${count} rows"
+//                }
+//                outputStream.write(buffer, 0, len)
+//            }
+//
+//            System.out.println("Body: " + new String(outputStream.toByteArray(), StandardCharsets.UTF_8));
+//        } catch (err) {
+//            err.printStackTrace()
+//        }
+//
+//
+//    }
+
+    String streamBytes(String url, String name) {
+        taskWrapper.task.message = "fetching ${name}"
+
+        HttpClient client = HttpClient.newHttpClient()
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .build()
+
+        HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
+
+        if (response.statusCode() != 200) {
+            throw new Exception ("Error reading from biocache-service: " + response.statusCode())
+        }
+
+        InputStream inputStream = null
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
+        byte[] buffer = new byte[1024]
+        try {
+            inputStream = response.body()
+
+            int count = 0
+            int len
+            while ((len = inputStream.read(buffer)) > 0) {
+                count += len
+                taskWrapper.task.message = "fetching ${name}: ${count} bytes"
+
+                outputStream.write(buffer, 0, len)
+            }
+
+            new String(outputStream.toByteArray(), StandardCharsets.UTF_8)
+        } catch (err) {
+            log.error(url, err)
+            ""
+        } finally {
+            if (inputStream) {
+                inputStream.close()
+            }
+        }
+    }
 }

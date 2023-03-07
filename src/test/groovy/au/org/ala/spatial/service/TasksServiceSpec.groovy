@@ -112,4 +112,12 @@ class TasksServiceSpec extends Specification implements ServiceUnitTest<TasksSer
 //
 //        //test formattedOutput
 //    }
+
+    void "getAllSpec"() {
+        when:
+        def allSpec = service.getAllSpec()
+
+        then:
+        allSpec.size() > 0
+    }
 }

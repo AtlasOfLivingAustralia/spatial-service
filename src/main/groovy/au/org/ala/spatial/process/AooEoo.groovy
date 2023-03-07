@@ -37,67 +37,79 @@ class AooEoo extends SlaveProcess {
     void start() {
 
         //grid size
-        def gridSize = task.input.resolution.toDouble()
+        def gridSize = taskWrapper.input.resolution.toDouble()
 
         //area to restrict
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
 
         //number of target species
-        def species = JSON.parse(task.input.species.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
 
         // concave hull coverage parameter
-        def alpha = (Double) task.input.coverage
+        def alpha = (Double) taskWrapper.input.coverage
 
         def speciesArea = getSpeciesArea(species, area[0])
 
-        new File(getTaskPath().toString()).mkdirs()
-
         // eoo
+        taskLog("fetching unique coordinates")
         def points = facet("lat_long", speciesArea)
 
-        if (points.size() == 0) {
-            throw new Exception("No occurrences are found in the defined area!")
+        if (points.size() < 3) {
+            throw new Exception("Fewer than 3 occurrences are found in the defined area.")
         }
 
         StringBuilder eWkt = new StringBuilder()
+        taskLog("building GEOMOETRYCOLLECTION of POINTs")
         processPoints(points, eWkt)
 
+        taskLog("counting occurrences")
+        def occurrenceCount = occurrenceCount(speciesArea)
+
         // aoo
+        taskLog("processing lat_long")
         Set<Point2D> aooPoints = aooProcess(points, gridSize)
         double aoo = gridSize * gridSize * aooPoints.size() * 10000
+
+        taskLog("building WKT grid")
         String aooWkt = aooWkt(aooPoints, gridSize)
 
         //radius for point circles size
-        def radius = task.input.radius.toDouble()
+        taskLog("building WKT circles")
+        def radius = taskWrapper.input.radius.toDouble()
         def circleWkt = circleRadiusProcess(aooPoints, radius)
         double circleArea = SpatialUtil.calculateArea(circleWkt) / 1000000.0
-
-        def occurrenceCount = occurrenceCount(speciesArea)
 
         double eoo
         WKTReader reader = new WKTReader()
         String metadata
-        taskLog("Calculating AooEoo!")
         try {
+            taskLog("calculating convex hull")
             Geometry g = reader.read(eWkt.toString())
-
             Geometry convexHull = g.convexHull()
             String wkt = convexHull.toText().replace(" (", "(").replace(", ", ",")
 
             eoo = SpatialUtil.calculateArea(wkt) / 1000000.0
 
             //aoo area
+            taskLog("calculating WKT grid union")
             Geometry a = reader.read(aooWkt)
             Geometry aUnion = a.union()
             String aWkt = aUnion.toText().replace(" (", "(").replace(", ", ",")
 
             //concave hull
-            Geometry concaveHull = buildConcaveHull(g, alpha)
-            String concaveWkt = concaveHull.toText().replace(" (", "(").replace(", ", ",")
-            double alphaHull = SpatialUtil.calculateArea(concaveWkt) / 1000000.0
+            taskLog("calculating concave hull")
+            Geometry concaveHull = buildConcaveHull(g, Double.parseDouble(alpha))
+            Double alphaHull = null
+            String concaveWkt = null
+            if (concaveHull == null) {
+                taskLog("Unable to produce alpha hull")
+            } else {
+                concaveWkt = concaveHull.toText().replace(" (", "(").replace(", ", ",")
+                alphaHull = SpatialUtil.calculateArea(concaveWkt) / 1000000.0
+            }
 
+            taskLog("generating output files")
             if (eoo > 0) {
-
                 def filename = "Extent of occurrence.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), wkt)
                 def values = [file: "Extent of occurrence.wkt",
@@ -113,12 +125,14 @@ class AooEoo extends SlaveProcess {
                 addOutput("areas", (values as JSON).toString(), true)
                 addOutput("files", filename, true)
 
-                filename = "Alpha Hull.wkt"
-                FileUtils.writeStringToFile(new File(getTaskPath() + filename), concaveWkt)
-                values = [file: "Alpha Hull.wkt", name: "Alpha Hull: " + species.name,
-                          description: "Created by AOO and EOO Tool"]
-                addOutput("areas", (values as JSON).toString(), true)
-                addOutput("files", filename, true)
+                if (alphaHull != null) {
+                    filename = "Alpha Hull.wkt"
+                    FileUtils.writeStringToFile(new File(getTaskPath() + filename), concaveWkt)
+                    values = [file       : "Alpha Hull.wkt", name: "Alpha Hull: " + species.name,
+                              description: "Created by AOO and EOO Tool"]
+                    addOutput("areas", (values as JSON).toString(), true)
+                    addOutput("files", filename, true)
+                }
 
                 filename = "Point Radius.wkt"
                 FileUtils.writeStringToFile(new File(getTaskPath() + filename), circleWkt)
@@ -138,7 +152,7 @@ class AooEoo extends SlaveProcess {
                         "<tr><td>Area of Occupancy (AOO: ${gridSize} degree grid)</td><td>" + String.format("%.0f", aoo) + " sq km</td></tr>" +
                         "<tr><td>Area of Occupancy (Points with radius: " + String.format("%.0f", radius) + "m)</td><td>" + String.format("%.0f", circleArea) + " sq km</td></tr>" +
                         "<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>" + (String.format("%.0f", eoo)) + " sq km</td></tr>" +
-                        "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format("%.0f", alphaHull) + " sq km</td></tr>" +
+                        ((alphaHull != null)?"<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format("%.0f", alphaHull) + " sq km</td></tr>":"") +
                         "</table></body></html>" +
                         "</div>"
 
@@ -155,20 +169,24 @@ class AooEoo extends SlaveProcess {
                 writeWktAsKmlToFile(new File(getTaskPath() + filename), aWkt)
                 addOutput("files", filename, true)
 
-                filename = "Alpha Hull.kml"
-                writeWktAsKmlToFile(new File(getTaskPath() + filename), concaveWkt)
-                addOutput("files", filename, true)
+                if (alphaHull != null) {
+                    filename = "Alpha Hull.kml"
+                    writeWktAsKmlToFile(new File(getTaskPath() + filename), concaveWkt)
+                    addOutput("files", filename, true)
+                }
 
                 filename = "Point Radius.kml"
                 writeWktAsKmlToFile(new File(getTaskPath() + filename), circleWkt)
                 addOutput("files", filename, true)
             } else {
+                taskLog("Error: extent of occurrences is 0")
                 log.error 'Extent of occurrences is 0.'
             }
 
         } catch (err) {
-            log.error 'failed to calculate aoo eoo ' + task.id, err
-            throw new Exception("AooEoo:" + task.id + " failed!", err)
+            taskLog("Error: failed to calculate AOO and EOO")
+            log.error 'failed to calculate aoo eoo ' + taskWrapper.id, err
+            throw new Exception("AooEoo:" + taskWrapper.id + " failed!", err)
         }
     }
 
@@ -194,7 +212,7 @@ class AooEoo extends SlaveProcess {
             try {
                 //point=latitude,longitude
                 String[] ll = point.replace("\"", "").split(",")
-                String s = "POINT(" + Double.parseDouble(ll[1]) + " " + Double.parseDouble(ll[0]) + ")"
+                String s = String.format("POINT(%.6f %.6f)", Double.parseDouble(ll[1]), Double.parseDouble(ll[0]))
                 if (pointCount > 0) {
                     sb.append(",")
                 }
@@ -255,11 +273,12 @@ class AooEoo extends SlaveProcess {
             float x = point.x
             float y = point.y
 
-            String s = "((" + x + " " + y + "," +
-                    x + " " + (y + gridsize) + "," +
-                    (x + gridsize) + " " + (y + gridsize) + "," +
-                    (x + gridsize) + " " + y + "," +
-                    x + " " + y + "))"
+            String s = String.format("((%.6f %.6f,%.6f %.6f,%.6f %.6f,%.6f %.6f,%.6f %.6f))",
+                    x, y,
+                    x, y+gridsize,
+                    x+gridsize, y+gridsize,
+                    x+gridsize, y,
+                    x, y)
             if (pointCount > 0) {
                 sb.append(",")
             }

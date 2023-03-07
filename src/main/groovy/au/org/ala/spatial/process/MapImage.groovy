@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.PrintMapComposer
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -28,33 +29,33 @@ class MapImage extends SlaveProcess {
     void start() {
 
         ///area to restrict
-        def bboxJSON = JSON.parse(task.input.bbox.toString())
+        def bboxJSON = JSON.parse(taskWrapper.input.bbox.toString())
         double[] bbox = new double[4]
         for (int i = 0; i < bboxJSON.size(); i++) {
             bbox[i] = (Double) bboxJSON.get(i)
         }
 
-        def windowSizeJSON = JSON.parse(task.input.windowSize.toString())
+        def windowSizeJSON = JSON.parse(taskWrapper.input.windowSize.toString())
         int[] windowSize = new int[2]
         for (int i = 0; i < windowSizeJSON.size(); i++) {
             windowSize[i] = windowSizeJSON.get(i).toString().toInteger()
         }
 
-        def mapLayersJSON = JSON.parse(task.input.mapLayers.toString())
+        def mapLayersJSON = JSON.parse(taskWrapper.input.mapLayers.toString())
         List<String> mapLayers = new ArrayList<String>()
         for (int i = 0; mapLayersJSON != null && i < mapLayersJSON.size(); i++) {
             mapLayers[i] = mapLayersJSON.get(i).toString()
         }
 
-        String baseMap = task.input.baseMap.toString()
-        String comment = task.input.comment.toString()
-        String outputType = task.input.outputType.toString()
-        Integer resolution = "print".equals(task.input.resolution.toString()) ? 1 : 0
+        String baseMap = taskWrapper.input.baseMap.toString()
+        String comment = taskWrapper.input.comment.toString()
+        String outputType = taskWrapper.input.outputType.toString()
+        Integer resolution = "print".equals(taskWrapper.input.resolution.toString()) ? 1 : 0
 
         //test for pid
         def imageBytes = new PrintMapComposer(
-                grailsApplication.config.geoserver.url.toString(),
-                grailsApplication.config.openstreetmap.url.toString(),
+                Holders.config.geoserver.url.toString(),
+                Holders.config.openstreetmap.url.toString(),
                 baseMap,
                 mapLayers,
                 bbox,
@@ -63,30 +64,30 @@ class MapImage extends SlaveProcess {
                 comment,
                 outputType,
                 resolution,
-                grailsApplication.config.data.dir, grailsApplication.config.google.apikey).get()
+                Holders.config.data.dir, Holders.config.google.apikey).get()
 
         if (outputType == 'pdf') {
-            FileUtils.writeByteArrayToFile(new File(getTaskPath() + task.id + ".jpg"), imageBytes)
+            FileUtils.writeByteArrayToFile(new File(getTaskPath() + taskWrapper.id + ".jpg"), imageBytes)
 
-            File pdf = new File(getTaskPath() + task.id + ".pdf")
+            File pdf = new File(getTaskPath() + taskWrapper.id + ".pdf")
             def outputStream = FileUtils.openOutputStream(pdf)
 
-            InputStream stream = new URL(grailsApplication.config.grails.serverURL + '/slave/exportMap/' + task.id).openStream()
+            InputStream stream = new URL(Holders.config.grails.serverURL + '/slave/exportMap/' + taskWrapper.id).openStream()
             outputStream << stream
             outputStream.flush()
             outputStream.close()
 
         } else {
-            FileUtils.writeByteArrayToFile(new File(getTaskPath() + task.id + "." + outputType), imageBytes)
+            FileUtils.writeByteArrayToFile(new File(getTaskPath() + taskWrapper.id + "." + outputType), imageBytes)
         }
 
         File dir = new File(getTaskPath())
 
         File pdf = new File(getTaskPath() + 'output.pdf')
         if (dir.listFiles().length == 0) {
-            task.history.put(System.currentTimeMillis(), "Failed.")
+            taskWrapper.history.put(System.currentTimeMillis() as String, "Failed.")
         } else if (outputType == 'pdf' && !pdf.exists()) {
-            task.history.put(System.currentTimeMillis(), "Failed to make PDF. Exporting html instead.")
+            taskWrapper.history.put(System.currentTimeMillis() as String, "Failed to make PDF. Exporting html instead.")
         }
 
         //all for download

@@ -15,74 +15,13 @@
 
 package au.org.ala.spatial.slave
 
-import grails.converters.JSON
+import grails.util.Holders
 
 import javax.imageio.ImageIO
-
-import static grails.async.Promises.onComplete
-import static grails.async.Promises.task
 
 class SlaveController {
 
     def slaveService
-    def taskService
-    def fileLockService
-    def slaveAuthService
-
-    def reRegister() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        onComplete([task { slaveService.registerWithMaster() }]) { result ->
-        }
-
-        def map = [status: "requested re-register"]
-        render map as JSON
-    }
-
-    def capabilities() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        def m = taskService.allSpec
-
-        render m as JSON
-    }
-
-    //TODO: limits vs running tasks, active threads resources, etc
-    def status() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        def map = [limits    : slaveService.getLimits(), tasks: taskService.running,
-                   file_locks: [
-                           tasks_waiting: fileLockService.locks.collect { k, v -> [id: v.task.id, files: v.files] },
-                           locked_files : fileLockService.filesList.collect { k, v -> [file: k, id: v.id] }]]
-
-        render map as JSON
-    }
-
-    //TODO: check tasks are alive
-    def ping() {
-        if (!slaveAuthService.isValid(params.api_key)) {
-            def err = [error: 'not authorised']
-            render err as JSON
-            return
-        }
-
-        def map = [status: "alive"]
-
-        render map as JSON
-    }
 
     /**
      * pdf area report
@@ -100,12 +39,12 @@ class SlaveController {
         def i = params.start?.toInteger() ?: 1
         def end = params.end?.toInteger() ?: 5000
         def pageHeader
-        def pageFooter = new File(grailsApplication.config.data.dir + '/public/' + id + '/footer.html').text
-        def tableOfContentsHeading = new File(grailsApplication.config.data.dir + '/public/' + id + '/tableOfContents.html').text
+        def pageFooter = new File(Holders.config.data.dir + '/public/' + id + '/footer.html').text
+        def tableOfContentsHeading = new File(Holders.config.data.dir + '/public/' + id + '/tableOfContents.html').text
 
         while (i <= end &&
-                ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
-                        (file = new File(grailsApplication.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists())) {
+                ((file = new File(Holders.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
+                        (file = new File(Holders.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists())) {
 
             if (file.text.contains("page-header")) {
                 pageHeader = cleanPageText(file.text, i, file)
@@ -149,7 +88,7 @@ class SlaveController {
                 }
             }
         }
-        String s;
+        String s
         sb.append("</ol>")
 
         if (!bookmarks && pages.size() > 0) {
@@ -175,10 +114,10 @@ class SlaveController {
         }
 
         def css
-        if (new File(grailsApplication.config.data.dir + '/public/' + id).exists()) {
-            css = new File(grailsApplication.config.data.dir + '/public/' + id + '/areaReport.css').text
+        if (new File(Holders.config.data.dir + '/public/' + id).exists()) {
+            css = new File(Holders.config.data.dir + '/public/' + id + '/areaReport.css').text
         } else {
-            css = new File(grailsApplication.config.data.dir + '/private/' + id + '/areaReport.css').text
+            css = new File(Holders.config.data.dir + '/private/' + id + '/areaReport.css').text
         }
 
         renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id, css: css, footer: pageFooter], filename: "areaReport" + id + ".pdf", stream: isStream)
@@ -193,8 +132,8 @@ class SlaveController {
     }
 
     def exportMap(Long id) {
-        def img = new File(grailsApplication.config.data.dir + '/public/' + id + '/' + id + '.jpg')
-        if (!img.exists()) img = new File(grailsApplication.config.data.dir + '/private/' + id + '/' + id + '.jpg')
+        def img = new File(Holders.config.data.dir + '/public/' + id + '/' + id + '.jpg')
+        if (!img.exists()) img = new File(Holders.config.data.dir + '/private/' + id + '/' + id + '.jpg')
 
         def image = ImageIO.read(img)
 
@@ -206,11 +145,11 @@ class SlaveController {
     def pdf(Long id) {
         def pages = []
 
-        if (!new File(grailsApplication.config.data.dir + '/public/' + id + '/report.1.html').exists()) {
+        if (!new File(Holders.config.data.dir + '/public/' + id + '/report.1.html').exists()) {
             //export map
 
-            def img = new File(grailsApplication.config.data.dir + '/public/' + id + '/' + id + '.jpg')
-            if (!img.exists()) img = new File(grailsApplication.config.data.dir + '/private/' + id + '/' + id + '.jpg')
+            def img = new File(Holders.config.data.dir + '/public/' + id + '/' + id + '.jpg')
+            if (!img.exists()) img = new File(Holders.config.data.dir + '/private/' + id + '/' + id + '.jpg')
 
             def image = ImageIO.read(img)
 
@@ -225,8 +164,8 @@ class SlaveController {
             File file
             def i = 1
             def pageHeader
-            while ((file = new File(grailsApplication.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
-                    (file = new File(grailsApplication.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists()) {
+            while ((file = new File(Holders.config.data.dir + '/public/' + id + '/report.' + i + '.html')).exists() ||
+                    (file = new File(Holders.config.data.dir + '/private/' + id + '/report.' + i + '.html')).exists()) {
                 pages.add(file.text.replaceAll("^.*<body>", "").//<div style='page-break-before: always;'>").
                         replaceAll("</body>.*\$", "").//</div>").
                         replaceAll("<tr></tr>", "").
@@ -271,7 +210,7 @@ class SlaveController {
                     }
                 }
             }
-            String s;
+            String s
             sb.append("</ol>")
 
             if (!bookmarks) {

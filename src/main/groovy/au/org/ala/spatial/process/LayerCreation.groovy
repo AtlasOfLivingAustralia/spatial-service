@@ -22,6 +22,7 @@ import au.org.ala.layers.util.Diva2bil
 import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.GeomMakeValid
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -29,19 +30,19 @@ import org.apache.commons.io.FileUtils
 class LayerCreation extends SlaveProcess {
 
     void start() {
-        String uploadId = task.input.uploadId
-        String layerId = task.input.layerId
+        String uploadId = taskWrapper.input.uploadId
+        String layerId = taskWrapper.input.layerId
 
         // get layer info
         Map layer = getLayer(layerId)
 
         if (layer == null) {
-            task.err.put(String.valueOf(System.currentTimeMillis()), "layer not found for id: " + layerId)
+            taskWrapper.err.put(String.valueOf(System.currentTimeMillis()), "layer not found for id: " + layerId)
             return
         }
 
         //upload shp into layersdb in a table with name layer.id
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
         File shpUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".shp")
         File bilUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".bil")
         File tifUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".tif")
@@ -58,42 +59,42 @@ class LayerCreation extends SlaveProcess {
 
             //reproject to 4326
             String[] cmd = [
-                    grailsApplication.config.gdal.dir + "/gdalwarp",
+                    Holders.config.gdal.dir + "/gdalwarp",
                     "-t_srs", "EPSG:4326"
                     , srcPath
                     , outPath + "_tmp.bil"]
-            task.message = 'reprojecting shp'
+            taskWrapper.message = 'reprojecting shp'
             try {
-                runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                runCmd(cmd, true, Holders.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (1)", e)
             }
-            cmd = [grailsApplication.config.gdal.dir + "/gdalinfo",
+            cmd = [Holders.config.gdal.dir + "/gdalinfo",
                    "-hist"
                    , outPath + "_tmp.bil"]
             try {
-                runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                runCmd(cmd, true, Holders.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (2)", e)
             }
             // make .hdr
-            cmd = [grailsApplication.config.gdal.dir + "/gdal_translate",
+            cmd = [Holders.config.gdal.dir + "/gdal_translate",
                    "-of", "Ehdr"
                    , outPath + "_tmp.bil"
                    , outPath + ".bil"]
             try {
-                runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                runCmd(cmd, true, Holders.config.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (3)", e)
             }
-            // delete tmp 
+            // delete tmp
             new File(outPath + "_tmp.bil").delete()
 
-            task.message = 'bil > diva'
+            taskWrapper.message = 'bil > diva'
             Bil2diva.bil2diva(outPath, outPath, layer.environmentalvalueunits.toString())
 
             if ("Contextual".equalsIgnoreCase(layer.type.toString())) {
-                task.message = "process grid file to shapes"
+                taskWrapper.message = "process grid file to shapes"
 
                 FileUtils.copyFile(txtUploaded, new File(dir + "/layer/" + layer.name + ".txt"))
                 GridClassBuilder.buildFromGrid(dir + "/layer/" + layer.name)
@@ -123,7 +124,7 @@ class LayerCreation extends SlaveProcess {
                 //bil may have changed
                 Diva2bil.diva2bil(outPath, outPath)
 
-                task.message = ""
+                taskWrapper.message = ""
             } else {
                 addOutput('layers', "/layer/" + layer.name + '.grd')
                 addOutput('layers', "/layer/" + layer.name + '.gri')
@@ -133,9 +134,9 @@ class LayerCreation extends SlaveProcess {
             addOutput('layers', "/layer/" + layer.name + '.sld')
 
             //bil 2 geotiff (?)
-            task.message = 'bil > geotiff'
+            taskWrapper.message = 'bil > geotiff'
             try {
-                SpatialUtils.toGeotiff(grailsApplication.config.gdal.dir, outPath + ".bil")
+                SpatialUtils.toGeotiff(Holders.config.gdal.dir, outPath + ".bil")
             } catch (Exception e) {
                 log.error("error making geotiff", e)
             }
@@ -151,15 +152,15 @@ class LayerCreation extends SlaveProcess {
                 File dst = new File(dir + newName)
                 dst.getParentFile().mkdirs()
 
-                task.message = 'ensuring shapefile is valid'
+                taskWrapper.message = 'ensuring shapefile is valid'
                 GeomMakeValid.makeValidShapefile(shpUploaded.getPath(), dst.getPath() + ".shp")
 
-                task.message = 'moving files'
-                String[] cmd = [grailsApplication.config.gdal.dir + '/ogrinfo',
+                taskWrapper.message = 'moving files'
+                String[] cmd = [Holders.config.gdal.dir + '/ogrinfo',
                                 dst.getPath() + ".shp", "-sql", "CREATE SPATIAL INDEX ON " + layer.name]
-                task.message = 'shp spatial index'
+                taskWrapper.message = 'shp spatial index'
                 try {
-                    runCmd(cmd, true, grailsApplication.config.admin.timeout)
+                    runCmd(cmd, true, Holders.config.admin.timeout)
                 } catch (Exception e) {
                     log.error("error running shp spatial index", e)
                 }
@@ -169,7 +170,7 @@ class LayerCreation extends SlaveProcess {
         }
 
         //delete from uploads dir if master service is remote
-        if (!grailsApplication.config.service.enable.toBoolean()) {
+        if (!Holders.config.service.enable.toBoolean()) {
             FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
         }
         addOutput("process", "Thumbnails " + ([] as JSON))

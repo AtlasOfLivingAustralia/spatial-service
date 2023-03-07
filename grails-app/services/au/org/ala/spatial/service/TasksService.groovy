@@ -19,94 +19,53 @@ import au.org.ala.layers.dto.Field
 import au.org.ala.layers.dto.Objects
 import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.process.SlaveProcess
+import au.org.ala.spatial.slave.TaskWrapper
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
+import grails.util.Holders
 import org.apache.commons.lang3.StringUtils
 
 class TasksService {
 
-    def masterService
     def objectDao
-    def grailsApplication
     def fieldDao
     def layerIntersectDao
 
-    def taskService
+    def publishService
+    def taskQueueService
 
-    def cancel(task) {
-        try {
-            def response = null
+    def transientTasks = [:]
 
-            if (task?.slave) {
-                if (task.slave.equals(grailsApplication.config.grails.serverURL)) {
-                    taskService.cancel(task.id)
-                    response = true
-                } else {
-                    def url = task.slave + "/task/cancel/" + task.id
-                    response = grails.converters.JSON.parse(Util.getUrl(url))
-                }
-            }
-
-            // TODO: confirm the task is not finished before setting as cancelled
-            update(task.id, [status: 2, message: 'cancelled'])
-
-            if (response != null) {
-                return true
-            }
-        } catch (Exception e) {
-            log.error("failed to cancel task: " + task?.id, e)
-        }
-
-        return false
+    def cancel(taskId) {
+        taskQueueService.cancel(taskId)
     }
 
-    def getStatus(Task task) {
-        def map = [status: task.status, message: task.message, id: task.id, name: task.name]
-
-        if (task.history) {
-            map.history = task.history
+    def getStatus(taskId) {
+        def task = transientTasks.get(taskId)
+        if (!task) {
+            task = Task.get(taskId)
         }
+        if (task) {
+            def map = [status: task.status, message: task.message, id: task.id, name: task.name]
 
-        if (task.output) {
-            // TODO: cleanup task.output, add resource information for each type,
-            // e.g. .zip requires a download URL, .html requires link URL, .tif and .shp require mappable information
-            map.put('output', task.output)
-        }
+            if (task.history) {
+                map.history = task.history
+            }
 
-        map
-    }
+            if (task.output) {
+                // e.g. .zip requires a download URL, .html requires link URL, .tif and .shp require mappable information
+                map.put('output', task.output)
+            }
 
-    @Transactional(readOnly = false)
-    synchronized def update(id, newValues) {
-        Task.withNewTransaction {
-            _update(id, newValues)
+            map
+        } else {
+            null
         }
     }
 
     private trimString(str, len) {
         return str.toString().substring(0, Math.min(len, str.toString().length()))
-    }
-
-    synchronized def _update(id, newValues) {
-        Task t = Task.get(id)
-        if (t != null) {
-            newValues.each { k, v ->
-                if ('status'.equals(k)) t.status = Integer.parseInt("" + v)
-                else if ('message'.equals(k)) t.message = v
-                else if ('url'.equals(k)) t.url = v
-                else if ('history'.equals(k)) {
-                    v.each { k1, v1 ->
-                        t.history.put("" + k1, trimString(v1, 254))
-                    }
-                } else if ('slave'.equals(k)) t.slave = v
-                else if ('output'.equals(k)) t.output = v
-            }
-        }
-        if (!t.save(flush: true)) {
-            t.errors.each {
-                log.error 'failed update status for task:' + id
-            }
-        }
     }
 
     def create(name, identifier, input) {
@@ -123,7 +82,7 @@ class TasksService {
         if (input == null) input = [:] as Map
 
         //get task spec
-        def spec = masterService.spec(true).get(name)
+        def spec = spec(true).get(name)
 
         if (spec == null) {
             log.error("failed to find spec for: " + name)
@@ -145,6 +104,8 @@ class TasksService {
             task = new Task([name  : String.valueOf(name), tag: String.valueOf(identifier),
                              userId: String.valueOf(userId), sessionId: String.valueOf(sessionId),
                              email : String.valueOf(email)])
+
+            task.history.put(System.currentTimeMillis() as String, "created")
 
             if (!task.save()) {
                 task.errors.each {
@@ -197,6 +158,10 @@ class TasksService {
             }
         }
 
+        transientTasks.put(task.id as Long, task)
+
+        taskQueueService.queue(task, spec)
+
         task
     }
 
@@ -224,73 +189,62 @@ class TasksService {
 
     // attach final log, message and outputs to a task
     @Transactional(readOnly = false)
-    def afterPublish(taskId, spec) {
-
-        def task = Task.read(taskId)
-        //task.err = spec.err
-
-        def newValues = [:]
-        if (spec.history != null && spec.history.size() > 0) newValues.put('history', spec.history)
-
-        // remove any existing outputs
-        if (task.output) {
-            Task.withTransaction {
-                for (def o : task.output) {
-                    o.delete()
-                }
-                task.output.clear()
-                if (!task.save(flush: true)) {
-                    it.errors.each {
-                        log.error it
-                    }
-                }
-            }
-        }
+    def afterPublish(TaskWrapper taskWrapper) {
 
         def formattedOutput = []
-        spec.output.each { k, out ->
+        taskWrapper.spec.output.each { k, out ->
             if (k.equals('layers') || k.equals('layer')) {
                 out.files.each { f1 ->
                     if (f1.endsWith('.tif')) {
                         //an environmental file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     } else if (f1.endsWith('.shp')) {
                         //contextual file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     }
                 }
             } else if (k.equals('metadata')) {
                 out.files.each { f1 ->
                     if (f1.endsWith('.html')) {
                         //a metadata file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     }
                 }
             } else if (k.equals('download')) {
                 //a download zip exists
-                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: task))
+                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: taskWrapper.task))
             } else if (k.equals('areas') || k.equals('envelopes')) {
                 out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: task))
+                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: taskWrapper.task))
                 }
             } else if (k.equals('species')) {
                 out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: task))
+                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: taskWrapper.task))
                 }
             } else if (k.equals('csv')) {
                 out.files.each { f1 ->
                     if (f1.endsWith('.csv')) {
                         //a csv file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: task))
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     }
                 }
             } else {
                 out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: task))
+                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: taskWrapper.task))
                 }
             }
-
         }
+
+        // flush task because it is finished
+        Task.withTransaction {
+            if (!taskWrapper.task.save(flush: true)) {
+                taskWrapper.task.errors.each {
+                    log.error it
+                }
+            }
+        }
+
+        // flush outputs
         OutputParameter.withTransaction {
             formattedOutput.each {
                 if (!it.save(flush: true)) {
@@ -301,24 +255,10 @@ class TasksService {
             }
         }
 
-        if (formattedOutput.size() > 0) newValues.put('output', formattedOutput)
-
-
-        if (newValues.size() > 0) {
-            Task.withTransaction {
-                _update(taskId, newValues)
-            }
-        }
+        // fetch and include outputs, inputs, history
+        taskWrapper.task.output = formattedOutput
     }
 
-    def validateInput(request) {
-        try {
-            validateInput(request.name, request.input, true)
-        } catch (err) {
-            log.error(err.getMessage(), err)
-            [generalError: err.getMessage()]
-        }
-    }
     /**
      * Validate input against name's spec.
      *
@@ -332,7 +272,7 @@ class TasksService {
         if (input == null) input = [:] as Map
 
         //get task spec
-        def spec = masterService.spec(isAdmin).get(name)
+        def spec = spec(isAdmin).get(name)
 
         def errors = [:]
 
@@ -441,7 +381,7 @@ class TasksService {
                     }
 
                     if ("upload".equals(v.type)) {
-                        if (!new File(grailsApplication.config.data.dir + "/uploads/" + i).exists()) {
+                        if (!new File(Holders.config.data.dir + "/uploads/" + i).exists()) {
                             errors.put(k, "Input parameter $k=$i has no upload directory.")
                         }
                     }
@@ -515,5 +455,136 @@ class TasksService {
         }
 
         errors
+    }
+
+    def reRun(Task task) {
+        //reset output
+        OutputParameter.withNewTransaction {
+            OutputParameter.findAllByTask(task).each {
+                it.delete()
+            }
+        }
+
+        //clear history
+        au.org.ala.spatial.service.Task.withTransaction {
+            if (task.history) {
+                task.history.clear()
+                if (!task.save()) {
+                    it.errors.each {
+                        log.error it
+                    }
+                }
+            }
+        }
+
+        task.status = 0
+        task.message = "restarting"
+        task.history.put(System.currentTimeMillis() as String, "restarted")
+
+        transientTasks.put(task.id as Long, task)
+
+        taskQueueService.queue(task, spec(true)[task.name])
+    }
+
+    def _spec = [:]
+    def _specAdmin = [:]
+
+    def spec(boolean includePrivate) {
+        if (!_spec) {
+
+            getAllSpec().each { it ->
+                def name = it.name
+                def cap = it
+                _specAdmin.put(name, cap)
+                boolean iPrivate = !cap.containsKey('private') || !cap.private.containsKey('public') || cap.private.public
+                if (iPrivate) {
+                    _spec.put(name, cap.findAll { i ->
+                        if (!includePrivate && i.key.equals('private')) {
+                            null
+                        } else {
+                            i
+                        }
+                    })
+                }
+            }
+
+        }
+
+        if (includePrivate) {
+            _specAdmin
+        } else {
+            _spec
+        }
+    }
+
+    private List getAllSpec() {
+        List list = []
+
+        def resource = TaskQueueService.class.getResource("/processes/")
+        def dir = new File(resource.getPath())
+
+        // default processes
+        for (File f : dir.listFiles()) {
+            if (f.getName().endsWith(".json") && !f.getName().equals("limits.json")) {
+                String name = "au.org.ala.spatial.process." + f.getName().substring(0, f.getName().length() - 5)
+                try {
+                    Class clazz = Class.forName(name)
+                    list.add(((SlaveProcess) clazz.newInstance()).spec(null))
+                } catch (err) {
+                    log.error("unable to instantiate $name. ${err.getMessage()}", err)
+                }
+            }
+        }
+
+        // Additional SlaveProcesses can be initialized with an external spec with a unique filename:
+        // - /data/spatial-service/config/processes/n.ProcessName.json
+        // Where:
+        // - `n` is a value that makes the filename unique
+        // - `ProcessName` is a valid class that extends SlaveProcess
+        for (File f : new File('/data/spatial-service/config/processes').listFiles()) {
+            // `ProcessName`
+            def fname = f.getName().substring(f.getName().indexOf('.') + 1)
+
+            // `n`
+            def funqiue = f.getName().substring(0, f.getName().indexOf('.'))
+
+            // add process class with this spec file
+            if (f.getName().endsWith(".json") && !f.getName().equals("limits.json")) {
+                String name = "au.org.ala.spatial.process." + fname.substring(0, fname.length() - 5)
+                try {
+                    Class clazz = Class.forName(name)
+                    list.add(((SlaveProcess) clazz.newInstance()).spec(JSON.parse(f.text) as Map))
+                } catch (err) {
+                    log.error("unable to instantiate $name. ${err.getMessage()}", err)
+                }
+            }
+        }
+
+        list
+    }
+
+    Map publish(TaskWrapper taskWrapper) {
+        Map map = [:]
+        try {
+            // update spec.output.files for files to add to download.zip
+            taskWrapper.spec.output.each { k, v ->
+                if (taskWrapper.output.containsKey(k)) {
+                    v.put('files', taskWrapper.output.get(k))
+                }
+            }
+
+            // do publishing
+            publishService.publish(taskWrapper.path, taskWrapper.spec)
+
+            //update log and outputs
+            afterPublish(taskWrapper)
+
+            map.put('status', 'published')
+        } catch (err) {
+            log.error 'failed to publish files', err
+            map.put('status', 'failed')
+        }
+
+        map
     }
 }

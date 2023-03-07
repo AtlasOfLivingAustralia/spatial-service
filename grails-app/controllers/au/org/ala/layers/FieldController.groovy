@@ -62,8 +62,8 @@ class FieldController {
     @Path("fields")
     @Produces("application/json")
     def index() {
-        if (params.containsKey('q')) {
-            search()
+        if (params?.q) {
+            render fieldDao.getFieldsByCriteria(params.q) as JSON
         } else {
             render fieldDao.getFields(true) as JSON
         }
@@ -163,7 +163,7 @@ class FieldController {
     def show(String id) {
         Integer start = params.containsKey('start') ? Integer.parseInt(params.start.toString()) : 0
         Integer pageSize = params.containsKey('pageSize') ? Integer.parseInt(params.pageSize.toString()) : -1
-        String q = params.containsKey('q') ? params.q : null;
+        String q = params.containsKey('q') ? params.q : null
 
         //test field id value
         Field field = fieldDao.getFieldById(id, false)
@@ -222,10 +222,6 @@ class FieldController {
     @Produces("application/json")
     def search() {
         def q = params.containsKey('q') ? params.q.toString() : ''
-        render fieldDao.getFieldsByCriteria(q) as JSON
-    }
 
-    def searchLayers() {
-        render fieldDao.getLayersByCriteria(params.q.toString()) as JSON
     }
 }

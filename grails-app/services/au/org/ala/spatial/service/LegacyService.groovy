@@ -26,6 +26,7 @@ import com.thoughtworks.xstream.io.HierarchicalStreamReader
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter
 import com.thoughtworks.xstream.io.xml.DomDriver
 import com.thoughtworks.xstream.mapper.MapperWrapper
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.ArrayUtils
 
@@ -33,42 +34,42 @@ import java.nio.file.Files
 
 class LegacyService {
 
-    def grailsApplication
+
     def manageLayersService
     def layerDao
 
     def apply() {
-        if (!grailsApplication.config.legacy.enabled.toBoolean()) return
+        if (!Holders.config.legacy.enabled.toBoolean()) return
 
         //copy layer distances file
-        File f1 = new File(grailsApplication.config.legacy.ALASPATIAL_OUTPUT_PATH + '/layerDistances.properties')
-        File f2 = new File(grailsApplication.config.legacy.workingdir + '/layerDistances.properties')
-        File nf = new File(grailsApplication.config.data.dir + '/public/layerDistances.properties')
+        File f1 = new File(Holders.config.legacy.ALASPATIAL_OUTPUT_PATH + '/layerDistances.properties')
+        File f2 = new File(Holders.config.legacy.workingdir + '/layerDistances.properties')
+        File nf = new File(Holders.config.data.dir + '/public/layerDistances.properties')
         if (!nf.exists()) {
             if (f1.exists()) legacySet(f1, nf)
             else if (f2.exists()) legacySet(f2, nf)
         }
 
         //link layer files
-        def legacyDir = grailsApplication.config.legacy.LAYER_FILES_PATH
+        def legacyDir = Holders.config.legacy.LAYER_FILES_PATH
         def legacyLayerDirs = ['/diva', '/shape', '/geotiff', '/shape_diva']
 
         for (String dir : legacyLayerDirs) {
             def files = new File(legacyDir + dir).listFiles()
             for (File f : files) {
-                nf = new File(grailsApplication.config.data.dir + '/layer/' + f.getName())
+                nf = new File(Holders.config.data.dir + '/layer/' + f.getName())
                 legacySet(f, nf)
             }
         }
 
         //link standard grid files
-        def oldDir = new File(grailsApplication.config.legacy.ANALYSIS_LAYER_FILES_PATH.toString())
-        def newDir = new File(grailsApplication.config.data.dir.toString() + '/standard_layer')
+        def oldDir = new File(Holders.config.legacy.ANALYSIS_LAYER_FILES_PATH.toString())
+        def newDir = new File(Holders.config.data.dir.toString() + '/standard_layer')
         newDir.mkdirs()
         legacySet(oldDir, newDir)
 
         //link analysis files
-        legacyDir = grailsApplication.config.legacy.ALASPATIAL_OUTPUT_PATH + '/'
+        legacyDir = Holders.config.legacy.ALASPATIAL_OUTPUT_PATH + '/'
         legacyLayerDirs = ['aloc', 'gdm', 'layerthumbs', 'maxent', 'scatterplot', 'session', 'sitesbyspecies']
 
         for (String dir : legacyLayerDirs) {
@@ -78,7 +79,7 @@ class LegacyService {
             def sitesbyspecies = false
             for (File f : files) {
                 if ('layerthumbs'.equalsIgnoreCase(dir)) {
-                    File out = new File(grailsApplication.config.data.dir + '/public/thumbnail')
+                    File out = new File(Holders.config.data.dir + '/public/thumbnail')
                     out.mkdirs()
                     nf = new File(out.getPath() + '/' + f.getName().replace("ALA:", ""))
                     if (!nf.exists()) {
@@ -87,8 +88,8 @@ class LegacyService {
                 } else if ("session".equalsIgnoreCase(dir)) {
                     convertSessionFiles(f.listFiles(), f.getName())
                 } else if ('scatterplot'.equalsIgnoreCase(dir)) {
-                    File data = new File(grailsApplication.config.legacy.workingdir + '/' + f.getName())
-                    File out = new File(grailsApplication.config.data.dir + "/public/" + f.getName())
+                    File data = new File(Holders.config.legacy.workingdir + '/' + f.getName())
+                    File out = new File(Holders.config.data.dir + "/public/" + f.getName())
                     File img = new File(f.getPath() + '/' + f.getName() + '/' + f.getName() + '.png')
                     if (data.exists() && img.exists() && !out.exists()) {
                         out.mkdirs()
@@ -98,7 +99,7 @@ class LegacyService {
                         //TODO: convertScatterplotFiles(data, out)
 
                         String time = String.valueOf(System.currentTimeMillis())
-                        String imgurl = grailsApplication.config.grails.serverURL + '/tasks/output/' + f.getName() + '/' + f.getName() + ".png"
+                        String imgurl = Holders.config.grails.serverURL + '/tasks/output/' + f.getName() + '/' + f.getName() + ".png"
                         String spec = "{\"history\":{${time} : \"Imported from previous spatial portal\"},\n" +
                                 "                                    \"input\":{},\n" +
                                 "                                    \"isBackground\":false,\n" +
@@ -110,16 +111,16 @@ class LegacyService {
                                 "                                    \"download\":{\"description\":\"Files in the download zip.\"}},\n" +
                                 "                                    \"version\":1.0}"
 
-                        FileUtils.writeStringToFile(new File(grailsApplication.config.data.dir + "/public/" + f.getName() + '/spec.json'), spec)
+                        FileUtils.writeStringToFile(new File(Holders.config.data.dir + "/public/" + f.getName() + '/spec.json'), spec)
                     }
                 } else if (f.isDirectory()) {
                     //link layer files
                     def analysisFiles = f.listFiles()
-                    File taskDir = new File(grailsApplication.config.data.dir + '/public/' + f.getName())
+                    File taskDir = new File(Holders.config.data.dir + '/public/' + f.getName())
                     if (!taskDir.exists()) taskDir.mkdirs()
                     for (File af : analysisFiles) {
                         if (af.getName().endsWith(".grd") || af.getName().endsWith(".gri")) {
-                            nf = new File(grailsApplication.config.data.dir + '/layer/' + f.getName() + af.getName())
+                            nf = new File(Holders.config.data.dir + '/layer/' + f.getName() + af.getName())
                             if (!nf.exists()) {
                                 legacySet(af, nf)
                             }
@@ -129,16 +130,16 @@ class LegacyService {
                             }
                         } else if (af.getName().endsWith(".asc")) {
                             String newName = f.getName() + '_' + af.getName().replaceAll("\\..*", ".tif")
-                            nf = new File("${grailsApplication.config.data.dir}/layer/${newName}.tif")
+                            nf = new File("${Holders.config.data.dir}/layer/${newName}.tif")
                             if (!nf.exists()) {
-                                if ("move".equalsIgnoreCase(grailsApplication.config.legacy.type.toString())) {
+                                if ("move".equalsIgnoreCase(Holders.config.legacy.type.toString())) {
 
                                     //copy as tiff
-                                    String[] cmd = [grailsApplication.config.gdal.dir + "/gdal_translate", "-of", "GTiff",
+                                    String[] cmd = [Holders.config.gdal.dir + "/gdal_translate", "-of", "GTiff",
                                                     "-a_srs", "EPSG:4326", "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES",
                                                     "-co", "BIGTIFF=IF_SAFER", af.getPath(),
-                                                    grailsApplication.config.data.dir + '/layer/' + newName + '.tif']
-                                    Util.runCmd(cmd, grailsApplication.config.admin.timeout)
+                                                    Holders.config.data.dir + '/layer/' + newName + '.tif']
+                                    Util.runCmd(cmd, Holders.config.admin.timeout)
 
                                     //copy sld
                                     File sld = new File(taskDir.getPath() + '/' + newName + '.sld')
@@ -165,7 +166,7 @@ class LegacyService {
                                     }
                                     if (!sldName.isEmpty()) {
                                         FileUtils.writeStringToFile(sld, getSld(sldName))
-                                        FileUtils.copyFile(sld, new File(grailsApplication.config.data.dir + '/layer/' + newName + '.sld'))
+                                        FileUtils.copyFile(sld, new File(Holders.config.data.dir + '/layer/' + newName + '.sld'))
                                     }
 
                                     //delete layer
@@ -173,7 +174,7 @@ class LegacyService {
 
                                     //add new layer
                                     createLayer(af.getParent() + '/' + newName + '.tif', oldLayerName)
-                                } else if ("copy".equalsIgnoreCase(grailsApplication.config.legacy.type.toString())) {
+                                } else if ("copy".equalsIgnoreCase(Holders.config.legacy.type.toString())) {
                                     //add new layer, it has the same name so skip creation
                                 }
                             }
@@ -247,7 +248,7 @@ class LegacyService {
                                 "                        \"metadata\":{\"files\":[\"sxs_metadata.html\"],\"description\":\"Points To Grid metadata.\"}},\n" +
                                 "                        \"version\": 0}"
                     }
-                    FileUtils.writeStringToFile(new File(grailsApplication.config.data.dir + "/public/" + f.getName() + '/spec.json'), spec)
+                    FileUtils.writeStringToFile(new File(Holders.config.data.dir + "/public/" + f.getName() + '/spec.json'), spec)
                 }
             }
         }
@@ -376,9 +377,9 @@ class LegacyService {
     }
 
     def getSld(String name) {
-        def geoserverUrl = grailsApplication.config.geoserver.url
-        def geoserverUsername = grailsApplication.config.geoserver.username
-        def geoserverPassword = grailsApplication.config.geoserver.password
+        def geoserverUrl = Holders.config.geoserver.url
+        def geoserverUsername = Holders.config.geoserver.username
+        def geoserverPassword = Holders.config.geoserver.password
 
         def url = geoserverUrl + "/rest/styles/" + name
         def result = manageLayersService.httpCall("GET", url, geoserverUsername, geoserverPassword, null, null, "text/plain")
@@ -388,8 +389,8 @@ class LegacyService {
 
     def legacySet(File src, File target, boolean force = false) {
         boolean symbolic = Files.isSymbolicLink(target.toPath())
-        boolean move = "move".equalsIgnoreCase(grailsApplication.config.legacy.type.toString())
-        boolean copy = "copy".equalsIgnoreCase(grailsApplication.config.legacy.type.toString())
+        boolean move = "move".equalsIgnoreCase(Holders.config.legacy.type.toString())
+        boolean copy = "copy".equalsIgnoreCase(Holders.config.legacy.type.toString())
 
         if (src.exists() && (!target.exists() || force || (symbolic && (move || copy)))) {
             if (!target.getParentFile().exists())
@@ -430,9 +431,9 @@ class LegacyService {
     }
 
     def deleteLayer(String layername) {
-        def geoserverUrl = grailsApplication.config.geoserver.url
-        def geoserverUsername = grailsApplication.config.geoserver.username
-        def geoserverPassword = grailsApplication.config.geoserver.password
+        def geoserverUrl = Holders.config.geoserver.url
+        def geoserverUsername = Holders.config.geoserver.username
+        def geoserverPassword = Holders.config.geoserver.password
 
         try {
             //attempt to delete
@@ -450,9 +451,9 @@ class LegacyService {
         def sld = new File(tiff.replace(".tif", ".sld"))
         def name = layername
 
-        def geoserverUrl = grailsApplication.config.geoserver.url
-        def geoserverUsername = grailsApplication.config.geoserver.username
-        def geoserverPassword = grailsApplication.config.geoserver.password
+        def geoserverUrl = Holders.config.geoserver.url
+        def geoserverUsername = Holders.config.geoserver.username
+        def geoserverPassword = Holders.config.geoserver.password
 
         if (geotiff.exists()) {
             try {

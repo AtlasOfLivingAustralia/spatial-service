@@ -16,9 +16,9 @@
 package au.org.ala.spatial.slave
 
 import au.org.ala.spatial.StreamGobbler
+import au.org.ala.spatial.service.Task
 
-class Task {
-    static transients = ['proc',"errorGobbler", "outputGobbler"]
+class TaskWrapper {
     Long id = System.currentTimeMillis()
 
     // date/time created
@@ -44,10 +44,14 @@ class Task {
     // status message
     String message = "starting"
 
-    // finished flag
-    Boolean finished = false
+    // isPublic
+    Boolean isPublic
+
+    // path to working directory
+    String path
 
     Process proc
     StreamGobbler errorGobbler
     StreamGobbler outputGobbler
+    Task task
 }

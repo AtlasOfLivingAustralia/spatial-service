@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.service
 
+import grails.util.Holders
 import org.apache.commons.io.FileUtils
 import org.geotools.geometry.jts.WKTReader2
 import org.json.simple.JSONArray
@@ -24,7 +25,7 @@ import org.locationtech.jts.geom.Geometry
 
 class JournalMapService {
 
-    def grailsApplication
+
 
     def journalMapArticles = new ArrayList<JSONObject>()
     def journalMapLocations = new ArrayList<Map>()
@@ -79,7 +80,7 @@ class JournalMapService {
         }
 
         //try disk cache
-        File jaFile = new File("${grailsApplication.config.data.dir}/journalmap.json")
+        File jaFile = new File("${Holders.config.data.dir}/journalmap.json")
 
         if (jaFile.exists()) {
             JSONParser jp = new JSONParser()

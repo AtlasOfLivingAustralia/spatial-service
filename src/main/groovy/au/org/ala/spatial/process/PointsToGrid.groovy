@@ -23,6 +23,7 @@ import au.org.ala.spatial.analysis.layers.Records
 import au.org.ala.spatial.analysis.layers.SitesBySpecies
 import au.org.ala.spatial.analysis.layers.SpeciesDensity
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -33,25 +34,25 @@ class PointsToGrid extends SlaveProcess {
 
     void start() {
 
-        def resolution = task.input.resolution.toString()
+        def resolution = taskWrapper.input.resolution.toString()
 
         //area to restrict (only interested in area.q part)
-        def area = JSON.parse(task.input.area.toString())
+        def area = JSON.parse(taskWrapper.input.area.toString())
         def (region, envelope) = processArea(area[0])
 
         //number of target species
-        def species = JSON.parse(task.input.species.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
 
         def speciesArea = getSpeciesArea(species, area)
 
         new File(getTaskPath()).mkdirs()
 
-        def gridCellSize = task.input.gridCellSize.toString().toDouble()
-        def movingAverageStr = task.input.movingAverage.toString()
+        def gridCellSize = taskWrapper.input.gridCellSize.toString().toDouble()
+        def movingAverageStr = taskWrapper.input.movingAverage.toString()
         def movingAverage = movingAverageStr.substring(0, movingAverageStr.indexOf('x')).toInteger()
-        def occurrenceDensity = task.input.occurrenceDensity.toString().toBoolean()
-        def speciesRichness = task.input.speciesRichness.toString().toBoolean()
-        def sitesBySpecies = task.input.sitesBySpecies.toString().toBoolean()
+        def occurrenceDensity = taskWrapper.input.occurrenceDensity.toString().toBoolean()
+        def speciesRichness = taskWrapper.input.speciesRichness.toString().toBoolean()
+        def sitesBySpecies = taskWrapper.input.sitesBySpecies.toString().toBoolean()
 
         //moving average check
         if (movingAverage % 2 == 0 || movingAverage <= 0
@@ -100,7 +101,7 @@ class PointsToGrid extends SlaveProcess {
             return
         }
 
-        String envelopeFile = getTaskPath() + "envelope_" + task.id
+        String envelopeFile = getTaskPath() + "envelope_" + taskWrapper.id
         Grid envelopeGrid = null
         if (envelope != null) {
             String [] types = new String[envelope.length]
@@ -131,11 +132,11 @@ class PointsToGrid extends SlaveProcess {
             od.write(records, getTaskPath(), "occurrence_density", 1, true, true)
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "occurrence_density.asc", grailsApplication.config.data.dir + '/layer/' + task.id + "_occurrence_density", true)
+            convertAsc(getTaskPath() + "occurrence_density.asc", Holders.config.data.dir + '/layer/' + taskWrapper.id + "_occurrence_density", true)
             try {
-                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + task.id + '_occurrence_density.png'),
+                FileUtils.moveFile(new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density.png'),
                         new File(getTaskPath() + 'occurrence_density.png'))
-                FileUtils.moveFile(new File(grailsApplication.config.data.dir + '/layer/' + task.id + '_occurrence_density_legend.png'),
+                FileUtils.moveFile(new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density_legend.png'),
                         new File(getTaskPath() + 'occurrence_density_legend.png'))
 
                 addOutput("files", "occurrence_density.png", true)
@@ -145,8 +146,8 @@ class PointsToGrid extends SlaveProcess {
                 taskLog("Error in convert density: " + e.message)
             }
 
-            addOutput("layers", "/layer/" + task.id + "_occurrence_density.sld")
-            addOutput("layers", "/layer/" + task.id + "_occurrence_density.tif")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_occurrence_density.sld")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_occurrence_density.tif")
             addOutput("files", "occurrence_density.asc", true)
 
             writeMetadata(getTaskPath() + "odensity_metadata.html", "Occurrence Density", records, bbox, occurrenceDensity, false, null, null, species.name.toString(), gridCellSize, movingAverageStr)
@@ -158,11 +159,11 @@ class PointsToGrid extends SlaveProcess {
             SpeciesDensity sd = new SpeciesDensity(movingAverage, gridCellSize, bbox)
             sd.write(records, getTaskPath(), "species_richness", 1, true, true)
 
-            convertAsc(getTaskPath() + "species_richness.asc", "${grailsApplication.config.data.dir}/layer/${task.id}_species_richness", true)
+            convertAsc(getTaskPath() + "species_richness.asc", "${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness", true)
             try {
-                FileUtils.moveFile(new File("${grailsApplication.config.data.dir}/layer/${task.id}_species_richness.png"),
+                FileUtils.moveFile(new File("${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness.png"),
                         new File(getTaskPath() + 'species_richness.png'))
-                FileUtils.moveFile(new File("${grailsApplication.config.data.dir}/layer/${task.id}_species_richness_legend.png"),
+                FileUtils.moveFile(new File("${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness_legend.png"),
                         new File(getTaskPath() + 'species_richness_legend.png'))
 
                 addOutput("files", "species_richness.png", true)
@@ -171,8 +172,8 @@ class PointsToGrid extends SlaveProcess {
                 log.error(e.getMessage(), e)
             }
 
-            addOutput("layers", "/layer/" + task.id + "_species_richness.sld")
-            addOutput("layers", "/layer/" + task.id + "_species_richness.tif")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_species_richness.sld")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_species_richness.tif")
             addOutput("files", "species_richness.asc", true)
 
             writeMetadata(getTaskPath() + "srichness_metadata.html", "Species Richness", records, bbox, false, speciesRichness, null, null, species.name.toString(), gridCellSize, movingAverageStr)
@@ -190,7 +191,7 @@ class PointsToGrid extends SlaveProcess {
         fw.append("<html><h1>").append(title).append("</h1>")
         fw.append("<table>")
         fw.append("<tr><td>Date/time " + sdf.format(new Date()) + "</td></tr>")
-        fw.append("<tr><td>Model reference number: " + task.id + "</td></tr>")
+        fw.append("<tr><td>Model reference number: " + taskWrapper.id + "</td></tr>")
         fw.append("<tr><td>Species selection " + speciesName + "</td></tr>")
         if (!odensity && !sdensity) {
             fw.append("<tr><td>Grid: " + 1 + "x" + 1 + " moving average, resolution " + gridCellSize + " degrees</td></tr>")

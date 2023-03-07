@@ -23,6 +23,7 @@ import au.org.ala.spatial.service.Log
 import au.org.ala.spatial.service.Task
 import grails.converters.JSON
 import grails.io.IOUtils
+import grails.util.Holders
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.ArrayUtils
@@ -56,35 +57,9 @@ class LayerController {
     }
 
     def img(String id) {
-        File f = new File(grailsApplication.config.data.dir.toString() + '/public/thumbnail/' + id + '.jpg')
-        if (f.exists()) {
-            OutputStream os = null
-            InputStream is = null
-
-            try {
-                response.setContentType("image/jpg")
-                os = response.outputStream
-                is = new BufferedInputStream(new FileInputStream(f))
-                IOUtils.copy(is, os)
-                os.flush()
-            } catch (Exception err) {
-                log.debug 'failed to write layer image : ' + id, err
-            } finally {
-                if (os != null) {
-                    try {
-                        os.close()
-                    } catch (Exception err1) {
-                        log.trace(err1.getMessage(), err1)
-                    }
-                }
-                if (is != null) {
-                    try {
-                        is.close()
-                    } catch (Exception err2) {
-                        log.trace(err2.getMessage(), err2)
-                    }
-                }
-            }
+        if (layerDao.getLayerByName(id)) {
+            File f = new File(Holders.config.data.dir.toString() + '/public/thumbnail/' + id + '.jpg')
+            render(file: f, fileName: "${id}.jpg")
         } else {
             response.sendError(404, "$id not found")
             return
@@ -276,7 +251,7 @@ class LayerController {
                     for (String p : pid.split("~")) {
                         def obj = objectDao.getObjectByPid(p)
                         if (obj) {
-                            if (obj.fid != grailsApplication.config.userObjectsField) {
+                            if (obj.fid != Holders.config.userObjectsField) {
                                 layers.put(obj.fid, layers.getOrDefault(obj.fid, 0) + 1)
                             }
                         }
@@ -396,7 +371,7 @@ class LayerController {
     def download(String id) {
         Layer layer = layerDao.getLayerByDisplayName(id)
         if (layer) {
-            if (downloadAllowed()) {
+            if (downloadAllowed(layer)) {
                 OutputStream outputStream = null
                 try {
                     outputStream = response.outputStream as OutputStream
@@ -406,7 +381,7 @@ class LayerController {
 
                     // When a geotiff exists, only download the geotiff
                     def path = "/layer/${layer.name}"
-                    def geotiff = new File(grailsApplication.config.data.dir + path + ".tif")
+                    def geotiff = new File(Holders.config.data.dir + path + ".tif")
                     if (geotiff.exists()) {
                         path += ".tif"
                     }
@@ -433,7 +408,7 @@ class LayerController {
     }
 
     private downloadAllowed(layer) {
-        return grailsApplication.config.getProperty('download.layer.licence_levels', String, '').contains(layer.licence_level)
+        return Holders.config.getProperty('download.layer.licence_levels', String, '').contains(layer.licence_level)
     }
 
     def more(String id) {

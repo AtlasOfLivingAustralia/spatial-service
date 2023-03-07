@@ -20,6 +20,7 @@ import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.SpatialUtil
 import au.org.ala.spatial.Util
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -32,8 +33,8 @@ class SpeciesByLayer extends SlaveProcess {
 
     void start() {
 
-        def species = JSON.parse(task.input.species.toString())
-        def fields = JSON.parse(task.input.layer.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
+        def fields = JSON.parse(taskWrapper.input.layer.toString())
 
         HashMap<String, Integer> speciesMap = new HashMap()
 
@@ -111,7 +112,7 @@ class SpeciesByLayer extends SlaveProcess {
                 // no area_km
                 def count = new SpeciesByLayerCount(-1)
 
-                task.message = "Getting species for area " + (n + 1) + " of " + steps
+                taskWrapper.message = "Getting species for area " + (n + 1) + " of " + steps
 
                 def lowerBound = (min + n * step)
                 def upperBound = n == steps - 1 ? max : (min + (n + 1) * step)
@@ -182,7 +183,7 @@ class SpeciesByLayer extends SlaveProcess {
 
 
     public double envelopeArea(String layerName, double minBound, double maxBound) {
-        Grid grid = new Grid(grailsApplication.config.data.dir.toString() + '/layer/' + layerName)
+        Grid grid = new Grid(Holders.config.data.dir.toString() + '/layer/' + layerName)
 
         int bufferSize = 1024 * 1024
         float areaSqKm = 0

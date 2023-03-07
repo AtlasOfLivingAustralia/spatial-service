@@ -17,6 +17,7 @@ package au.org.ala.spatial.service
 
 import grails.config.Config
 import grails.testing.services.ServiceUnitTest
+import grails.util.Holders
 import org.apache.tools.ant.taskdefs.GUnzip
 import org.apache.tools.ant.taskdefs.Untar
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -41,7 +42,7 @@ class LegacyServiceSpec extends Specification implements ServiceUnitTest<LegacyS
 
     def setup() {
         dataDir = File.createTempDir()
-        grailsApplication.config.data.dir = dataDir.getPath()
+        Holders.config.data.dir = dataDir.getPath()
 
         legacyDir = File.createTempDir()
         def gz = new GUnzip()
@@ -64,13 +65,13 @@ class LegacyServiceSpec extends Specification implements ServiceUnitTest<LegacyS
     void "link"() {
         when:
 
-        grailsApplication.config.legacy.ALASPATIAL_OUTPUT_PATH = legacyDir.getPath() + "/ala/data/alaspatial"
-        grailsApplication.config.legacy.workingdir = legacyDir.getPath()
-        grailsApplication.config.legacy.LAYER_FILES_PATH = legacyDir.getPath() + "/ala/data/layers/ready"
-        grailsApplication.config.legacy.type = "link"
-        grailsApplication.config.legacy.enabled = true
+        Holders.config.legacy.ALASPATIAL_OUTPUT_PATH = legacyDir.getPath() + "/ala/data/alaspatial"
+        Holders.config.legacy.workingdir = legacyDir.getPath()
+        Holders.config.legacy.LAYER_FILES_PATH = legacyDir.getPath() + "/ala/data/layers/ready"
+        Holders.config.legacy.type = "link"
+        Holders.config.legacy.enabled = true
 
-        grailsApplication.config.data.dir = dataDir.getPath()
+        Holders.config.data.dir = dataDir.getPath()
 
         service.apply()
 

@@ -18,20 +18,26 @@ package au.org.ala.spatial.service
 import au.org.ala.RequireAdmin
 import au.org.ala.RequirePermission
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.slave.TaskService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
+import grails.util.Holders
 import org.grails.web.json.JSONObject
 
 @Transactional(readOnly = true)
 class TasksController {
 
     TasksService tasksService
-    TaskService taskService
 
-    def serviceAuthService
     def authService
+    def masterService
 
+    /**
+     * get collated capabilities specs from all registered slaves
+     * @return
+     */
+    def capabilities() {
+        render masterService.spec(authService.userInRole(Holders.config.auth.admin_role)) as JSON
+    }
 
     /**
      * admin only or api_key
@@ -40,6 +46,42 @@ class TasksController {
      */
     @RequireAdmin
     def index() {
+        if (!params?.max) params.max = 10
+        if (!params?.sort) params.sort = "created"
+        if (!params?.order) params.order = "desc"
+        if (!params?.offset) params.offset = 0
+
+        def list = []
+
+        // limit history and format time
+        tasksService.transientTasks.each { id, item ->
+            def hist = [:]
+
+            try {
+                item.history.keySet().sort().reverse().each { key ->
+                    if (hist.size() < 4) {
+                        hist.put(new Date(Long.parseLong(key)), item.history.get(key))
+                    }
+                }
+            } catch (err) {}
+
+            list.add([
+                    created: item.created,
+                    name: item.name,
+                    history: hist,
+                    status: item.status,
+                    email: item.email,
+                    userId: item.userId,
+                    message: item.message,
+                    id: item.id
+            ])
+        }
+
+        [taskInstanceList: list, taskInstanceCount: tasksService.transientTasks.size()]
+    }
+
+    @RequireAdmin
+    def all () {
         if (!params?.max) params.max = 10
         if (!params?.sort) params.sort = "created"
         if (!params?.order) params.order = "desc"
@@ -97,8 +139,8 @@ class TasksController {
      * @param task
      * @return
      */
-    def status(Task task) {
-        def status = tasksService.getStatus(task)
+    def status(Long id) {
+        def status = tasksService.getStatus(id)
 
         if (params.containsKey('last')) {
             def hist = [:]
@@ -130,7 +172,8 @@ class TasksController {
      * @return
      */
     @RequirePermission
-    def show(Task task) {
+    def show(Long id) {
+        def task = tasksService.getStatus(id)
         if (task) {
             task.history = task.history.sort { a, b ->
                 a.key ? a.key.compareTo(b.key) : "".compareTo(b.key)
@@ -153,23 +196,22 @@ class TasksController {
         }
 
         //Validate input. It may update input
-        def errors = tasksService.validateInput(params.name, input, serviceAuthService.isAdmin(params))
-
-        def userId = authService.getUserId() ?: params.userId
-        def email = params.email
-
-        if (userId && !email) {
-            def user = authService.getUserForUserId(userId, false);
-            if (user) {
-                email = user.email;
-            }
+        def errors
+        def userId
+        if (Holders.config.security.oidc.enabled || Holders.config.security.cas.enabled) {
+            errors = tasksService.validateInput(params.name, input, authService.userInRole(Holders.config.auth.admin_role))
+            userId = authService.getUserId() ?: params.userId
+        } else {
+            errors = tasksService.validateInput(params.name, input, true)
+            userId = params.userId
         }
 
         if (errors) {
             response.status = 400
             render errors as JSON
         } else {
-            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, email)
+            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, params.email)
+
             render task as JSON
         }
     }
@@ -182,8 +224,8 @@ class TasksController {
      */
     @Transactional(readOnly = false)
     @RequirePermission
-    cancel(Task task) {
-        if (task?.status < 2) tasksService.cancel(task)
+    cancel(Long id) {
+        def task = tasksService.cancel(id)
 
         if (request.contentType?.equalsIgnoreCase("application/json")) {
             render task as JSON
@@ -202,30 +244,9 @@ class TasksController {
      */
     @RequirePermission
     def download(Task task) {
-        String file = grailsApplication.config.publish.dir + task.id + ".zip"
+        String file = Holders.config.publish.dir + task.id + ".zip"
 
         render file: file, contentType: 'application/zip'
-    }
-
-    /**
-     * Internal use
-     *
-     * login required
-     *
-     * data.dir or publish.dir?
-     * get zip of all task outputs (zip received from slave/publish)
-     * @param task
-     * @return
-     */
-    @RequirePermission
-    def downloadReport(String taskId) {
-        def file = new File(grailsApplication.config.publish.dir + "/" + taskId + "/download.zip")
-
-        response.setHeader("Content-Type", "application/octet-stream")
-        response.setHeader("Content-disposition", "attachment;filename=${file.name}")
-        response.setContentLengthLong(file.size())
-        response.outputStream << file.bytes
-
     }
 
     /**
@@ -237,14 +258,14 @@ class TasksController {
      */
     @Transactional(readOnly = false)
     @RequireAdmin
-    reRun(Task task) {
-        if (task != null) {
-            def history = [:]
-            history.put(String.valueOf(System.currentTimeMillis()), 'restarting task')
-            tasksService.update(task.id, [status: 0, slave: null, url: null, message: 'in queue', history: history])
-        }
+    reRun(Long id) {
+        def t = Task.get(id)
+        t.history.each { it -> it }
+        t.output.each { it -> it }
+        t.input.each { it -> it }
+        def task = tasksService.reRun(t)
 
-        if (request.contentType?.equalsIgnoreCase("application/json")) {
+        if (task) {
             render task as JSON
         } else {
             redirect(action: "index", params: params)
@@ -258,7 +279,7 @@ class TasksController {
      * @return
      */
     def output() {
-        def path = "${grailsApplication.config.data.dir}/public"
+        def path = "${Holders.config.data.dir}/public"
         def p1 = params.p1
         def p2 = params.p2
         def p3 = params.p3
@@ -339,8 +360,8 @@ class TasksController {
             }
 
             if (ok) {
-                response.setContentLength((int) f.length());
-                response.addHeader("Content-Disposition", "attachment");
+                response.setContentLength((int) f.length())
+                response.addHeader("Content-Disposition", "attachment")
 
                 OutputStream os = response.getOutputStream()
                 InputStream is = new BufferedInputStream(new FileInputStream(f))
@@ -355,61 +376,6 @@ class TasksController {
         } else {
             render('File does not exist: ' + file, contentType: "text/html", encoding: "UTF-8")
             return
-        }
-    }
-
-    /**
-     * admin required
-     *
-     * @return
-     */
-    @Transactional(readOnly = false)
-    @RequireAdmin
-    def cancelAll() {
-        def list = Task.createCriteria().list() {
-            and {
-                if (params?.q) {
-                    or {
-                        ilike("message", "%${params.q}%")
-                        ilike("name", "%${params.q}%")
-                        ilike("tag", "%${params.q}%")
-                    }
-                }
-                if (params?.status) {
-                    eq("status", params.status.toInteger())
-                }
-            }
-        }
-
-        def cancelled = []
-        list.each {
-            //try to cancel tasks that are in queue or running
-            if (it.status == 0 || it.status == 1) {
-                cancelled.push(it)
-                tasksService.cancel(it)
-            }
-        }
-
-        if (request.contentType?.equalsIgnoreCase("application/json")) {
-            render cancelled as JSON
-        } else {
-            redirect(action: "index", params: params)
-        }
-    }
-
-    def activeThreads() {
-        List tasks = new ArrayList(taskService.getActiveTasks())
-        [tasks: tasks]
-    }
-
-    @RequireAdmin
-    def getUserById(String id) {
-        def user = authService.getUserForUserId(id, false)
-        if (user) {
-            render user as JSON
-        } else {
-            def message = [error: "No user found for id: " + id +", or no permission to access user details!"]
-            render message as JSON
         }
     }
 }

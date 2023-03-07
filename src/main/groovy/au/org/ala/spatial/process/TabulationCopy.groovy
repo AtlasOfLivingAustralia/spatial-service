@@ -25,7 +25,7 @@ class TabulationCopy extends SlaveProcess {
 
     void start() {
 
-        def sourceUrl = task.input.sourceUrl
+        def sourceUrl = taskWrapper.input.sourceUrl
 
         //get tabulations
         def tabulations = JSON.parse(Util.getUrl(sourceUrl + "/tabulations.json"))

@@ -276,7 +276,7 @@ class DistributionController {
 
         if (distribution != null) {
             m.setDataResourceUID(distribution.getData_resource_uid())
-            m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
+            m.setUrl((Holders.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
 
             // set the attribution info
             AttributionDTO dto = AttributionCache.getCache(Holders.config.collections.url).getAttributionFor(distribution.getData_resource_uid())
@@ -306,7 +306,7 @@ class DistributionController {
             distributions.each { Distribution distribution ->
                 MapDTO m = new MapDTO()
                 m.setDataResourceUID(distribution.getData_resource_uid())
-                m.setUrl((grailsApplication.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
+                m.setUrl((Holders.config.grails.serverURL + "/distribution/map/png/" + distribution.getGeom_idx()) as String)
                 // set the attribution info
                 AttributionDTO dto = AttributionCache.getCache(Holders.config.collections.url).getAttributionFor(distribution.getData_resource_uid())
                 m.setAvailable(true)
@@ -407,7 +407,7 @@ class DistributionController {
                 Writer buffer = new StringWriter()
                 PrintWriter pw = new PrintWriter(buffer)
                 e.printStackTrace(pw)
-                log.error(e.toString());
+                log.error(e.toString())
                 render(status: 400, text: 'Spatial encounters runtime error when calculating outlier of lsid: ' + lsid)
             }
         } else {

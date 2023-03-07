@@ -20,6 +20,7 @@ import au.org.ala.layers.dto.IntersectionFile
 import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.intersect.SimpleShapeFile
 import au.org.ala.spatial.util.RecordsSmall
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -33,7 +34,7 @@ class TabulationCounts extends SlaveProcess {
         // get all fields requiring an intersection
         List allFields = getFields()
         List<Map> fields = []
-        task.message = 'getting field list'
+        taskWrapper.message = 'getting field list'
         allFields.each { field ->
             if (field.intersect) {
                 slaveService.getFile(taskService.getResourcePath([type: 'layer'], field.layer.name))
@@ -42,15 +43,15 @@ class TabulationCounts extends SlaveProcess {
         }
 
         // load records
-        task.message = 'getting records'
-        String dir = grailsApplication.config.data.dir + File.separator + "sample"
+        taskWrapper.message = 'getting records'
+        String dir = Holders.config.data.dir + File.separator + "sample"
         RecordsSmall.fileList().each { filename ->
             slaveService.getFile(dir + File.separator + filename)
         }
 
         RecordsSmall records = new RecordsSmall(dir)
 
-        task.message = 'reading records'
+        taskWrapper.message = 'reading records'
         float[] allPoints = records.getUniquePointsAll()
         int[] pidx = records.getUniqueIdx()
 
@@ -64,7 +65,7 @@ class TabulationCounts extends SlaveProcess {
 
         //produce sampling files
         fields.eachWithIndex { field, idx ->
-            task.message = 'get/make sampling for: ' + field.id
+            taskWrapper.message = 'get/make sampling for: ' + field.id
             pidFiles.add(sample(points, field))
         }
 
@@ -80,7 +81,7 @@ class TabulationCounts extends SlaveProcess {
             Object[] o1 = null
             fields.eachWithIndex { field2, idx2 ->
                 if (idx1 < idx2 /*&& (field1.id.equals('cl1052') || field2.id.equals('cl1058'))*/) {
-                    task.message = 'tabulating ' + field1.id + ' and ' + field2.id
+                    taskWrapper.message = 'tabulating ' + field1.id + ' and ' + field2.id
                     try {
                         if (o1 == null) o1 = loadFile(pidFiles[idx1], (allPoints.length / 2).intValue())
                         Object[] o2 = loadFile(pidFiles[idx2], (allPoints.length / 2).intValue())
@@ -98,7 +99,7 @@ class TabulationCounts extends SlaveProcess {
                         }
                         fw.flush()
                         fw.close()
-                        task.message = 'finished tabulating ' + field1.id + ' and ' + field2.id
+                        taskWrapper.message = 'finished tabulating ' + field1.id + ' and ' + field2.id
                     } catch (err) {
                         log.error 'failed tabulating ' + field1.id + ' and ' + field2.id, err
                         taskLog('failed tabulating ' + field1.id + ' and ' + field2.id)
@@ -212,10 +213,10 @@ class TabulationCounts extends SlaveProcess {
     def sample(double[][] points, Map field) {
 
         //create new sampling file when one does not already exist
-        File file = new File(grailsApplication.config.data.dir.toString() + '/sample/' + field.spid + '.' + field.sname + '.pid')
+        File file = new File(Holders.config.data.dir.toString() + '/sample/' + field.spid + '.' + field.sname + '.pid')
         String fieldName = field.sname
         Map l = getLayer(field.spid)
-        String filename = grailsApplication.config.data.dir + '/layer/' + l.name
+        String filename = Holders.config.data.dir + '/layer/' + l.name
 
         if (!file.exists()) {
             try {

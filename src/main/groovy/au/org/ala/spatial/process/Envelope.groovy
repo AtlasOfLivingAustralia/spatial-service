@@ -20,6 +20,7 @@ import au.org.ala.layers.intersect.Grid
 import au.org.ala.layers.util.LayerFilter
 import au.org.ala.spatial.slave.SpatialUtils
 import grails.converters.JSON
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -27,10 +28,10 @@ import org.apache.commons.io.FileUtils
 class Envelope extends SlaveProcess {
 
     void start() {
-        List envelope = JSON.parse(task.input.envelope.toString())
-        String resolution = task.input.resolution
-        String makeShapefile = Boolean.parseBoolean(task.input.shp)
-        String geoserverUrl = task.input.geoserverUrl
+        List envelope = JSON.parse(taskWrapper.input.envelope.toString())
+        String resolution = taskWrapper.input.resolution
+        String makeShapefile = Boolean.parseBoolean(taskWrapper.input.shp)
+        String geoserverUrl = taskWrapper.input.geoserverUrl
 
         LayerFilter[] filter = new LayerFilter[envelope.length()]
         if (envelope) {
@@ -55,7 +56,7 @@ class Envelope extends SlaveProcess {
         File dir = new File(getTaskPath())
         dir.mkdirs()
 
-        String filename = task.id
+        String filename = taskWrapper.id
 
         File grid = new File(dir.getPath() + File.separator + filename)
 
@@ -70,7 +71,7 @@ class Envelope extends SlaveProcess {
         if ((areaSqKm = GridCutter.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
 
             SpatialUtils.divaToAsc(dir.getPath() + File.separator + filename)
-            SpatialUtils.toGeotiff(grailsApplication.config.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
+            SpatialUtils.toGeotiff(Holders.config.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
             SpatialUtils.save4326prj(dir.getPath() + File.separator + filename + ".prj")
 
             addOutput("files", filename + ".asc")
@@ -88,8 +89,8 @@ class Envelope extends SlaveProcess {
                           area_km    : areaSqKm,
                           type       : "envelope",
                           file       : filename + ".tif",
-                          id         : task.id,
-                          wmsurl     : geoserverUrl + "/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + task.id]
+                          id         : taskWrapper.id,
+                          wmsurl     : geoserverUrl + "/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + taskWrapper.id]
             addOutput("envelopes", (values as JSON).toString(), true)
 
             String metadata = "<html><body>Extents: " + g.xmin + "," + g.ymin + "," + g.xmax + "," + g.ymax + "<br>Area (sq km): " + areaSqKm + "</body></html>"

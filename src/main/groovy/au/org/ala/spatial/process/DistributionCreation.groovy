@@ -16,6 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.GeomMakeValid
+import grails.util.Holders
 import groovy.util.logging.Commons
 import org.apache.commons.io.FileUtils
 import org.geotools.data.FeatureReader
@@ -28,11 +29,11 @@ import java.text.MessageFormat
 class DistributionCreation extends SlaveProcess {
 
     void start() {
-        String uploadId = task.input.uploadId
-        String data_resource_uid = task.input.data_resource_uid
+        String uploadId = taskWrapper.input.uploadId
+        String data_resource_uid = taskWrapper.input.data_resource_uid
 
         //upload shp into layersdb in a table with name layer.id
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
 
         //open shapefile
         File file = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".shp")
@@ -74,7 +75,7 @@ class DistributionCreation extends SlaveProcess {
                                   imageUrl      : ['family_exemplar', 'b'],
                                   image_qual    : ['image_quality', 's']]
 
-        task.message = "reading shapefile"
+        taskWrapper.message = "reading shapefile"
         int sqlCount = 0
         while (reader.hasNext()) {
             def f = reader.next()
@@ -115,7 +116,7 @@ class DistributionCreation extends SlaveProcess {
                     try {
                         g = GeomMakeValid.makeValid(g)
                     } catch (err) {
-                        log.error 'task: ' + task.id + ' failed validating wkt', err
+                        log.error 'task: ' + taskWrapper.id + ' failed validating wkt', err
                     }
                 }
 
@@ -147,20 +148,20 @@ class DistributionCreation extends SlaveProcess {
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and distributions.pid is null;"
         sql += "\nINSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch, area_km, bbox) " +
                 "(select nextval('objects_id_seq'), max(spcode), max(area_name), '', '" +
-                grailsApplication.config.userObjectsField + "', the_geom, false, " +
+                Holders.config.userObjectsField + "', the_geom, false, " +
                 "(st_area(ST_GeogFromWKB(st_asbinary(the_geom)), true)/1000000), ST_ASTEXT(ST_EXTENT(the_geom)) " +
                 "from distributions where pid is null group by the_geom);"
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                "distributions.pid is null and fid = '" + grailsApplication.config.userObjectsField + "' and " +
+                "distributions.pid is null and fid = '" + Holders.config.userObjectsField + "' and " +
                 "o.id = '' || distributions.spcode;"
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                "distributions.pid is null and o.fid = '" + grailsApplication.config.userObjectsField + "';"
+                "distributions.pid is null and o.fid = '" + Holders.config.userObjectsField + "';"
 
         FileUtils.writeStringToFile(new File(getTaskPath() + 'finish.sql'), sql)
         addOutput('sql', 'finish.sql')
 
         //delete from uploads dir if master service is remote
-        if (!grailsApplication.config.service.enable.toBoolean()) {
+        if (!Holders.config.service.enable.toBoolean()) {
             FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
         }
 

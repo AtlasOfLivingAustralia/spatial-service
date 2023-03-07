@@ -22,6 +22,7 @@ import au.org.ala.spatial.slave.SpatialUtils
 import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import grails.converters.JSON
+import grails.util.Holders
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -218,7 +219,7 @@ class ShapesController {
                 })
 
                 File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, 'area', filename, ids.join(','))
-                FileUtils.copyFile(zippedShapeFile, os);
+                FileUtils.copyFile(zippedShapeFile, os)
             } else {
                 objectDao.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'shp')
             }
@@ -802,19 +803,19 @@ class ShapesController {
     }
 
     private void streamEnvelope(OutputStream os, String envelopeTaskId, String type) {
-        String filePrefix = grailsApplication.config.data.dir + "/public/" + envelopeTaskId + "/envelope"
+        String filePrefix = Holders.config.data.dir + "/public/" + envelopeTaskId + "/envelope"
 
         if (type == 'shp') {
             def file = new File(filePrefix + "-shp.zip")
             if (!file.exists()) {
                 ZipUtil.zip(filePrefix + "-shp.zip", (String[]) [filePrefix + ".shp", filePrefix + ".shx", filePrefix + ".dbf", filePrefix + ".fix"])
             }
-            InputStream is;
+            InputStream is
             try {
                 is = FileUtils.openInputStream(new File(filePrefix + "-shp.zip"))
 
-                int len;
-                byte[] bytes = new byte[1024];
+                int len
+                byte[] bytes = new byte[1024]
                 while ((len = is.read(bytes)) > 0) {
                     os.write(bytes, 0, len)
                 }

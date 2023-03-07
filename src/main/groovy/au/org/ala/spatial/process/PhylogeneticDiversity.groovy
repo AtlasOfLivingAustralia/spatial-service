@@ -33,13 +33,13 @@ class PhylogeneticDiversity extends SlaveProcess {
     void start() {
 
         //area to restrict
-        def areas = JSON.parse(task.input.area.toString())
+        def areas = JSON.parse(taskWrapper.input.area.toString())
 
-        String phyloServiceUrl = task.input.phyloServiceUrl
+        String phyloServiceUrl = taskWrapper.input.phyloServiceUrl
 
-        def species = JSON.parse(task.input.species.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
 
-        def trees = JSON.parse(task.input.phylo.toString())
+        def trees = JSON.parse(taskWrapper.input.phylo.toString())
 
         def areaPds = []
         def areaSpeciesMatches = []
@@ -48,7 +48,7 @@ class PhylogeneticDiversity extends SlaveProcess {
 
         int count = 1
         areas.each { area ->
-            task.message = "Running"
+            taskWrapper.message = "Running"
             taskLog("Processing " + area.name + " (" + count + " of " + areas.size() + ")")
 
             //species list

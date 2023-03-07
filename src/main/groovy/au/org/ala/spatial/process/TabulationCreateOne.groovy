@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.layers.tabulation.Intersection
 import au.org.ala.layers.tabulation.TabulationGenerator
 import au.org.ala.layers.util.SpatialUtil
+import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataStore
@@ -37,10 +38,10 @@ import java.util.zip.ZipInputStream
 class TabulationCreateOne extends SlaveProcess {
 
     void start() {
-        String fieldId1 = task.input.fieldId1
-        String fieldId2 = task.input.fieldId2
+        String fieldId1 = taskWrapper.input.fieldId1
+        String fieldId2 = taskWrapper.input.fieldId2
 
-        String layersDir = grailsApplication.config.data.dir + '/layer/'
+        String layersDir = Holders.config.data.dir + '/layer/'
 
         String layerId1 = getField(fieldId1).spid
         String layerId2 = getField(fieldId2).spid
@@ -49,35 +50,19 @@ class TabulationCreateOne extends SlaveProcess {
 
         String intersectPath = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
 
-        //lock files that will be created and can be created by other threads
-        List filesForLocking = []
-        if (!new File(grailsApplication.config.data.dir.toString() + intersectPath).exists() && !slaveService.peekFile(intersectPath)[0].exists) {
-            filesForLocking.add(grailsApplication.config.data.dir + intersectPath)
-        }
-
-        if (filesForLocking.size() > 0) {
-            Object lock = fileLockService.lock(filesForLocking, task)
-            if (lock != null) {
-                synchronized (lock) {
-                    lock.wait()
-                    log.debug 'lock released on task:' + task.id
-                }
-            }
-        }
-
         try {
             slaveService.getFile('/layer/' + layer1.name)
             slaveService.getFile('/layer/' + layer2.name)
 
             File file1 = new File(layersDir + layer1.name + ".shp")
             File file2 = new File(layersDir + layer2.name + ".shp")
-            File file3 = new File(grailsApplication.config.data.dir.toString() + intersectPath)
+            File file3 = new File(Holders.config.data.dir.toString() + intersectPath)
 
             //create an intersection file if both shapefiles exist and the intesection file does not
             if (file1.exists() && file2.exists() && !file3.exists()) {
-                new File(grailsApplication.config.data.dir.toString() + "/intersect/").mkdirs()
+                new File(Holders.config.data.dir.toString() + "/intersect/").mkdirs()
                 Intersection.intersectShapefiles(file1.getPath(), Arrays.asList(file2.getPath()),
-                        grailsApplication.config.data.dir.toString() + "/intersect/")
+                        Holders.config.data.dir.toString() + "/intersect/")
 
                 //keep the intersection file for use with other fields that use the same 2 layers (layers can have >1 field)
                 addOutput('file', intersectPath)
@@ -85,19 +70,14 @@ class TabulationCreateOne extends SlaveProcess {
 
             importTabulation()
         } catch (err) {
-            task.history.put(System.currentTimeMillis(), 'unknown error')
+            taskWrapper.history.put(System.currentTimeMillis() as String, 'unknown error')
             log.error "failed to produce tabulation for: " + fieldId1 + " and " + fieldId2, err
-        }
-
-        if (filesForLocking.size() > 0) {
-            log.debug 'releasing files locked by task: ' + task.id
-            fileLockService.release(filesForLocking)
         }
     }
 
     void importTabulation() {
-        String fieldId1 = task.input.fieldId1
-        String fieldId2 = task.input.fieldId2
+        String fieldId1 = taskWrapper.input.fieldId1
+        String fieldId2 = taskWrapper.input.fieldId2
         Map field1 = getField(fieldId1)
         Map field2 = getField(fieldId2)
         String layerId1 = field1.spid
@@ -105,7 +85,7 @@ class TabulationCreateOne extends SlaveProcess {
         Map layer1 = getLayer(layerId1)
         Map layer2 = getLayer(layerId2)
 
-        String dir = grailsApplication.config.data.dir
+        String dir = Holders.config.data.dir
         String intersectFile = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
         slaveService.getFile(intersectFile)
 
@@ -286,7 +266,7 @@ class TabulationCreateOne extends SlaveProcess {
                 addOutput('sql', fname)
             }
         } catch (err) {
-            task.history.put(System.currentTimeMillis(), 'unknown error')
+            taskWrapper.history.put(System.currentTimeMillis() as String, 'unknown error')
             log.error 'failed tabulation create one for :' + fieldId1 + ', ' + fieldId2, err
         }
 

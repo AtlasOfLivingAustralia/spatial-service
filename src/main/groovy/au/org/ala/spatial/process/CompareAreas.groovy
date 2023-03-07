@@ -26,8 +26,8 @@ class CompareAreas extends SlaveProcess {
 
     void start() {
 
-        def areas = JSON.parse(task.input.area.toString())
-        def species = JSON.parse(task.input.species.toString())
+        def areas = JSON.parse(taskWrapper.input.area.toString())
+        def species = JSON.parse(taskWrapper.input.species.toString())
 
         //get info for each area
         for (area in areas) {

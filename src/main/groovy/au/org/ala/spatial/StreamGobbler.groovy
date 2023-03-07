@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-import au.org.ala.spatial.slave.Task
+import au.org.ala.spatial.slave.TaskWrapper
 import org.apache.log4j.Logger
 
 class StreamGobbler extends Thread {
@@ -24,9 +24,9 @@ class StreamGobbler extends Thread {
 
     BufferedReader br
     String logPrefix
-    Task task
+    TaskWrapper task
 
-    StreamGobbler(InputStream is, String logPrefix, Task task) {
+    StreamGobbler(InputStream is, String logPrefix, TaskWrapper task) {
         br = new BufferedReader(new InputStreamReader(is))
         this.logPrefix = logPrefix
         this.task = task
@@ -38,7 +38,7 @@ class StreamGobbler extends Thread {
             String line
             while ((line = br.readLine()) != null) {
                 if (task != null) {
-                    task.history.put(System.currentTimeMillis(), logPrefix + ": " + line)
+                    task.history.put(System.currentTimeMillis() as String, logPrefix + ": " + line)
                 }
                 log.debug logPrefix + ": " + line
             }

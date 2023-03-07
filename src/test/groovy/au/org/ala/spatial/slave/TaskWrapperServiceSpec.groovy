@@ -15,13 +15,15 @@
 
 package au.org.ala.spatial.slave
 
+import au.org.ala.spatial.service.TaskQueueService
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Specification
 
 import javax.sql.DataSource
 
-class SlaveAuthServiceSpec extends Specification implements ServiceUnitTest<SlaveAuthService> {
+class TaskWrapperServiceSpec extends Specification implements ServiceUnitTest<TaskQueueService>, DataTest {
 
     @Override
     Closure doWithSpring() {{ ->
@@ -33,23 +35,12 @@ class SlaveAuthServiceSpec extends Specification implements ServiceUnitTest<Slav
         ['core', 'eventBus', "converters"].toSet()
     }
 
-    def setup() {
-        grailsApplication.config.slaveKey = 'valid'
+    void setup() {
+
     }
 
-    def cleanup() {
-    }
+    void cleanup() {}
 
-    void "isValid"() {
-        when:
-        def result = service.isValid(key)
 
-        then:
-        result == expected
 
-        where:
-        key || expected
-        'valid' || true
-        'not valid' || false
-    }
 }
