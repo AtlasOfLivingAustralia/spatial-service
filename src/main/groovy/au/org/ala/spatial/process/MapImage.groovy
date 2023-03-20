@@ -17,10 +17,11 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.PrintMapComposer
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
+import org.grails.web.json.JSONArray
 
+//@CompileStatic
 @Slf4j
 class MapImage extends SlaveProcess {
 
@@ -29,33 +30,33 @@ class MapImage extends SlaveProcess {
     void start() {
 
         ///area to restrict
-        def bboxJSON = JSON.parse(taskWrapper.input.bbox.toString())
+        JSONArray bboxJSON = JSON.parse(getInput('bbox').toString()) as JSONArray
         double[] bbox = new double[4]
         for (int i = 0; i < bboxJSON.size(); i++) {
             bbox[i] = (Double) bboxJSON.get(i)
         }
 
-        def windowSizeJSON = JSON.parse(taskWrapper.input.windowSize.toString())
+        JSONArray windowSizeJSON = JSON.parse(getInput('windowSize').toString()) as JSONArray
         int[] windowSize = new int[2]
         for (int i = 0; i < windowSizeJSON.size(); i++) {
             windowSize[i] = windowSizeJSON.get(i).toString().toInteger()
         }
 
-        def mapLayersJSON = JSON.parse(taskWrapper.input.mapLayers.toString())
+        JSONArray mapLayersJSON = JSON.parse(getInput('mapLayers').toString()) as JSONArray
         List<String> mapLayers = new ArrayList<String>()
         for (int i = 0; mapLayersJSON != null && i < mapLayersJSON.size(); i++) {
             mapLayers[i] = mapLayersJSON.get(i).toString()
         }
 
-        String baseMap = taskWrapper.input.baseMap.toString()
-        String comment = taskWrapper.input.comment.toString()
-        String outputType = taskWrapper.input.outputType.toString()
-        Integer resolution = "print".equals(taskWrapper.input.resolution.toString()) ? 1 : 0
+        String baseMap = getInput('baseMap').toString()
+        String comment = getInput('comment').toString()
+        String outputType = getInput('outputType').toString()
+        Integer resolution = "print" == getInput('resolution').toString() ? 1 : 0
 
         //test for pid
         def imageBytes = new PrintMapComposer(
-                Holders.config.geoserver.url.toString(),
-                Holders.config.openstreetmap.url.toString(),
+                spatialConfig.geoserver.url.toString(),
+                spatialConfig.openstreetmap.url.toString(),
                 baseMap,
                 mapLayers,
                 bbox,
@@ -64,7 +65,7 @@ class MapImage extends SlaveProcess {
                 comment,
                 outputType,
                 resolution,
-                Holders.config.data.dir, Holders.config.google.apikey).get()
+                spatialConfig.data.dir, spatialConfig.google.apikey).get()
 
         if (outputType == 'pdf') {
             FileUtils.writeByteArrayToFile(new File(getTaskPath() + taskWrapper.id + ".jpg"), imageBytes)
@@ -72,7 +73,7 @@ class MapImage extends SlaveProcess {
             File pdf = new File(getTaskPath() + taskWrapper.id + ".pdf")
             def outputStream = FileUtils.openOutputStream(pdf)
 
-            InputStream stream = new URL(Holders.config.grails.serverURL + '/slave/exportMap/' + taskWrapper.id).openStream()
+            InputStream stream = new URL(spatialConfig.grails.serverURL + '/slave/exportMap/' + taskWrapper.id).openStream()
             outputStream << stream
             outputStream.flush()
             outputStream.close()
@@ -85,14 +86,14 @@ class MapImage extends SlaveProcess {
 
         File pdf = new File(getTaskPath() + 'output.pdf')
         if (dir.listFiles().length == 0) {
-            taskWrapper.history.put(System.currentTimeMillis() as String, "Failed.")
+            taskWrapper.task.history.put(System.currentTimeMillis() as String, "Failed.")
         } else if (outputType == 'pdf' && !pdf.exists()) {
-            taskWrapper.history.put(System.currentTimeMillis() as String, "Failed to make PDF. Exporting html instead.")
+            taskWrapper.task.history.put(System.currentTimeMillis() as String, "Failed to make PDF. Exporting html instead.")
         }
 
         //all for download
         for (File f : dir.listFiles()) {
-            if (f.getName().equals("index.html")) {
+            if (f.getName() == "index.html") {
                 addOutput('metadata', 'index.html', !pdf.exists())
             } else if (f.getName().endsWith(".pdf")) {
                 addOutput('files', f.getName(), true)

@@ -15,44 +15,45 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.grid.GridCutter
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.intersect.SimpleRegion
-import au.org.ala.spatial.analysis.layers.OccurrenceDensity
-import au.org.ala.spatial.analysis.layers.Records
-import au.org.ala.spatial.analysis.layers.SitesBySpecies
-import au.org.ala.spatial.analysis.layers.SpeciesDensity
+import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.dto.SpeciesInput
+import au.org.ala.spatial.layers.OccurrenceDensity
+import au.org.ala.spatial.layers.SitesBySpecies
+import au.org.ala.spatial.layers.SpeciesDensity
+import au.org.ala.spatial.util.Records
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.intersect.SimpleRegion
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
 import java.text.SimpleDateFormat
 
 @Slf4j
+//@CompileStatic
 class PointsToGrid extends SlaveProcess {
 
     void start() {
 
-        def resolution = taskWrapper.input.resolution.toString()
+        def resolution = getInput('resolution').toString()
 
         //area to restrict (only interested in area.q part)
-        def area = JSON.parse(taskWrapper.input.area.toString())
-        def (region, envelope) = processArea(area[0])
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
+        RegionEnvelope regionEnvelope = processArea(areas[0])
 
         //number of target species
-        def species = JSON.parse(taskWrapper.input.species.toString())
+        SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
 
-        def speciesArea = getSpeciesArea(species, area)
+        SpeciesInput speciesArea = getSpeciesArea(species, areas)
 
         new File(getTaskPath()).mkdirs()
 
-        def gridCellSize = taskWrapper.input.gridCellSize.toString().toDouble()
-        def movingAverageStr = taskWrapper.input.movingAverage.toString()
+        def gridCellSize = getInput('gridCellSize').toString().toDouble()
+        def movingAverageStr = getInput('movingAverage').toString()
         def movingAverage = movingAverageStr.substring(0, movingAverageStr.indexOf('x')).toInteger()
-        def occurrenceDensity = taskWrapper.input.occurrenceDensity.toString().toBoolean()
-        def speciesRichness = taskWrapper.input.speciesRichness.toString().toBoolean()
-        def sitesBySpecies = taskWrapper.input.sitesBySpecies.toString().toBoolean()
+        def occurrenceDensity = getInput('occurrenceDensity').toString().toBoolean()
+        def speciesRichness = getInput('speciesRichness').toString().toBoolean()
+        def sitesBySpecies = getInput('sitesBySpecies').toString().toBoolean()
 
         //moving average check
         if (movingAverage % 2 == 0 || movingAverage <= 0
@@ -103,14 +104,14 @@ class PointsToGrid extends SlaveProcess {
 
         String envelopeFile = getTaskPath() + "envelope_" + taskWrapper.id
         Grid envelopeGrid = null
-        if (envelope != null) {
-            String [] types = new String[envelope.length]
-            String [] fieldIds = new String[envelope.length]
-            for (int i=0;i<envelope.length;i++) {
+        if (regionEnvelope.envelope != null) {1
+            String[] types = new String[regionEnvelope.envelope.length]
+            String[] fieldIds = new String[regionEnvelope.envelope.length]
+            for (int i = 0; i < regionEnvelope.envelope.length; i++) {
                 types[i] = "e"
-                fieldIds[i] = envelope.layername
+                fieldIds[i] = regionEnvelope.envelope.layername
             }
-            GridCutter.makeEnvelope(envelopeFile, resolution, envelope, Long.MAX_VALUE, types, fieldIds)
+            gridCutterService.makeEnvelope(envelopeFile, resolution, regionEnvelope.envelope, Long.MAX_VALUE, types, fieldIds)
             envelopeGrid = new Grid(envelopeFile)
         }
 
@@ -119,7 +120,7 @@ class PointsToGrid extends SlaveProcess {
             taskLog("building sites by species matrix for " + records.getSpeciesSize() + " species in " + records.getRecordsSize() + " occurrences")
 
             SitesBySpecies sbs = new SitesBySpecies(gridCellSize, bbox)
-            int[] counts = sbs.write(records, getTaskPath(), region, envelopeGrid)
+            int[] counts = sbs.write(records, getTaskPath(), regionEnvelope.region, envelopeGrid)
             writeMetadata(getTaskPath() + "sxs_metadata.html", "Sites by Species", records, bbox, false, false, counts, "" /*TODO: area_km*/, species.name.toString(), gridCellSize, movingAverageStr)
             addOutput("metadata", "sxs_metadata.html", true)
             addOutput("files", "SitesBySpecies.csv", true)
@@ -132,11 +133,11 @@ class PointsToGrid extends SlaveProcess {
             od.write(records, getTaskPath(), "occurrence_density", 1, true, true)
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "occurrence_density.asc", Holders.config.data.dir + '/layer/' + taskWrapper.id + "_occurrence_density", true)
+            convertAsc(getTaskPath() + "occurrence_density.asc", spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_occurrence_density", true)
             try {
-                FileUtils.moveFile(new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density.png'),
+                FileUtils.moveFile(new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density.png'),
                         new File(getTaskPath() + 'occurrence_density.png'))
-                FileUtils.moveFile(new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density_legend.png'),
+                FileUtils.moveFile(new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + '_occurrence_density_legend.png'),
                         new File(getTaskPath() + 'occurrence_density_legend.png'))
 
                 addOutput("files", "occurrence_density.png", true)
@@ -159,11 +160,11 @@ class PointsToGrid extends SlaveProcess {
             SpeciesDensity sd = new SpeciesDensity(movingAverage, gridCellSize, bbox)
             sd.write(records, getTaskPath(), "species_richness", 1, true, true)
 
-            convertAsc(getTaskPath() + "species_richness.asc", "${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness", true)
+            convertAsc(getTaskPath() + "species_richness.asc", "${spatialConfig.data.dir}/layer/${taskWrapper.id}_species_richness", true)
             try {
-                FileUtils.moveFile(new File("${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness.png"),
+                FileUtils.moveFile(new File("${spatialConfig.data.dir}/layer/${taskWrapper.id}_species_richness.png"),
                         new File(getTaskPath() + 'species_richness.png'))
-                FileUtils.moveFile(new File("${Holders.config.data.dir}/layer/${taskWrapper.id}_species_richness_legend.png"),
+                FileUtils.moveFile(new File("${spatialConfig.data.dir}/layer/${taskWrapper.id}_species_richness_legend.png"),
                         new File(getTaskPath() + 'species_richness_legend.png'))
 
                 addOutput("files", "species_richness.png", true)

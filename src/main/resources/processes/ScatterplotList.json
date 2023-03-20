@@ -53,7 +53,7 @@
       "type": "list",
       "constraints": {
         "selection": "single",
-        "default" : 0.01,
+        "default": 0.01,
         "content": [
           "0.01",
           "0.1",

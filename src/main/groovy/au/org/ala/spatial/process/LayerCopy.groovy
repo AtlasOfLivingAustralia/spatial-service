@@ -16,44 +16,46 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.Fields
+import au.org.ala.spatial.Layers
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
-import org.json.simple.JSONObject
+import org.grails.web.json.JSONObject
 
+//@CompileStatic
 @Slf4j
 class LayerCopy extends SlaveProcess {
 
     void start() {
-        def layerId = taskWrapper.input.layerId
-        def fieldId = taskWrapper.input.fieldId
-        def sourceUrl = taskWrapper.input.sourceUrl
+        String layerId = getInput('layerId')
+        String fieldId = getInput('fieldId')
+        String  sourceUrl = getInput('sourceUrl')
 
         //TODO: fetch default sld from geoserver
-        def displayPath = taskWrapper.input.displayPath
+        String displayPath = getInput('displayPath')
 
-        def field = getField(fieldId)
-        def layer = getLayer(layerId)
+        Fields field = getField(fieldId)
+        Layers layer = getLayer(layerId)
 
         //get style
         if (fieldId.toString().startsWith("cl")) {
-            slaveService.getFile("/layer/${fieldId}.sld", sourceUrl)
+            //getFile("/layer/${fieldId}.sld", sourceUrl)
             addOutput('sld', '/layer/' + fieldId + ".sld")
         } else {
-            slaveService.getFile("/layer/${layer.name}.sld", sourceUrl)
+            //getFile("/layer/${layer.name}.sld", sourceUrl)
             addOutput('sld', '/layer/' + layer.name + ".sld")
         }
 
         //get layer files
         //TODO: do not download layer files if they are already up to date
-        slaveService.getFile("/layer/${layer.name}", sourceUrl)
+        //getFile("/layer/${layer.name}", sourceUrl)
         addOutputFiles("/layer/${layer.name}", true)
 
         //get standardized files
         taskLog("get standardized files")
         def resolutions
-        if (layer.type == 'Contextual') resolutions = Holders.config.shpResolutions
-        else resolutions = Holders.config.grdResolutions
+        if (layer.type == 'Contextual') resolutions = spatialConfig.shpResolutions
+        else resolutions = spatialConfig.gridResolutions
         if (!(resolutions instanceof List)) {
             // comma separated or JSON list
             if (resolutions.toString().startsWith("[")) {
@@ -64,17 +66,17 @@ class LayerCopy extends SlaveProcess {
         }
 
         resolutions.each { res ->
-            slaveService.getFile("/standard_layer/${res}/${field.id}", sourceUrl)
+            //getFile("/standard_layer/${res}/${field.id}", sourceUrl)
             addOutputFiles("/standard_layer/${res}/${field.id}")
         }
 
         //get layerdistances
         taskLog("get layer distances")
-        slaveService.getFile('/public/layerDistances.properties')
-        JSONObject dists = JSON.parse(Util.getUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json"))
+        getFile('/public/layerDistances.properties')
+        JSONObject dists = JSON.parse(Util.getUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json")) as JSONObject
         def distString = ''
         for (def f : getFields()) {
-            if ("e".equalsIgnoreCase(f.type) && !f.id.equals(field.id)) {
+            if ("e".equalsIgnoreCase(f.type) && f.id != field.id) {
                 String c = (f.id.compareTo(field.id) < 0 ? f.id + " " + field.id : field.id + " " + f.id)
 
                 if (dists.containsKey(c)) {

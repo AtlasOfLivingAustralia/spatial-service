@@ -7,6 +7,7 @@
     <title><g:message code="default.show.label" args="[entityName]"/></title>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 <a href="#show-task" class="skip" tabindex="-1"><g:message code="default.link.skip.label"
                                                            default="Skip to content&hellip;"/></a>
@@ -22,6 +23,7 @@
     <div class="panel-heading">
         <h4 class="panel-title">Navigation</h4>
     </div>
+
     <div class="panel-body">
         <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
         <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>

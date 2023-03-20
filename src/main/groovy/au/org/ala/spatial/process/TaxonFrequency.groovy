@@ -15,10 +15,11 @@
 
 package au.org.ala.spatial.process
 
-import au.com.bytecode.opencsv.CSVWriter
+import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.dto.SpeciesInput
+import com.opencsv.CSVWriter
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.JFreeChart
 import org.jfree.chart.StandardChartTheme
@@ -38,20 +39,20 @@ import static org.jfree.chart.ChartUtilities.saveChartAsJPEG
 @Slf4j
 class TaxonFrequency extends SlaveProcess {
 
-    static int width = 640;    /* Width of the image */
-    static int height = 480;   /* Height of the image */
+    static int width = 640    /* Width of the image */
+    static int height = 480   /* Height of the image */
 
     void start() {
         //min year
-        def minYear = taskWrapper.input.minYear.toInteger()
+        def minYear = getInput('minYear').toInteger()
 
         //area to restrict
-        def area = JSON.parse(taskWrapper.input.area.toString())
+        List<AreaInput> area = JSON.parse(getInput('area').toString()) as List<AreaInput>
 
         //number of target species
-        def species1 = JSON.parse(taskWrapper.input.species1.toString())
-        def species1Name = species1.name;
-        def species1Area = getSpeciesArea(species1, area[0])
+        SpeciesInput species1 = JSON.parse(getInput('species1').toString()) as SpeciesInput
+        def species1Name = species1.name
+        def species1Area = getSpeciesArea(species1, area)
 
         def facets1 = facetOccurenceCount('year', species1Area)
         if (facets1.size() == 0) {
@@ -61,21 +62,21 @@ class TaxonFrequency extends SlaveProcess {
         }
         List years1 = facets1.find { it.fieldName == "year" }.fieldResult
 
-        TimeSeries cumulative1 = new TimeSeries(species1Name, "Year", "Count");
-        TimeSeries count1 = new TimeSeries(species1Name, "Year", "Count");
+        TimeSeries cumulative1 = new TimeSeries(species1Name, "Year", "Count")
+        TimeSeries count1 = new TimeSeries(species1Name, "Year", "Count")
 
         buildDatasets(count1, cumulative1, years1, minYear)
 
         //if only one taxon has been selected.
-        def files = []
+        List<String> files = []
         files.push(generateChart(count1, 'Frequency of ' + species1Name, 'frequency', false, false))
         files.push(generateChart(cumulative1, 'Cumulative frequency of ' + species1Name, 'cumulative_frequency', true, false))
 
-        def species2 = JSON.parse(taskWrapper.input.species2.toString())
-        def species2Name = species2.name;
+        SpeciesInput species2 = JSON.parse(getInput('species2').toString()) as SpeciesInput
+        def species2Name = species2.name
 
         if (species2.q) {
-            def species2Area = getSpeciesArea(species2, area[0])
+            def species2Area = getSpeciesArea(species2, area)
 
             def facets2 = facetOccurenceCount('year', species2Area)
             if (facets2.size() == 0) {
@@ -85,13 +86,13 @@ class TaxonFrequency extends SlaveProcess {
             }
             def years2 = facets2.find { it.fieldName == "year" }.fieldResult
 
-            TimeSeries cumulative2 = new TimeSeries(species2Name, "Year", "Count");
-            TimeSeries count2 = new TimeSeries(species2Name, "Year", "Count");
+            TimeSeries cumulative2 = new TimeSeries(species2Name, "Year", "Count")
+            TimeSeries count2 = new TimeSeries(species2Name, "Year", "Count")
 
             buildDatasets(count2, cumulative2, years2, minYear)
 
-            TimeSeries cumulativeRatio = new TimeSeries("", "", "");
-            TimeSeries ratio = new TimeSeries("", "", "");
+            TimeSeries cumulativeRatio = new TimeSeries("", "", "")
+            TimeSeries ratio = new TimeSeries("", "", "")
 
             createRatio(count1, count2, ratio, cumulativeRatio)
 
@@ -107,38 +108,38 @@ class TaxonFrequency extends SlaveProcess {
             addOutput("files", it, true)
         }
 
-        String metadata = "<html><body>";
+        String metadata = "<html><body>"
 
         def imgs = files.findAll { it.endsWith('.jpeg') || it.endsWith('.jpg') }
         metadata += "<a href='data.csv'>Download CSV</a>"
         imgs.each {
             def img = '<div><img src=' + it + '></div><br>'
-            metadata += img;
+            metadata += img
         }
         metadata += '</body></html>'
 
-        FileUtils.writeStringToFile(new File(getTaskPath() + "charts.html"), metadata)
+        new File(getTaskPath() + "charts.html").write(metadata)
 
         addOutput("metadata", "charts.html", true)
 
     }
 
     //return  Files of csv and jpeg
-    String generateChart(ds, String title, String outputfile, isLineChart, isPercent) {
+    String generateChart(TimeSeries ds, String title, String outputfile, Boolean isLineChart, Boolean isPercent) {
         JFreeChart chart = createChartInstance(ds, title, isLineChart, isPercent, "Count")
 
         new File(getTaskPath().toString()).mkdirs()
-        File chart_file = new File(getTaskPath() + outputfile + ".jpeg");
+        File chart_file = new File(getTaskPath() + outputfile + ".jpeg")
         saveChartAsJPEG(chart_file, chart, width, height)
 
         outputfile + '.jpeg'
     }
 
-    def createRatio(ds1, ds2, ratio, cumulativeRatio) {
+    def createRatio(TimeSeries ds1, TimeSeries ds2, TimeSeries ratio, TimeSeries cumulativeRatio) {
 
         //The third one is ratio
-        def maxYear = Math.max(ds1.getTimePeriods().max().year, ds2.getTimePeriods().max().year)
-        def minYear = Math.min(ds1.getTimePeriods().min().year, ds2.getTimePeriods().min().year)
+        int maxYear = Math.max(ds1.getTimePeriods().max().year, ds2.getTimePeriods().max().year)
+        int minYear = Math.min(ds1.getTimePeriods().min().year, ds2.getTimePeriods().min().year)
         int sum1 = 0
         int sum2 = 0
         double ratioSum = 0
@@ -162,39 +163,40 @@ class TaxonFrequency extends SlaveProcess {
     }
 
     //return  Files of csv and jpeg
-    String generateRatioChart(ratio_ds, String title, String outputfile, isLineChart, isPercent) {
+    String generateRatioChart(TimeSeries ratio_ds, String title, String outputfile, Boolean isLineChart, Boolean isPercent) {
 
-        def ratio_chart = createChartInstance(ratio_ds, title, isLineChart, isPercent, 'Ratio');
+        def ratio_chart = createChartInstance(ratio_ds, title, isLineChart, isPercent, 'Ratio')
 
         new File(getTaskPath().toString()).mkdirs()
-        File ratio_chart_file = new File(getTaskPath() + outputfile + ".jpeg");
+        File ratio_chart_file = new File(getTaskPath() + outputfile + ".jpeg")
         saveChartAsJPEG(ratio_chart_file, ratio_chart, width, height)
 
         outputfile + '.jpeg'
     }
 
-    JFreeChart createChartInstance(ds, String title, boolean isLineChart, boolean isPercent, String yLabel) {
+    JFreeChart createChartInstance(TimeSeries ds, String title, boolean isLineChart, boolean isPercent, String yLabel) {
         // Ratio chart
-        def series = new TimeSeriesCollection(ds)
-        def chart, plot
-        ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
+        TimeSeriesCollection series = new TimeSeriesCollection(ds)
+        JFreeChart chart
+        XYPlot plot
+        ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme())
         if (isLineChart) {
             chart = ChartFactory.createTimeSeriesChart(
                     title,
                     "Year",
                     yLabel,
                     series,
-                    false, true, false);
+                    false, true, false)
 
-            plot = (XYPlot) chart.getPlot();
+            plot = (XYPlot) chart.getPlot()
 
             XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer()
-            renderer.setBaseShapesVisible(true);
+            renderer.setBaseShapesVisible(true)
 
             if (isPercent) {
-                NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-                DecimalFormat pctFormat = new DecimalFormat("#.##%");
-                yAxis.setNumberFormatOverride(pctFormat);
+                NumberAxis yAxis = (NumberAxis) plot.getRangeAxis()
+                DecimalFormat pctFormat = new DecimalFormat("#.##%")
+                yAxis.setNumberFormatOverride(pctFormat)
             }
         } else {
             chart = ChartFactory.createXYBarChart(
@@ -203,9 +205,9 @@ class TaxonFrequency extends SlaveProcess {
                     true,
                     yLabel,
                     series, PlotOrientation.VERTICAL,
-                    false, true, false);
+                    false, true, false)
 
-            plot = (XYPlot) chart.getPlot();
+            plot = (XYPlot) chart.getPlot()
             plot.getRenderer()
 
             plot.getRenderer().setShadowVisible(false)
@@ -215,17 +217,17 @@ class TaxonFrequency extends SlaveProcess {
         chart
     }
 
-    String createCSV(ds1, ds2, ratio, speciesName1, speciesName2, String filename) {
-        CSVWriter writer = new CSVWriter(new FileWriter(getTaskPath() + filename));
+    String createCSV(TimeSeries ds1, TimeSeries ds2, TimeSeries ratio, String speciesName1, String speciesName2, String filename) {
+        CSVWriter writer = new CSVWriter(new FileWriter(getTaskPath() + filename))
 
         if (ds2 != null) {
-            writer.writeNext((String[]) ["Year", "Frequency-" + speciesName1, "Cumulative frequency-" + speciesName1,
+            writer.writeNext(["Year", "Frequency-" + speciesName1, "Cumulative frequency-" + speciesName1,
                                          "Frequency-" + speciesName2, "Cumulative frequency-" + speciesName2,
-                                         "Ratio", "Cumulative ratio"])
+                                         "Ratio", "Cumulative ratio"] as String [])
 
             def i1sum = 0
             def i2sum = 0
-            for (TimeSeriesDataItem i : ratio.getItems()) {
+            for (TimeSeriesDataItem i : (ratio.getItems() as List<TimeSeriesDataItem>)) {
                 def i1 = ds1.getValue(i.period)
                 def i2 = ds2.getValue(i.period)
                 i1sum += i1 ?: 0
@@ -234,11 +236,11 @@ class TaxonFrequency extends SlaveProcess {
                                              i2?.value > 0 ? i1?.value / i2?.value : '', i2sum > 0 ? i1sum / i2sum : ''])
             }
         } else {
-            writer.writeNext((String[]) ["Year", "Frequency-" + speciesName1, "Cumulative frequency-" + speciesName1,
-                                         "Frequency-" + speciesName2])
+            writer.writeNext(["Year", "Frequency-" + speciesName1, "Cumulative frequency-" + speciesName1,
+                                         "Frequency-" + speciesName2] as String [])
 
             def i1sum = 0
-            for (TimeSeriesDataItem i : ds1.getItems()) {
+            for (TimeSeriesDataItem i : (ds1.getItems() as List<TimeSeriesDataItem>)) {
                 def i1 = ds1.getValue(i.period)
                 i1sum += i1 ?: 0
                 writer.writeNext((String[]) [i.period, i1?.value ?: '', i1sum])
@@ -251,17 +253,17 @@ class TaxonFrequency extends SlaveProcess {
         filename
     }
 
-    void buildDatasets(count, cumulative, list, min) {
+    void buildDatasets(TimeSeries count,TimeSeries  cumulative, List list, Integer min) {
         if (list.size() > 0) {
-            int sum = 0;
+            int sum = 0
             for (int i = 0; i < list.size(); i++) {
-                def item = list[i];
+                def item = list[i]
 
                 if (item.label?.isNumber()) {
                     def year = Integer.parseInt(item.label)
 
                     if (year >= min) {
-                        sum += item.count;
+                        sum += item.count
 
                         count.add(new Year(year), new Double(item.count))
                         cumulative.add(new Year(year), sum)

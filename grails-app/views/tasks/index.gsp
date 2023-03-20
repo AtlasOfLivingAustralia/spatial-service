@@ -4,13 +4,14 @@
 <head>
     <meta name="layout" content="ala-main">
     <title>Tasks</title>
-    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
+    <meta name="breadcrumbs" content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service"/>
     <g:set var="entityName" value="${message(code: 'task.label', default: 'Task')}"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 <script type="text/javascript">
     $(document).ready(function () {
@@ -39,6 +40,7 @@
 <div class="col-lg-4">
     <div class="panel panel-default">
         <div class="panel-heading">Navigation</div>
+
         <div class="panel-body">
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
@@ -97,25 +99,25 @@
     <table class="table table-bordered table-striped" name="tasks">
         <thead>
 
-            <g:sortableColumn property="message" title="${message(code: 'task.message.label', default: 'Message')}"/>
+        <g:sortableColumn property="message" title="${message(code: 'task.message.label', default: 'Message')}"/>
 
-            <g:sortableColumn property="url" title="${message(code: 'task.url.label', default: 'Url')}"/>
+        <g:sortableColumn property="url" title="${message(code: 'task.url.label', default: 'Url')}"/>
 
-            <g:sortableColumn property="name" title="${message(code: 'task.name.label', default: 'Name')}"/>
+        <g:sortableColumn property="name" title="${message(code: 'task.name.label', default: 'Name')}"/>
 
-            <g:sortableColumn property="tag" title="${message(code: 'task.tag.label', default: 'Tag')}"/>
+        <g:sortableColumn property="tag" title="${message(code: 'task.tag.label', default: 'Tag')}"/>
 
-            <g:sortableColumn property="created" title="${message(code: 'task.created.label', default: 'Created')}"/>
+        <g:sortableColumn property="created" title="${message(code: 'task.created.label', default: 'Created')}"/>
 
-            <g:sortableColumn property="status" title="${message(code: 'task.status.label', default: 'Status')}"/>
+        <g:sortableColumn property="status" title="${message(code: 'task.status.label', default: 'Status')}"/>
 
-            <g:sortableColumn property="history"
-                              title="${message(code: 'task.history.label', default: 'History (last 4 entries)')}"/>
-            <td><i class="fa fa-user"></i></td>
-            <th></th>
+        <g:sortableColumn property="history"
+                          title="${message(code: 'task.history.label', default: 'History (last 4 entries)')}"/>
+        <td><i class="fa fa-user"></i></td>
+        <th></th>
         </thead>
         <tbody>
-        <g:set var="status" value="${["Queued","Running","Cancelled","Error","Successful"]}"></g:set>
+        <g:set var="status" value="${["Queued", "Running", "Cancelled", "Error", "Successful"]}"></g:set>
         <g:each in="${taskInstanceList}" status="i" var="taskInstance">
             <tr class="${(i % 2) == 0 ? 'odd' : 'even'}">
 
@@ -124,7 +126,7 @@
 
                 <td><g:if test="${taskInstance.status < 2}">${taskInstance.status}</g:if></td>
 
-                <td>${taskInstance.name} </td>
+                <td>${taskInstance.name}</td>
 
                 <td></td>
 
@@ -137,11 +139,13 @@
                 </g:each></td>
 
                 <td><g:link action="getUserById"
-                            id="${taskInstance.userId}"><g:if test = "${taskInstance?.email != "null"}">${taskInstance?.email}</g:if><g:else>${taskInstance?.userId}</g:else></g:link></td>
+                            id="${taskInstance.userId}"><g:if
+                            test="${taskInstance?.email != "null"}">${taskInstance?.email}</g:if><g:else>${taskInstance?.userId}</g:else></g:link></td>
 
-                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">re-run task</g:link>
-                <g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}" params="${params}">cancel</g:link></td>
-
+                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}"
+                            params="${params}">re-run task</g:link>
+                    <g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}"
+                            params="${params}">cancel</g:link></td>
 
             </tr>
         </g:each>

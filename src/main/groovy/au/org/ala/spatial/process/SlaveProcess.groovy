@@ -15,41 +15,60 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.intersect.SimpleRegion
-import au.org.ala.layers.intersect.SimpleShapeFile
-import au.org.ala.layers.legend.GridLegend
-import au.org.ala.layers.legend.Legend
-import au.org.ala.layers.legend.LegendEqualArea
-import au.org.ala.layers.util.LayerFilter
+import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.dto.ProcessSpecification
+import au.org.ala.spatial.dto.SpeciesInput
+import au.org.ala.spatial.SpatialConfig
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.service.TasksService
-import au.org.ala.spatial.slave.TaskWrapper
+import au.org.ala.spatial.Distributions
+import au.org.ala.spatial.DistributionsService
+import au.org.ala.spatial.Fields
+import au.org.ala.spatial.FieldService
+import au.org.ala.spatial.GridCutterService
+import au.org.ala.spatial.Layers
+import au.org.ala.spatial.LayerService
+import au.org.ala.spatial.OutputParameter
+import au.org.ala.spatial.SpatialObjects
+import au.org.ala.spatial.SpatialObjectsService
+import au.org.ala.spatial.TabulationGeneratorService
+import au.org.ala.spatial.TabulationService
+import au.org.ala.spatial.TasksService
+import au.org.ala.spatial.dto.TaskWrapper
 import au.org.ala.spatial.util.OccurrenceData
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.intersect.SimpleRegion
+import au.org.ala.spatial.intersect.SimpleShapeFile
+import au.org.ala.spatial.legend.GridLegend
+import au.org.ala.spatial.legend.Legend
+import au.org.ala.spatial.legend.LegendEqualArea
+import au.org.ala.spatial.dto.LayerFilter
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
-import org.geotools.data.FeatureReader
-import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.WKTReader2
-import org.json.simple.JSONArray
-import org.json.simple.JSONObject
-import org.json.simple.parser.JSONParser
+import org.grails.web.json.JSONArray
 import org.locationtech.jts.geom.Geometry
+import org.yaml.snakeyaml.util.UriEncoder
 
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 
+//@CompileStatic
 @Slf4j
 class SlaveProcess {
 
+    FieldService fieldService
+    LayerService layerService
+    DistributionsService distributionsService
     TasksService tasksService
     TaskWrapper taskWrapper
+    TabulationService tabulationService
+    SpatialObjectsService spatialObjectsService
+    GridCutterService gridCutterService
+    TabulationGeneratorService tabulationGeneratorService
+
+    SpatialConfig spatialConfig
 
     // start the task
     void start() {}
@@ -57,173 +76,91 @@ class SlaveProcess {
     // abort the task
     void stop() {}
 
+
+    def getFile(path) {
+        // placeholder for the future
+    }
+
+    String getInput(String name) {
+        taskWrapper.task.input.find { it.name == name}.value as String
+    }
+
     // define inputs and outputs
-    Map spec(Map config) {
-        Map s
+    ProcessSpecification spec(ProcessSpecification config) {
+        ProcessSpecification s
         if (config == null) {
-            s = JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text) as Map
+            s = JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text) as ProcessSpecification
         } else {
-            s = config
+            s = config.clone()
         }
 
-        if (!s.containsKey('private')) {
-            s.put('private', [:])
+        if (!s.privateSpecification) {
+            s.privateSpecification = new ProcessSpecification.PrivateSpecification()
         }
 
-        s.private.put('classname', this.class.getCanonicalName())
+        s.privateSpecification.classname = this.class.getCanonicalName()
 
         updateSpec(s)
 
         s
     }
 
+    void updateSpec(ProcessSpecification spec) {}
+
     String getTaskPath() {
-        taskWrapper.path
+        taskWrapper.path + '/'
     }
 
     String getTaskPathById(taskId) {
-        Holders.config.data.dir + '/public/' + taskId + '/'
+        spatialConfig.data.dir + '/public/' + taskId + '/'
     }
 
-    List getLayers() {
-        List layers = null
-
-        try {
-            String url = taskWrapper.input.layersServiceUrl + '/layers'
-            layers = JSON.parse(Util.getUrl(url)) as List
-        } catch (err) {
-            log.error 'failed to get all layers', err
-        }
-
-        layers
+    List<Layers> getLayers() {
+        layerService.getLayers()
     }
 
-    List getFields() {
-        List fields = null
-
-        try {
-            //include layers info by using ?q=
-            String url = taskWrapper.input.layersServiceUrl + '/fields?q='
-            fields = JSON.parse(Util.getUrl(url)) as List
-        } catch (err) {
-            log.error 'failed to get all fields', err
-        }
-
-        fields
+    List<Fields> getFields() {
+        fieldService.getFieldsByCriteria("")
     }
 
-    List getDistributions() {
-        List distributions = null
-
-        try {
-            String url = taskWrapper.input.layersServiceUrl + '/distributions'
-            distributions = JSON.parse(Util.getUrl(url)) as List
-        } catch (err) {
-            log.error 'failed to get all distributions', err
-        }
-
-        distributions
+    List<Distributions> getDistributions() {
+        distributionsService.queryDistributions([:], true, Distributions.EXPERT_DISTRIBUTION)
     }
 
-    List getChecklists() {
-        List checklists = null
-
-        try {
-            String url = taskWrapper.input.layersServiceUrl + '/checklists'
-            checklists = JSON.parse(Util.getUrl(url)) as List
-        } catch (err) {
-            log.error 'failed to get all checklists', err
-        }
-
-        checklists
+    List<Distributions> getChecklists() {
+        distributionsService.queryDistributions([:], true, Distributions.SPECIES_CHECKLIST)
     }
 
     List getTabulations() {
-        List tabulations = null
-
-        try {
-            String url = taskWrapper.input.layersServiceUrl + '/tabulation/list'
-            tabulations = JSON.parse(Util.getUrl(url)) as List
-        } catch (err) {
-            log.error 'failed to get tabulations list', err
-        }
-
-        tabulations
+        tabulationService.listTabulations()
     }
 
-    Map getLayer(id) {
-        Map layer = null
-
-        try {
-            String url = taskWrapper.input.layersServiceUrl + '/layer/' + id
-            layer = JSON.parse(Util.getUrl(url)) as Map
-        } catch (err) {
-            log.error 'failed to lookup layer: ' + id, err
-        }
-
-        layer
+    Layers getLayer(String id) {
+        layerService.getLayerById(id as Long, false)
     }
 
-    Map getField(id) {
-        Map field = null
-
-        try {
-            String url = taskWrapper.input.layersServiceUrl + '/field/show/' + id + "?pageSize=0"
-            field = JSON.parse(Util.getUrl(url)) as Map
-        } catch (err) {
-            log.error 'failed to lookup field: ' + id, err
-        }
-
-        field
+    Fields getField(String id) {
+        fieldService.get(id, null, 0, 0)
     }
 
-    List getObjects(fieldId) {
-        List objects = null
-
-        try {
-            String url = taskWrapper.input.layersServiceUrl + '/field/' + fieldId
-            Map field = (JSONObject) JSON.parse(Util.getUrl(url))
-            objects = field.objects as List
-        } catch (err) {
-            log.error 'failed to lookup objects: ' + fieldId, err
-        }
-
-        objects
+    List<SpatialObjects> getObjects(String fieldId) {
+        fieldService.get(fieldId, null, 0, -1)?.objects
     }
 
     String getWkt(objectId) {
-        String wkt = null
+        OutputStream baos = new ByteArrayOutputStream()
+        spatialObjectsService.wkt(objectId, baos)
 
-        try {
-            if (objectId != null) {
-                String url = taskWrapper.input.layersServiceUrl + '/shapes/wkt/' + objectId
-                wkt = Util.getUrl(url)
-            }
-        } catch (err) {
-            log.error "failed to lookup object wkt: ${objectId}", err
-        }
-
-        wkt
+        baos.toString()
     }
 
-    String getEnvelopeWkt(objectId) {
+    String getEnvelopeWkt(String objectId) {
         String wkt = ''
 
         try {
             String taskId = objectId.replace("ENVELOPE", "")
 
-            def file = new File(Holders.config.data.dir + "/public/" + taskId + "/" + taskId + ".shp")
-
-            ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
-            FeatureReader reader = sds.featureReader
-
-            if (reader.hasNext()) {
-                def f = reader.next()
-                Geometry g = f.getDefaultGeometry()
-                wkt = g.toText()
-            }
-
-            sds.dispose()
+            wkt = new File(spatialConfig.data.dir + "/public/" + taskId + "/" + taskId + ".shp").text
         } catch (err) {
             log.error "failed to lookup object wkt: ${objectId}", err
         }
@@ -238,7 +175,7 @@ class SlaveProcess {
      *
      * @param value
      */
-    void addOutputFiles(value, layers = false) {
+    void addOutputFiles(String value, Boolean layers = false) {
         def fstart = value.substring(0, value.lastIndexOf('/'))
         def fend = value.substring(value.lastIndexOf('/') + 1)
 
@@ -246,11 +183,15 @@ class SlaveProcess {
             addOutput("layers", value)
         }
 
-        if (!taskWrapper.output.containsKey(value)) taskWrapper.output.put(value, [])
+        OutputParameter op = taskWrapper.task.output.find { it.name == value }
+        if (!op) {
+            op = new OutputParameter([name: value, file: ([] as JSON).toString()])
+            taskWrapper.task.output.add(op)
+        }
 
-        File file = new File("${Holders.config.data.dir}${fstart}")
+        File file = new File("${spatialConfig.data.dir}${fstart}")
         for (File f : file.listFiles()) {
-            if (f.getName().equals(fend) || f.getName().startsWith("${fend}.")) {
+            if (f.getName() == fend || f.getName().startsWith("${fend}.")) {
                 if (layers &&
                         (f.getName().endsWith(".sld") || f.getName().endsWith(".grd") ||
                                 f.getName().endsWith(".gri") || f.getName().endsWith(".tif") ||
@@ -264,21 +205,22 @@ class SlaveProcess {
         }
     }
 
-    void addOutput(name, value) {
-        if (!taskWrapper.output.containsKey(name)) taskWrapper.output.put(name, [])
-        taskWrapper.output.get(name).add(value)
-    }
-
-    void addOutput(name, value, download) {
-        if (!taskWrapper.output.containsKey(name)) taskWrapper.output.put(name, [])
-        taskWrapper.output.get(name).add(value)
+    void addOutput(String name, String value,Boolean  download = false) {
+        OutputParameter op = taskWrapper.task.output.find {OutputParameter it -> it.name == name }
+        if (!op) {
+            op = new OutputParameter([name: name, file: ([] as JSON).toString()])
+            taskWrapper.task.output.add(op)
+        }
+        List values = (List) JSON.parse(op.file)
+        values.add(value)
+        op.file = (values as JSON).toString()
 
         if (download && !"download".equalsIgnoreCase(name)) {
             addOutput('download', value)
         }
     }
 
-    String sqlEscapeString(str) {
+    static String sqlEscapeString(String str) {
 
         if (str == null) {
             'null'
@@ -287,29 +229,28 @@ class SlaveProcess {
         }
     }
 
-    def facetOccurenceCount(facet, species) {
+    static def facetOccurenceCount(String facet, SpeciesInput species) {
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=-1&fsort=index&q=" + species.q
         String response = Util.getUrl(url)
-        JSONParser jp = new JSONParser()
-        ((JSONArray) jp.parse(response))
+
+        ((JSONArray) JSON.parse(response))
     }
 
-    def facetCount(facet, species) {
+    Integer facetCount(String facet, SpeciesInput species) {
         return facetCount(facet, species, null)
     }
 
-    def facetCount(facet, species, extraFq) {
+    Integer facetCount(String facet, SpeciesInput species, String extraFq) {
         String fq = ''
-        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
+        if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
 
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q + fq
-        JSONParser jp = new JSONParser()
         try {
             String response = Util.getUrl(url)
 
-            def results = ((JSONArray) jp.parse(response))
+            def results = (List) (response as JSON)
             if (results) {
-                return results.get(0).getAt("count")
+                return results.get(0)["count"] as Integer
             }
         } catch (err) {
             log.error 'failed get facet count for: ' + taskWrapper.id + ", " + url, err
@@ -318,32 +259,71 @@ class SlaveProcess {
         return 0
     }
 
-    def occurrenceCount(species) {
+    def occurrenceCount(SpeciesInput species) {
         return occurrenceCount(species, null)
     }
 
-    def occurrenceCount(species, extraFq) {
+    Integer occurrenceCount(SpeciesInput species, String extraFq) {
         String fq = ''
-        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
+        if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
 
         String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q + fq
         String response = Util.getUrl(url)
 
-        JSONParser jp = new JSONParser()
-        ((JSONObject) jp.parse(response)).getAt("totalRecords")
+        ((List) (response as JSON))["totalRecords"] as Integer
     }
 
-    def facet(facet, species) {
+    String [] facet(String facet, SpeciesInput species) {
         String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q
         String response = streamBytes(url, facet)
         if (response) {
             response.split("\n")
         } else {
-            []
+            [] as String[]
         }
     }
 
-    def downloadSpecies(species) {
+    String streamBytes(String url, String name) {
+        taskWrapper.task.message = "fetching ${name}"
+
+        HttpClient client = HttpClient.newHttpClient()
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .build()
+
+        HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
+
+        if (response.statusCode() != 200) {
+            throw new Exception("Error reading from biocache-service: " + response.statusCode())
+        }
+
+        InputStream inputStream = null
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
+        byte[] buffer = new byte[1024]
+        try {
+            inputStream = response.body()
+
+            int count = 0
+            int len
+            while ((len = inputStream.read(buffer)) > 0) {
+                count += len
+                taskWrapper.task.message = "fetching ${name}: ${count} bytes"
+
+                outputStream.write(buffer, 0, len)
+            }
+
+            new String(outputStream.toByteArray(), StandardCharsets.UTF_8)
+        } catch (err) {
+            log.error(url, err)
+            ""
+        } finally {
+            if (inputStream) {
+                inputStream.close()
+            }
+        }
+    }
+
+    List<File> downloadSpecies(SpeciesInput species) {
         OccurrenceData od = new OccurrenceData()
         String[] s = od.getSpeciesData(species.q, species.bs, null, null)
 
@@ -357,11 +337,11 @@ class SlaveProcess {
                 new File(newPath).mkdirs()
 
                 File f = new File(newPath + File.separator + "species_points.csv")
-                FileUtils.writeStringToFile(f, s[0])
+                f.write(s[0])
                 newFiles.add(f)
                 if (s[1] != null) {
                     f = new File(newPath + File.separator + "removedSpecies.txt")
-                    FileUtils.writeStringToFile(f, s[1])
+                    f.write(s[1])
                     newFiles.add(f)
                 }
             } catch (err) {
@@ -455,7 +435,7 @@ class SlaveProcess {
         return newPath
     }
 
-    double[][] internalExtents(double[][] e1, double[][] e2) {
+    static double[][] internalExtents(double[][] e1, double[][] e2) {
         double[][] internalExtents = new double[2][2]
 
         internalExtents[0][0] = Math.max(e1[0][0], e2[0][0])
@@ -466,7 +446,7 @@ class SlaveProcess {
         return internalExtents
     }
 
-    boolean isValidExtents(double[][] e) {
+    static boolean isValidExtents(double[][] e) {
         return e[0][0] < e[1][0] && e[0][1] < e[1][1]
     }
 
@@ -493,7 +473,7 @@ class SlaveProcess {
     }
 
     String getLayerPath(String resolution, String layer) {
-        String standardLayersDir = Holders.config.data.dir + '/standard_layer/'
+        String standardLayersDir = spatialConfig.data.dir + '/standard_layer/'
 
         File file = new File(standardLayersDir + resolution + '/' + layer + '.grd')
         log.debug("Get grid from: " + file.path)
@@ -505,7 +485,7 @@ class SlaveProcess {
                     if (dir.isDirectory()) {
                         try {
                             resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName())
-                        } catch (Exception e) {
+                        } catch (Exception ignored) {
                             //ignore other dirs
                         }
                     }
@@ -513,7 +493,7 @@ class SlaveProcess {
 
                 String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue()
 
-                if (newResolution.equals(resolution)) {
+                if (newResolution == resolution) {
                     break
                 } else {
                     resolution = newResolution
@@ -576,7 +556,7 @@ class SlaveProcess {
                 String[] ids = envelopes[i].getIds()
                 for (int j = 0; j < ids.length; j++) {
                     try {
-                        String obj = Util.getUrl(taskWrapper.input.layersServiceUrl.toString() + '/object/' + ids[j])
+                        SpatialObjects obj = spatialObjectsService.getObjectByPid(ids[j])
                         double[][] bbox = SimpleShapeFile.parseWKT(obj.bbox.toString()).getBoundingBox()
                         extents = internalExtents(extents, bbox)
                     } catch (Exception e) {
@@ -602,7 +582,7 @@ class SlaveProcess {
      * @param region area for the mask as SimpleRegion.
      * @return
      */
-    private byte[][] getRegionMask(double[][] extents, int w, int h, SimpleRegion region) {
+    private static byte[][] getRegionMask(double[][] extents, int w, int h, SimpleRegion region) {
         byte[][] mask = new byte[h][w]
 
         //can also use region.getOverlapGridCells_EPSG900913
@@ -617,7 +597,7 @@ class SlaveProcess {
         return mask
     }
 
-    private byte[][] getMask(int w, int h) {
+    private static byte[][] getMask(int w, int h) {
         byte[][] mask = new byte[h][w]
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
@@ -664,14 +644,14 @@ class SlaveProcess {
 
                 for (int i = 0; i < ids.length; i++) {
                     srs[i] = SimpleShapeFile.parseWKT(
-                            Util.getUrl(taskWrapper.input.layersServiceUrl.toString() + "/shape/wkt/" + ids[i])
+                            Util.getUrl(getInput('layersServiceUrl').toString() + "/shape/wkt/" + ids[i])
                     )
 
                 }
                 for (int i = 0; i < points.length; i++) {
                     for (int j = 0; j < srs.length; j++) {
                         if (srs[j].isWithin(points[i][0], points[i][1])) {
-                            mask[i / w][i % w]++
+                            mask[(int)(i / w)][i % w]++
                             break
                         }
                     }
@@ -683,7 +663,7 @@ class SlaveProcess {
 
                 for (int i = 0; i < d.length; i++) {
                     if (lf.isValid(d[i])) {
-                        mask[i / w][i % w]++
+                        mask[(int)(i / w)][i % w]++
                     }
                 }
             }
@@ -742,7 +722,7 @@ class SlaveProcess {
         return smallerMask
     }
 
-    void writeExtents(String filename, double[][] extents, int w, int h) {
+    static void writeExtents(String filename, double[][] extents, int w, int h) {
         if (filename != null) {
             try {
                 FileWriter fw = new FileWriter(filename)
@@ -754,7 +734,7 @@ class SlaveProcess {
                 fw.append(String.valueOf(extents[1][1]))
                 fw.close()
             } catch (Exception e) {
-                e.printStackTrace()
+                log.error(e.getMessage(), e)
             }
         }
     }
@@ -799,36 +779,35 @@ class SlaveProcess {
 
     boolean existsLayerPath(String resolution, String field, boolean do_not_lower_resolution) {
 
-        File file = new File(Holders.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
+        File file = new File(spatialConfig.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
 
         //move up a resolution when the file does not exist at the target resolution
         try {
             while (!file.exists() && !do_not_lower_resolution) {
                 TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>()
-                for (File dir : new File(Holders.config.data.dir.toString() + '/standard_layer/').listFiles()) {
+                for (File dir : new File(spatialConfig.data.dir.toString() + '/standard_layer/').listFiles()) {
                     if (dir.isDirectory()) {
                         try {
                             resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName())
-                        } catch (Exception e) {
-                            //ignore
+                        } catch (Exception ignored) {
                         }
                     }
                 }
 
                 String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue()
 
-                if (newResolution.equals(resolution)) {
+                if (newResolution == resolution) {
                     break
                 } else {
                     resolution = newResolution
-                    file = new File(Holders.config.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
+                    file = new File(spatialConfig.data.dir.toString() + '/standard_layer/' + File.separator + resolution + File.separator + field + ".grd")
                 }
             }
         } catch (err) {
             log.error 'failed to find path for: ' + field + ' : ' + resolution, err
         }
 
-        String layerPath = Holders.config.data.dir + '/standard_layer/' + File.separator + resolution + File.separator + field
+        String layerPath = spatialConfig.data.dir + '/standard_layer/' + File.separator + resolution + File.separator + field
 
         return new File(layerPath + ".grd").exists()
     }
@@ -888,7 +867,7 @@ class SlaveProcess {
                 try {
                     g = new Grid(grd)
                     float[] d = g.getGrid()
-                    java.util.Arrays.sort(d)
+                    Arrays.sort(d)
 
                     Legend legend = new LegendEqualArea()
                     legend.generate(d)
@@ -910,11 +889,11 @@ class SlaveProcess {
                 }
             }
 
-            def cmd = [Holders.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
+            def cmd = [spatialConfig.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                        "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                        asc, grd + ".tif"]
             taskWrapper.task.message = "asc > tif"
-            runCmd(cmd.toArray(new String[cmd.size()]), false, Holders.config.admin.timeout)
+            runCmd(cmd.toArray(new String[cmd.size()]), false, spatialConfig.admin.timeout)
 
         } catch (Exception e) {
             e.printStackTrace()
@@ -925,15 +904,15 @@ class SlaveProcess {
         return getSpeciesList(species, null, true, true)
     }
 
-    String getSpeciesList(species, extraFq, lookup, count) {
+    String getSpeciesList(SpeciesInput species, String extraFq, lookup, count) {
         String speciesList = null
 
         try {
             String fq = ''
-            if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, "UTF-8")
+            if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
             String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q + fq
             taskLog("Loading species ...")
-            log.info("Loading species from: " + url )
+            log.info("Loading species from: " + url)
             speciesList = Util.getUrl(url)
         } catch (err) {
             taskLog("Failed to get species list.")
@@ -943,7 +922,7 @@ class SlaveProcess {
         speciesList
     }
 
-    def getAreaWkt(area) {
+    def getAreaWkt(AreaInput area) {
         if (area.type == 'envelope') {
             return getEnvelopeWkt(area.pid)
         }
@@ -964,7 +943,7 @@ class SlaveProcess {
         return null
     }
 
-    def processArea(area) {
+    RegionEnvelope processArea(AreaInput area) {
         def wkt = getAreaWkt(area)
 
         def region = null
@@ -975,8 +954,10 @@ class SlaveProcess {
             region = SimpleShapeFile.parseWKT(wkt)
         }
 
-        [region, envelope]
+        new RegionEnvelope(region, envelope)
     }
+
+
 
     /**
      * Create a new species by combining a species and area.
@@ -985,25 +966,27 @@ class SlaveProcess {
      * @param area array of areas, only the first area is used
      * @return
      */
-    def getSpeciesArea(speciesIn, areas) {
+    SpeciesInput getSpeciesArea(SpeciesInput speciesIn, List<AreaInput> areas) {
         // copy species
-        def species = speciesIn.collectEntries { k, v -> [(k): v] }
+        SpeciesInput species = speciesIn.clone()
 
         // check for absent area
-        if (areas instanceof List && areas.length == 0) {
+        if (areas.size() == 0) {
             return species
         }
 
         // support areas and single area
-        def area = areas instanceof List && areas.size() >= 1 ? areas[0] : areas
+        AreaInput area = areas[0]
 
         if (!species.q) {
             return species
         }
 
         if (species.q.startsWith('qid:') && species.q.substring(4).isLong()) {
-            def qid = Util.getQid(species.bs, species.q.substring(4))
-            species.putAll(qid)
+            SpeciesInput qid = Util.getQid(species.bs, species.q.substring(4))
+            species.q = qid.q
+            species.fq.addAll(qid.fq)
+            species.wkt = qid.wkt
         }
 
         def q = [species.q] as Set
@@ -1027,7 +1010,7 @@ class SlaveProcess {
                 species.wkt = wkt
             } else {
                 // find intersection of species wkt and area wkt
-                WKTReader2 wktReader = new WKTReader2();
+                WKTReader2 wktReader = new WKTReader2()
 
                 Geometry g1 = wktReader.read(species.wkt)
                 Geometry g2 = wktReader.read(wkt)
@@ -1078,169 +1061,21 @@ class SlaveProcess {
         taskWrapper.task.message = msg
     }
 
-    def getOccurrencesCsv(query, server, fields) {
-        int pageSize = 1000000;
-
-        int start = 0;
-
-        StringBuilder output = new StringBuilder();
-
-        //TODO: use info from the original analysis request instead of doing this
-        boolean isUserData = server.contains("spatial");
-        log.info("isUserData=" + isUserData + ", server=" + server);
-
-        if (isUserData) {
-            String url = server + "/userdata/sample?q=" + q + "&fl=" + fields;
-            log.info("getting occurrences from : " + url);
-            InputStream is = null;
-            try {
-                is = getUrlStream(url);
-                ZipInputStream zis = new ZipInputStream(is);
-                ZipEntry ze = zis.getNextEntry();
-
-                return zis
-//
-//                ByteArrayBuilder bab = new ByteArrayBuilder();
-//                byte[] b = new byte[1024];
-//                int n;
-//                while ((n = zis.read(b, 0, 1024)) > 0) {
-//                    bab.write(b, 0, n);
-//                }
-//
-//                String csv = IOUtils.toString(bab.toByteArray(), "UTF-8");
-//
-//                output.append(csv);
-            } catch (Exception e) {
-                log.error("failed to get userdata as csv for url: " + url, e);
-            } finally {
-//                if (is != null) {
-//                    try {
-//                        is.close();
-//                    } catch (Exception e) {
-//                        log.error(e.getMessage(), e);
-//                    }
-//                }
-            }
-
-        } else {
-            String url = server + "/occurrences/index/download?q=" + query + "&reasonTypeId=10&qa=none&fields=" + fields;
-            log.info("retrieving from biocache : " + url);
-            InputStream is = null;
-            String csv = null;
-            try {
-                is = getUrlStream(url)
-                ZipInputStream zip = new ZipInputStream(is)
-                // first entry is data.csv
-                zip.getNextEntry()
-                return zip
-//                csv = IOUtils.toString(zip);
-            } catch (Exception e) {
-                log.warn("failed try: " + url, e);
-            } finally {
-//                if (is != null) {
-//                    try {
-//                        is.close();
-//                    } catch (Exception e) {
-//                        log.error(e.getMessage(), e);
-//                    }
-//                }
-            }
-
-            if (csv == null) {
-//                throw new IOException("failed to get records from biocache.");
-            }
-
-//            return csv;
-        }
-
-//        return output.toString();
-    }
-
     static InputStream getUrlStream(String url) throws IOException {
-        long start = System.currentTimeMillis();
-        URLConnection c = new URL(url).openConnection();
-        InputStream is = c.getInputStream();
-        return is;
+        URLConnection c = new URL(url).openConnection()
+        InputStream is = c.getInputStream()
+        return is
     }
 
-    /**
-     * Update spec based on local configuration.
-     *
-     * @param spec
-     */
-    void updateSpec(spec) {}
 
-//    String streamRows(String url, String name) {
-//        task.message = "fetching ${name}"
-//
-//        HttpClient client = HttpClient.newHttpClient()
-//        HttpRequest request = HttpRequest.newBuilder()
-//                .uri(URI.create(url))
-//                .build()
-//
-//        HttpResponse<InputStream> responseOfInputStream = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
-//
-//        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
-//        byte[] buffer = new byte[1024]
-//        try {
-//            InputStream fromIs = responseOfInputStream.body()
-//
-//            int count = 0
-//            int len
-//            while ((len = fromIs.read(buffer)) > 0) {
-//                int newlines = buffer.count('\n')
-//                if (newlines > 0) {
-//                    count += newlines
-//                    task.message = "fetching ${name}: ${count} rows"
-//                }
-//                outputStream.write(buffer, 0, len)
-//            }
-//
-//            System.out.println("Body: " + new String(outputStream.toByteArray(), StandardCharsets.UTF_8));
-//        } catch (err) {
-//            err.printStackTrace()
-//        }
-//
-//
-//    }
+}
 
-    String streamBytes(String url, String name) {
-        taskWrapper.task.message = "fetching ${name}"
+class RegionEnvelope {
+    SimpleRegion region
+    LayerFilter[] envelope
 
-        HttpClient client = HttpClient.newHttpClient()
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .build()
-
-        HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
-
-        if (response.statusCode() != 200) {
-            throw new Exception ("Error reading from biocache-service: " + response.statusCode())
-        }
-
-        InputStream inputStream = null
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
-        byte[] buffer = new byte[1024]
-        try {
-            inputStream = response.body()
-
-            int count = 0
-            int len
-            while ((len = inputStream.read(buffer)) > 0) {
-                count += len
-                taskWrapper.task.message = "fetching ${name}: ${count} bytes"
-
-                outputStream.write(buffer, 0, len)
-            }
-
-            new String(outputStream.toByteArray(), StandardCharsets.UTF_8)
-        } catch (err) {
-            log.error(url, err)
-            ""
-        } finally {
-            if (inputStream) {
-                inputStream.close()
-            }
-        }
+    RegionEnvelope(SimpleRegion region, LayerFilter[] envelope) {
+        this.region = region
+        this.envelope = envelope
     }
 }

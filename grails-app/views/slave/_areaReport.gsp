@@ -7,9 +7,7 @@
     <title>Area Report</title>
 
     <style type="text/css">
-    ${
-    raw(css)
-    }
+    ${raw(css)}
     </style>
 </head>
 

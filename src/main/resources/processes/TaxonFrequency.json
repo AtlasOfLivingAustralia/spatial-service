@@ -34,7 +34,7 @@
       "description": "Second taxon (ratio denominator)",
       "type": "species",
       "constraints": {
-        "min":0,
+        "min": 0,
         "max": 1
       }
     },

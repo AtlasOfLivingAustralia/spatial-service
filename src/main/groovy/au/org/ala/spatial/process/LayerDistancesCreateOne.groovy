@@ -15,28 +15,27 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.tabulation.TabulationGenerator
-import grails.util.Holders
-import groovy.util.logging.Commons
-import org.apache.commons.io.FileUtils
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.TabulationGeneratorService
+import groovy.util.logging.Slf4j
 
-@Commons
+//@CompileStatic
+@Slf4j
 class LayerDistancesCreateOne extends SlaveProcess {
 
     void start() {
-        List fieldIds = []
-        for (int i = 0; taskWrapper.input.containsKey('fieldId' + (i + 1)); i++) {
-            fieldIds.add(taskWrapper.input["fieldId" + (i + 1)])
+        List<String> fieldIds = []
+        for (int i = 0; getInput('fieldId' + (i + 1)); i++) {
+            fieldIds.add(getInput('fieldId' + (i + 1)) as String)
         }
 
-        String[] grdResolutions = taskWrapper.input.grdResolutions
+        String[] grdResolutions = getInput('grdResolutions')
 
-        taskWrapper.message = 'getting layerDistances.properties'
-        slaveService.getFile('/public/layerDistances.properties')
+        taskWrapper.task.message = 'getting layerDistances.properties'
+        getFile('/public/layerDistances.properties')
 
-        File f = new File(Holders.config.data.dir.toString() + '/public/layerDistances.properties')
-        if (!f.exists()) FileUtils.writeStringToFile(f, '')
+        File f = new File(spatialConfig.data.dir.toString() + '/public/layerDistances.properties')
+        if (!f.exists()) f.write('')
         Map distances = [:]
         FileReader fr = new FileReader(f)
         for (String line : fr.readLines()) {
@@ -46,19 +45,19 @@ class LayerDistancesCreateOne extends SlaveProcess {
             }
         }
 
-        List files = []
+        List<File> files = []
 
         //get highest resolution standardized layer files
-        taskWrapper.message = 'get standardized layer files'
+        taskWrapper.task.message = 'get standardized layer files'
         int found = 0
         for (def i = grdResolutions.size() - 1; i >= 0; i--) {
             for (def j = 0; j < fieldIds.size(); j++) {
                 if (files[j] == null) {
                     String path = '/standard_layer/' + grdResolutions[i] + '/' + fieldIds[j] + '.grd'
-                    taskWrapper.message = 'checking file ' + path
-                    if (slaveService.peekFile(path)[0].exists) {
-                        taskWrapper.message = 'getting file ' + path
-                        slaveService.getFile(path)
+                    taskWrapper.task.message = 'checking file ' + path
+                    if (new File(path).exists()) {
+                        taskWrapper.task.message = 'getting file ' + path
+                        getFile(path)
                         files[j] = new File(path)
                         found++
                     }
@@ -72,7 +71,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
         List<Double> ranges = []
 
         for (int i = 0; i < files.size(); i++) {
-            String f1 = Holders.config.data.dir + files[i].getPath()
+            String f1 = spatialConfig.data.dir + files[i].getPath()
             f1 = f1.substring(0, f1.length() - 4)
 
             Grid g1 = Grid.getGrid(f1)
@@ -83,17 +82,17 @@ class LayerDistancesCreateOne extends SlaveProcess {
             long maxLength = 4000 * 4000
 
             if (((long) g1.nrows) * ((long) g1.ncols) < maxLength) {
-                taskWrapper.message = 'loading grid file ' + f1
+                taskWrapper.task.message = 'loading grid file ' + f1
                 float[] d1 = g1.getGrid()
                 values.add(d1)
             } else {
-                taskWrapper.message = 'not loading grid file ' + f1
+                taskWrapper.task.message = 'not loading grid file ' + f1
                 values.add(null)
             }
         }
 
         if (found >= 2) {
-            taskWrapper.message = 'init batch objects'
+            taskWrapper.task.message = 'init batch objects'
             int batchSize = 1000000
             double[][] points = new double[batchSize][2]
 
@@ -108,10 +107,10 @@ class LayerDistancesCreateOne extends SlaveProcess {
                             String domain1 = getLayer(getField(fieldIds[i]).spid).domain
                             String domain2 = getLayer(getField(fieldIds[j]).spid).domain
 
-                            if (TabulationGenerator.isSameDomain(TabulationGenerator.parseDomain(domain1),
-                                    TabulationGenerator.parseDomain(domain2))) {
+                            if (TabulationGeneratorService.isSameDomain(TabulationGeneratorService.parseDomain(domain1),
+                                    TabulationGeneratorService.parseDomain(domain2))) {
 
-                                taskWrapper.message = 'calculating distance for ' + fieldIds[i] + ' and ' + fieldIds[j]
+                                taskWrapper.task.message = 'calculating distance for ' + fieldIds[i] + ' and ' + fieldIds[j]
 
                                 double distance = calculateDistanceBatch(points, v1, v2, values[i], values[j],
                                         grids[i], grids[j], ranges[i], ranges[j])
@@ -137,8 +136,8 @@ class LayerDistancesCreateOne extends SlaveProcess {
         }
     }
 
-    private double calculateDistanceBatch(double[][] points, float[] v1, float[] v2, float[] d1, float[] d2,
-                                          Grid g1, Grid g2, double range1, double range2) {
+    private static double calculateDistanceBatch(double[][] points, float[] v1, float[] v2, float[] d1, float[] d2,
+                                                 Grid g1, Grid g2, double range1, double range2) {
 
         int count = 0
         double sum = 0
@@ -178,8 +177,8 @@ class LayerDistancesCreateOne extends SlaveProcess {
                         if (!Double.isNaN(v1[i]) && !Double.isNaN(v2[i])) {
                             count++
 
-                            float s1 = (v1[i] - g1.minval) / range1
-                            float s2 = (v2[i] - g2.minval) / range2
+                            float s1 = (float) ((v1[i] - g1.minval) / range1)
+                            float s2 = (float) ((v2[i] - g2.minval) / range2)
                             sum += Math.abs(s1 - s2)
                         }
                     }
@@ -195,8 +194,8 @@ class LayerDistancesCreateOne extends SlaveProcess {
 
                 for (int i = 0; i < size; i++) {
                     if (!Double.isNaN(v1[i]) && !Double.isNaN(v2[i])) {
-                        float s1 = (v1[i] - g1.minval) / range1
-                        float s2 = (v2[i] - g2.minval) / range2
+                        float s1 = (float) ((v1[i] - g1.minval) / range1)
+                        float s2 = (float) ((v2[i] - g2.minval) / range2)
                         sum += Math.abs(s1 - s2)
 
                         count++

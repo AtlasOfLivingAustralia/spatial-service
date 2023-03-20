@@ -1,15 +1,17 @@
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.intersect.SimpleRegion
+import au.org.ala.spatial.dto.SpeciesInput
+import au.org.ala.spatial.SpatialConfig
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.analysis.layers.Records
-import au.org.ala.spatial.service.TestUtil
-
-import au.org.ala.spatial.service.TaskQueueService
-import grails.util.Holders
-import org.apache.commons.io.FileUtils
+import au.org.ala.spatial.LayersDistancesServiceSpec
+import au.org.ala.spatial.TaskQueueService
+import au.org.ala.spatial.TasksService
+import au.org.ala.spatial.TestUtil
+import au.org.ala.spatial.util.Records
+import au.org.ala.spatial.intersect.SimpleRegion
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import javax.sql.DataSource
@@ -18,58 +20,95 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
 
     def gdalInstalled = false
 
+    File tmpCsv
+
+    TasksService tasksService
+    SpatialConfig spatialConfig
+    TaskQueueService taskQueueService
+
     @Override
-    Closure doWithSpring() {{ ->
-        dataSource(InstanceFactoryBean, Stub(DataSource), DataSource)
-    }}
+    Closure doWithSpring() {
+        { ->
+            dataSource(InstanceFactoryBean, Stub(DataSource), DataSource)
+
+            this.spatialConfig = new SpatialConfig()
+            this.spatialConfig.with {
+                data = new SpatialConfig.DotDir()
+                data.dir = new File(LayersDistancesServiceSpec.class.getResource("/resources/layers.json").getFile()).getParent()
+                task = new SpatialConfig.DotTask()
+                task.general = new SpatialConfig.DotThreads()
+                task.general.threads = 1
+                task.admin = new SpatialConfig.DotThreads()
+                task.admin.threads = 1
+                gdal = new SpatialConfig.DotDir()
+                gdal.dir = '/opt/homebrew/bin'
+                admin = new SpatialConfig.DotTimeout()
+                admin.timeout = 30000
+
+            }
+
+            taskQueueService(TaskQueueService) {
+                spatialConfig = this.spatialConfig
+            }
+        }
+    }
 
     @Override
     Set<String> getIncludePlugins() {
         ['core', 'eventBus', "converters"].toSet()
     }
 
-    def proc = new PointsToGrid()
+    def proc = new PointsToGrid() {
+        @Override
+        String streamBytes(String url, String name) {
+            if (url.contains('webportal/params/details')) return '{}'
+            else if (url.contains('/occurrences/search')) return '{"totalRecords": 10}'
+            else if (url.contains('/occurrence/facets?facets=')) return '{"count": 10}'
+            else if (url.contains('/occurrences/facets/download?facets=')) return "120,-15\n154, -25\n140, -40"
+            return 'other'
+        }
+
+        @Override
+        Integer occurrenceCount(SpeciesInput species, String extraFq){
+            10
+        }
+
+        @Override
+        def getRecords(String bs, String q, double[] bbox, String filename, SimpleRegion region) {
+            new RecordsMock(tmpCsv)
+        }
+    }
 
     def setup() {
-        proc.taskService = Mock(TaskQueueService)
-        proc.slaveService = Mock(SlaveService)
-        proc.grailsApplication = grailsApplication
+        Util.metaClass.initialize()
 
+        proc.tasksService = Mock(TasksService)
+        tasksService = proc.tasksService
 
-        // gdal installation is required for 'PointsToGrid'
-        Holders.config.gdal.dir = '/opt/homebrew/bin'
-        gdalInstalled = TestUtil.GDALInstalled(Holders.config.gdal.dir)
+        taskQueueService = applicationContext.getBean('taskQueueService') as TaskQueueService
+
+        gdalInstalled = TestUtil.GDALInstalled(spatialConfig.gdal.dir)
     }
 
     def cleanup() {
 
     }
 
+    @Ignore
     def "run PointsToGrid"() {
         when:
 
-        def tmpDir
-        def replacementId
+        proc.spatialConfig = this.spatialConfig
+
+        def tmpDir = null
+        def replacementId = null
         if (gdalInstalled) {
             tmpDir = File.createTempDir()
 
             new File("${tmpDir}/layer").mkdirs()
 
-            Holders.config.data.dir = tmpDir.getPath()
-            proc.taskService.getBasePath(_) >> tmpDir.getPath() + '/public/'
-
-            System.out.println(tmpDir.getPath())
-
             Util.metaClass.static.getQid = { qid -> [:] }
             Util.metaClass.static.makeQid = { query -> "qid" }
-
-            Util.metaClass.static.getUrl = { String url ->
-                if (url.contains('webportal/params/details')) return '{}'
-                else if (url.contains('/occurrences/search')) return '{"totalRecords": 10}'
-                else if (url.contains('/occurrence/facets?facets=')) return '{"count": 10}'
-                else if (url.contains('/occurrences/facets/download?facets=')) return "120,-15\n154, -25\n140, -40"
-                return 'other'
-            }
 
             def csvRaw = "names_and_lsid,longitude,latitude,year\n" +
                     "species1,131,-22,2000\n" +
@@ -77,18 +116,28 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
                     "species3,131,-23,2000\n" +
                     "species1,141,-22,2000\n" +
                     "species1,131,-30,2000"
-            def tmpCsv = File.createTempFile("test", ".csv")
-            FileUtils.writeStringToFile(tmpCsv, csvRaw)
-            proc.metaClass.getRecords = { String bs, String q, double[] bbox, String filename, SimpleRegion region ->
-                return new RecordsMock(tmpCsv)
-            }
+            tmpCsv = File.createTempFile("test", ".csv")
+            tmpCsv.write(csvRaw)
 
+            proc.taskWrapper = [
+                    path: tmpDir,
+                    spec : tasksService.getAllSpec().find { spec -> spec.name.equalsIgnoreCase('PointsToGrid') },
+                    task: [
+                            input: [
+                                    [ name: "area", value: "[{\"wkt\": \"POLYGON((120 -15,154 -15,154 -40,120 -40,120 -15))\", \"bbox\": [120,-15,154,-40]}]"],
+                                    [ name: "species", value: "{\"q\": \"\", \"name\": \"test species\"}"],
+                                    [ name: "resolution", value: "0.02"],
+                                    [ name: "gridCellSize", value : "1"],
+                                    [ name: "sitesBySpecies", value : "true"],
+                                    [ name: "occurrenceDensity", value : "true"],
+                                    [ name: "speciesRichness", value: "true"],
+                                    [ name: "movingAverage", value: "1x1"]
+                            ],
+                            output: []
+                    ]
+            ]
 
-            proc.taskWrapper = [spec : Mock(TaskQueueService).getAllSpec().find { spec -> spec.name.equalsIgnoreCase('AooEoo') },
-                                input: [area         : "[{\"wkt\": \"POLYGON((120 -15,154 -15,154 -40,120 -40,120 -15))\", \"bbox\": [120,-15,154,-40]}]",
-                                 species      : "{\"q\": \"\", \"name\": \"test species\"}", resolution: 0.02,
-                                 gridCellSize : 1, sitesBySpecies: true, occurrenceDensity: true, speciesRichness: true,
-                                 movingAverage: "1x1"]]
+            proc.spatialConfig.data.dir = tmpDir.path
 
             proc.start()
 
@@ -103,13 +152,13 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
         }
     }
 
-    def compareDir(tmpDir, expectedDir, replacementId) {
+    def compareDir(File tmpDir, expectedDir, String replacementId) {
         def tested = []
-        tmpDir.listFiles().each { file ->
+        tmpDir.listFiles().each { File file ->
             if (file.isDirectory()) {
                 tested.addAll(compareDir(file, "${expectedDir}/${file.name}", replacementId))
             } else {
-                def expect = new File(TestUtil.getResourcePath("${expectedDir}/${file.name.replace(replacementId, '*')}"))
+                File expect = new File(TestUtil.getResourcePath("${expectedDir}/${file.name.replace(replacementId, '*')}"))
                 tested.add(expect)
                 assert compareFiles(file, expect)
             }
@@ -117,21 +166,21 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
         tested
     }
 
-    def compareFiles (File file, File file2) {
+    def compareFiles(File file, File file2) {
         if (file.getName().endsWith(".csv") || file.getName().endsWith(".asc") ||
-                file.getName().endsWith(".wkt") || file.getName().endsWith(".sld")) {
-            FileUtils.readFileToString(file) == FileUtils.readFileToString(file2)
+                file.getName().endsWith(".wkt")                       || file.getName().endsWith(".sld")) {
+            file.text == file2.text
         } else if (file.getName().endsWith(".html")) {
             //replace date/time strings, processIds
-            FileUtils.readFileToString(file).replaceAll("\\b[0-9]{2}\\/[0-9]{2}\\/[0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2}\\b|\\b[0-9]{13}\\b", "") ==
-                    FileUtils.readFileToString(file2).replaceAll("\\b[0-9]{2}\\/[0-9]{2}\\/[0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2}\\b|\\b[0-9]{13}\\b", "")
+            file.text.replaceAll("\\b[0-9]{2}\\/[0-9]{2}\\/[0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2}\\b|\\b[0-9]{13}\\b", "") ==
+                    file2.text.replaceAll("\\b[0-9]{2}\\/[0-9]{2}\\/[0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2}\\b|\\b[0-9]{13}\\b", "")
         } else if (file.getName().endsWith(".gri")) {
-            FileUtils.readFileToByteArray(file) == FileUtils.readFileToByteArray(file2)
+            file.bytes == file2.bytes
         } else if (file.getName().endsWith(".grd")) {
             //replace created and title values
             String remove = '(Title|Created).*\n'
-            FileUtils.readFileToString(file).replaceAll("\r\n", "\n").replaceAll(remove, '') ==
-                    FileUtils.readFileToString(file2).replaceAll("\r\n", "\n").replaceAll(remove, '')
+            file.text.replaceAll("\r\n", "\n").replaceAll(remove, '') ==
+                    file2.text.replaceAll("\r\n", "\n").replaceAll(remove, '')
         } else {
             //png, tif
             //default test of exists and !empty

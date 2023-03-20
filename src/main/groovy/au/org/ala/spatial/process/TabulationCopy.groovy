@@ -16,25 +16,25 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.Tabulation
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 
 @Slf4j
 class TabulationCopy extends SlaveProcess {
 
     void start() {
 
-        def sourceUrl = taskWrapper.input.sourceUrl
+        String sourceUrl = getInput('sourceUrl')
 
         //get tabulations
-        def tabulations = JSON.parse(Util.getUrl(sourceUrl + "/tabulations.json"))
+        List<Tabulation> tabulations = JSON.parse(Util.getUrl(sourceUrl + "/tabulations.json")) as List<Tabulation>
         File fname = new File(getTaskPath() + 'tabulationImport.sql')
         addOutput('sql', 'tabulationImport.sql')
 
         int sqlCount = 0
 
-        for (def tab : tabulations) {
+        for (Tabulation tab : tabulations) {
             if (getField(tab.fid2) && getField(tab.fid1)) {
                 def data = JSON.parse(Util.getUrl("${sourceUrl}/tabulation/data/${tab.fid1}/${tab.fid2}/tabulation.json"))
 
@@ -48,7 +48,7 @@ class TabulationCopy extends SlaveProcess {
                 }
 
                 //sql to delete existing entry
-                FileUtils.writeStringToFile(fname, "DELETE FROM tabulation WHERE " +
+                fname.write("DELETE FROM tabulation WHERE " +
                         "(fid1='${tab.fid1}' AND fid2='${tab.fid2}') OR (fid1='${tab.fid1}' AND fid2='${tab.fid2}');", true)
 
                 //sql to add new entries
@@ -71,8 +71,11 @@ class TabulationCopy extends SlaveProcess {
                     sqlCount++
                     sqlFile = new File(getTaskPath() + 'tabulation' + sqlCount + '.sql')
                     addOutput('sql', 'tabulation' + sqlCount + '.sql')
+                    sqlFile.write(sb.toString())
                 }
-                FileUtils.writeStringToFile(sqlFile, sb.toString(), append)
+                if (append) {
+                    sqlFile.append(sb.toString())
+                }
             }
         }
 

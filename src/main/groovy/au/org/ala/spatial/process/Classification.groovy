@@ -15,90 +15,88 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.slave.SpatialUtils
 import grails.converters.JSON
-import grails.util.Holders
-import groovy.util.logging.Commons
+import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
-@Commons
+//@CompileStatic
+@Slf4j
 class Classification extends SlaveProcess {
 
     void start() {
-        //update ALOC
-        slaveService.getFile('/modelling/aloc/aloc.jar')
 
         //list of layers
-        def layers = JSON.parse(taskWrapper.input.layer.toString())
+        List<String> layers = JSON.parse(getInput('layer').toString()) as List<String>
         def envnameslist = new String[layers.size()]
         layers.eachWithIndex { l, idx ->
             envnameslist[idx] = l
         }
 
         //area to restrict
-        def area = JSON.parse(taskWrapper.input.area.toString())
-        def (region, envelope) = processArea(area[0])
+        List<AreaInput> area = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        RegionEnvelope regionEnvelope = processArea(area[0])
 
         //target resolution
-        def resolution = taskWrapper.input.resolution
+        def resolution = getInput('resolution')
 
         //number of target groups
-        def groups = taskWrapper.input.groups
+        def groups = getInput('groups')
 
         //make a shapefile
-        def makeShapefile = taskWrapper.input.shp
+        def makeShapefile = getInput('shp')
 
         new File(getTaskPath()).mkdirs()
 
-        def cutDataPath = cutGrid(envnameslist, resolution, region, envelope, null);
+        def cutDataPath = cutGrid(envnameslist, resolution as String, regionEnvelope.region, regionEnvelope.envelope, null)
 
-        String[] cmd = ["java", "-Xmx" + String.valueOf(Holders.config.aloc.xmx),
-                        "-jar", Holders.config.data.dir + '/modelling/aloc/aloc.jar',
-                        cutDataPath, String.valueOf(groups), String.valueOf(Holders.config.aloc.threads), getTaskPath()]
+        String[] cmd = ["java", "-Xmx" + String.valueOf(spatialConfig.aloc.xmx),
+                        "-jar", spatialConfig.data.dir + '/modelling/aloc/aloc.jar',
+                        cutDataPath, String.valueOf(groups), String.valueOf(spatialConfig.aloc.threads), getTaskPath()]
 
-        runCmd(cmd, true, Holders.config.aloc.timeout)
+        runCmd(cmd, true, spatialConfig.aloc.timeout)
 
         def replaceMap = [:] as LinkedHashMap
         envnameslist.each {
             replaceMap.put(it + '.grd', getLayer(getField(it).spid).displayname)
             replaceMap.put(it, getLayer(getField(it).spid).displayname)
         }
-        replaceMap.put('http://spatial.ala.org.au', taskWrapper.input.layersServiceUrl)
+        replaceMap.put('http://spatial.ala.org.au', getInput('layersServiceUrl'))
 
-        cmd = [Holders.config.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
+        cmd = [spatialConfig.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                getTaskPath() + "aloc.asc", getTaskPath() + taskWrapper.id + "_aloc.tif"]
-        taskWrapper.message = "asc > tif"
-        runCmd(cmd, true, Holders.config.aloc.timeout)
+        taskWrapper.task.message = "asc > tif"
+        runCmd(cmd, true, spatialConfig.aloc.timeout)
 
         if (new File(getTaskPath() + taskWrapper.id + "aloc.sld").exists()) {
-            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + taskWrapper.id + "_aloc.sld"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.sld")
         }
         if (new File(getTaskPath() + "aloc.sld").exists()) {
-            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.sld"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.sld")
         }
         if (new File(getTaskPath() + taskWrapper.id + "_aloc.tif").exists()) {
-            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.tif")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.tif")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + taskWrapper.id + "_aloc.tif"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.tif")
         }
 
         if (new File(getTaskPath() + "aloc.grd").exists()) {
-            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.grd")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.grd")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.grd"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.grd")
         }
         if (new File(getTaskPath() + "aloc.gri").exists()) {
-            File target = new File(Holders.config.data.dir + '/layer/' + taskWrapper.id + "_aloc.gri")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.gri")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.gri"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.gri")

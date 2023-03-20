@@ -20,13 +20,12 @@
     "ignoreNullObjects": {
       "type": "boolean"
     },
-    "skipSLDCreation":{
+    "skipSLDCreation": {
       "type": "boolean",
       "constraints": {
         "default": false
       }
     }
-
   },
   "output": {
     "layers": {

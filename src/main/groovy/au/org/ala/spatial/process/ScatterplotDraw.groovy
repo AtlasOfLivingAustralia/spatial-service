@@ -15,34 +15,35 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.scatterplot.Scatterplot
-import au.org.ala.scatterplot.ScatterplotStyleDTO
+import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.scatterplot.Scatterplot
+import au.org.ala.spatial.scatterplot.ScatterplotStyleDTO
 import au.org.ala.spatial.Util
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
 
+//@CompileStatic
 @Slf4j
 class ScatterplotDraw extends SlaveProcess {
 
     void start() {
         //optional area to restrict
-        def area = JSON.parse(taskWrapper.input?.wkt ?: '[]')
-        def wkt = area.size() > 0 ? getAreaWkt(area[0]) : null
+        List<AreaInput> areas = JSON.parse(getInput('wkt') as String?: '[]') as List<AreaInput>
+        def wkt = areas.size() > 0 ? getAreaWkt(areas[0]) : null
 
-        def layersServiceUrl = taskWrapper.input.layersServiceUrl
+        def layersServiceUrl = getInput('layersServiceUrl')
 
-        def colour = taskWrapper.input.color.toString()
-        def colourMode = taskWrapper.input.colorType.toString()
-        def size = taskWrapper.input.size.toString().toInteger()
-        def opacity = taskWrapper.input.opacity.toString().toDouble()
+        def colour = getInput('color').toString()
+        def colourMode = getInput('colorType').toString()
+        def size = getInput('size').toString().toInteger()
+        def opacity = getInput('opacity').toString().toDouble()
 
-        def selection = taskWrapper.input.selection.toString().split(',')
+        def selection = getInput('selection').toString().split(',')
 
-        def taskId = taskWrapper.input.scatterplotId
+        def taskId = getInput('scatterplotId')
 
-        File dataFile = new File(Holders.config.data.dir.toString() + '/public/' + taskId + "/data.xml")
-        slaveService.getFile('/public/' + taskId + '/data.xml')
+        File dataFile = new File(spatialConfig.data.dir.toString() + '/public/' + taskId + "/data.xml")
+        getFile('/public/' + taskId + '/data.xml')
 
         Scatterplot scatterplot = Scatterplot.load(dataFile)
 
@@ -74,38 +75,37 @@ class ScatterplotDraw extends SlaveProcess {
 
         scatterplot.getScatterplotDTO().setId('' + System.currentTimeMillis())
         scatterplot.reStyle(newStyle,
-                !existingStyle.getColourMode().equals(newStyle.getColourMode()),
-                !existingStyle.getRed() != newStyle.getRed(),
-                !existingStyle.getBlue() != newStyle.getBlue(),
-                !existingStyle.getGreen() != newStyle.getGreen(),
-                !existingStyle.getOpacity() != newStyle.getOpacity(),
-                !existingStyle.getSize() != newStyle.getSize(),
-                !existingStyle.getHighlightWkt() != newStyle.getHighlightWkt())
+                existingStyle.getColourMode() != newStyle.getColourMode(),
+                existingStyle.getRed() != newStyle.getRed(),
+                existingStyle.getBlue() != newStyle.getBlue(),
+                existingStyle.getGreen() != newStyle.getGreen(),
+                existingStyle.getOpacity() != newStyle.getOpacity(),
+                existingStyle.getSize() != newStyle.getSize(),
+                existingStyle.getHighlightWkt() != newStyle.getHighlightWkt())
 
         def image = [:]
-        image.putAt("scatterplotId", taskWrapper.id)
+        image["scatterplotId"] = taskWrapper.id
         def imgFile = new File(scatterplot.getImagePath())
-        image.putAt("scatterplotUrl",
-                imgFile.path.replace(Holders.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
-                        .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name))
+        image["scatterplotUrl"] = imgFile.path.replace(spatialConfig.data.dir + '/public/', layersServiceUrl + '/tasks/output/' as CharSequence)
+                .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name)
 
         //style
-        image.putAt('red', newStyle.red)
-        image.putAt('green', newStyle.green)
-        image.putAt('blue', newStyle.blue)
-        image.putAt('size', newStyle.size)
-        image.putAt('opacity', newStyle.opacity)
-        image.putAt('highlightWkt', newStyle.highlightWkt)
+        image['red'] = newStyle.red
+        image['green'] = newStyle.green
+        image['blue'] = newStyle.blue
+        image['size'] = newStyle.size
+        image['opacity'] = newStyle.opacity
+        image['highlightWkt'] = newStyle.highlightWkt
 
         //annotation
-        image.putAt('q', scatterplot.getScatterplotDTO().getForegroundOccurrencesQs())
-        image.putAt('bs', scatterplot.getScatterplotDTO().getForegroundOccurrencesBs())
-        image.putAt('name', scatterplot.getScatterplotDTO().getForegroundName())
+        image['q'] = scatterplot.getScatterplotDTO().getForegroundOccurrencesQs()
+        image['bs'] = scatterplot.getScatterplotDTO().getForegroundOccurrencesBs()
+        image['name'] = scatterplot.getScatterplotDTO().getForegroundName()
 
-        image.putAt('scatterplotExtents', scatterplot.getScatterplotDataDTO().layerExtents())
-        image.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotStyleDTO().getSelection())
-        image.putAt('scatterplotLayers', scatterplot.getScatterplotDTO().getLayers())
-        image.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
+        image['scatterplotExtents'] = scatterplot.getScatterplotDataDTO().layerExtents()
+        image['scatterplotSelectionExtents'] = scatterplot.getScatterplotStyleDTO().getSelection()
+        image['scatterplotLayers'] = scatterplot.getScatterplotDTO().getLayers()
+        image['scatterplotSelectionMissingCount'] = scatterplot.getScatterplotDataDTO().getMissingCount()
 
         addOutput("species", (image as JSON).toString())
 
@@ -113,7 +113,7 @@ class ScatterplotDraw extends SlaveProcess {
         File csvFile = new File(getTaskPathById(taskId) + "data.csv")
         scatterplot.saveCsv(csvFile)
         File downloadZip = new File(getTaskPathById(taskId) + "download.zip")
-        downloadZip.delete();
-        Util.zip(downloadZip.path, (String[]) [csvFile.path].toArray(), (String[]) [csvFile.name].toArray())
+        downloadZip.delete()
+        Util.zip(downloadZip.path, [csvFile.path] as String[], [csvFile.name] as String[])
     }
 }

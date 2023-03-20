@@ -1,3 +1,41 @@
-[{"id":"cl1", "name":"field1", "spid":"1", "desc":"displayName1", "locations":[{"id":1,"longitude":130,"latitude":-20}]},
-{"id":"cl2", "name":"field2", "spid":"2", "desc":"displayName2", "locations":[{"id":1,"longitude":120,"latitude":-30}]},
-{"id":"cl3", "name":"field3", "spid":"3", "desc":"displayName3", "locations":[{"id":1,"longitude":130,"latitude":20}]}]
+[
+  {
+    "id": "cl1",
+    "name": "field1",
+    "spid": "1",
+    "desc": "displayName1",
+    "locations": [
+      {
+        "id": 1,
+        "longitude": 130,
+        "latitude": -20
+      }
+    ]
+  },
+  {
+    "id": "cl2",
+    "name": "field2",
+    "spid": "2",
+    "desc": "displayName2",
+    "locations": [
+      {
+        "id": 1,
+        "longitude": 120,
+        "latitude": -30
+      }
+    ]
+  },
+  {
+    "id": "cl3",
+    "name": "field3",
+    "spid": "3",
+    "desc": "displayName3",
+    "locations": [
+      {
+        "id": 1,
+        "longitude": 130,
+        "latitude": 20
+      }
+    ]
+  }
+]

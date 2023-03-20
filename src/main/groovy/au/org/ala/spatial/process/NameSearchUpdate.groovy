@@ -14,11 +14,7 @@
  */
 
 package au.org.ala.spatial.process
-
-import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
-
-@Slf4j
+//@CompileStatic
 class NameSearchUpdate extends SlaveProcess {
 
     void start() {
@@ -29,9 +25,9 @@ class NameSearchUpdate extends SlaveProcess {
                 "  WHERE obj_names.name IS NULL AND fields.namesearch = true" +
                 "  GROUP BY lower(objects.name);" +
                 "  UPDATE objects SET name_id=obj_names.id FROM obj_names WHERE " +
-                "  lower(objects.name)=obj_names.name;";
+                "  lower(objects.name)=obj_names.name;"
 
-        FileUtils.writeStringToFile(new File(getTaskPath() + 'update.sql'), sql)
+        new File(getTaskPath() + 'update.sql').write(sql)
 
         addOutput('sql', 'update.sql')
     }

@@ -6,6 +6,7 @@
     <title><g:message code="default.create.label" args="[entityName]"/></title>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 <a href="#create-task" class="skip" tabindex="-1"><g:message code="default.link.skip.label"
                                                              default="Skip to content&hellip;"/></a>

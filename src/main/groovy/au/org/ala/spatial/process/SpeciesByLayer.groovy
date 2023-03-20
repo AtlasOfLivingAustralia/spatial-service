@@ -15,26 +15,26 @@
 
 package au.org.ala.spatial.process
 
-import au.com.bytecode.opencsv.CSVWriter
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.util.SpatialUtil
+import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.util.SpatialUtils
+import com.opencsv.CSVWriter
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
-import org.json.simple.JSONObject
-import org.json.simple.parser.JSONParser
+import org.grails.web.json.JSONObject
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+//@CompileStatic
 @Slf4j
 class SpeciesByLayer extends SlaveProcess {
 
     void start() {
 
-        def species = JSON.parse(taskWrapper.input.species.toString())
-        def fields = JSON.parse(taskWrapper.input.layer.toString())
+        SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
+        List<String> fields = JSON.parse(getInput('layer').toString()) as List<String>
 
         HashMap<String, Integer> speciesMap = new HashMap()
 
@@ -46,22 +46,22 @@ class SpeciesByLayer extends SlaveProcess {
         speciesNames.push(species.name)
 
         List<String> items = new ArrayList()
-        List<SpeciesByLayerCount> counts = new ArrayList();
+        List<SpeciesByLayerCount> counts = new ArrayList<SpeciesByLayerCount>()
 
         if (field.type != 'e') {
             // indexed only fields - contextual or grid as contextual layers
 
             def fieldObjects = getObjects(fields[0])
 
-            HashSet<String> occurrenceIds = new HashSet();
+            HashSet<String> occurrenceIds = new HashSet()
 
-            def firstSpecies = true;
+            def firstSpecies = true
 
             int n = 0
             for (def fieldObject : fieldObjects) {
-                def areaName = new String(fieldObject.name.getBytes("US-ASCII"), "UTF-8")
+                def areaName = fieldObject.name
 
-                def count = new SpeciesByLayerCount(fieldObject.area_km)
+                SpeciesByLayerCount count = new SpeciesByLayerCount(fieldObject.area_km)
 
                 n = n + 1
                 taskLog("Getting species for \"" + fieldObject.name + "\" (area " + n + " of " + fieldObjects.size() + ")")
@@ -83,14 +83,14 @@ class SpeciesByLayer extends SlaveProcess {
             String url = species.bs + "/chart?x=" + fields[0] + "&q=" + species.q
             String response = Util.getUrl(url)
 
-            JSONParser jp = new JSONParser()
-            def fieldObjects = ((JSONObject) jp.parse(response)).getAt("data").get(0).getAt("data")
+
+            def fieldObjects = ((List) ((JSONObject) JSON.parse(response))["data"])[0]["data"]
 
             def firstSpecies = true
 
             def min = Double.MAX_VALUE, max = Double.MIN_VALUE
-            for (def fieldObject : fieldObjects) {
-                def areaName = fieldObject.label
+            for (Map fieldObject : (fieldObjects as List<Map>)) {
+                String areaName = fieldObject.label
                 if (areaName) {
                     def values = areaName.split('-')
                     values.each {
@@ -98,7 +98,7 @@ class SpeciesByLayer extends SlaveProcess {
                             def n = Double.parseDouble(it)
                             if (min > n) min = n
                             if (max < n) max = n
-                        } catch (err) {
+                        } catch (ignored) {
                         }
                     }
                 }
@@ -110,12 +110,12 @@ class SpeciesByLayer extends SlaveProcess {
             double step = (max - min) / steps
             for (int n = 0; n < steps; n++) {
                 // no area_km
-                def count = new SpeciesByLayerCount(-1)
+                SpeciesByLayerCount count = new SpeciesByLayerCount(-1)
 
-                taskWrapper.message = "Getting species for area " + (n + 1) + " of " + steps
+                taskWrapper.task.message = "Getting species for area " + (n + 1) + " of " + steps
 
-                def lowerBound = (min + n * step)
-                def upperBound = n == steps - 1 ? max : (min + (n + 1) * step)
+                float lowerBound = (float) (min + n * step)
+                float upperBound = (float) (n == steps - 1 ? max : (min + (n + 1) * step))
 
                 // for usage 'value < upperBoundFile'
                 def upperBoundFile = n == steps - 1 ? max * 1.1 : (min + (n + 1) * step)
@@ -125,7 +125,7 @@ class SpeciesByLayer extends SlaveProcess {
                 // SOLR range query; lowerBound <= value < upperBoundQuery
                 def fq = fields[0] + ":[" + lowerBound + " TO " + upperBoundQuery + "}"
                 if (n > 0) {
-                    fq += " AND -" + fields[0] + ":" + lowerBound
+                    fq += " AND -" + fields[0] + ':' + lowerBound
                 }
                 count.species = facetCount('names_and_lsid', species, fq)
                 count.occurrences = occurrenceCount(species, fq)
@@ -143,19 +143,19 @@ class SpeciesByLayer extends SlaveProcess {
         CSVWriter writer = new CSVWriter(new FileWriter(csvFile))
 
         //info
-        writer.writeNext((String[]) ['species', speciesNames.join(' AND ')])
-        writer.writeNext((String[]) ['layer', field.name])
+        writer.writeNext(['species', speciesNames.join(' AND ')] as String[])
+        writer.writeNext(['layer', field.name] as String[])
 
         //header
         if (field.type != 'e') {
-            writer.writeNext((String[]) ['area name', 'area (sq km)', 'number of species', 'number of occurrences'])
+            writer.writeNext( ['area name', 'area (sq km)', 'number of species', 'number of occurrences'] as String[])
         } else {
-            writer.writeNext((String[]) ['lower bound', 'upper bound', 'number of species', 'number of occurrences'])
+            writer.writeNext( ['lower bound', 'upper bound', 'number of species', 'number of occurrences'] as String[])
         }
 
         for (int i = 0; i < items.size(); i++) {
             String item = items.get(i)
-            def count = counts.get(i)
+            SpeciesByLayerCount count = counts.get(i)
 
             if (field.type != 'e') {
                 writer.writeNext([item, count.area, count.species, count.occurrences] as String[])
@@ -171,101 +171,87 @@ class SpeciesByLayer extends SlaveProcess {
         addOutput("csv", csvFile.name, true)
     }
 
-    private class SpeciesByLayerCount {
-        int species = 0
-        int occurrences = 0
-        double area = 0
-
-        SpeciesByLayerCount(double area) {
-            this.area = area
-        }
-    }
-
-
-    public double envelopeArea(String layerName, double minBound, double maxBound) {
-        Grid grid = new Grid(Holders.config.data.dir.toString() + '/layer/' + layerName)
+    double envelopeArea(String layerName, float minBound, float maxBound) {
+        Grid grid = new Grid(spatialConfig.data.dir.toString() + '/layer/' + layerName)
 
         int bufferSize = 1024 * 1024
         float areaSqKm = 0
 
-        Grid g = Grid.getLoadedGrid(grid.filename);
+        Grid g = Grid.getLoadedGrid(grid.filename)
         if (g != null && g.grid_data != null) {
             for (int i = 0; i < g.grid_data.length; i++) {
-                areaSqKm += areaOf(g, value, i, min, max)
+                areaSqKm += areaOf(g, g.grid_data[i], i, minBound, maxBound)
             }
         } else {
-            int length = grid.nrows * grid.ncols;
-            RandomAccessFile afile = null;
-            File f2 = new File(grid.filename + ".GRI");
+            int length = grid.nrows * grid.ncols
+            RandomAccessFile afile = null
+            File f2 = new File(grid.filename + ".GRI")
 
             try {
                 if (!f2.exists()) {
-                    afile = new RandomAccessFile(grid.filename + ".gri", "r");
+                    afile = new RandomAccessFile(grid.filename + ".gri", "r")
                 } else {
-                    afile = new RandomAccessFile(grid.filename + ".GRI", "r");
+                    afile = new RandomAccessFile(grid.filename + ".GRI", "r")
                 }
 
-                byte[] b = new byte[bufferSize];
-                int i = 0;
-                int max = 0;
+                byte[] b = new byte[bufferSize]
+                int i = 0
+                int max = 0
 
-                while (true) {
-                    int len;
-                    while ((len = afile.read(b)) > 0) {
-                        ByteBuffer bb = ByteBuffer.wrap(b);
-                        if (grid.byteorderLSB) {
-                            bb.order(ByteOrder.LITTLE_ENDIAN);
-                        }
-
-                        if (grid.datatype.equalsIgnoreCase("UBYTE")) {
-                            max += len;
-
-                            for (max = Math.min(max, length); i < max; ++i) {
-                                value = (float) bb.get();
-                                if (value < 0.0F) {
-                                    value += 256.0F;
-                                }
-                                areaSqKm += areaOf(grid, value, i, minBound, maxBound)
-                            }
-                        } else if (grid.datatype.equalsIgnoreCase("BYTE")) {
-                            max += len;
-
-                            for (max = Math.min(max, length); i < max; ++i) {
-                                areaSqKm += areaOf(grid, (float) bb.get(), i, minBound, maxBound)
-                            }
-                        } else if (grid.datatype.equalsIgnoreCase("SHORT")) {
-                            max += len / 2;
-
-                            for (max = Math.min(max, length); i < max; ++i) {
-                                areaSqKm += areaOf(grid, (float) bb.getShort(), i, minBound, maxBound)
-                            }
-                        } else if (grid.datatype.equalsIgnoreCase("INT")) {
-                            max += len / 4;
-
-                            for (max = Math.min(max, length); i < max; ++i) {
-                                areaSqKm += areaOf(grid, (float) bb.getInt(), i, minBound, maxBound)
-                            }
-                        } else if (grid.datatype.equalsIgnoreCase("LONG")) {
-                            max += len / 8;
-
-                            for (max = Math.min(max, length); i < max; ++i) {
-                                areaSqKm += areaOf(grid, (float) bb.getLong(), i, minBound, maxBound)
-                            }
-                        } else if (grid.datatype.equalsIgnoreCase("FLOAT")) {
-                            max += len / 4;
-
-                            for (max = Math.min(max, length); i < max; ++i) {
-                                areaSqKm += areaOf(grid, (float) bb.getFloat(), i, minBound, maxBound)
-                            }
-                        } else if (grid.datatype.equalsIgnoreCase("DOUBLE")) {
-                            max += len / 8;
-
-                            for (max = Math.min(max, length); i < max; ++i) {
-                                areaSqKm += areaOf(grid, (float) bb.getDouble(), i, minBound, maxBound)
-                            }
-                        }
+                int len
+                while ((len = afile.read(b)) > 0) {
+                    ByteBuffer bb = ByteBuffer.wrap(b)
+                    if (grid.byteorderLSB) {
+                        bb.order(ByteOrder.LITTLE_ENDIAN)
                     }
 
+                    if (grid.datatype.equalsIgnoreCase("UBYTE")) {
+                        max += len
+
+                        for (max = Math.min(max, length); i < max; ++i) {
+                            float value = (float) bb.get()
+                            if (value < 0.0F) {
+                                value += 256.0F
+                            }
+                            areaSqKm += areaOf(grid, value, i, minBound, maxBound)
+                        }
+                    } else if (grid.datatype.equalsIgnoreCase("BYTE")) {
+                        max += len
+
+                        for (max = Math.min(max, length); i < max; ++i) {
+                            areaSqKm += areaOf(grid, (float) bb.get(), i, minBound, maxBound)
+                        }
+                    } else if (grid.datatype.equalsIgnoreCase("SHORT")) {
+                        max += len / 2
+
+                        for (max = Math.min(max, length); i < max; ++i) {
+                            areaSqKm += areaOf(grid, (float) bb.getShort(), i, minBound, maxBound)
+                        }
+                    } else if (grid.datatype.equalsIgnoreCase("INT")) {
+                        max += len / 4
+
+                        for (max = Math.min(max, length); i < max; ++i) {
+                            areaSqKm += areaOf(grid, (float) bb.getInt(), i, minBound, maxBound)
+                        }
+                    } else if (grid.datatype.equalsIgnoreCase("LONG")) {
+                        max += len / 8
+
+                        for (max = Math.min(max, length); i < max; ++i) {
+                            areaSqKm += areaOf(grid, (float) bb.getLong(), i, minBound, maxBound)
+                        }
+                    } else if (grid.datatype.equalsIgnoreCase("FLOAT")) {
+                        max += len / 4
+
+                        for (max = Math.min(max, length); i < max; ++i) {
+                            areaSqKm += areaOf(grid, (float) bb.getFloat(), i, minBound, maxBound)
+                        }
+                    } else if (grid.datatype.equalsIgnoreCase("DOUBLE")) {
+                        max += len / 8
+
+                        for (max = Math.min(max, length); i < max; ++i) {
+                            areaSqKm += areaOf(grid, (float) bb.getDouble(), i, minBound, maxBound )
+                        }
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace()
@@ -285,7 +271,7 @@ class SpeciesByLayer extends SlaveProcess {
         // end of row; return area value
         if ((cellIdx + 1) % grid.ncols == 0) {
             // latitude at the middle of the current row
-            double latitude = Math.floor(cellIdx / grid.ncols) * grid.yres + grid.yres / 2.0 + grid.ymax
+            double latitude = Math.floor(cellIdx / grid.ncols as double) * grid.yres + grid.yres / 2.0 + grid.ymax
 
             // area of a cell at this grid resolution and latitude * number of cells to count
             double area = SpatialUtil.cellArea(grid.yres, latitude) * cellsInRow
@@ -297,5 +283,15 @@ class SpeciesByLayer extends SlaveProcess {
         } else {
             return 0
         }
+    }
+}
+
+class SpeciesByLayerCount {
+    int species = 0
+    int occurrences = 0
+    double area = 0
+
+    SpeciesByLayerCount(double area) {
+        this.area = area
     }
 }

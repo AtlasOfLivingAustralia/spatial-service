@@ -21,6 +21,7 @@ import org.apache.commons.httpclient.methods.ByteArrayRequestEntity
 import org.apache.commons.httpclient.methods.RequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
 
+//@CompileStatic
 @Slf4j
 class InitGeoserver extends SlaveProcess {
     String geoserverUrl
@@ -31,14 +32,14 @@ class InitGeoserver extends SlaveProcess {
     String postgresqlPassword
 
     void start() {
-        geoserverUrl = taskWrapper.input.geoserverUrl ?: Holders.config.geoserver.url
-        username = taskWrapper.input.geoserverUser ?: Holders.config.geoserver.username
-        password = taskWrapper.input.geoserverPassword ?: Holders.config.geoserver.password
+        geoserverUrl = getInput('geoserverUrl') ?: spatialConfig.geoserver.url
+        username = getInput('geoserverUser') ?: spatialConfig.geoserver.username
+        password = getInput('geoserverPassword') ?: spatialConfig.geoserver.password
 
         // default url is jdbc:postgres://localhost/layersdb, get the path
-        postgresqlPath = taskWrapper.input.postgresqlPath ?: Holders.config.dataSource.url.split("/")[2]
-        postgresqlUser = taskWrapper.input.postgresqlUser ?: Holders.config.dataSource.username
-        postgresqlPassword = taskWrapper.input.postgresqlPassword ?: Holders.config.dataSource.password
+        postgresqlPath = getInput('postgresqlPath') ?: spatialConfig.dataSource.url.split("/")[2]
+        postgresqlUser = getInput('postgresqlUser') ?: spatialConfig.dataSource.username
+        postgresqlPassword = getInput('postgresqlPassword') ?: spatialConfig.dataSource.password
 
         changeGeoserverPassword()
 
@@ -162,7 +163,7 @@ class InitGeoserver extends SlaveProcess {
             entity = new StringRequestEntity(resource.text, "text/xml", "UTF-8")
             restCall("Creating layer " + layer, "POST", "/rest/workspaces/ALA/datastores/LayersDB/featuretypes", entity)
 
-            if (layer.equals("Points")) {
+            if (layer == "Points") {
                 entity = new StringRequestEntity("<layer><defaultStyle><name>points_style</name><workspace>ALA</workspace></defaultStyle></layer>", "text/xml", "UTF-8")
             } else {
                 entity = new StringRequestEntity("<layer><defaultStyle><name>distributions_style</name><workspace>ALA</workspace></defaultStyle></layer>", "text/xml", "UTF-8")

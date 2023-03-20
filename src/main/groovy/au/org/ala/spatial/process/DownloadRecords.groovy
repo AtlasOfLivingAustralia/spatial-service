@@ -15,23 +15,21 @@
 
 package au.org.ala.spatial.process
 
-import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.spatial.util.RecordsSmall
-import grails.util.Holders
-import groovy.util.logging.Slf4j
+import com.opencsv.CSVReader
 
 import java.util.zip.ZipInputStream
 
-@Slf4j
+//@CompileStatic
 class DownloadRecords extends SlaveProcess {
 
     void start() {
-        File file = new File(Holders.config.data.dir.toString() + '/sample/records.csv')
+        File file = new File(spatialConfig.data.dir.toString() + '/sample/records.csv')
         file.getParentFile().mkdirs()
 
-        taskWrapper.message = 'downloading new records'
+        taskWrapper.task.message = 'downloading new records'
         try {
-            ZipInputStream zis = new ZipInputStream(new URL(Holders.config.records.url.toString()).openConnection().getInputStream())
+            ZipInputStream zis = new ZipInputStream(new URL(spatialConfig.records.url.toString()).openConnection().getInputStream())
 
             //only 1 file in the download zip
             zis.getNextEntry()
@@ -43,7 +41,7 @@ class DownloadRecords extends SlaveProcess {
             String[] next
             br.write('latitude,longitude,names_and_lsid')
             while ((next = csv.readNext()) != null) {
-                if (!'decimalLatitude_p'.equals(next[0]) && !'rowKey'.equals(next[0]) && next[0].length() > 0) {
+                if ('decimalLatitude_p' != next[0] && 'rowKey' != next[0] && next[0].length() > 0) {
                     br.write('\n' + next[0] + ',' + next[1] + ',' + (next[2] + '|' + next[3]).replace(',', ' '))
                 }
             }
@@ -57,16 +55,16 @@ class DownloadRecords extends SlaveProcess {
 
         addOutput('file', '/sample/records.csv')
 
-        taskWrapper.message = 'making small records files'
+        taskWrapper.task.message = 'making small records files'
 
         //small records file
-        RecordsSmall records = new RecordsSmall(Holders.config.data.dir.toString() + '/sample/')
+        RecordsSmall records = new RecordsSmall(spatialConfig.data.dir.toString() + '/sample/')
         records.close()
         RecordsSmall.fileList().each { filename ->
             addOutput('file', '/sample/' + filename)
         }
 
-        taskWrapper.message = 'identify contextual layer sampling files for deletion'
+        taskWrapper.task.message = 'identify contextual layer sampling files for deletion'
 
         //delete any existing contextual layer sampling files
         List fields = getFields()

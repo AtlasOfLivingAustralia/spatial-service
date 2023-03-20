@@ -2,13 +2,14 @@
 <html>
 <head>
     <title>Layer Administration</title>
-    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
+    <meta name="breadcrumbs" content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="ala-main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 
 <div class="col-lg-8">
@@ -20,6 +21,7 @@
         <div class="panel-heading">
             Navigation
         </div>
+
         <div class="panel-body">
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
@@ -62,8 +64,8 @@
                     <g:each in="${item.fields}" var="field">
                         <g:link controller="manageLayers" action="field"
                                 id="${field.id}">${field.id}: ${field.name}</g:link>,
-                                ${field.type == 'c' ? 'contextual (polygon)' : ''}
-                                ${field.type == 'e' ? 'environmental (raster)' : ''}
+                        ${field.type == 'c' ? 'contextual (polygon)' : ''}
+                        ${field.type == 'e' ? 'environmental (raster)' : ''}
                         ${field.type == 'a' ? 'contextual (raster with classes)' : ''}
                         ${field.type == 'b' ? 'contextual (raster with polygons)' : ''}
                     </g:each>
@@ -73,12 +75,13 @@
                     add field
                 </g:link><br/>
                 </td>
-                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"id="${item.id}">
+                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default" id="${item.id}">
                     <i class="glyphicon glyphicon-edit"></i>
                     edit
-                    </g:link>
+                </g:link>
                 </td>
-                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');" class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-remove"></i> delete</a></td>
+                <td><a onclick="return confirmDelete(${item.id}, '${item.name}');" class="btn btn-sm btn-danger"><i
+                        class="glyphicon glyphicon-remove"></i> delete</a></td>
             </tr>
         </g:each>
         </tbody>

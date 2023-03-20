@@ -15,34 +15,34 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.grid.GridClassBuilder
-import au.org.ala.layers.legend.GridLegend
-import au.org.ala.layers.util.Bil2diva
-import au.org.ala.layers.util.Diva2bil
-import au.org.ala.spatial.slave.SpatialUtils
+import au.org.ala.spatial.Layers
 import au.org.ala.spatial.util.GeomMakeValid
+import au.org.ala.spatial.grid.GridClassBuilder
+import au.org.ala.spatial.legend.GridLegend
+import au.org.ala.spatial.grid.Bil2diva
+import au.org.ala.spatial.grid.Diva2bil
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
+//@CompileStatic
 @Slf4j
 class LayerCreation extends SlaveProcess {
 
     void start() {
-        String uploadId = taskWrapper.input.uploadId
-        String layerId = taskWrapper.input.layerId
+        String uploadId = getInput('uploadId')
+        String layerId = getInput('layerId')
 
         // get layer info
-        Map layer = getLayer(layerId)
+        Layers layer = getLayer(layerId)
 
         if (layer == null) {
-            taskWrapper.err.put(String.valueOf(System.currentTimeMillis()), "layer not found for id: " + layerId)
+            taskWrapper.task.history.put(String.valueOf(System.currentTimeMillis()), "layer not found for id: " + layerId)
             return
         }
 
         //upload shp into layersdb in a table with name layer.id
-        String dir = Holders.config.data.dir
+        String dir = spatialConfig.data.dir
         File shpUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".shp")
         File bilUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".bil")
         File tifUploaded = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".tif")
@@ -59,42 +59,42 @@ class LayerCreation extends SlaveProcess {
 
             //reproject to 4326
             String[] cmd = [
-                    Holders.config.gdal.dir + "/gdalwarp",
+                    spatialConfig.gdal.dir + "/gdalwarp",
                     "-t_srs", "EPSG:4326"
                     , srcPath
                     , outPath + "_tmp.bil"]
-            taskWrapper.message = 'reprojecting shp'
+            taskWrapper.task.message = 'reprojecting shp'
             try {
-                runCmd(cmd, true, Holders.config.admin.timeout)
+                runCmd(cmd, true, spatialConfig.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (1)", e)
             }
-            cmd = [Holders.config.gdal.dir + "/gdalinfo",
+            cmd = [spatialConfig.gdal.dir + "/gdalinfo",
                    "-hist"
                    , outPath + "_tmp.bil"]
             try {
-                runCmd(cmd, true, Holders.config.admin.timeout)
+                runCmd(cmd, true, spatialConfig.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (2)", e)
             }
             // make .hdr
-            cmd = [Holders.config.gdal.dir + "/gdal_translate",
+            cmd = [spatialConfig.gdal.dir + "/gdal_translate",
                    "-of", "Ehdr"
                    , outPath + "_tmp.bil"
                    , outPath + ".bil"]
             try {
-                runCmd(cmd, true, Holders.config.admin.timeout)
+                runCmd(cmd, true, spatialConfig.admin.timeout)
             } catch (Exception e) {
                 log.error("error running gdalwarp (3)", e)
             }
             // delete tmp
             new File(outPath + "_tmp.bil").delete()
 
-            taskWrapper.message = 'bil > diva'
+            taskWrapper.task.message = 'bil > diva'
             Bil2diva.bil2diva(outPath, outPath, layer.environmentalvalueunits.toString())
 
             if ("Contextual".equalsIgnoreCase(layer.type.toString())) {
-                taskWrapper.message = "process grid file to shapes"
+                taskWrapper.task.message = "process grid file to shapes"
 
                 FileUtils.copyFile(txtUploaded, new File(dir + "/layer/" + layer.name + ".txt"))
                 GridClassBuilder.buildFromGrid(dir + "/layer/" + layer.name)
@@ -124,7 +124,7 @@ class LayerCreation extends SlaveProcess {
                 //bil may have changed
                 Diva2bil.diva2bil(outPath, outPath)
 
-                taskWrapper.message = ""
+                taskWrapper.task.message = ""
             } else {
                 addOutput('layers', "/layer/" + layer.name + '.grd')
                 addOutput('layers', "/layer/" + layer.name + '.gri')
@@ -134,9 +134,9 @@ class LayerCreation extends SlaveProcess {
             addOutput('layers', "/layer/" + layer.name + '.sld')
 
             //bil 2 geotiff (?)
-            taskWrapper.message = 'bil > geotiff'
+            taskWrapper.task.message = 'bil > geotiff'
             try {
-                SpatialUtils.toGeotiff(Holders.config.gdal.dir, outPath + ".bil")
+                SpatialUtils.toGeotiff(spatialConfig.gdal.dir, outPath + ".bil")
             } catch (Exception e) {
                 log.error("error making geotiff", e)
             }
@@ -152,15 +152,15 @@ class LayerCreation extends SlaveProcess {
                 File dst = new File(dir + newName)
                 dst.getParentFile().mkdirs()
 
-                taskWrapper.message = 'ensuring shapefile is valid'
+                taskWrapper.task.message = 'ensuring shapefile is valid'
                 GeomMakeValid.makeValidShapefile(shpUploaded.getPath(), dst.getPath() + ".shp")
 
-                taskWrapper.message = 'moving files'
-                String[] cmd = [Holders.config.gdal.dir + '/ogrinfo',
+                taskWrapper.task.message = 'moving files'
+                String[] cmd = [spatialConfig.gdal.dir + '/ogrinfo',
                                 dst.getPath() + ".shp", "-sql", "CREATE SPATIAL INDEX ON " + layer.name]
-                taskWrapper.message = 'shp spatial index'
+                taskWrapper.task.message = 'shp spatial index'
                 try {
-                    runCmd(cmd, true, Holders.config.admin.timeout)
+                    runCmd(cmd, true, spatialConfig.admin.timeout)
                 } catch (Exception e) {
                     log.error("error running shp spatial index", e)
                 }
@@ -169,10 +169,6 @@ class LayerCreation extends SlaveProcess {
             }
         }
 
-        //delete from uploads dir if master service is remote
-        if (!Holders.config.service.enable.toBoolean()) {
-            FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
-        }
         addOutput("process", "Thumbnails " + ([] as JSON))
 
     }

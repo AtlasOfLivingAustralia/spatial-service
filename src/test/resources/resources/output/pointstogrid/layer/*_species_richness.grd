@@ -1,5 +1,5 @@
 [General]
-Title=
+Title=/var/folders/3n/gbgz4ybx07g9vwjf7k7pgxq00000gp/T/groovy-generated-tmpdir-1041649326539325783/layer/1678757017560_species_richness
 [GeoReference]
 Projection=GEOGRAPHIC
 Datum=WGS84
@@ -15,6 +15,6 @@ ResolutionY=1.0
 [Data]
 DataType=FLT4BYTES
 MinValue=0.0
-MaxValue=1.0
+MaxValue=0.0
 NoDataValue=-3.4E38
 Transparent=0

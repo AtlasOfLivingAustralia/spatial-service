@@ -15,25 +15,23 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.grid.GridCutter
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.util.LayerFilter
-import au.org.ala.spatial.slave.SpatialUtils
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.dto.LayerFilter
 import grails.converters.JSON
-import grails.util.Holders
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
+//@CompileStatic
 @Slf4j
 class Envelope extends SlaveProcess {
 
     void start() {
-        List envelope = JSON.parse(taskWrapper.input.envelope.toString())
-        String resolution = taskWrapper.input.resolution
-        String makeShapefile = Boolean.parseBoolean(taskWrapper.input.shp)
-        String geoserverUrl = taskWrapper.input.geoserverUrl
+        List<String> envelope = JSON.parse(getInput('envelope').toString()) as List<String>
+        String resolution = getInput('resolution')
+        String makeShapefile = Boolean.parseBoolean(getInput('shp') as String)
+        String geoserverUrl = getInput('geoserverUrl')
 
-        LayerFilter[] filter = new LayerFilter[envelope.length()]
+        LayerFilter[] filter = new LayerFilter[envelope.size()]
         if (envelope) {
             // fq to LayerFilter
             for (int i = 0; i < envelope.size(); i++) {
@@ -48,8 +46,8 @@ class Envelope extends SlaveProcess {
                     }
                 }
                 String layerFile = '/standard_layer/' + resolution + "/" + filter[i].getLayername()
-                taskLog("Fetch layer: " + layerFile )
-                slaveService.getFile(layerFile)
+                taskLog("Fetch layer: " + layerFile)
+                getFile(layerFile)
             }
         }
 
@@ -61,17 +59,17 @@ class Envelope extends SlaveProcess {
         File grid = new File(dir.getPath() + File.separator + filename)
 
         double areaSqKm
-        String [] types = new String[filter.length]
-        String [] fieldIds = new String[filter.length]
-        for (int i=0;i<filter.length;i++) {
+        String[] types = new String[filter.length]
+        String[] fieldIds = new String[filter.length]
+        for (int i = 0; i < filter.length; i++) {
             types[i] = filter[i].contextual ? "c" : "e"
             fieldIds[i] = filter[i].layername
         }
         taskLog("Making envelope.....")
-        if ((areaSqKm = GridCutter.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
+        if ((areaSqKm = gridCutterService.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
 
             SpatialUtils.divaToAsc(dir.getPath() + File.separator + filename)
-            SpatialUtils.toGeotiff(Holders.config.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
+            SpatialUtils.toGeotiff(spatialConfig.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
             SpatialUtils.save4326prj(dir.getPath() + File.separator + filename + ".prj")
 
             addOutput("files", filename + ".asc")
@@ -94,7 +92,7 @@ class Envelope extends SlaveProcess {
             addOutput("envelopes", (values as JSON).toString(), true)
 
             String metadata = "<html><body>Extents: " + g.xmin + "," + g.ymin + "," + g.xmax + "," + g.ymax + "<br>Area (sq km): " + areaSqKm + "</body></html>"
-            FileUtils.writeStringToFile(new File(dir.getPath() + File.separator + "envelope.html"), metadata)
+            new File(dir.getPath() + File.separator + "envelope.html").write(metadata)
             addOutput("metadata", "envelope.html")
 
             SpatialUtils.grid2shp(grid.getPath(), [1])

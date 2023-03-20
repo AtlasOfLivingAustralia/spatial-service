@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Edit Field</title>
-    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink( controller: 'manageLayers', action: 'layers')}, Layers"/>
+    <meta name="breadcrumbs"
+          content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink(controller: 'manageLayers', action: 'layers')}, Layers"/>
 
     <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
@@ -13,10 +14,12 @@
     <script src="${resource(dir: 'js', file: 'BetterWMS.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 
 <div class="col-lg-8">
     <h1>Edit Field ${item && item.id ? ' : ' + item.id : ''}</h1>
+
     <div class="col-lg-12">
         <g:if test="${error != null}">
             <b class="alert alert-danger">${error}</b>
@@ -36,6 +39,7 @@
         <div class="panel-heading">
             Navigation
         </div>
+
         <div class="panel-body">
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
@@ -67,8 +71,8 @@
                 </li></g:if>
                 <li role="presentation" class=""><a href="#geoserverPreview" aria-controls="geoserverPreview" role="tab"
                                                     data-toggle="tab" onclick="setTimeout(function () {
-                            map.invalidateSize()
-                        }, 0)">Map</a></li>
+                        map.invalidateSize()
+                    }, 0)">Map</a></li>
                 <li role="presentation" class=""><a href="#backgroundProcesses" aria-controls="backgroundProcesses"
                                                     role="tab"
                                                     data-toggle="tab">Background Processes</a></li>
@@ -82,13 +86,13 @@
 
                         <table class="table table-condensed">
                             <thead>
-                                <th>Id</th>
-                                <th>name</th>
-                                <th>description</th>
-                                <th>sid</th>
-                                <th>sname</th>
-                                <th></th>
-                                <th></th>
+                            <th>Id</th>
+                            <th>name</th>
+                            <th>description</th>
+                            <th>sid</th>
+                            <th>sname</th>
+                            <th></th>
+                            <th></th>
                             </thead>
                             <tbody>
                             <g:each in="${fields}" var="item">
@@ -114,14 +118,14 @@
                                     </td>
                                 </tr>
                             </g:each>
-                                <tr>
-                                    <td colspan="7"><g:link controller="manageLayers" action="field"
-                                                            class="btn btn-sm btn-default"
-                                                            id="${raw_id}">
-                                     <i class="glyphicon-plus"></i>
-                                        Add new Field</g:link>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td colspan="7"><g:link controller="manageLayers" action="field"
+                                                        class="btn btn-sm btn-default"
+                                                        id="${raw_id}">
+                                    <i class="glyphicon-plus"></i>
+                                    Add new Field</g:link>
+                                </td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>
@@ -152,7 +156,7 @@
                             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         }).addTo(map);
 
-                        var wmsLayer = L.tileLayer.betterWms("${grailsApplication.config.geoserver.url}/wms", {
+                        var wmsLayer = L.tileLayer.betterWms("${spatialConfig.geoserver.url}/wms", {
                             layers: '${layerName}',
                             format: 'image/png',
                             version: '1.1.0',
@@ -211,7 +215,7 @@
                                 <tr><td>
                                     <label for="sid"
                                            style="color:red">Source id (contextual only; comma delimited list of shape file column names for aggregation to
-                                        create unique objects, e.g. "id") ${sid}</label></td><td>
+                                    create unique objects, e.g. "id") ${sid}</label></td><td>
                                     <!--input type="text" id="sid" name="sid" value="${sid}" maxlength="256"/-->
                                     <select class="form-control" id="sid" name="sid" style="color:red">
                                         <option value=""

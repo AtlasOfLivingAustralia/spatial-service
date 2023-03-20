@@ -5,28 +5,37 @@
     <title>Spatial Service</title>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 <div class="container">
-<h1>Spatial service</h1>
-<p>
-    View spatial layers available in the system.
-</p>
-<ul>
-    <li><g:link controller="tabulation" action="index">Tabulations</g:link> - View the available tabulations (2 dimension matrices of contextual variables)</li>
-    <li><g:link controller="layer" action="list">Layers</g:link> - View available spatial layers (Grid or Polygon)</li>
-</ul>
+    <h1>Spatial service</h1>
 
-<h3>Admin tools</h3>
-<p>
-    This is an administration interface for managing the layers available in the system.
-</p>
-<ul>
-    <li><g:link controller="manageLayers" action="uploads">Manage layer uploads</g:link> - Upload, edit or delete layers from the system</li>
-    <li><g:link controller="manageLayers" action="layers">View available layers</g:link> - View lists of existing layers</li>
-    <li><g:link controller="tasks" action="activeThreads">Check active tasks</g:link> - View the status of active tasks</li>
-    <li><g:link controller="tasks" action="index">Show all tasks</g:link> - View the status of tasks</li>
-    <li><g:link controller="manageLayers" action="remote">Copy layers from remote servers</g:link> - transfer layers from test environment to production</li>
-</ul>
+    <p>
+        View spatial layers available in the system.
+    </p>
+    <ul>
+        <li><g:link controller="tabulation"
+                    action="index">Tabulations</g:link> - View the available tabulations (2 dimension matrices of contextual variables)</li>
+        <li><g:link controller="layer"
+                    action="list">Layers</g:link> - View available spatial layers (Grid or Polygon)</li>
+    </ul>
+
+    <h3>Admin tools</h3>
+
+    <p>
+        This is an administration interface for managing the layers available in the system.
+    </p>
+    <ul>
+        <li><g:link controller="manageLayers"
+                    action="uploads">Manage layer uploads</g:link> - Upload, edit or delete layers from the system</li>
+        <li><g:link controller="manageLayers"
+                    action="layers">View available layers</g:link> - View lists of existing layers</li>
+        <li><g:link controller="tasks"
+                    action="activeThreads">Check active tasks</g:link> - View the status of active tasks</li>
+        <li><g:link controller="tasks" action="index">Show all tasks</g:link> - View the status of tasks</li>
+        <li><g:link controller="manageLayers"
+                    action="remote">Copy layers from remote servers</g:link> - transfer layers from test environment to production</li>
+    </ul>
 
     <h4>
         Tools
@@ -42,7 +51,8 @@
                     params="${[admin: true, accept: 'application/csv', groupBy: 'category1,category2', countBy: 'record,user,session', excludeRoles: 'ROLE_ADMIN', startDate: (java.time.LocalDate.now().minusMonths(6).toString()), endDate: (java.time.LocalDate.now().toString())]}">spatial-hub usage report - last 6 months (csv)</g:link> - Excludes ROLE_ADMIN users</li>
         <li><g:link controller="layer" action="csvlist"
                     params="${[usage: true, months: 6]}">layer usage report - last 6 months (csv)</g:link></li>
-        <li><g:link controller="manageLayers" action="defaultGeoserverStyles">Fix layer styles</g:link> - Recreate linear/none linear styles for each Raster layers, Recreate polygon/outlines for Vector layers</li>
+        <li><g:link controller="manageLayers"
+                    action="defaultGeoserverStyles">Fix layer styles</g:link> - Recreate linear/none linear styles for each Raster layers, Recreate polygon/outlines for Vector layers</li>
         <li><g:link controller="tasks" action="create"
                     params="${[name: 'TabulationCreate']}">Add missing 2-D tabulation</g:link> -Add missing 2-D tabulation</li>
         <li><g:link controller="tasks" action="create"

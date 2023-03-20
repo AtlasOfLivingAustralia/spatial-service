@@ -16,24 +16,24 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.GeomMakeValid
-import grails.util.Holders
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.locationtech.jts.geom.Geometry
+import org.opengis.feature.Property
 
 import java.text.MessageFormat
 
+//@CompileStatic
 @Slf4j
 class ChecklistCreation extends SlaveProcess {
 
     void start() {
-        String uploadId = taskWrapper.input.uploadId
-        String data_resource_uid = taskWrapper.input.data_resource_uid
+        String uploadId = getInput('uploadId')
+        String data_resource_uid = getInput('dataResourceUid')
 
         //upload shp into layersdb in a table with name layer.id
-        String dir = Holders.config.data.dir
+        String dir = spatialConfig.data.dir
 
         //open shapefile
         File file = new File(dir + "/uploads/" + uploadId + "/" + uploadId + ".shp")
@@ -74,7 +74,7 @@ class ChecklistCreation extends SlaveProcess {
                                   family_exe    : ['family_exemplar', 'b'],
                                   image_qual    : ['image_quality', 's']]
 
-        taskWrapper.message = "reading shapefile"
+        taskWrapper.task.message = "reading shapefile"
         String sqlCount = 0
         while (reader.hasNext()) {
             def f = reader.next()
@@ -83,11 +83,11 @@ class ChecklistCreation extends SlaveProcess {
             StringBuilder values = new StringBuilder()
             StringBuilder columns = new StringBuilder()
             String spcode = null
-            f.getProperties().each { p ->
+            f.getProperties().each { Property p ->
                 if (p.getName().toString().equalsIgnoreCase('spcode')) {
                     spcode = (int) p.getValue()
                 }
-                distributionFields.each { String k, List v ->
+                distributionFields.each { String k, List<String> v ->
                     if (p.getName().toString().equalsIgnoreCase(k)) {
                         if (columns.length() > 0) columns.append(",")
                         columns.append("\"").append(v[0]).append("\"")
@@ -95,7 +95,7 @@ class ChecklistCreation extends SlaveProcess {
                         if (values.length() > 0) values.append(",")
                         if (v[1].equalsIgnoreCase('s')) {
                             //string
-                            values.append("\'\'").append(sqlEscapeString(p.getValue()).replace("\'", "\'\'")).append("\'\'")
+                            values.append("\'\'").append(sqlEscapeString(p.getValue() as String).replace("\'", "\'\'")).append("\'\'")
                         } else if (v[1].equalsIgnoreCase('b')) {
                             //boolean
                             values.append(p.getValue().toString())
@@ -133,8 +133,12 @@ class ChecklistCreation extends SlaveProcess {
                         sqlCount++
                         sqlFile = new File(getTaskPath() + 'objects' + sqlCount + '.sql')
                         addOutput('sql', 'objects' + sqlCount + '.sql')
+                        sqlFile.write(sql)
                     }
-                    FileUtils.writeStringToFile(sqlFile, sql, append)
+
+                    if (append) {
+                        sqlFile.append(sql)
+                    }
                 }
             }
         }
@@ -146,25 +150,20 @@ class ChecklistCreation extends SlaveProcess {
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and distributions.pid is null;"
         sql += "\nINSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch, area_km, bbox) " +
                 "(select nextval('objects_id_seq'), max(spcode), max(area_name), '', '" +
-                Holders.config.userObjectsField + "', the_geom, false, " +
+                spatialConfig.userObjectsField + "', the_geom, false, " +
                 "(st_area(ST_GeogFromWKB(st_asbinary(the_geom)), true)/1000000), ST_ASTEXT(ST_EXTENT(the_geom)) " +
                 "from distributions where pid is null group by the_geom);"
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                "distributions.pid is null and fid = '" + Holders.config.userObjectsField + "' and " +
+                "distributions.pid is null and fid = '" + spatialConfig.userObjectsField + "' and " +
                 "o.id = '' || distributions.spcode;"
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                "distributions.pid is null and fid = '" + Holders.config.userObjectsField + "' and " +
+                "distributions.pid is null and fid = '" + spatialConfig.userObjectsField + "' and " +
                 "o.name = distributions.area_name;"
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                "distributions.pid is null and o.fid = '" + Holders.config.userObjectsField + "';"
+                "distributions.pid is null and o.fid = '" + spatialConfig.userObjectsField + "';"
 
-        FileUtils.writeStringToFile(new File(getTaskPath() + 'finish.sql'), sql)
+        new File(getTaskPath() + 'finish.sql').write(sql)
         addOutput('sql', 'finish.sql')
-
-        //delete from uploads dir if master service is remote
-        if (!Holders.config.service.enable.toBoolean()) {
-            FileUtils.deleteDirectory(new File(dir + "/uploads/" + uploadId + "/"))
-        }
 
         addOutput("process", "DistributionRematchLsid")
 

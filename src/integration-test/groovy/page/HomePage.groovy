@@ -8,13 +8,13 @@ class HomePage extends Page {
     static content = {
         authModule { module(AuthModule) }
 
-        subTitle {$("h1").text()}
+        subTitle { $("h1").text() }
 
         taskTable { $("table[name='tasks']") }
     }
 
-    void clickLink(name){
-        $("a",text: name).click()
+    void clickLink(name) {
+        $("a", text: name).click()
     }
 
     def numberOfTasks() {

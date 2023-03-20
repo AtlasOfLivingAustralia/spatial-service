@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial.slave
 
-import au.org.ala.spatial.service.TaskQueueService
+import au.org.ala.spatial.TaskQueueService
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -26,9 +26,11 @@ import javax.sql.DataSource
 class TaskWrapperServiceSpec extends Specification implements ServiceUnitTest<TaskQueueService>, DataTest {
 
     @Override
-    Closure doWithSpring() {{ ->
-        dataSource(InstanceFactoryBean, Stub(DataSource), DataSource)
-    }}
+    Closure doWithSpring() {
+        { ->
+            dataSource(InstanceFactoryBean, Stub(DataSource), DataSource)
+        }
+    }
 
     @Override
     Set<String> getIncludePlugins() {
@@ -40,7 +42,6 @@ class TaskWrapperServiceSpec extends Specification implements ServiceUnitTest<Ta
     }
 
     void cleanup() {}
-
 
 
 }
