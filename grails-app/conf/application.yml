@@ -390,7 +390,7 @@ environments:
     grails:
       server:
         use-forward-headers: true
-      serverURL: http://local.ala.org.au:8081/ws
+      serverURL: http://localhost:8081/ws
 
     server:
       port: 8081
