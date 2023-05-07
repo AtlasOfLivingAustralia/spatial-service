@@ -85,7 +85,7 @@ sourceSets {
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-//    developmentOnly "org.springframework.boot:spring-boot-starter-logging"
+    developmentOnly "org.springframework.boot:spring-boot-starter-logging"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
     implementation "org.grails:grails-core"
     implementation "org.springframework.boot:spring-boot-starter-actuator"

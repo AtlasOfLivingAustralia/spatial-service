@@ -112,7 +112,7 @@ There is also a requirement for have GDAL installed locally. This can be done wi
 brew install gdal
 ```
 
-Note: On Mac OSX, GGDAL tools are installed here `/usr/local/bin/`. You can use the `gdal.dir` configuration property to
+Note: On Mac OSX, GGDAL tools are installed here `/usr/local/bin/` or `/opt/homebrew/Cellar/gdal/xxxx-version`. You can use the `gdal.dir` configuration property to
 specify the location if different.
 
 Configure geoserver with the required postgis layers using spatial-service:
