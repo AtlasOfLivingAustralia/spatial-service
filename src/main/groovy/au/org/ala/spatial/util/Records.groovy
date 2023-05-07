@@ -2,6 +2,7 @@ package au.org.ala.spatial.util
 
 import au.org.ala.spatial.intersect.SimpleRegion
 import com.opencsv.CSVReader
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -11,8 +12,8 @@ import java.util.zip.GZIPInputStream
 /**
  * @author Adam
  */
-//@CompileStatic
 @Slf4j
+@CompileStatic
 class Records {
 
     //private static final Logger logger = log.getLogger(Records.class);

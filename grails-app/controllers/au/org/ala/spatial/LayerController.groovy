@@ -193,7 +193,7 @@ class LayerController {
                         String.valueOf(lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added()))]
 
                 if ("true".equalsIgnoreCase(params.usage as String)) {
-                    row = ArrayUtils.add(row, usage.getOrDefault(lyr.id as String, 0) as String)
+                    row = ArrayUtils.add(row, (String) usage.get("Totals").getOrDefault(lyr.id , 0) as String)
                 }
 
                 cw.writeNext(row)

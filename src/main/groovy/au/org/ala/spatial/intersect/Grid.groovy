@@ -771,7 +771,7 @@ class Grid { //  implements Serializable
             float lng = (float) (xmin + xres * (i % ncols))
             float lat = (float) (ymax - yres * row)
 
-            stats[0] += (float) SpatialUtil.cellArea(yres, ymin + yres * row)
+            stats[0] += (float) SpatialUtils.cellArea(yres, ymin + yres * row)
             if (Float.isNaN(stats[1]) || stats[1] > lng) stats[1] = lng
             if (Float.isNaN(stats[2]) || stats[2] > lat) stats[2] = lat
             if (Float.isNaN(stats[3]) || stats[3] < lng + xres) stats[3] = (float) (lng + xres)

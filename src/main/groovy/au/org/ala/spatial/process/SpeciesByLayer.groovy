@@ -274,7 +274,7 @@ class SpeciesByLayer extends SlaveProcess {
             double latitude = Math.floor(cellIdx / grid.ncols as double) * grid.yres + grid.yres / 2.0 + grid.ymax
 
             // area of a cell at this grid resolution and latitude * number of cells to count
-            double area = SpatialUtil.cellArea(grid.yres, latitude) * cellsInRow
+            double area = SpatialUtils.cellArea(grid.yres, latitude) * cellsInRow
 
             // reset number of cells
             cellsInRow = 0

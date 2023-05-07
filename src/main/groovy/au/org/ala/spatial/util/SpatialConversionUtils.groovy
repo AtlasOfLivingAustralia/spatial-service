@@ -1,6 +1,7 @@
 package au.org.ala.spatial.util
 
 import com.google.common.io.Files
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -45,7 +46,7 @@ import java.util.zip.ZipOutputStream
  * @author ChrisF
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class SpatialConversionUtils {
 
     public final static String WKT_MAP_KEY = "WKT_MAP_KEY_****"

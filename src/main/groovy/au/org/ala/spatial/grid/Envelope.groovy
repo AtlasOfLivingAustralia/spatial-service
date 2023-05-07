@@ -99,48 +99,48 @@ class Envelope {
      * @param params comma separated grid file name,min,max,field.id2,min,max
      * @return wkt representing the envelope as String.
      */
-    static public MultiPolygon getGridEnvelopeAsMultiPolygon(String params) {
-        String[] p = params.split(",");
-        Geometry geomIntersect = null;
+    static MultiPolygon getGridEnvelopeAsMultiPolygon(String params) {
+        String[] p = params.split(",")
+        Geometry geomIntersect = null
         if (p.length == 3) {
-            Grid g = new Grid(p[0]);
-            return Grid2Shape.grid2Multipolygon(g.getGrid(), Double.parseDouble(p[1]), Double.parseDouble(p[2]), g.nrows, g.ncols, g.xmin, g.ymin, g.xres, g.yres);
+            Grid g = new Grid(p[0])
+            return Grid2Shape.grid2Multipolygon(g.getGrid(), Double.parseDouble(p[1]), Double.parseDouble(p[2]), g.nrows, g.ncols, g.xmin, g.ymin, g.xres, g.yres)
         } else {
             for (int i = 0; i < p.length; i += 3) {
-                Grid g = new Grid(p[i]);
-                Geometry thisGeometry = Grid2Shape.grid2Multipolygon(g.getGrid(), Double.parseDouble(p[i + 1]), Double.parseDouble(p[i + 2]), g.nrows, g.ncols, g.xmin, g.ymin, g.xres, g.yres);
+                Grid g = new Grid(p[i])
+                Geometry thisGeometry = Grid2Shape.grid2Multipolygon(g.getGrid(), Double.parseDouble(p[i + 1]), Double.parseDouble(p[i + 2]), g.nrows, g.ncols, g.xmin, g.ymin, g.xres, g.yres)
 
                 if (geomIntersect == null) {
-                    geomIntersect = thisGeometry;
+                    geomIntersect = thisGeometry
                 } else {
-                    geomIntersect = geomIntersect.intersection(thisGeometry);
+                    geomIntersect = geomIntersect.intersection(thisGeometry)
                 }
             }
 
             //only want polygons
-            ArrayList<Polygon> polygons = new ArrayList<Polygon>();
+            ArrayList<Polygon> polygons = new ArrayList<Polygon>()
             if (geomIntersect instanceof Polygon) {
-                polygons.add((Polygon) geomIntersect);
+                polygons.add((Polygon) geomIntersect)
             } else if (geomIntersect instanceof GeometryCollection
                     || geomIntersect instanceof MultiPolygon) {
                 for (int i = 0; i < geomIntersect.getNumGeometries(); i++) {
                     if (geomIntersect.getGeometryN(i) instanceof Polygon) {
-                        polygons.add((Polygon) geomIntersect.getGeometryN(i));
+                        polygons.add((Polygon) geomIntersect.getGeometryN(i))
                     } else if (geomIntersect.getGeometryN(i) instanceof MultiPolygon) {
-                        MultiPolygon mp = (MultiPolygon) geomIntersect.getGeometryN(i);
+                        MultiPolygon mp = (MultiPolygon) geomIntersect.getGeometryN(i)
                         for (int j = 0; j < mp.getNumGeometries(); j++) {
-                            polygons.add((Polygon) mp.getGeometryN(j));
+                            polygons.add((Polygon) mp.getGeometryN(j))
                         }
                     } else if (geomIntersect.getGeometryN(i) instanceof GeometryCollection) {
-                        log.debug("GridCacheReader.getGridEnvelopeAsMultiPolygon not processed: GeometryCollection inside of GeometryCollection");
+                        log.debug("GridCacheReader.getGridEnvelopeAsMultiPolygon not processed: GeometryCollection inside of GeometryCollection")
                     }
                 }
             }
-            GeometryFactory geometryFactory = new GeometryFactory();
-            Polygon[] pa = new Polygon[polygons.size()];
-            polygons.toArray(pa);
+            GeometryFactory geometryFactory = new GeometryFactory()
+            Polygon[] pa = new Polygon[polygons.size()]
+            polygons.toArray(pa)
 
-            return geometryFactory.createMultiPolygon(pa);
+            return geometryFactory.createMultiPolygon(pa)
         }
     }
 //
@@ -212,8 +212,8 @@ class Envelope {
 //     * 'map value','wkt polygon character start position'.
 //     */
     static  Map getGridSingleLayerEnvelopeAsWktIndexed(String params, Set keys, int[] map) {
-        String[] p = params.split(",");
-        Grid g = new Grid(p[0]);
-        return Grid2Shape.grid2WktIndexed(g.getGrid(), Double.parseDouble(p[1]), Double.parseDouble(p[2]), keys, g.nrows, g.ncols, g.xmin, g.ymin, g.xres, g.yres, map);
+        String[] p = params.split(",")
+        Grid g = new Grid(p[0])
+        return Grid2Shape.grid2WktIndexed(g.getGrid(), Double.parseDouble(p[1]), Double.parseDouble(p[2]), keys, g.nrows, g.ncols, g.xmin, g.ymin, g.xres, g.yres, map)
     }
 }

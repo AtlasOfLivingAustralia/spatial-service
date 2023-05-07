@@ -37,12 +37,14 @@ import org.geotools.kml.KMLConfiguration
 import org.geotools.xsd.Encoder
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.io.WKTReader
+import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
 import org.springframework.dao.DataAccessException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.transaction.annotation.Transactional
 import org.yaml.snakeyaml.util.UriEncoder
 
+import java.sql.ResultSet
 import java.util.Map.Entry
 import java.util.zip.ZipInputStream
 
@@ -254,33 +256,64 @@ class SpatialObjectsService {
 
     void streamObjectsGeometryById(OutputStream os, String id, String geomtype) throws IOException {
         log.info("Getting object info for id = " + id + " and geometry as " + geomtype)
-        String sql = ""
-        if ("kml" == geomtype) {
-            sql = "SELECT ST_AsKml(the_geom,15) as geometry, name, \"desc\" as description  FROM objects WHERE pid=?;"
-        } else if ("wkt" == geomtype) {
-            sql = "SELECT ST_AsText(the_geom,15) as geometry FROM objects WHERE pid=?;"
-        } else if ("geojson" == geomtype) {
-            sql = "SELECT ST_AsGeoJSON(the_geom,15) as geometry FROM objects WHERE pid=?;"
-        } else if ("shp" == geomtype) {
-            sql = "SELECT ST_AsText(the_geom,15) as geometry, name, \"desc\" as description FROM objects WHERE pid=?;"
-        }
 
-        List<SpatialObjects> l = SpatialObjects.executeQuery(sql, id) as List<SpatialObjects>
+
+        List<SpatialObjects> l = SpatialObjects.findAllByPid(id)
 
         if (l.size() > 0) {
             if ("shp" == geomtype) {
-                String wkt = l.get(0).geometry
-                File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, id, l.get(0).getName(), l.get(0).desc)
+                String wkt = l.get(0).geometry.toText()
+                File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, id, l.get(0).name, l.get(0).name)
                 FileUtils.copyFile(zippedShapeFile, os)
             } else if ("kml" == geomtype) {
-                os.write(KML_HEADER
-                        .replace("<name></name>", "<name><![CDATA[" + l.get(0).getName() + "]]></name>")
-                        .replace("<description></description>", "<description><![CDATA[" + l.get(0).desc + "]]></description>").bytes)
+                String wktString = l.get(0).geometry.toText()
+                String wkttype = "POLYGON"
+                if (wktString.contains("MULTIPOLYGON")) {
+                    wkttype = "MULTIPOLYGON"
+                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
+                    wkttype = "GEOMETRYCOLLECTION"
+                }
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
+                featureBuilder.add(l.get(0).geometry)
+                SimpleFeature feature = featureBuilder.buildFeature(null)
+                List<SimpleFeature> features = new ArrayList<SimpleFeature>()
+                features.add(feature)
+                DefaultFeatureCollection featureCollection = new DefaultFeatureCollection()
+                featureCollection.addAll(features)
 
-                os.write(l.get(0).geometry.toString().bytes)
-                os.write(KML_FOOTER.bytes)
-            } else {
-                os.write(l.get(0).geometry.toString().bytes)
+                Encoder encoder = new Encoder(new KMLConfiguration())
+                encoder.setIndenting(true)
+                encoder.encode(featureCollection, KML.kml, os )
+
+//                os.write(KML_HEADER
+//                        .replace("<name></name>", "<name><![CDATA[" + l.get(0).getName() + "]]></name>")
+//                        .replace("<description></description>", "<description><![CDATA[" + l.get(0).desc + "]]></description>").bytes)
+//
+//                os.write(l.get(0).geometry.toString().bytes)
+//                os.write(KML_FOOTER.bytes)
+            } else if ("wkt" == geomtype) {
+                os.write(l.get(0).geometry.toText().bytes)
+            } else if ("geojson" == geomtype) {
+                FeatureJSON fjson = new FeatureJSON()
+                StringWriter writer = new StringWriter()
+
+                String wktString = l.get(0).geometry.toText()
+                String wkttype = "POLYGON"
+                if (wktString.contains("MULTIPOLYGON")) {
+                    wkttype = "MULTIPOLYGON"
+                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
+                    wkttype = "GEOMETRYCOLLECTION"
+                }
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
+                featureBuilder.add(l.get(0).geometry)
+                SimpleFeature feature = featureBuilder.buildFeature(null)
+
+                fjson.writeFeature(feature(1), writer)
+
+                String json = writer.toString()
+                os.write(json)
             }
 
         } else {
@@ -669,7 +702,7 @@ class SpatialObjectsService {
     @Transactional
     String createUserUploadedObject(String wkt, String name, String description, String userid, boolean namesearch) {
 
-        double area_km = SpatialUtil.calculateArea(wkt) / 1000.0 / 1000.0
+        double area_km = SpatialUtils.calculateArea(wkt) / 1000.0 / 1000.0
 
         try {
             int object_id = 0
@@ -705,7 +738,7 @@ class SpatialObjectsService {
         }
 
         try {
-            double area_km = SpatialUtil.calculateArea(wkt) / 1000.0 / 1000.0
+            double area_km = SpatialUtils.calculateArea(wkt) / 1000.0 / 1000.0
 
             // First update metadata table
             String sql = "UPDATE uploaded_objects_metadata SET user_id = ?, time_last_updated = now() WHERE pid = ?"

@@ -31,7 +31,7 @@ import groovy.transform.CompileStatic
 
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class UploadSpatialResource {
     /**
      * HTTP request type PUT

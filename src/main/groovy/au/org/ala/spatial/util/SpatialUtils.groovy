@@ -57,7 +57,7 @@ import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class SpatialUtils {
 
@@ -589,7 +589,7 @@ class SpatialUtils {
         }
     }
 
-    //private static final Logger logger = log.getLogger(SpatialUtil.class);
+    //private static final Logger logger = log.getLogger(SpatialUtils.class);
 
     static HashMap<Double, double[]> commonGridLatitudeArea = new HashMap<Double, double[]>()
     static private final int map_zoom = 21

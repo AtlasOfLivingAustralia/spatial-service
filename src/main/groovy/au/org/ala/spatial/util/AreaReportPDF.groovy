@@ -3,6 +3,7 @@ package au.org.ala.spatial.util
 import au.org.ala.spatial.Util
 import com.opencsv.CSVReader
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringEscapeUtils
@@ -20,8 +21,8 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.List
 
-//@CompileStatic
 @Slf4j
+@CompileStatic
 class AreaReportPDF {
 
     static final int PROGRESS_COUNT = 92

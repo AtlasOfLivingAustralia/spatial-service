@@ -1,5 +1,6 @@
 package au.org.ala.spatial.util
 
+import groovy.transform.CompileStatic
 import org.codehaus.jackson.map.ObjectMapper
 
 /**
@@ -9,8 +10,7 @@ class for parsing JSON maps provided to webservice handling methods.
  *
  * @author ChrisF
  */
-import groovy.transform.CompileStatic
-//@CompileStatic
+@CompileStatic
 class JSONRequestBodyParser {
 
     List<String> _parameterNames

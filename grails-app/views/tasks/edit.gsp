@@ -1,4 +1,4 @@
-<%@ page import="au.org.ala.spatial.service.Task" %>
+<%@ page import="au.org.ala.spatial.Task" %>
 <!DOCTYPE html>
 <html>
 <head>

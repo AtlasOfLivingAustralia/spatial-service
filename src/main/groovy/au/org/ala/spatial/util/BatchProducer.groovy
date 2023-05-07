@@ -14,7 +14,7 @@
  ***************************************************************************/
 package au.org.ala.spatial.util
 
-
+import groovy.transform.CompileStatic
 import org.springframework.util.StringUtils
 
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class BatchProducer {
     static private final ConcurrentHashMap log = new ConcurrentHashMap()
 

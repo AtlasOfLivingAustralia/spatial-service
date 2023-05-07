@@ -29,7 +29,6 @@ import javax.ws.rs.Produces
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
-//@CompileStatic
 class ChecklistController {
 
     DistributionsService distributionsService
@@ -45,7 +44,7 @@ class ChecklistController {
                             name = "lsids",
                             in = QUERY,
                             schema = @Schema(implementation = String),
-                            description = "LSID to filter",
+                            description = "LSIDs to filter, comma delimited",
                             required = false
                     ),
                     @Parameter(
@@ -59,7 +58,7 @@ class ChecklistController {
                             name = "data_resource_uids",
                             in = QUERY,
                             schema = @Schema(implementation = String),
-                            description = "Data resource UIDs to filter",
+                            description = "Data resource UIDs to filter, comma delimited",
                             required = false
                     ),
                     @Parameter(
@@ -155,7 +154,7 @@ class ChecklistController {
     def lsidFirst(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.SPECIES_CHECKLIST)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.SPECIES_CHECKLIST)
 
         if (distributions) {
             render distributions.get(0) as JSON
@@ -168,7 +167,7 @@ class ChecklistController {
     def lsid(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.SPECIES_CHECKLIST)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.SPECIES_CHECKLIST)
 
         if (distributions) {
             render distributions.get(0) as JSON
@@ -217,7 +216,7 @@ class ChecklistController {
     def lsids(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.SPECIES_CHECKLIST)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.SPECIES_CHECKLIST)
 
         if (distributions) {
             render distributions as JSON

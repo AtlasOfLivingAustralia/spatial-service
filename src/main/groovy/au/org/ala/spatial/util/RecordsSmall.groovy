@@ -24,7 +24,7 @@ import java.nio.ByteBuffer
 
 import groovy.transform.CompileStatic
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class RecordsSmall {
 
     List<String> lsids

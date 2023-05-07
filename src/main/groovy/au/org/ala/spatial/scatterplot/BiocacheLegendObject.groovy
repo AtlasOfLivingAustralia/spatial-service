@@ -136,7 +136,7 @@ class BiocacheLegendObject extends LegendObject {
             csv = csvReader.readAll()
             csvReader.close()
         } catch (IOException ex) {
-            log.error("error reading legend: ", ex);
+            log.error("error reading legend: ", ex)
         }
 
         boolean isDecade = colourMode.startsWith("occurrence_year_decade") || colourMode == "decade"

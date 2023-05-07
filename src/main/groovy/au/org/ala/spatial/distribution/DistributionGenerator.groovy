@@ -149,7 +149,7 @@ class AreaThread extends Thread {
                 try {
                     String[] data = lbq.take()
 
-                    double area = SpatialUtil.calculateArea(data[1]) / 1000.0 / 1000.0
+                    double area = SpatialUtils.calculateArea(data[1]) / 1000.0 / 1000.0
 
                     String sql = "UPDATE distributionshapes SET area_km = " + area + " WHERE id='" + data[0] + "';"
 

@@ -681,8 +681,8 @@ class SimpleRegion implements Serializable {
                 && latitude <= bounding_box[1][1] && latitude >= bounding_box[0][1]) {
 
             //initial segment
-            int longitudePx = SpatialUtil.convertLngToPixel(longitude)
-            boolean segment = SpatialUtil.convertLngToPixel(points[0]) > longitudePx
+            int longitudePx = SpatialUtils.convertLngToPixel(longitude)
+            boolean segment = SpatialUtils.convertLngToPixel(points[0]) > longitudePx
 
             int y
             int i
@@ -691,12 +691,12 @@ class SimpleRegion implements Serializable {
 
             for (i = 2; i < len; i += 2) {
                 // is it in a new segment?
-                if ((SpatialUtil.convertLngToPixel(points[i]) > longitudePx) != segment) {
+                if ((SpatialUtils.convertLngToPixel(points[i]) > longitudePx) != segment) {
                     //lat value at line crossing > target point
-                    y = (int) ((longitudePx - SpatialUtil.convertLngToPixel(points[i])) * ((SpatialUtil.convertLatToPixel(points[i + 1]) - SpatialUtil.convertLatToPixel(points[i - 1])) / (double) (SpatialUtil.convertLngToPixel(points[i]) - SpatialUtil.convertLngToPixel(points[i - 2]))) + SpatialUtil.convertLatToPixel(points[i + 1]))
-                    if (y > SpatialUtil.convertLatToPixel(latitude)) {
+                    y = (int) ((longitudePx - SpatialUtils.convertLngToPixel(points[i])) * ((SpatialUtils.convertLatToPixel(points[i + 1]) - SpatialUtils.convertLatToPixel(points[i - 1])) / (double) (SpatialUtils.convertLngToPixel(points[i]) - SpatialUtils.convertLngToPixel(points[i - 2]))) + SpatialUtils.convertLatToPixel(points[i + 1]))
+                    if (y > SpatialUtils.convertLatToPixel(latitude)) {
                         score++
-                    } else if (y == SpatialUtil.convertLatToPixel(latitude)) {
+                    } else if (y == SpatialUtils.convertLatToPixel(latitude)) {
                         //line crossing
                         return true
                     }
@@ -1317,10 +1317,10 @@ class SimpleRegion implements Serializable {
             three_state_map = new byte[oheight][owidth]
         }
 
-        int longitude1 = SpatialUtil.convertLngToPixel(olongitude1)
-        int longitude2 = SpatialUtil.convertLngToPixel(olongitude2)
-        int latitude1 = SpatialUtil.convertLatToPixel(olatitude2)
-        int latitude2 = SpatialUtil.convertLatToPixel(olatitude1)
+        int longitude1 = SpatialUtils.convertLngToPixel(olongitude1)
+        int longitude2 = SpatialUtils.convertLngToPixel(olongitude2)
+        int latitude1 = SpatialUtils.convertLatToPixel(olatitude2)
+        int latitude2 = SpatialUtils.convertLatToPixel(olatitude1)
         int scale = 100 //if it is too small the 'fill' operation is messed up
         int width = owidth * scale
         int height = oheight * scale
@@ -1338,15 +1338,15 @@ class SimpleRegion implements Serializable {
         int xcross, endlat, dx1, dx2, dy1, dy2
         for (j = 2; j < points.length; j += 2) {
             if (points[j + 1] > points[j - 1]) {
-                dx1 = SpatialUtil.convertLngToPixel(points[j])
-                dy1 = SpatialUtil.convertLatToPixel(points[j + 1])
-                dx2 = SpatialUtil.convertLngToPixel(points[j - 2])
-                dy2 = SpatialUtil.convertLatToPixel(points[j - 1])
+                dx1 = SpatialUtils.convertLngToPixel(points[j])
+                dy1 = SpatialUtils.convertLatToPixel(points[j + 1])
+                dx2 = SpatialUtils.convertLngToPixel(points[j - 2])
+                dy2 = SpatialUtils.convertLatToPixel(points[j - 1])
             } else {
-                dx2 = SpatialUtil.convertLngToPixel(points[j])
-                dy2 = SpatialUtil.convertLatToPixel(points[j + 1])
-                dx1 = SpatialUtil.convertLngToPixel(points[j - 2])
-                dy1 = SpatialUtil.convertLatToPixel(points[j - 1])
+                dx2 = SpatialUtils.convertLngToPixel(points[j])
+                dy2 = SpatialUtils.convertLatToPixel(points[j + 1])
+                dx1 = SpatialUtils.convertLngToPixel(points[j - 2])
+                dy1 = SpatialUtils.convertLatToPixel(points[j - 1])
             }
             x = (int) ((dx1 - longitude1) / divx)
             y = (int) ((dy1 - latitude1) / divy)
@@ -1354,8 +1354,8 @@ class SimpleRegion implements Serializable {
             yend = (int) ((dy2 - latitude1) / divy)
 
             if (y >= 0 && y < height && x >= 0 && x < width) {
-                oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                 if (oy >= oheight) {
                     oy = oheight - 1
                 }
@@ -1385,8 +1385,8 @@ class SimpleRegion implements Serializable {
                 while (y != yend) {
                     y++
                     if (y >= 0 && y < height && x >= 0 && x < width) {
-                        oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                        ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                        oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                        ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                         if (oy >= oheight) {
                             oy = oheight - 1
                         }
@@ -1407,8 +1407,8 @@ class SimpleRegion implements Serializable {
                 while (x != xend) {
                     x += xDirection
                     if (y >= 0 && y < height && x >= 0 && x < width) {
-                        oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                        ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                        oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                        ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                         if (oy >= oheight) {
                             oy = oheight - 1
                         }
@@ -1434,8 +1434,8 @@ class SimpleRegion implements Serializable {
                     while (x != icross && x != xend) {
                         x += xDirection
                         if (y >= 0 && y < height && x >= 0 && x < width) {
-                            oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                            ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                            oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                            ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                             if (oy >= oheight) {
                                 oy = oheight - 1
                             }
@@ -1455,8 +1455,8 @@ class SimpleRegion implements Serializable {
                     if (y != yend) {
                         y++
                         if (y >= 0 && y < height && x >= 0 && x < width) {
-                            oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                            ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                            oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                            ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                             if (oy >= oheight) {
                                 oy = oheight - 1
                             }
@@ -1478,8 +1478,8 @@ class SimpleRegion implements Serializable {
                 while (x != xend) {
                     x += xDirection
                     if (y >= 0 && y < height && x >= 0 && x < width) {
-                        oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                        ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                        oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                        ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                         if (oy >= oheight) {
                             oy = oheight - 1
                         }
@@ -1539,10 +1539,10 @@ class SimpleRegion implements Serializable {
             three_state_map = new byte[oheight][owidth]
         }
 
-        int longitude1 = SpatialUtil.convertLngToPixel(olongitude1)
-        int longitude2 = SpatialUtil.convertLngToPixel(olongitude2)
-        int latitude1 = SpatialUtil.convertLatToPixel(olatitude2)
-        int latitude2 = SpatialUtil.convertLatToPixel(olatitude1)
+        int longitude1 = SpatialUtils.convertLngToPixel(olongitude1)
+        int longitude2 = SpatialUtils.convertLngToPixel(olongitude2)
+        int latitude1 = SpatialUtils.convertLatToPixel(olatitude2)
+        int latitude2 = SpatialUtils.convertLatToPixel(olatitude1)
         int scale = 16 //if it is too small the 'fill' operation is messed up
         int width = owidth * scale
         int height = oheight * scale
@@ -1560,15 +1560,15 @@ class SimpleRegion implements Serializable {
         int xcross, endlat, dx1, dx2, dy1, dy2
         for (j = 2; j < points.length; j += 2) {
             if (points[j + 1] > points[j - 1]) {
-                dx1 = SpatialUtil.convertLngToPixel(points[j])
-                dy1 = SpatialUtil.convertLatToPixel(points[j + 1])
-                dx2 = SpatialUtil.convertLngToPixel(points[j - 2])
-                dy2 = SpatialUtil.convertLatToPixel(points[j - 1])
+                dx1 = SpatialUtils.convertLngToPixel(points[j])
+                dy1 = SpatialUtils.convertLatToPixel(points[j + 1])
+                dx2 = SpatialUtils.convertLngToPixel(points[j - 2])
+                dy2 = SpatialUtils.convertLatToPixel(points[j - 1])
             } else {
-                dx2 = SpatialUtil.convertLngToPixel(points[j])
-                dy2 = SpatialUtil.convertLatToPixel(points[j + 1])
-                dx1 = SpatialUtil.convertLngToPixel(points[j - 2])
-                dy1 = SpatialUtil.convertLatToPixel(points[j - 1])
+                dx2 = SpatialUtils.convertLngToPixel(points[j])
+                dy2 = SpatialUtils.convertLatToPixel(points[j + 1])
+                dx1 = SpatialUtils.convertLngToPixel(points[j - 2])
+                dy1 = SpatialUtils.convertLatToPixel(points[j - 1])
             }
             x = (int) ((dx1 - longitude1) / divx)
             y = (int) ((dy1 - latitude1) / divy)
@@ -1576,8 +1576,8 @@ class SimpleRegion implements Serializable {
             yend = (int) ((dy2 - latitude1) / divy)
 
             if (y >= 0 && y < height && x >= 0 && x < width) {
-                oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                 if (oy >= oheight) {
                     oy = oheight - 1
                 }
@@ -1607,8 +1607,8 @@ class SimpleRegion implements Serializable {
                 while (y != yend) {
                     y++
                     if (y >= 0 && y < height && x >= 0 && x < width) {
-                        oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                        ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                        oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                        ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                         if (oy >= oheight) {
                             oy = oheight - 1
                         }
@@ -1629,8 +1629,8 @@ class SimpleRegion implements Serializable {
                 while (x != xend) {
                     x += xDirection
                     if (y >= 0 && y < height && x >= 0 && x < width) {
-                        oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                        ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                        oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                        ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                         if (oy >= oheight) {
                             oy = oheight - 1
                         }
@@ -1656,8 +1656,8 @@ class SimpleRegion implements Serializable {
                     while (x != icross && x != xend) {
                         x += xDirection
                         if (y >= 0 && y < height && x >= 0 && x < width) {
-                            oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                            ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                            oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                            ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                             if (oy >= oheight) {
                                 oy = oheight - 1
                             }
@@ -1677,8 +1677,8 @@ class SimpleRegion implements Serializable {
                     if (y != yend) {
                         y++
                         if (y >= 0 && y < height && x >= 0 && x < width) {
-                            oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                            ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                            oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                            ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                             if (oy >= oheight) {
                                 oy = oheight - 1
                             }
@@ -1700,8 +1700,8 @@ class SimpleRegion implements Serializable {
                 while (x != xend) {
                     x += xDirection
                     if (y >= 0 && y < height && x >= 0 && x < width) {
-                        oy = (int) ((SpatialUtil.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
-                        ox = (int) ((SpatialUtil.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
+                        oy = (int) ((SpatialUtils.convertPixelToLat((int) (y * divy + latitude1)) - olatitude1) / odivy)
+                        ox = (int) ((SpatialUtils.convertPixelToLng((int) (x * divx + longitude1)) - olongitude1) / odivx)
                         if (oy >= oheight) {
                             oy = oheight - 1
                         }

@@ -5,7 +5,7 @@ $(function () {
         extraParams: {limit: 100},
         dataType: 'jsonp',
         parse: function (data) {
-            var rows = new Array();
+            var rows = [];
             data = data.autoCompleteList;
             for (var i = 0; i < data.length; i++) {
                 rows[i] = {

@@ -21,6 +21,7 @@ import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
+import au.org.ala.spatial.util.SpatialUtils
 
 /**
  * @author Adam
@@ -467,7 +468,7 @@ class TabulationGeneratorService {
                         p = new Pair(key)
                         map.put(key, p)
                     }
-                    p.area += SpatialUtil.cellArea(resolution, extents[0][1] + resolution * j) * 1000000 // convert
+                    p.area += SpatialUtils.cellArea(resolution, extents[0][1] + resolution * j) * 1000000 // convert
                     // sqkm
                     // to
                     // sqm
@@ -573,7 +574,7 @@ class TabulationGeneratorService {
 //                    p = new Pair(key);
 //                    map.put(key, p);
 //                }
-//                p.area += SpatialUtil.calculateArea(wkt);
+//                p.area += SpatialUtils.calculateArea(wkt);
 //
 //                WKTReader wktReader = new WKTReader();
 //                Geometry geom = wktReader.read(wkt);
@@ -635,25 +636,25 @@ class TabulationGeneratorService {
      */
     private String confirmResolution(String[] layers, String resolution) {
         try {
-            TreeMap<Double, String> resolutions = new TreeMap<Double, String>();
+            TreeMap<Double, String> resolutions = new TreeMap<Double, String>()
             for (String layer : layers) {
-                String path = getLayerPath(resolution, layer);
-                int end, start;
+                String path = getLayerPath(resolution, layer)
+                int end, start
                 if (path != null && ((end = path.lastIndexOf(File.separator)) > 0) && ((start = path.lastIndexOf(File.separator, end - 1)) > 0)) {
-                    String res = path.substring(start + 1, end);
-                    Double d = Double.parseDouble(res);
+                    String res = path.substring(start + 1, end)
+                    Double d = Double.parseDouble(res)
                     if (d < 1) {
-                        resolutions.put(d, res);
+                        resolutions.put(d, res)
                     }
                 }
             }
             if (resolutions.size() > 0) {
-                resolution = resolutions.firstEntry().getValue();
+                resolution = resolutions.firstEntry().getValue()
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage(), e)
         }
-        return resolution;
+        return resolution
     }
 //
     static double[][] internalExtents(double[][] e1, double[][] e2) {
@@ -672,81 +673,81 @@ class TabulationGeneratorService {
     }
 //
     double[][] getLayerExtents(String resolution, String layer) {
-        double[][] extents = new double[2][2];
-        Grid g = Grid.getGrid(getLayerPath(resolution, layer));
+        double[][] extents = new double[2][2]
+        Grid g = Grid.getGrid(getLayerPath(resolution, layer))
 
-        extents[0][0] = g.xmin;
-        extents[0][1] = g.ymin;
-        extents[1][0] = g.xmax;
-        extents[1][1] = g.ymax;
+        extents[0][0] = g.xmin
+        extents[0][1] = g.ymin
+        extents[1][0] = g.xmax
+        extents[1][1] = g.ymax
 
-        return extents;
+        return extents
     }
 //
      String getLayerPath(String resolution, String layer) {
         String analysisLayerDir = spatialConfig.data.dir + '/standard_layer'
-        String field = getFieldId(layer);
+        String field = getFieldId(layer)
 
-        File file = new File(analysisLayerDir + File.separator + resolution + File.separator + field + ".grd");
+        File file = new File(analysisLayerDir + File.separator + resolution + File.separator + field + ".grd")
 
         // move up a resolution when the file does not exist at the target
         // resolution
         try {
             while (!file.exists()) {
-                TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>();
+                TreeMap<Double, String> resolutionDirs = new TreeMap<Double, String>()
                 for (File dir : new File(analysisLayerDir).listFiles()) {
                     if (dir.isDirectory()) {
                         try {
-                            log.info(dir.getName());
-                            resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName());
+                            log.info(dir.getName())
+                            resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName())
                         } catch (Exception ignored) {
                         }
                     }
                 }
 
-                String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue();
+                String newResolution = resolutionDirs.higherEntry(Double.parseDouble(resolution)).getValue()
 
                 if (newResolution == resolution) {
-                    break;
+                    break
                 } else {
-                    resolution = newResolution;
-                    file = new File(analysisLayerDir + File.separator + resolution + File.separator + field + ".grd");
+                    resolution = newResolution
+                    file = new File(analysisLayerDir + File.separator + resolution + File.separator + field + ".grd")
                 }
             }
         } catch (Exception ignored) {
         }
 
-        String layerPath = analysisLayerDir + File.separator + resolution + File.separator + field;
+        String layerPath = analysisLayerDir + File.separator + resolution + File.separator + field
 
         if (new File(layerPath + ".grd").exists()) {
-            return layerPath;
+            return layerPath
         } else {
             // look for an analysis layer
-            log.info("getLayerPath, not a default layer, checking analysis output for: " + layer);
-            String[] info = layerService.getAnalysisLayerInfo(layer);
+            log.info("getLayerPath, not a default layer, checking analysis output for: " + layer)
+            String[] info = layerService.getAnalysisLayerInfo(layer)
             if (info != null) {
-                return info[1];
+                return info[1]
             } else {
-                log.info("getLayerPath, cannot find for: " + layer + ", " + resolution);
-                return null;
+                log.info("getLayerPath, cannot find for: " + layer + ", " + resolution)
+                return null
             }
         }
     }
 //
      String getFieldId(String layerShortName) {
-        String field = layerShortName;
+        String field = layerShortName
         // layer short name -> layer id -> field id
         try {
             String id = layerService.getLayerByName(layerShortName).getId()
             for (Fields f : fieldService.getFields()) {
                 if (f.getSpid() != null && f.getSpid() == id) {
-                    field = f.getId();
-                    break;
+                    field = f.getId()
+                    break
                 }
             }
         } catch (Exception ignored) {
         }
-        return field;
+        return field
     }
 //
 //    private static int updateArea() {
@@ -1160,7 +1161,7 @@ class TabulationGeneratorService {
                         p = new Pair(key)
                         map.put(key, p)
                     }
-                    p.area += SpatialUtil.cellArea(resolution, extents[0][1] + resolution * j) * 1000000 // convert
+                    p.area += SpatialUtils.cellArea(resolution, extents[0][1] + resolution * j) * 1000000 // convert
                     // sqkm
                     // to
                     // sqm

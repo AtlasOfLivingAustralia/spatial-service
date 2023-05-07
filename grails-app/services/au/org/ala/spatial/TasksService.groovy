@@ -345,7 +345,7 @@ class TasksService {
                         //TODO: update getObjectByPid to support envelope areas
                         if (i.containsKey("pid") && spatialObjectsService.getObjectByPid(i.pid) == null) {
                             errors.put(k, "Input parameter $k=${i.pid} has an invalid pid value.")
-                        } else if (i.containsKey("wkt") && !StringUtils.isEmpty(i.wkt) && SpatialUtil.calculateArea(i.wkt) <= 0 /* TODO: validateInput WKT */) {
+                        } else if (i.containsKey("wkt") && !StringUtils.isEmpty(i.wkt) && SpatialUtils.calculateArea(i.wkt) <= 0 /* TODO: validateInput WKT */) {
                             errors.put(k, "Input parameter $k has invalid WKT.")
                         } else {
                             //area size constraints
@@ -356,7 +356,7 @@ class TasksService {
                                     if (i.containsKey("pid") && spatialObjectsService.getObjectByPid(i.pid) != null) {
                                         areaKm += spatialObjectsService.getObjectByPid(i.pid).getArea_km()
                                     } else if (i.containsKey("wkt")) {
-                                        areaKm += SpatialUtil.calculateArea(i.wkt)
+                                        areaKm += SpatialUtils.calculateArea(i.wkt)
                                     }
                                 }
                                 if (v.constraints.containsKey("maxArea") && v.constraints.maxArea < areaKm) {

@@ -15,8 +15,6 @@
 
 package au.org.ala.spatial
 
-import groovy.transform.CompileStatic
-//@CompileStatic
 class Log {
 
     // date/time created

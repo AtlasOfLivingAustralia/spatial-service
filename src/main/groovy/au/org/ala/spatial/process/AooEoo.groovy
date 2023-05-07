@@ -20,6 +20,7 @@ import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.util.SpatialConversionUtils
 import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.geotools.kml.KML
 import org.geotools.kml.KMLConfiguration
@@ -33,7 +34,7 @@ import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder
 import java.awt.geom.Point2D
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class AooEoo extends SlaveProcess {
 
     void start() {
@@ -80,7 +81,7 @@ class AooEoo extends SlaveProcess {
         //radius for point circles size
         taskLog("building WKT circles")
         def circleWkt = circleRadiusProcess(aooPoints, radius)
-        double circleArea = SpatialUtil.calculateArea(circleWkt) / 1000000.0
+        double circleArea = SpatialUtils.calculateArea(circleWkt) / 1000000.0
 
         double eoo
         WKTReader reader = new WKTReader()
@@ -91,7 +92,7 @@ class AooEoo extends SlaveProcess {
             Geometry convexHull = g.convexHull()
             String wkt = convexHull.toText().replace(" (", "(").replace(", ", ",")
 
-            eoo = SpatialUtil.calculateArea(wkt) / 1000000.0
+            eoo = SpatialUtils.calculateArea(wkt) / 1000000.0
 
             //aoo area
             taskLog("calculating WKT grid union")
@@ -108,7 +109,7 @@ class AooEoo extends SlaveProcess {
                 taskLog("Unable to produce alpha hull")
             } else {
                 concaveWkt = concaveHull.toText().replace(" (", "(").replace(", ", ",")
-                alphaHull = SpatialUtil.calculateArea(concaveWkt) / 1000000.0
+                alphaHull = SpatialUtils.calculateArea(concaveWkt) / 1000000.0
             }
 
             taskLog("generating output files")
@@ -152,10 +153,10 @@ class AooEoo extends SlaveProcess {
                         '<table >' +
                         '<tr><td>Number of records used for the calculations</td><td>' + occurrenceCount + "</td></tr>" +
                         '<tr><td>Species</td><td>' + species.name + '</td></tr>' +
-                        '<tr><td>Area of Occupancy (AOO: ${gridSize} degree grid)</td><td>' + String.format('%.0f', aoo) + ' sq km</td></tr>' +
+                        "<tr><td>Area of Occupancy (AOO: ${gridSize} degree grid)</td><td>" + String.format('%.0f', aoo) + ' sq km</td></tr>' +
                         '<tr><td>Area of Occupancy (Points with radius: ' + String.format("%.0f", radius) + 'm)</td><td>' + String.format('%.0f', circleArea) + ' sq km</td></tr>' +
                         '<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>' + (String.format('%.0f', eoo)) + ' sq km</td></tr>' +
-                        ((alphaHull != null) ? '<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>' + String.format('%.0f', alphaHull) + ' sq km</td></tr>' : "") +
+                        ((alphaHull != null) ? "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format('%.0f', alphaHull) + ' sq km</td></tr>' : "") +
                         '</table></body></html>' +
                         '</div>'
 
@@ -305,23 +306,23 @@ class AooEoo extends SlaveProcess {
      * @return
      */
     static Geometry buildConcaveHull(Geometry geometry, Double alpha) {
-        def triangulation = new DelaunayTriangulationBuilder()
+        DelaunayTriangulationBuilder triangulation = new DelaunayTriangulationBuilder()
         triangulation.setSites(geometry)
-        def triangles = triangulation.getTriangles(new GeometryFactory())
-        def edges = triangulation.getEdges(new GeometryFactory())
+        Geometry triangles = triangulation.getTriangles(new GeometryFactory())
+        Geometry edges = triangulation.getEdges(new GeometryFactory())
 
         //get mean edge length
-        def sum = 0
+        int sum = 0
         for (int i = 0; i < edges.numGeometries; i++) {
-            sum += edges.getGeometryN(i).length
+            sum += (int) edges.getGeometryN(i).length
         }
-        def meanByAlpha = sum / (edges.numGeometries) * alpha
+        double meanByAlpha = sum / (edges.numGeometries * alpha)
 
         //remove triangles with at least one edge length > meanByAlpha
-        def union = null
+        Geometry union = null
         for (int i = 0; i < triangles.numGeometries; i++) {
-            def triangle = triangles.getGeometryN(i)
-            def valid = true
+            Geometry triangle = triangles.getGeometryN(i)
+            boolean valid = true
             for (int j = 1; j < 3 && valid; j++) {
                 if (new LineSegment(triangle.coordinates[j], triangle.coordinates[j - 1]).length > meanByAlpha) {
                     valid = false

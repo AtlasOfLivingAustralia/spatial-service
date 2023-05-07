@@ -12,7 +12,7 @@ import java.util.zip.ZipInputStream
  */
 import groovy.transform.CompileStatic
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class Occurrences {
 
     /**

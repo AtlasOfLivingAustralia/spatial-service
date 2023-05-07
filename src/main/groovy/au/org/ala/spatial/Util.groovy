@@ -159,22 +159,16 @@ class Util {
                 if (type == HttpGet.METHOD_NAME) {
                     HttpGet httpGet = new HttpGet(targetUrl)
                     queryParams.addAll(nvList) //Combine name: value
-                    java.net.URI uri = new URIBuilder(httpGet.getURI())
-                            .setParameters(queryParams)
-                            .build()
+                    java.net.URI uri = new URIBuilder(httpGet.getURI()).setParameters(queryParams).build()
                     call = new GetMethod(uri.toString())
                 } else if (type == "DELETE") {
                     HttpGet httpGet = new HttpGet(targetUrl)
                     queryParams.addAll(nvList) //Combine name: value
-                    java.net.URI uri = new URIBuilder(httpGet.getURI())
-                            .setParameters(queryParams)
-                            .build()
+                    java.net.URI uri = new URIBuilder(httpGet.getURI()).setParameters(queryParams).build()
                     call = new DeleteMethod(uri.toString())
                 } else {
                     HttpPut httpGet = new HttpPut(targetUrl)
-                    java.net.URI uri = new URIBuilder(httpGet.getURI())
-                            .setParameters(queryParams)
-                            .build()
+                    java.net.URI uri = new URIBuilder(httpGet.getURI()).setParameters(queryParams).build()
                     if (type == HttpPut.METHOD_NAME) {
                         call = new PutMethod(uri.toString())
                     } else if (type == HttpPost.METHOD_NAME) {
@@ -222,19 +216,19 @@ class Util {
     static makeQid(SpeciesInput query) {
         List<NameValuePair> params = new ArrayList<>()
 
-        if (query.q instanceof List) {
-            params.add(new NameValuePair('q', ((List) query.q)[0].toString()))
-            if (query.q.size() > 1) query.q.subList(1, query.q.size()).each {
-                params.add(new NameValuePair('fq', it.toString()))
-            }
-        } else {
+//        if (query.q instanceof List) {
+//            params.add(new NameValuePair('q', query.q[0].toString()))
+//            if (query.q.size() > 1) query.q.subList(1, query.q.size()).each {
+//                params.add(new NameValuePair('fq', it.toString()))
+//            }
+//        } else {
             params.add(new NameValuePair('q', query.q.toString()))
             if (query.fq) query.fq.each {
                 if (it instanceof String) {
                     params.add(new NameValuePair('fq', it))
                 }
             }
-        }
+//        }
 
         if (query.wkt) {
             params.add(new NameValuePair('wkt', query.wkt.toString()))
@@ -443,19 +437,19 @@ class Util {
         exitValue
     }
 
-    static int occurrenceCount(Map query) {
+    static int occurrenceCount(SpeciesInput query) {
         int count = 0
         String q
         try {
-            if (query.q instanceof List) {
-                q = ((List) query.q)[0]
-                if (query.q.size() > 1) query.q.subList(1, query.q.size()).each { q += "&fq=$it" }
-            } else {
+//            if (query.q instanceof List) {
+//                q = ((List) query.q)[0]
+//                if (query.q.size() > 1) query.q.subList(1, query.q.size()).each { q += "&fq=$it" }
+//            } else {
                 q = query.q
                 if (query.fq) query.fq.each {
                     if (it instanceof String) q += "&fq=$it"
                 }
-            }
+//            }
             org.grails.web.json.JSONObject json = JSON.parse(getUrl("${query.bs}/occurrences/search?q=${q}&facet=off&pageSize=0")) as org.grails.web.json.JSONObject
             if (json != null) count = json.totalRecords
         } catch (Exception e) {
@@ -463,12 +457,12 @@ class Util {
 
             //retry with a qid
             if (q != null && !q.contains("qid:")) {
-                count = occurrenceCount([ q:
+                count = occurrenceCount(new SpeciesInput([q:
                 "qid:" + makeQid(query),
                     bs:
                     query.bs,
                     ws:
-                    query.ws ])
+                    query.ws ]))
             }
         }
         return count
@@ -478,28 +472,28 @@ class Util {
         int count = 0
         String q
         try {
-            if (query.q instanceof List) {
-                q = ((List) query.q)[0]
-                if (query.q.size() > 1) query.q.subList(1, query.q.size()).each { q += "&fq=$it" }
-            } else {
+//            if (query.q instanceof List) {
+//                q = ((List) query.q)[0]
+//                if (query.q.size() > 1) query.q.subList(1, query.q.size()).each { q += "&fq=$it" }
+//            } else {
                 q = query.q
                 if (query.fq) query.fq.each {
                     if (it instanceof String) q += '&fq=' + it
                 }
-            }
-            def json = JSON.parse(getUrl("${query.bs}/occurrences/facets/download?facets=names_and_lsid&flimit=0&q=$q"))
-            if (json != null) count = ((List) json.data)[0].count
+//            }
+            JSONObject json = (JSONObject) JSON.parse(getUrl("${query.bs}/occurrences/facets/download?facets=names_and_lsid&flimit=0&q=$q"))
+            if (json != null) count = (Integer) ((List) json.data)[0].getAt('count')
         } catch (Exception e) {
             log.debug(e.getMessage())
 
             //retry with a qid
             if (q != null && !q.contains("qid:")) {
-                count = occurrenceCount([ q:
+                count = occurrenceCount(new SpeciesInput([ q:
                 "qid:" + makeQid(query),
                     bs:
                     query.bs,
                     ws:
-                    query.ws ])
+                    query.ws ]))
             }
         }
         return count

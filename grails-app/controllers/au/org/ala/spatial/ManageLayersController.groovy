@@ -15,15 +15,16 @@
 
 package au.org.ala.spatial
 
-import au.org.ala.spatial.dto.Upload
 import grails.converters.JSON
 import grails.converters.XML
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.hibernate.criterion.CriteriaSpecification
-import org.grails.web.json.JSONObject
+import org.json.simple.JSONObject
+import org.json.simple.parser.JSONParser
 import java.text.SimpleDateFormat
 
-//@CompileStatic
+@RequirePermission
 class ManageLayersController {
 
     ManageLayersService manageLayersService
@@ -31,7 +32,8 @@ class ManageLayersController {
     TasksService tasksService
     SpatialConfig spatialConfig
 
-    def fieldService
+    FieldService fieldService
+    LayerService layerService
 
     /**
      * admin only or api_key
@@ -194,7 +196,7 @@ class ManageLayersController {
             log.info("Deleting original zip. File moved to: " + spatialConfig.data.dir + '/uploads/' + id)
 
             def result = manageLayersService.processUpload(uploadFile.getParentFile(), id)
-            if (result.error) {
+            if (result.error){
                 log.error("Problem processing upload. " + result.error)
                 return redirect(action: 'uploads', params: [error: result.error])
             }
@@ -298,11 +300,6 @@ class ManageLayersController {
         render map as JSON
     }
 
-    @RequireAdmin
-    def defaultGeoserverStyles() {
-        manageLayersService.fixLayerStyles()
-    }
-
     /**
      * create/update (POST) or get (GET) layer
      *
@@ -317,7 +314,6 @@ class ManageLayersController {
         Map map = [:]
         if ("POST".equalsIgnoreCase(request.method)) {
             if (params.containsKey("name")) {
-                if (!params.enabled) params.enabled = false
                 map.putAll manageLayersService.createOrUpdateLayer(params, layerId)
             } else {
                 map.putAll manageLayersService.createOrUpdateLayer(request.JSON as Map, layerId)
@@ -390,10 +386,10 @@ class ManageLayersController {
     @RequireAdmin
     def delete(String id, String action) {
         if (fieldService.getFieldById(id, false) == null) {
-            Upload m = manageLayersService.getUpload(id, false)
-            if (m == null || (!m.data_resource_uid && !m.checklist)) {
+            Map m = manageLayersService.getUpload(id, false)
+            if (m == null || (!m.containsKey('data_resource_uid') && !m.containsKey('checklist'))) {
                 manageLayersService.deleteLayer(id)
-            } else if (!m.checklist) {
+            } else if (!m.containsKey('checklist')) {
                 manageLayersService.deleteDistribution(id)
             } else {
                 manageLayersService.deleteChecklist(id)
@@ -625,11 +621,11 @@ class ManageLayersController {
         if (params.id.isNumber()) {
             def layer = layerDao.getLayerById(params.id.toInteger(), false)
             layer.enabled = true
-            layerDao.updateLayer(layer)
+            layerService.updateLayer(layer)
         } else {
             def field = fieldDao.getFieldById(params.id, false)
             field.enabled = true
-            fieldDao.updateField(field)
+            fieldService.updateField(field)
         }
         render ''
     }

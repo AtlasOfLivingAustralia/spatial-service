@@ -14,7 +14,7 @@
  */
 
 package au.org.ala.spatial
-//@CompileStatic
+
 class InputParameter {
     String value
     String name

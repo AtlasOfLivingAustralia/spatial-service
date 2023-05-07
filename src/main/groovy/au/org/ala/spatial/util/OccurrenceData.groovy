@@ -2,11 +2,12 @@ package au.org.ala.spatial.util
 
 import au.org.ala.spatial.Util
 import com.opencsv.CSVReader
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.yaml.snakeyaml.util.UriEncoder
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class OccurrenceData {
 
     static final String SPECIES_LIST_SERVICE_CSV = "/occurrences/facets/download?facets=species_guid&lookup=true&count=true"

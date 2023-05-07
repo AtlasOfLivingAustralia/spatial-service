@@ -34,7 +34,7 @@ import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
 
 import groovy.transform.CompileStatic
-//@CompileStatic
+@CompileStatic
 class GeomMakeValid {
 
     static void makeValidShapefile(String inputShapefile, String outputShapefile) {

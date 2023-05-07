@@ -2,7 +2,9 @@ package au.org.ala.spatial.util
 
 import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.intersect.IntersectCallback
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class ConsumerCallback implements IntersectCallback {
     private final String id
 

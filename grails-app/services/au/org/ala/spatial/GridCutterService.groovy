@@ -546,7 +546,7 @@ class GridCutterService {
                     values[pos] = mask[i][j]
 
                     if (mask[i][j] > 0) {
-                        areaSqKm += SpatialUtil.cellArea(res, extents[0][1] + res * i)
+                        areaSqKm += SpatialUtils.cellArea(res, extents[0][1] + res * i)
                     }
                 } else {
                     values[pos] = 0

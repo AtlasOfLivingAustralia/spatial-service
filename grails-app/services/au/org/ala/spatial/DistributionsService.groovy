@@ -88,7 +88,7 @@ class DistributionsService {
         }
         if (!wkt) wkt = ''
 
-        String lsids = queryParams.lsids?.toString()?.replace("https:/", "https://")
+        String lsids = queryParams.lsids
         Integer geomIdx = queryParams.geom_idx as Integer ?: -1 as Integer
         String[] dataResources = queryParams.data_resource_uids as String[]
 
@@ -101,6 +101,7 @@ class DistributionsService {
         constructWhereClause(geomIdx, lsids, type, dataResources, params, whereClause)
 
         String wktSelect = ""
+        boolean intersectArea = false
         if (wkt != null && wkt.length() > 0) {
             if (whereClause.length() > 0) {
                 whereClause.append(" AND ")
@@ -109,6 +110,7 @@ class DistributionsService {
             params.put("wkt", wkt)
 
             wktSelect = ", ST_AREA(ST_INTERSECTION(the_geom, ST_GEOMFROMTEXT( :wkt , 4326))) as intersectArea"
+            intersectArea = true
         }
 
         if (!noWkt) {
@@ -123,16 +125,15 @@ class DistributionsService {
         List result = new ArrayList()
 
         String[] fields = SELECT_CLAUSE.split(',')
-        groovySql.query(sql, params) { ResultSet rs ->
+        groovySql.query(sql, params, { ResultSet rs ->
             while (rs.next()) {
-
                 Map map = [:]
                 fields.eachWithIndex { String entry, int i ->
-                    if (rs.getObject(i + 1) != null) {
-                        map.put(entry, rs.getObject(i + 1))
+                    if (rs.getObject(i+1) != null) {
+                        map.put(entry, rs.getObject(i+1))
                     }
                 }
-                if (wktSelect) {
+                if (intersectArea) {
                     map += [intersectArea: rs.getObject('intersectArea')]
                 }
 
@@ -142,7 +143,7 @@ class DistributionsService {
 
                 result.add(new Distributions(map))
             }
-        }
+        })
 
         result = addImageUrls(result)
         result
@@ -158,23 +159,41 @@ class DistributionsService {
             if (where.length() > 0) {
                 where.append(" AND ")
             }
-            where.append(":lsids IN (:lsids)'  ")
-            params.put("lsids", Arrays.asList(lsids.split(',')))
+            int count = 0
+            where.append('(')
+            lsids.split(',').each {
+                if (count > 0) {
+                    where.append(' OR ')
+                }
+                count++
+                where.append(" lsid = :lsid${count} ".toString())
+                params.put("lsid${count}".toString(), it)
+            }
+            where.append(')')
         }
 
         if (dataResources != null && dataResources.length > 0) {
             if (where.length() > 0) {
                 where.append(" AND ")
             }
-            where.append("data_resource_uid IN (:dataResources) ")
-            params.put("dataResources", Arrays.asList(dataResources))
+            int count = 0
+            where.append('(')
+            dataResources.each {
+                if (count > 0) {
+                    where.append(' OR ')
+                }
+                count++
+                where.append(" data_resource_uid = :dataResources${count} ".toString())
+                params.put("dataResources${count}".toString(), it)
+            }
+            where.append(')')
         }
 
         if (type != null) {
             if (where.length() > 0) {
                 where.append(" AND ")
             }
-            where.append("type = :distribution_type ")
+            where.append(" type = :distribution_type ")
             params.put("distribution_type", type)
         }
 
@@ -246,12 +265,15 @@ class DistributionsService {
             params.put('radius', radius)
         }
 
-        if (requestType != POINT_RADIUS) {
+        String sql
+
+        if (requestType == COUNT || requestType == POINT_RADIUS_COUNT) {
             wktSelect = "SELECT family as name, count(*) as count "
             groupBy = " GROUP BY family"
+            sql = wktSelect + " from Distributions"
+        } else {
+            sql = SELECT_CLAUSE + wktSelect + " from Distributions"
         }
-
-        String sql = SELECT_CLAUSE + wktSelect + " from Distributions"
         if (whereClause.length() > 0) {
             sql += " WHERE " + whereClause.toString()
         }

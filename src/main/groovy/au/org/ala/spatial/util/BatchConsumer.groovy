@@ -16,13 +16,14 @@ package au.org.ala.spatial.util
 
 
 import au.org.ala.spatial.LayerIntersectService
+import groovy.transform.CompileStatic
 
 import java.util.concurrent.LinkedBlockingQueue
 
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class BatchConsumer {
     static List<Thread> threads = new ArrayList<Thread>()
     static LinkedBlockingQueue<String> waitingBatchDirs

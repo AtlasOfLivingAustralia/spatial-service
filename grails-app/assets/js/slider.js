@@ -205,7 +205,7 @@ angular.module('ui.slider', []).value('uiSliderConfig', {}).directive('uiSlider'
                         var left = ((i / total) * 100) + '%';
                         $("<div/>").addClass("ui-slider-tick").appendTo(element).css({left: left});
                     }
-                    ;
+
                 }
                 if (angular.isDefined(options['tip'])) {
                     $timeout(function () {

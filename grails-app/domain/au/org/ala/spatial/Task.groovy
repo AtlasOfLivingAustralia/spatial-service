@@ -14,7 +14,7 @@
  */
 
 package au.org.ala.spatial
-//@CompileStatic
+
 class Task {
 
     // date/time created

@@ -1,13 +1,12 @@
 package au.org.ala.spatial
 
-import org.codehaus.jackson.annotate.JsonIgnore
+import javax.persistence.GeneratedValue
 
-import groovy.transform.CompileStatic
-//@CompileStatic
 class Layers {
 //    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "layers_id_seq")
 //    @SequenceGenerator(name = "layers_id_seq", sequenceName = "layers_id_seq")
 //    //@Column(name = "id", insertable = false, updatable = false)
+    @GeneratedValue
     Long id
 
 

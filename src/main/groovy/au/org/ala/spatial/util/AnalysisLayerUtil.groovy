@@ -17,6 +17,7 @@ package au.org.ala.spatial.util
 import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.grid.Diva2bil
 import au.org.ala.spatial.intersect.Grid
+import groovy.transform.CompileStatic
 
 /**
  * @author Adam
@@ -25,7 +26,7 @@ import au.org.ala.spatial.intersect.Grid
 import groovy.util.logging.Slf4j
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class AnalysisLayerUtil {
 
     static boolean diva2Analysis(String srcFilepath, String dstFilepath, Double resolution, String gdalPath, boolean force) {

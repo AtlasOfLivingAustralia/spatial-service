@@ -221,7 +221,7 @@ class TrackController {
     def lsidFirst(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.TRACK)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.TRACK)
 
         if (distributions) {
             render distributions.get(0) as JSON
@@ -234,7 +234,7 @@ class TrackController {
     def lsid(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.TRACK)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.TRACK)
 
         if (distributions) {
             render distributions.get(0) as JSON
@@ -283,7 +283,7 @@ class TrackController {
     def lsids(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.notwkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.TRACK)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.TRACK)
 
         if (distributions) {
             render distributions as JSON
@@ -298,7 +298,7 @@ class TrackController {
 
     @Deprecated
     def lsidMapFirst(String lsid) {
-        List distributions = distributionsService.queryDistributions([lsids: lsid], true, Distributions.TRACK)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], true, Distributions.TRACK)
 
         if (distributions) {
             Distributions distribution = distributions.get(0)
@@ -316,7 +316,7 @@ class TrackController {
 
         List found = []
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], true, Distributions.TRACK)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], true, Distributions.TRACK)
 
         if (distributions != null) {
             distributions.each { Distributions distribution ->
@@ -404,20 +404,23 @@ class TrackController {
      */
     @Deprecated
     // users can directly use geoserver
-    def image(response, String lsid, Long spcode, String scientificName) {
-        Long geomIdx = Distributions.createCriteria().get {
+    private def image(response, String lsid, Long spcode, String scientificName) {
+        def geomIdxs = Distributions.createCriteria().list {
             projections {
-                distinct('geomIdx')
+                distinct('geom_idx')
             }
-            or {
-                eq('spcode', spcode)
-                eq('lsid', lsid.replace("https:/", "https://"))
-                eq('scientificName', scientificName)
+            and {
+                or {
+                    eq('spcode', spcode)
+                    eq('lsid', lsid?.replace("https:/", "https://"))
+                    eq('scientific', scientificName)
+                }
+                eq('type', Distributions.TRACK)
             }
         }
 
-        if (geomIdx != null) {
-            map(String.valueOf(geomIdx))
+        if (geomIdxs?.size() > 0) {
+            map(String.valueOf(geomIdxs.get(0)))
         } else {
             response.status = 404
         }

@@ -147,7 +147,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         setupConfig()
 
         service.fieldService.getFieldsByDB() >> [[id: "cl1", spid: "cl1"]]
-        service.layerService.getLayerById(_, _) >> [id: "1", displayname: "name1", type: "contextual"]
+        service.layerService.getLayerById(_, _) >> [id: "1", name: "name1", displayname: "name1", type: "contextual"]
 
         def map = service.fieldMapDefault("1").findAll { k, v -> v != null }
         //do not test creation time or test_ur

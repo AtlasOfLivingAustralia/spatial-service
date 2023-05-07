@@ -1,7 +1,8 @@
 package au.org.ala.spatial.util
 
+import groovy.transform.CompileStatic
 import org.apache.commons.io.filefilter.IOFileFilter
-
+@CompileStatic
 class BaseFileNameInDirectoryFilter implements IOFileFilter {
 
     private final String baseFileName

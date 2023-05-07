@@ -389,7 +389,7 @@ class FieldCreation extends SlaveProcess {
                         log.error 'task:' + taskWrapper.id + ', >1 non-Polygon geometry at: ' + k + ', ' + layername + ', ' + sid
                     }
 
-                    double area = newg.getArea() == 0 ? 0 : SpatialUtil.calculateArea(newg.toText()) / 1000000.0
+                    double area = newg.getArea() == 0 ? 0 : SpatialUtils.calculateArea(newg.toText()) / 1000000.0
                     sql = MessageFormat.format("INSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch, area_km)" +
                             " VALUES (nextval(''objects_id_seq''::regclass), ''{0}'', ''{1}'', ''{2}'', ''{3}'', " +
                             "ST_GEOMFROMTEXT(''{4}'', 4326), {5}, {6});",

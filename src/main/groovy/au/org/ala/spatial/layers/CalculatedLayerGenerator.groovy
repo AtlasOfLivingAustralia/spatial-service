@@ -149,69 +149,69 @@ abstract class CalculatedLayerGenerator {
 
         try {
             // .asc output (ESRI ASCII grid)
-            FileWriter ascFileWriter = new FileWriter(new File(outputFileDirectory, outputFileNamePrefix + ".asc"));
-            PrintWriter ascPrintWriter = new PrintWriter(ascFileWriter);
+            FileWriter ascFileWriter = new FileWriter(new File(outputFileDirectory, outputFileNamePrefix + ".asc"))
+            PrintWriter ascPrintWriter = new PrintWriter(ascFileWriter)
 
             // DIVA output
-            BufferedOutputStream divaOutputStream = new BufferedOutputStream(new FileOutputStream(new File(outputFileDirectory, outputFileNamePrefix + ".gri")));
+            BufferedOutputStream divaOutputStream = new BufferedOutputStream(new FileOutputStream(new File(outputFileDirectory, outputFileNamePrefix + ".gri")))
 
-            int numRows = calculateNumberOfRows();
-            int numColumns = calculateNumberOfColumns();
+            int numRows = calculateNumberOfRows()
+            int numColumns = calculateNumberOfColumns()
 
             // Write header for .asc output
-            ascPrintWriter.println("ncols " + Integer.toString(numColumns));
-            ascPrintWriter.println("nrows " + Integer.toString(numRows));
-            ascPrintWriter.println("xllcorner -180.0");
-            ascPrintWriter.println("yllcorner -90.0");
-            ascPrintWriter.println("cellsize " + _resolution.toString());
-            ascPrintWriter.println("NODATA_value -9999");
+            ascPrintWriter.println("ncols " + Integer.toString(numColumns))
+            ascPrintWriter.println("nrows " + Integer.toString(numRows))
+            ascPrintWriter.println("xllcorner -180.0")
+            ascPrintWriter.println("yllcorner -90.0")
+            ascPrintWriter.println("cellsize " + _resolution.toString())
+            ascPrintWriter.println("NODATA_value -9999")
 
             // Generate layer for the entire globe.
-            BigDecimal maxLatitude = new BigDecimal("90.00");
-            BigDecimal minLatitude = new BigDecimal("-90.00");
-            BigDecimal minLongitude = new BigDecimal("-180.00");
-            BigDecimal maxLongitude = new BigDecimal("180.00");
+            BigDecimal maxLatitude = new BigDecimal("90.00")
+            BigDecimal minLatitude = new BigDecimal("-90.00")
+            BigDecimal minLongitude = new BigDecimal("-180.00")
+            BigDecimal maxLongitude = new BigDecimal("180.00")
 
-            float maxValue = Float.NEGATIVE_INFINITY;
+            float maxValue = Float.NEGATIVE_INFINITY
 
-            int scale = 2;
+            int scale = 2
             if (_resolution.doubleValue() == 1.0) {
-                scale = 0;
+                scale = 0
             }
             if (_resolution.doubleValue() == 0.1) {
-                scale = 1;
+                scale = 1
             }
             if (_resolution.doubleValue() == 0.01) {
-                scale = 2;
+                scale = 2
             }
 
             for (BigDecimal lat = maxLatitude; lat.compareTo(minLatitude) == 1; lat = lat.subtract(_resolution)) {
                 // a row for each _resolution unit of latitude
                 for (BigDecimal lon = minLongitude; lon.compareTo(maxLongitude) == -1; lon = lon.add(_resolution)) {
                     // a column for each _resolution unit of longitude
-                    Map.Entry<BigDecimal, BigDecimal> coordPair = new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(lat.setScale(scale, RoundingMode.FLOOR), lon.setScale(scale, RoundingMode.FLOOR));
+                    Map.Entry<BigDecimal, BigDecimal> coordPair = new AbstractMap.SimpleEntry<BigDecimal, BigDecimal>(lat.setScale(scale, RoundingMode.FLOOR), lon.setScale(scale, RoundingMode.FLOOR))
 
-                    maxValue = handleCell(coordPair, maxValue, ascPrintWriter, divaOutputStream);
+                    maxValue = handleCell(coordPair, maxValue, ascPrintWriter, divaOutputStream)
 
                     if (lon.compareTo(maxLongitude) != 0) {
-                        ascPrintWriter.print(" ");
+                        ascPrintWriter.print(" ")
                     }
                 }
-                ascPrintWriter.println();
+                ascPrintWriter.println()
             }
 
-            ascPrintWriter.flush();
-            ascPrintWriter.close();
+            ascPrintWriter.flush()
+            ascPrintWriter.close()
 
-            divaOutputStream.flush();
-            divaOutputStream.close();
+            divaOutputStream.flush()
+            divaOutputStream.close()
 
             // Write header file for DIVA output
             DensityLayers.writeHeader(new File(outputFileDirectory, outputFileNamePrefix + ".grd").getAbsolutePath(), _resolution.doubleValue(), numRows, numColumns, -180, -90, 180, 90, 0, maxValue,
-                    -9999);
+                    -9999)
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            ex.printStackTrace()
         }
     }
 

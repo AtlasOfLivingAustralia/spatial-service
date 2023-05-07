@@ -501,7 +501,7 @@ class Scatterplot {
 
             if (x >= 0 && x < area.length
                     && y >= 0 && y < area[x].length) {
-                area[x][y] += SpatialUtil.cellArea(Double.parseDouble(resolution), g.ymin + (i / g.ncols) * g.yres)
+                area[x][y] += SpatialUtils.cellArea(Double.parseDouble(resolution), g.ymin + (i / g.ncols) * g.yres)
             }
         }
 

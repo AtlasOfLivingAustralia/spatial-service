@@ -224,7 +224,7 @@ class DistributionController {
     def lsidFirst(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.EXPERT_DISTRIBUTION)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.EXPERT_DISTRIBUTION)
 
         if (distributions) {
             render distributions.get(0) as JSON
@@ -237,7 +237,7 @@ class DistributionController {
     def lsid(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.EXPERT_DISTRIBUTION)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.EXPERT_DISTRIBUTION)
 
         if (distributions) {
             render distributions.get(0) as JSON
@@ -287,7 +287,7 @@ class DistributionController {
     def lsids(String lsid) {
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], noWkt, Distributions.EXPERT_DISTRIBUTION)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.EXPERT_DISTRIBUTION)
 
         if (distributions) {
             render distributions as JSON
@@ -302,7 +302,7 @@ class DistributionController {
 
     @Deprecated
     def lsidMapFirst(String lsid) {
-        List distributions = distributionsService.queryDistributions([lsids: lsid], true, Distributions.EXPERT_DISTRIBUTION)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], true, Distributions.EXPERT_DISTRIBUTION)
 
         if (distributions) {
             Distributions distribution = distributions.get(0)
@@ -320,7 +320,7 @@ class DistributionController {
 
         List found = []
 
-        List distributions = distributionsService.queryDistributions([lsids: lsid], true, Distributions.EXPERT_DISTRIBUTION)
+        List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], true, Distributions.EXPERT_DISTRIBUTION)
 
         if (distributions != null) {
             distributions.each { Distributions distribution ->
@@ -340,7 +340,7 @@ class DistributionController {
     def cacheMaps() {
         Distributions.createCriteria().list {
             projections {
-                distinct('geomIdx')
+                distinct('geom_idx')
             }
         }.each { geomIdx ->
             distributionsService.mapCache().getCachedMap(geomIdx as String)
@@ -403,10 +403,6 @@ class DistributionController {
 
     @Deprecated
     def overviewMapPngSpcode(Long spcode) {
-        if (spcode == null) {
-            render status: 400
-            return
-        }
         image(response, null, spcode, null)
     }
 
@@ -428,19 +424,22 @@ class DistributionController {
     @Deprecated
     // users can directly use geoserver
     private def image(response, String lsid, Long spcode, String scientificName) {
-        def geomIdx = Distributions.createCriteria().get {
+        def geomIdxs = Distributions.createCriteria().list {
             projections {
-                distinct('geomIdx')
+                distinct('geom_idx')
             }
-            or {
-                eq('spcode', spcode)
-                eq('lsid', lsid.replace("https:/", "https://"))
-                eq('scientificName', scientificName)
+            and {
+                or {
+                    eq('spcode', spcode)
+                    eq('lsid', lsid?.replace("https:/", "https://"))
+                    eq('scientific', scientificName)
+                }
+                eq('type', Distributions.EXPERT_DISTRIBUTION)
             }
         }
 
-        if (geomIdx != null) {
-            map(String.valueOf(geomIdx))
+        if (geomIdxs?.size()) {
+            map(String.valueOf(geomIdxs.get(0)))
         } else {
             response.status = 404
         }

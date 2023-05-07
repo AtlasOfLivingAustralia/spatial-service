@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
 import au.org.ala.spatial.tabulation.Intersection
+import au.org.ala.spatial.util.SpatialUtils
 import groovy.util.logging.Slf4j
 import org.geotools.data.DataStore
 import org.geotools.data.DataStoreFinder
@@ -165,7 +166,7 @@ class TabulationCreateOne extends SlaveProcess {
                         p = new Pair(key)
                         map.put(key, p)
                     }
-                    p.area += SpatialUtil.calculateArea(wkt) / 1000000.0
+                    p.area += SpatialUtils.calculateArea(wkt) / 1000000.0
                     p.geom.add(wkt)
                 }
 

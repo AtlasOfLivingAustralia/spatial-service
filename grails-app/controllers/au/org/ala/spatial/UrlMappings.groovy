@@ -19,7 +19,6 @@ class UrlMappings {
         "/distribution/lsids/$lsid**"(controller: "distribution", action: "lsids")
         "/distribution/map/$lsid**?"(controller: "distribution", action: "lsidMapFirst")
         "/distribution/map/png/$geomIdx(.$format)?"(controller: "distribution", action: "overviewMapPng")
-        //"/distribution/map/seed(.$format)?"(controller: "distribution", action: "overviewMapSeed")
         "/distribution/outliers/$lsid**?"(controller: "distribution", action: "outliers")
         "/distribution/map/lsid/$lsid**?"(controller: "distribution", action: "overviewMapPngLsid")
         "/distribution/map/spcode/$spcode(.$format)?"(controller: "distribution", action: "overviewMapPngSpcode")

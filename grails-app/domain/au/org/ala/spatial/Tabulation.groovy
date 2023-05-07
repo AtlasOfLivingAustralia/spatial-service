@@ -18,7 +18,7 @@ package au.org.ala.spatial
  * @author Adam
  */
 import groovy.transform.CompileStatic
-//@CompileStatic
+@CompileStatic
 class Tabulation {
 
     String fid1

@@ -1,8 +1,9 @@
 package au.org.ala.spatial.util
 
+import groovy.transform.CompileStatic
 import org.apache.commons.io.FileUtils
 
-//@CompileStatic
+@CompileStatic
 class MapCache {
 
     private static MapCache singleton

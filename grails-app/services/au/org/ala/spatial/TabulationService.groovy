@@ -20,11 +20,17 @@ import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.tabulation.TabulationUtil
 import au.org.ala.spatial.util.SpatialUtils
 
+import java.sql.ResultSet
+
 //@CompileStatic
 class TabulationService {
     LayerService layerService
     SpatialObjectsService spatialObjectsService
     SpatialConfig spatialConfig
+    TabulationGeneratorService tabulationGeneratorService
+
+    def sessionFactory
+    def groovySql
 
     String[][] tabulationGridGenerator(List<Tabulation> tabulations, String func) throws IOException {
         //determine x & y field names
@@ -372,18 +378,53 @@ class TabulationService {
 
         if (wkt == null || wkt.length() == 0) {
             /* before "tabulation" table is updated with column "occurrences", to just make sure column "area" is all good */
-            String sql = "SELECT i.pid1, i.pid2, i.fid1, i.fid2, i.area, o1.name as name1, o2.name as name2, i.occurrences, i.species, i.speciest1, i.speciest2 FROM "+"(SELECT pid1, pid2, fid1, fid2, area, occurrences, species, speciest1, speciest2 FROM tabulation WHERE fid1= ? AND fid2 = ? ) i, "+"(select t1.pid1 as pid, name from tabulation t1 left join objects o3 on t1.fid1=o3.fid and t1.pid1=o3.pid where t1.fid1= ? group by t1.pid1, name) o1, "+"(select t2.pid2 as pid, name from tabulation t2 left join objects o4 on t2.fid2=o4.fid and t2.pid2=o4.pid where t2.fid2= ? group by t2.pid2, name) o2 "+"WHERE i.pid1=o1.pid AND i.pid2=o2.pid ;"
+            String sql = "SELECT i.pid1, i.pid2, i.fid1, i.fid2, i.area, o1.name as name1, o2.name as name2, i.occurrences, i.species, i.speciest1, i.speciest2 FROM "+"(SELECT pid1, pid2, fid1, fid2, area, occurrences, species, speciest1, speciest2 FROM tabulation WHERE fid1= ? AND fid2 = ? ) i, "+"(select t1.pid1 as pid, name from tabulation t1 left join objects o3 on t1.fid1=o3.fid and t1.pid1=o3.pid where t1.fid1= ? group by t1.pid1, name) o1, "+"(select t2.pid2 as pid, name from tabulation t2 left join objects o4 on t2.fid2=o4.fid and t2.pid2=o4.pid where t2.fid2= ? group by t2.pid2, name) o2 "+"WHERE i.pid1=o1.pid AND i.pid2=o2.pid "
 
-            tabulations = Tabulation.executeQuery(sql, [min, max, min, max])
+            tabulations = []
 
+            groovySql.query(sql, [min, max, min, max], { it ->
+                while (it.next()) {
+                    Tabulation t = new Tabulation()
+                    t.pid1 = it.getString(1)
+                    t.pid2 = it.getString(2)
+                    t.fid1 = it.getString(3)
+                    t.fid2 = it.getString(4)
+                    t.area = it.getDouble(5)
+                    t.name1 = it.getString(6)
+                    t.name2 = it.getString(7)
+                    t.occurrences = it.getInt(8)
+                    t.species = it.getInt(9)
+                    t.speciest1 = it.getInt(10)
+                    t.speciest2 = it.getInt(11)
+                    tabulations.add(t)
+                }
+            })
         } else {
-            String sql = "SELECT fid1, pid1, fid2, pid2, ST_AsText(newgeom) as geometry, name1, name2, occurrences, species, speciest1, speciest2 FROM "+"(SELECT fid1, pid1, fid2, pid2, (ST_INTERSECTION(ST_GEOMFROMTEXT( ? ,4326), i.the_geom)) as newgeom, o1.name as name1, o2.name as name2, i.occurrences, i.species FROM "+"(SELECT * FROM tabulation WHERE fid1= ? AND fid2 = ? ) i, "+"(select t1.pid1 as pid, name from tabulation t1 left join objects o3 on t1.fid1=o3.fid and t1.pid1=o3.pid where t1.fid1= ? group by t1.pid1, name) o1, "+"(select t2.pid2 as pid, name from tabulation t2 left join objects o4 on t2.fid2=o4.fid and t2.pid2=o4.pid where t2.fid2= ? group by t2.pid2, name) o2 "+"WHERE i.pid1=o1.pid AND i.pid2=o2.pid) a "+"WHERE a.newgeom is not null AND ST_Area(a.newgeom) > 0;"
+            String sql = "SELECT fid1, pid1, fid2, pid2, ST_AsText(newgeom) as geometry, name1, name2, occurrences, species, speciest1, speciest2 FROM "+"(SELECT fid1, pid1, fid2, pid2, (ST_INTERSECTION(ST_GEOMFROMTEXT( ? ,4326), i.the_geom)) as newgeom, o1.name as name1, o2.name as name2, i.occurrences, i.species FROM "+"(SELECT * FROM tabulation WHERE fid1= ? AND fid2 = ? ) i, "+"(select t1.pid1 as pid, name from tabulation t1 left join objects o3 on t1.fid1=o3.fid and t1.pid1=o3.pid where t1.fid1= ? group by t1.pid1, name) o1, "+"(select t2.pid2 as pid, name from tabulation t2 left join objects o4 on t2.fid2=o4.fid and t2.pid2=o4.pid where t2.fid2= ? group by t2.pid2, name) o2 "+"WHERE i.pid1=o1.pid AND i.pid2=o2.pid) a "+"WHERE a.newgeom is not null AND ST_Area(a.newgeom) > 0"
 
-            tabulations = Tabulation.executeQuery(sql, [wkt, min, max, min, max])
+            tabulations = []
+
+            groovySql.query(sql, [wkt, min, max, min, max], { it ->
+                while (it.next()) {
+                    Tabulation t = new Tabulation()
+                    t.fid1 = it.getString(1)
+                    t.pid1 = it.getString(2)
+                    t.fid2 = it.getString(3)
+                    t.pid2 = it.getString(4)
+                    t.geometry = it.getString(5)
+                    t.name1 = it.getString(6)
+                    t.name2 = it.getString(7)
+                    t.occurrences = it.getInt(8)
+                    t.species = it.getInt(9)
+                    t.speciest1 = it.getInt(10)
+                    t.speciest2 = it.getInt(11)
+                    tabulations.add(t)
+                }
+            })
 
             for (Tabulation t : (tabulations as List<Tabulation>)) {
                 try {
-                    t.setArea(SpatialUtil.calculateArea(t.getGeometry()))
+                    t.setArea(SpatialUtils.calculateArea(t.getGeometry()))
                     t.setOccurrences(TabulationUtil.calculateOccurrences(spatialConfig.occurrence_species_records_filename, t.getGeometry()))
                     t.setSpecies(TabulationUtil.calculateSpecies(spatialConfig.occurrence_species_records_filename, t.getGeometry()))
                 } catch (Exception e) {
@@ -412,17 +453,21 @@ class TabulationService {
 
     List<Tabulation> listTabulations() {
         String incompleteTabulations = "select fid1, fid2 from tabulation where area is null and the_geom is not null group by fid1, fid2"
-        String sql = "SELECT fid1, fid2, f1.name as name1, f2.name as name2 "
-        +" FROM (select t1.* from "
-        +"(select fid1, fid2, sum(area) a from tabulation group by fid1, fid2) t1 left join "
-        +" (" + incompleteTabulations + ") i on t1.fid1=i.fid1 and t1.fid2=i.fid2 where i.fid1 is null"
-        +") t"
-        +", fields f1, fields f2 "
-        +" WHERE f1.id = fid1 AND f2.id = fid2 AND a > 0 "
-        +" AND f1.intersect=true AND f2.intersect=true "
-        +" GROUP BY fid1, fid2, name1, name2;"
+        String sql = "SELECT fid1, fid2, f1.name as name1, f2.name as name2 "+" FROM (select t1.* from "        +"(select fid1, fid2, sum(area) a from tabulation group by fid1, fid2) t1 left join "        +" (" + incompleteTabulations + ") i on t1.fid1=i.fid1 and t1.fid2=i.fid2 where i.fid1 is null"        +") t"        +", fields f1, fields f2 "        +" WHERE f1.id = fid1 AND f2.id = fid2 AND a > 0 "        +" AND f1.intersect=true AND f2.intersect=true "        +" GROUP BY fid1, fid2, name1, name2"
+        List<Tabulation> result = []
 
-        return Tabulation.executeQuery(sql)
+        groovySql.query(sql, { it ->
+            while (it.next()) {
+                Tabulation t = new Tabulation()
+                t.fid1 = it.getString(1)
+                t.fid2 = it.getString(2)
+                t.name1 = it.getString(3)
+                t.name2 = it.getString(4)
+
+                result.add(t)
+            }
+        })
+        result
     }
 
 
@@ -438,32 +483,41 @@ class TabulationService {
                 List<Tabulation> tabulations
 
                 if (isPid) {
-                    sql = "SELECT fid1, pid1, name1,"
-                    +" fid2, pid2, name2, "
-                    +" ST_AsText(newgeom) as geometry FROM "
-                    +"("
-                    +"SELECT a.fid as fid1, a.pid as pid1, a.name as name1, b.fid as fid2, b.pid as pid2, b.name as name2 "
-                    +", (ST_INTERSECTION(b.the_geom, a.the_geom)) as newgeom FROM "
-                    +"(SELECT * FROM objects WHERE fid = ? ) a, (SELECT * FROM objects WHERE pid = ? ) b "
-                    +"WHERE ST_INTERSECTS(ST_GEOMFROMTEXT(a.bbox, 4326), ST_GEOMFROMTEXT(b.bbox ,4326))"
-                    +") o "
-                    +"WHERE newgeom is not null AND ST_Area(newgeom) > 0;"
+                    sql = "SELECT fid1, pid1, name1,"                    +" fid2, pid2, name2, "                    +" ST_AsText(newgeom) as geometry FROM "                    +"("                    +"SELECT a.fid as fid1, a.pid as pid1, a.name as name1, b.fid as fid2, b.pid as pid2, b.name as name2 "                    +", (ST_INTERSECTION(b.the_geom, a.the_geom)) as newgeom FROM "                    +"(SELECT * FROM objects WHERE fid = ? ) a, (SELECT * FROM objects WHERE pid = ? ) b "                    +"WHERE ST_INTERSECTS(ST_GEOMFROMTEXT(a.bbox, 4326), ST_GEOMFROMTEXT(b.bbox ,4326))"                    +") o "                    +"WHERE newgeom is not null AND ST_Area(newgeom) > 0"
 
-                    tabulations = Tabulation.executeQuery(sql, fid, wkt)
+                    groovySql.query(sql, [fid, wkt], { it ->
+                        while (it.next()) {
+                            Tabulation t = new Tabulation()
+                            t.fid1 = it.getString(1)
+                            t.pid1 = it.getString(2)
+                            t.name1 = it.getString(3)
+                            t.fid2 = it.getString(4)
+                            t.pid2 = it.getString(5)
+                            t.name2 = it.getString(6)
+                            t.geometry = it.getString(7)
+                            tabulations.add(t)
+                        }
+                    })
                 } else {
-                    sql = "SELECT fid as fid1, pid as pid1, name as name1,"
-                    +" 'user area' as fid2, 'user area' as pid2, 'user area' as name2, "
-                    +" ST_AsText(newgeom) as geometry FROM "
-                    +"(SELECT fid, pid, name, (ST_INTERSECTION(ST_GEOMFROMTEXT( ? ,4326), the_geom)) as newgeom FROM "
-                    +"objects WHERE fid= ? and ST_INTERSECTS(ST_GEOMFROMTEXT(bbox, 4326), ST_ENVELOPE(ST_GEOMFROMTEXT( ? ,4326)))"
-                    +") o "
-                    +"WHERE newgeom is not null AND ST_Area(newgeom) > 0;"
-
-                    tabulations = Tabulation.executeQuery(sql, wkt, fid, wkt)
+                    sql = "SELECT fid as fid1, pid as pid1, name as name1,"                    +" 'user area' as fid2, 'user area' as pid2, 'user area' as name2, "+" ST_AsText(newgeom) as geometry FROM "                    +"(SELECT fid, pid, name, (ST_INTERSECTION(ST_GEOMFROMTEXT( ? ,4326), the_geom)) as newgeom FROM "                    +"objects WHERE fid= ? and ST_INTERSECTS(ST_GEOMFROMTEXT(bbox, 4326), ST_ENVELOPE(ST_GEOMFROMTEXT( ? ,4326)))"                    +") o "                    +"WHERE newgeom is not null AND ST_Area(newgeom) > 0"
+                    groovySql.query(sql, [wkt, fid, wkt], { it ->
+                        while (it.next()) {
+                            Tabulation t = new Tabulation()
+                            t.fid1 = it.getString(1)
+                            t.pid1 = it.getString(2)
+                            t.name1 = it.getString(3)
+                            t.fid2 = it.getString(4)
+                            t.pid2 = it.getString(5)
+                            t.name2 = it.getString(6)
+                            t.geometry = it.getString(7)
+                            tabulations.add(t)
+                        }
+                    })
                 }
 
+
                 for (Tabulation t : (tabulations as List<Tabulation>)) {
-                    t.setArea(SpatialUtil.calculateArea(t.getGeometry()))
+                    t.setArea(SpatialUtils.calculateArea(t.getGeometry()))
 
                     //don't return geometry
                     t.setGeometry(null)
@@ -471,14 +525,21 @@ class TabulationService {
 
                 return tabulations
             } else {
-                String sql = "SELECT fid1, pid1, name as name1,"
-                +" 'world' as fid2, 'world' as pid2, 'world' as name2, "
-                +" area_km as area FROM "
-                +"(SELECT name, fid as fid1, pid as pid1, the_geom as newgeom, area_km FROM "
-                +"objects WHERE fid= ? ) t "
-                +"WHERE newgeom is not null AND ST_Area(newgeom) > 0;"
+                String sql = "SELECT fid1, pid1, name as name1," +" 'world' as fid2, 'world' as pid2, 'world' as name2, "+" area_km as area FROM "+"(SELECT name, fid as fid1, pid as pid1, the_geom as newgeom, area_km FROM "+"objects WHERE fid= ? ) t "+"WHERE newgeom is not null AND ST_Area(newgeom) > 0"
 
-                List<Tabulation> tabulations = Tabulation.executeQuery(sql, fid)
+                List<Tabulation> tabulations = []
+                groovySql.query(sql, [fid], { it ->
+                    while (it.next()) {
+                        Tabulation t = new Tabulation()
+                        t.fid1 = it.getString(1)
+                        t.pid1 = it.getString(2)
+                        t.name1 = it.getString(3)
+                        t.fid2 = it.getString(4)
+                        t.pid2 = it.getString(5)
+                        t.area = it.getDouble(6)
+                        tabulations.add(t)
+                    }
+                })
 
                 return tabulations
             }
@@ -490,7 +551,8 @@ class TabulationService {
                 w = spatialObjectsService.getObjectsGeometryById(wkt, "wkt")
             }
             log.debug("w: " + w)
-            return TabulationGenerator.calc(fid, w)
+            //TODO: fix
+            return tabulationGeneratorService.calc(fid, w)
         }
     }
 }

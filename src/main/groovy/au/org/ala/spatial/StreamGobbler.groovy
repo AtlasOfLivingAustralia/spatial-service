@@ -16,10 +16,11 @@
 package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.TaskWrapper
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class StreamGobbler extends Thread {
 
     BufferedReader br

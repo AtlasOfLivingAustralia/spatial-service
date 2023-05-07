@@ -15,20 +15,16 @@
 
 package au.org.ala.spatial
 
-
-import au.org.ala.spatial.dto.Upload
-import au.org.ala.spatial.util.UploadSpatialResource
-import au.org.ala.spatial.intersect.Grid
-import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.grid.Diva2bil
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
-import org.codehaus.jackson.map.ObjectMapper
 import org.geotools.data.shapefile.ShapefileDataStore
-import org.grails.web.json.JSONObject
+import org.json.simple.JSONObject
 import org.json.simple.JSONValue
 import org.opengis.feature.simple.SimpleFeatureType
 import org.opengis.feature.type.AttributeDescriptor
@@ -38,7 +34,6 @@ import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 
 @Slf4j
-//@CompileStatic
 class ManageLayersService {
 
     def groovySql
@@ -62,7 +57,7 @@ class ManageLayersService {
                 if (f.isDirectory()) {
                     log.error 'getting ' + f.getName()
                     def upload = getUpload(f.getName())
-                    if (upload.name) {
+                    if (upload.size() > 0) {
                         list.add(upload)
                     }
                 }
@@ -72,9 +67,9 @@ class ManageLayersService {
         list
     }
 
-    Upload getUpload(String uploadId, boolean canRetry = true) {
+    Map getUpload(String uploadId, boolean canRetry = true) {
 
-        Upload upload = new Upload()
+        def upload = [:]
 
         String layersDir = spatialConfig.data.dir
         File f = new File(layersDir + "/uploads/" + uploadId)
@@ -84,20 +79,20 @@ class ManageLayersService {
         if (f.exists()) {
             f.listFiles().each { file ->
                 if (file.getPath().toLowerCase().endsWith("original.name")) {
-                    upload.raw_id = uploadId
-                    upload.created = Files.readAttributes(file.toPath(), BasicFileAttributes.class).creationTime()
+                    upload.put("raw_id", uploadId)
+                    upload.put("created", Files.readAttributes(file.toPath(), BasicFileAttributes.class).creationTime())
 
                     try {
 
                         def layerIdFile = new File(layersDir + "/uploads/" + uploadId + "/layer.id")
                         if (layerIdFile.exists()) {
-                            upload.layer_id = layerIdFile.text
+                            upload.put("layer_id", layerIdFile.text)
                         }
 
                         def originalNameFile = new File(layersDir + "/uploads/" + uploadId + "/original.name")
                         if (originalNameFile.exists()) {
                             String originalName = originalNameFile.text
-                            upload.filename = originalName
+                            upload.put("filename", originalName)
 
                             //default name (unique) and displayname
                             def idx = 1
@@ -107,28 +102,28 @@ class ManageLayersService {
                                 idx = idx + 1
                                 checkName = cleanName + '_' + idx
                             }
-                            upload.name = checkName
-                            upload.displayname = originalName
+                            upload.put("name", checkName)
+                            upload.put("displayname", originalName)
                         }
 
                         File distributionFile = new File(layersDir + "/uploads/" + uploadId + "/distribution.id")
                         if (distributionFile.exists()) {
-                            upload.data_resource_uid=distributionFile.text
+                            upload.put("data_resource_uid", distributionFile.text)
                         }
 
                         File checklistFile = new File(layersDir + "/uploads/" + uploadId + "/checklist.id")
                         if (checklistFile.exists()) {
-                            upload.checklist=checklistFile.text
+                            upload.put("checklist", checklistFile.text)
                         }
 
                         List<Task> creationTask = Task.findAllByNameAndTag('LayerCreation', uploadId)
                         if (creationTask.size() > 0) {
                             if (creationTask.get(0).status < 2) {
-                                upload.layer_creation="running"
+                                upload.put("layer_creation", "running")
                             } else if (creationTask.get(0).status == 2) {
-                                upload.layer_creation="cancelled"
+                                upload.put("layer_creation", "cancelled")
                             } else if (creationTask.get(0).status == 3) {
-                                upload.layer_creation="error"
+                                upload.put("layer_creation", "error")
                             } //else finished
                         }
 
@@ -138,11 +133,11 @@ class ManageLayersService {
                 } else if (file.getName().startsWith("field.id.")) {
                     fields.add(fieldService.getFieldById(file.getName().substring("field.id.".length()), false))
 
-                    upload.fields=fields
+                    upload.put("fields", fields)
                 }
             }
 
-            if (!upload.filename) {
+            if (!upload.containsKey('filename')) {
                 // process manually uploaded file
                 processUpload(f, f.getName())
 
@@ -154,13 +149,13 @@ class ManageLayersService {
         }
 
         //no upload dir, look in existing layers, at layer.id
-        if (!upload.raw_id) {
+        if (!upload.containsKey("raw_id")) {
             try {
                 Layers layer = layerService.getLayerById(Integer.parseInt(uploadId))
                 if (layer != null) {
-                    upload.raw_id= uploadId
-                    upload.layer_id= uploadId
-                    upload.filename= ""
+                    upload.put("raw_id", uploadId)
+                    upload.put("layer_id", uploadId)
+                    upload.put("filename", "")
 
                     List<Fields> fieldList = fieldService.getFields()
                     for (Fields fs : fieldList) {
@@ -169,7 +164,7 @@ class ManageLayersService {
                         }
                     }
 
-                    upload.fields=fields
+                    upload.put("fields", fields)
                 }
             } catch (Exception ignored) {
 
@@ -235,6 +230,7 @@ class ManageLayersService {
                 log.info("Converting DIVA to BIL")
                 def n = grd.getPath().substring(0, grd.getPath().length() - 4)
                 Diva2bil.diva2bil(n, n)
+                bil = n + '.hdr'
                 name = grd.getName().substring(0, grd.getName().length() - 4)
                 count = count + 1
             }
@@ -268,7 +264,7 @@ class ManageLayersService {
                 log.info("SHP available: ${shp.exists()}, TIF available: ${tif.exists()}, BIL available: ${bil.exists()}")
             }
 
-            Upload map = new Upload()
+            def map = [:]
 
             if (!shp.exists() && !tif.exists()) {
                 log.error("No SHP or TIF available....")
@@ -278,7 +274,7 @@ class ManageLayersService {
 
                 if (errors) {
                     log.error("Errors uploading to geoserver...." + errors.inspect())
-                    map.error = errors.inspect()
+                    map.put("error", errors.inspect())
                 } else {
                     map.put("raw_id", name)
                     map.put("columns", columns)
@@ -297,7 +293,7 @@ class ManageLayersService {
             log.error("Path does not exist..." + pth)
         }
 
-        return [error: pth + " does not exist!"]
+        return [error: pth + " does not exist!" ]
     }
 
     /**
@@ -316,7 +312,7 @@ class ManageLayersService {
      * unsuccessful
      */
     def httpCall(String type, String url, String username, String password, String resourcepath, String resourcestr, String contenttype) {
-        List<String> output = ["", ""]
+        def output = ["", ""]
 
         def entity = null
         if (resourcepath != null) {
@@ -335,10 +331,10 @@ class ManageLayersService {
         // Execute the request
         if (response) {
             if (response.statusCode) {
-                output.set(0, String.valueOf(response.statusCode))
+                output[0] = String.valueOf(response.statusCode)
             }
             if (response.text) {
-                output.set(1, response.text as String)
+                output[1] = response.text
             }
             //Add extra info
             switch (response.statusCode) {
@@ -397,7 +393,7 @@ class ManageLayersService {
                 layers = []
                 JSON.parse(Util.getUrl("${url}/layers?all=true")).each {
                     Layers layer = it as Layers
-                    layer.id = it.getAt('id')
+                    layer.id = it['id']
                     layers.push(layer)
                 }
             } catch (err) {
@@ -407,7 +403,7 @@ class ManageLayersService {
                 fields = []
                 JSON.parse(Util.getUrl("${url}/fields?all=true")).each {
                     Fields field = it as Fields
-                    field.id = it.getAt('id')
+                    field.id = it['id']
                     fields.push(field)
                 }
             } catch (err) {
@@ -435,11 +431,15 @@ class ManageLayersService {
     Map layerMap(String layerId) {
         String layersDir = spatialConfig.data.dir
 
-        Upload map = getUpload(layerId)
+        def map = [:]
+
+        Map upload = getUpload(layerId)
+
+        map.putAll(upload)
 
         try {
             JSONObject jo = (JSONObject) JSON.parse(new File(layersDir + "/uploads/" + layerId + "/upload.json").text)
-
+            map.putAll(jo)
         } catch (Exception ignored) {
             try {
                 Layers l = layerService.getLayerById(Integer.parseInt(layerId.replaceAll('[ec]l', "")), false)
@@ -465,7 +465,7 @@ class ManageLayersService {
         if (map.containsKey("layer_id")) {
             Layers layer = layerService.getLayerById(Integer.parseInt(map.layer_id as String), false)
 
-            if (layer) {
+            if(layer) {
                 map.putAll(layer.properties)
             }
 
@@ -637,7 +637,7 @@ class ManageLayersService {
             try {
                 def deletedUploadsDir = new File(layersDir + "/uploads-deleted/")
                 FileUtils.forceMkdir(deletedUploadsDir)
-                FileUtils.moveDirectory(dir, new File(layersDir + "/uploads-deleted/" + id))
+                FileUtils.moveDirectory(dir, new File(layersDir + "/uploads-deleted/" + id ))
             } catch (Exception e) {
                 log.error("Problem moving directory. Unable to move", e.getMessage())
             }
@@ -1248,7 +1248,10 @@ class ManageLayersService {
     def distributionMap(String uploadId) {
         String dir = spatialConfig.data.dir
 
-        Upload map = getUpload(uploadId)
+        //fetch info
+        Map map = [:]
+
+        Map upload = getUpload(uploadId)
 
         if (upload.size() > 0) {
             map.putAll(upload)
@@ -1379,7 +1382,7 @@ class ManageLayersService {
 
         try {
             if (m.containsKey('checklist')) {
-                groovySql.execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\';')
+                groovySql.execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\'')
             }
         } catch (err) {
             log.error 'failed to delete data resource uid records for uploadId: ' + id, err
@@ -1534,9 +1537,9 @@ class ManageLayersService {
 
         def min = diva.minval.round(2)
         def max = diva.maxval.round(2)
-        def mid = ((diva.maxval + diva.minval) / 2).round(2)
-        def midMin = ((mid + diva.minval) / 2).round(2)
-        def midMax = ((diva.maxval + mid) / 2).round(2)
+        def mid = ((diva.maxval + diva.minval)/2).round(2)
+        def midMin = ((mid + diva.minval)/2).round(2)
+        def midMax = ((diva.maxval + mid)/2).round(2)
 
         def nodatavalue = diva.nodatavalue
 
@@ -1564,14 +1567,12 @@ class ManageLayersService {
                 '<NamedLayer><Name>ALA:' + name + '</Name>' +
                 '<UserStyle><FeatureTypeStyle><Rule><RasterSymbolizer><Geometry></Geometry><ColorMap>' +
                 (nodatavalue < min ? '<ColorMapEntry color="0xffffff" opacity="0" quantity="' + nodatavalue + '"/>' : '') +
-                '<ColorMapEntry color="' + colour1 + '" opacity="1" quantity="' + min + '" label="' + ((float) min) + " " + diva.units + '"/>' +
-                '<ColorMapEntry color="' + colour2 + '" opacity="1" quantity="' + midMin + '"/>' +
-                '<ColorMapEntry color="' + colour3 + '" opacity="1" quantity="' + mid + '" label="' + ((float) mid) + " " + diva.units + '"/>' +
-                '<ColorMapEntry color="' + colour4 + '" opacity="1" quantity="' + midMax + '"/>' +
-                '<ColorMapEntry color="' + colour5 + '" opacity="1" quantity="' + max + '" label="' + ((float) max) + " " + diva.units + '"/>' +
+                '<ColorMapEntry color="'+colour1 +'" opacity="1" quantity="' + min + '" label="' + ((float) min) + " " + diva.units + '"/>' +
+                '<ColorMapEntry color="'+colour2 +'" opacity="1" quantity="' + midMin + '"/>' +
+                '<ColorMapEntry color="'+colour3 +'" opacity="1" quantity="' + mid + '" label="' + ((float) mid) + " " + diva.units + '"/>' +
+                '<ColorMapEntry color="'+colour4 +'" opacity="1" quantity="' + midMax + '"/>' +
+                '<ColorMapEntry color="'+colour5 +'" opacity="1" quantity="' + max + '" label="' + ((float) max) + " " + diva.units + '"/>' +
                 (nodatavalue > max ? '<ColorMapEntry color="0xffffff" opacity="0" quantity="' + nodatavalue + '"/>' : '') +
                 '</ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>'
     }
 }
-
-

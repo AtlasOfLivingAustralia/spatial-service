@@ -22,7 +22,7 @@ class AreaThread extends Thread {
         try {
             String[] data
             while ((data = queue.poll()) != null) {
-                double area = SpatialUtil.calculateArea(data[2])
+                double area = SpatialUtils.calculateArea(data[2])
 
                 String sql = "UPDATE tabulation SET area = " + area + " WHERE pid1='" + data[0] + "' AND pid2='" + data[1] + "';"
 

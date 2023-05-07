@@ -1,5 +1,6 @@
 package au.org.ala.spatial.util
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.yaml.snakeyaml.util.UriEncoder
@@ -20,7 +21,7 @@ import java.util.concurrent.Executors
  * Created by a on 12/05/2014.
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class PrintMapComposer {
     //HIGH_RES=(approx A4 600dpi) is only available for 'Outline' basemap
     private static final int MAX_WIDTH_LOW_RES = 2080
