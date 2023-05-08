@@ -1,12 +1,12 @@
 package au.org.ala.spatial
 
-import groovy.transform.CompileStatic
+
 import org.locationtech.jts.geom.Geometry
 
 class SpatialObjects {
     String id
     String pid
-    String desc
+    String description
     String name
     String fid
     Geometry geometry
@@ -27,7 +27,7 @@ class SpatialObjects {
         id name: 'pid'
         version false
 
-        desc column: '"desc"', nullable: true
+        description column: '"desc"', nullable: true
         name_id nullable: true
         bbox nullable: true
         area_km nullable: true

@@ -19,6 +19,9 @@ import au.org.ala.spatial.dto.IntersectionFile
 import groovy.sql.Sql
 import org.codehaus.jackson.map.DeserializationConfig
 import org.codehaus.jackson.map.ObjectMapper
+import org.postgresql.core.Field
+
+import java.sql.ResultSet
 
 /**
  * @author ajay
@@ -38,20 +41,25 @@ class FieldService {
             sql += " and enabled=true"
         }
 
-        Fields result = null
+        Fields field = null
 
-        groovySql.query(sql, [id: id], {
-            result = it as Fields
-            if ("a".equalsIgnoreCase(result.type) || "b".equalsIgnoreCase(result.type)) {
-                // fetch object count for this 'grid as contextual'
-                IntersectionFile f = layerService.getIntersectionFile(id)
-                if (f != null && f.getClasses() != null) {
-                    result.number_of_objects = f.getClasses().size()
+        groovySql.query(sql, [id: id], { ResultSet rs ->
+            if (rs.next()) {
+                field = new Fields()
+                rs.fields.each { Field f ->
+                    field.properties.putAt(f.columnLabel, rs.getObject(f.columnLabel))
+                }
+                if ("a".equalsIgnoreCase(field.type) || "b".equalsIgnoreCase(field.type)) {
+                    // fetch object count for this 'grid as contextual'
+                    IntersectionFile f = layerService.getIntersectionFile(id)
+                    if (f != null && f.getClasses() != null) {
+                        field.number_of_objects = f.getClasses().size()
+                    }
                 }
             }
         })
 
-        result
+        field
     }
 
     List<Fields> getFieldsByDB() {
@@ -161,7 +169,7 @@ class FieldService {
         mapsToLayers(getByKeywords(keywords))
     }
 
-    List<Map<String, Object>> getByKeywords(String keywords) {
+    List<Fields> getByKeywords(String keywords) {
         log.info("Getting a list of all enabled fields by criteria: " + keywords)
         String sql = ""
         sql += "select f.*, l.* from fields f inner join layers l on f.spid = l.id || '' where "
@@ -175,49 +183,45 @@ class FieldService {
 
         keywords = "%" + keywords.toLowerCase() + "%"
 
-        List<Map<String, Object>> maps = new ArrayList()
+        List<Fields> fields = new ArrayList()
 
         groovySql.query(sql, [keywords: keywords], {
-            Map<String, Object> row = it as Map
-            maps.add(row)
+            while (it.next()) {
+                Fields field = new Fields()
+                Layers layer = new Layers()
+
+                int fieldTableOid = 0
+                it.fields.eachWithIndex { Field fname, Integer idx ->
+                    // field first, then layer
+                    if (idx > 0 && fieldTableOid != fname.tableOid) {
+                        layer.setProperty(fname.columnLabel, it.getObject(idx + 1))
+                    } else {
+                        field.setProperty(fname.columnLabel, it.getObject(idx + 1))
+                        fieldTableOid = fname.tableOid
+                    }
+                }
+
+                updateDisplayPath(layer)
+                layer.displaypath = layer.displaypath.replace("&styles=", "") + "&style=" + field.id
+
+                // field name will be unique but layer display name may not be
+                layer.displayname = field.name
+
+                field.layer = layer
+                fields.add(field)
+            }
         })
 
-        maps
+        fields
     }
 
     List<Fields> getFieldsByCriteria(String keywords) {
-        mapsToFields(getByKeywords(keywords))
+        getByKeywords(keywords)
     }
 
 
-    private List<Layers> mapsToLayers(List<Map<String, Object>> maps) {
-        List<Layers> list = new ArrayList<Layers>()
-
-        ObjectMapper om = new ObjectMapper()
-        om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        for (Map<String, Object> map : maps) {
-            try {
-                Map field = new HashMap()
-                Map layer = new HashMap()
-                for (Map.Entry<String, Object> entry : map.entrySet()) {
-                    if (entry.getKey().startsWith("layer_"))
-                        layer.put(entry.getKey().substring("layer_".length()), entry.getValue())
-                    else field.put(entry.getKey(), entry.getValue())
-                }
-                Fields f = om.readValue(om.writeValueAsString(field), Fields.class)
-                Layers l = om.readValue(om.writeValueAsString(layer), Layers.class)
-                updateDisplayPath(l)
-                f.setLayer(l)
-                l.setDisplaypath(l.getDisplaypath().replace("&styles=", "") + "&style=" + f.getId())
-                l.setDisplayname(f.getName())
-                l.setPid(f.getId())
-                list.add(l)
-            } catch (Exception e) {
-                log.error("failed to read field/layer " + map.get("id"), e)
-            }
-        }
-
-        return list
+    private static List<Layers> mapsToLayers(List<Fields> fields) {
+        fields.collect { it.layer }.asList()
     }
 
     private List<Fields> mapsToFields(List<Map<String, Object>> maps) {
@@ -286,13 +290,7 @@ class FieldService {
 
             //include field objects
             log.info('field id: ' + id)
-            List<SpatialObjects> objects = spatialObjectsService.getObjectsById(id, start, pageSize, q)
-            List<SpatialObjects> list = objects.collect { SpatialObjects it ->
-                [name  : it.name, id: it.id, description: it.desc, pid: it.pid,
-                 wmsurl: it.wmsurl, area_km: it.area_km, fieldname: it.fieldname,
-                 bbox  : it.bbox, fid: it.fid] as SpatialObjects
-            }
-            field.objects = list
+            field.objects = spatialObjectsService.getObjectsById(id, start, pageSize, q)
         }
 
         field

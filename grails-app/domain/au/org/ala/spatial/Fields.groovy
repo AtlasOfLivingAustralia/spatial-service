@@ -1,5 +1,6 @@
 package au.org.ala.spatial
 
+import com.fasterxml.jackson.annotation.JsonInclude
 
 import javax.persistence.GeneratedValue
 
@@ -49,15 +50,10 @@ class Fields {
     }
 
     static transients = ["number_of_objects", "layer", "wms", "objects", "requestedId"]
-
     String requestedId
-
     Integer number_of_objects
-
     Layers layer
-
     String wms
-
     List<SpatialObjects> objects
 
 }

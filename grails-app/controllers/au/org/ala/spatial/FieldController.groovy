@@ -29,7 +29,6 @@ import javax.ws.rs.Produces
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
-//@CompileStatic
 class FieldController {
 
     FieldService fieldService
@@ -41,7 +40,15 @@ class FieldController {
             operationId = "getFields",
             summary = "Get list of fields",
             description = "Get a list of fields",
-            parameters = [],
+            parameters = [
+                    @Parameter(
+                            name = "q",
+                            in = QUERY,
+                            description = "restrict to field names that contain this value and include layer information",
+                            schema = @Schema(implementation = String),
+                            required = false
+                    )
+            ],
             responses = [
                     @ApiResponse(
                             description = "List of fields",
@@ -60,7 +67,7 @@ class FieldController {
     @Produces("application/json")
     def index() {
         if (params.containsKey('q')) {
-            search()
+            render fieldService.getFieldsByCriteria(params.q as String) as JSON
         } else {
             render fieldService.getFields(true) as JSON
         }
@@ -199,6 +206,7 @@ class FieldController {
             ],
             security = []
     )
+    @Deprecated
     @Path("fields/search")
     @Produces("application/json")
     def search() {

@@ -144,7 +144,7 @@ class LayerIntersectService {
                         m.put("value", o.getName())
                         m.put("layername", f.getFieldName())
                         m.put("pid", o.getPid())
-                        m.put("description", o.desc)
+                        m.put("description", o.description)
 
                         out.add(m)
                     } else {

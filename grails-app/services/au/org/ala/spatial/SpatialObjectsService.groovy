@@ -119,7 +119,23 @@ class SpatialObjectsService {
                 "ST_AsText(ST_Centroid(o.the_geom)) as centroid," +
                 "GeometryType(o.the_geom) as featureType from objects o, fields f " +
                 "where o.fid = ? and o.fid = f.id and (o.name ilike ? or o.desc ilike ? ) order by o.pid " + limit_offset
-        List<SpatialObjects> objects = SpatialObjects.executeQuery(sql, id, filter, filter)
+        List<SpatialObjects> objects = []
+        groovySql.query(sql, [id, filter, filter], { ResultSet it ->
+            while (it.next()) {
+                SpatialObjects so = new SpatialObjects()
+                so.pid = it.getObject(1)
+                so.id = it.getObject(2)
+                so.name = it.getObject(3)
+                so.description = it.getObject(4)
+                so.fid = it.getObject(5)
+                so.fieldname = it.getObject(6)
+                so.bbox = it.getObject(7)
+                so.area_km = it.getObject(8)
+                so.centroid = it.getObject(9)
+                so.featureType = it.getObject(10)
+                objects.add(so)
+            }
+        })
 
         updateObjectWms(objects)
 

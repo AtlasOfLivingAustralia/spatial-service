@@ -29,6 +29,12 @@ class BootStrap {
             }
         }
 
+        [Fields, Distributions, InputParameter, Layers, Log, OutputParameter, SpatialObjects, Tabulation, Task].each {
+            JSON.registerObjectMarshaller(it) {
+                it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null }
+            }
+        }
+
         //create database required by layers-store
         try {
             def rs = groovySql.rows("SELECT * FROM fields WHERE id = ?", [spatialConfig.userObjectsField] as List<Object>)
