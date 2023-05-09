@@ -31,7 +31,7 @@ class BootStrap {
 
         [Fields, Distributions, InputParameter, Layers, Log, OutputParameter, SpatialObjects, Tabulation, Task].each {
             JSON.registerObjectMarshaller(it) {
-                it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null }
+                it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null } + [id: it.id]
             }
         }
 

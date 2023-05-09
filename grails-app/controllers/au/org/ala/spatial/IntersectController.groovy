@@ -38,7 +38,6 @@ import java.util.zip.ZipOutputStream
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
-//@CompileStatic
 class IntersectController {
 
     LayerIntersectService layerIntersectService

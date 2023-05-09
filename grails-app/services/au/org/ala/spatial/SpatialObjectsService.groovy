@@ -48,11 +48,7 @@ import java.sql.ResultSet
 import java.util.Map.Entry
 import java.util.zip.ZipInputStream
 
-/**
- * @author ajay
- */
 @Slf4j
-//@CompileStatic
 class SpatialObjectsService {
 
     static final String objectWmsUrl = "/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:Objects&format=image/png&viewparams=s:<pid>"
@@ -462,8 +458,13 @@ class SpatialObjectsService {
     SpatialObjects getObjectByPid(String pid) {
         log.info("Getting object info for pid = " + pid)
         String sql = "select o.pid, o.id, o.name, o.desc as description, o.fid as fid, f.name as fieldname, " +
-                "o.bbox, o.area_km from objects o, fields f where o.pid = ? and o.fid = f.id"
-        List<SpatialObjects> l = SpatialObjects.executeQuery(sql, pid)
+                "o.bbox, o.area_km from objects o inner join fields f on o.fid = f.id where o.pid = ?"
+        List<SpatialObjects> l = []
+        groovySql.query(sql, [pid], { ResultSet rs ->
+            while(rs.next()) {
+                l.add(spatialObjectsFromResult(rs))
+            }
+        })
 
         updateObjectWms(l)
 
@@ -799,9 +800,14 @@ class SpatialObjectsService {
 
     List<SpatialObjects> getObjectsWithinRadius(String fid, double latitude, double longitude, double radiusKm) {
         String sql = "SELECT o.pid, o.id, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, o.bbox, " +
-                "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o, fields f WHERE o.fid = ? AND o.fid = f.id AND " +
+                "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o inner join fields f on o.fid = f.id  WHERE o.fid = ? AND " +
                 "ST_DWithin(ST_GeographyFromText('POINT(" + longitude + " " + latitude + ")'), geography(the_geom), ?, true)"
-        List<SpatialObjects> l = SpatialObjects.executeQuery(sql, [fid, radiusKm * 1000])
+        List<SpatialObjects> l = []
+        groovySql.query(sql, [fid, radiusKm * 1000], {
+            while (it.next()) {
+                l.add(spatialObjectsFromResult(it))
+            }
+        })
         updateObjectWms(l)
         return l
     }
@@ -809,10 +815,13 @@ class SpatialObjectsService {
 
     List<SpatialObjects> getObjectsIntersectingWithGeometry(String fid, String wkt) {
         String sql = "SELECT o.pid, o.id, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, " +
-                "o.bbox, o.area_km from search_objects_by_geometry_intersect(?, ST_GeomFromText(?, 4326)) o, fields f WHERE o.fid = f.id"
-        List<SpatialObjects> l = SpatialObjects.executeQuery(sql, [fid, wkt]) {
-
-        }
+                "o.bbox, o.area_km from search_objects_by_geometry_intersect(?, ST_GeomFromText(?, 4326)) o inner join fields f on o.fid = f.id"
+        List<SpatialObjects> l = []
+        groovySql.query(sql, [fid, wkt], {
+            while (it.next()) {
+                l.add(spatialObjectsFromResult(it))
+            }
+        })
         updateObjectWms(l)
         return l
     }
@@ -820,18 +829,43 @@ class SpatialObjectsService {
 
     List<SpatialObjects> getObjectsIntersectingWithObject(String fid, String objectPid) {
         String sql = "SELECT o.pid, o.id, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, " +
-                "o.bbox, o.area_km FROM search_objects_by_geometry_intersect(?, (SELECT the_geom FROM objects WHERE pid = ?)) o, fields f WHERE o.fid = f.id"
-        List<SpatialObjects> l = SpatialObjects.executeQuery(sql, [fid, objectPid])
+                "o.bbox, o.area_km FROM search_objects_by_geometry_intersect(?, (SELECT the_geom FROM objects WHERE pid = ?)) o inner join fields f on o.fid = f.id"
+        List<SpatialObjects> l = []
+        groovySql.query(sql, [fid, objectPid], {
+            while (it.next()) {
+                l.add(spatialObjectsFromResult(it))
+            }
+        })
         updateObjectWms(l)
         return l
     }
 
+    SpatialObjects spatialObjectsFromResult(ResultSet rs) {
+        SpatialObjects so = new SpatialObjects()
+        so.pid = rs.getObject(1)
+        so.id = rs.getObject(2)
+        so.name = rs.getObject(3)
+        so.description = rs.getObject(4)
+        so.fid = rs.getObject(5)
+        so.fieldname = rs.getObject(6)
+        so.bbox = rs.getObject(7)
+        so.area_km = rs.getObject(8)
+        if (rs.fields.length >= 9) {
+            so.featureType = rs.getObject(9)
+        }
+        so
+    }
+
     SpatialObjects intersectObject(String pid, double latitude, double longitude) {
         String sql = "SELECT o.pid, o.id, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, o.bbox, " +
-                "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o, fields f WHERE o.pid = ? AND o.fid = f.id AND " +
+                "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o inner join fields f on o.fid = f.id WHERE o.pid = ? AND " +
                 "ST_Intersects(the_geom, ST_GeomFromText('POINT(" + longitude + " " + latitude + ")', 4326))"
-        List<SpatialObjects> l = SpatialObjects.executeQuery(sql, pid)
-        updateObjectWms(l)
+        List<SpatialObjects> l = []
+        groovySql.query(sql, [pid], { ResultSet it ->
+            while (it.next()) {
+                l.add(spatialObjectsFromResult(it))
+            }
+        })
         if (l.size() > 0) {
             return l.get(0)
         } else {

@@ -9,10 +9,6 @@ import au.org.ala.spatial.grid.Grid2Shape
 import au.org.ala.spatial.intersect.Grid
 import com.opencsv.CSVReader
 
-
-/**
- * @author ajay
- */
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.geotools.data.DefaultTransaction

@@ -23,10 +23,6 @@ import org.postgresql.core.Field
 
 import java.sql.ResultSet
 
-/**
- * @author ajay
- */
-//@CompileStatic
 class FieldService {
 
     LayerService layerService

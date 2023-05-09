@@ -18,15 +18,6 @@ import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.RequestEntity
 
-/**
- * UploadSpatialResource helps with loading any dynamically generated spatial
- * data into geoserver.
- * <p/>
- * Main code from:
- * http://svn.apache.org/viewvc/httpcomponents/oac.hc3x/trunk/src/examples/BasicAuthenticationExample.java?view=log
- *
- * @author ajay
- */
 import groovy.transform.CompileStatic
 
 

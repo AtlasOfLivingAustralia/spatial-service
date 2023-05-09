@@ -45,11 +45,11 @@ class JournalMapService {
                 if (loc.point.intersects(g)) {
                     if (pos >= offset && found.size() < max) found.add(journalMapArticles[loc.index])
                     count.add(journalMapArticles.get(loc.index))
+                    pos++
                 }
             } catch (ignore) {
 
             }
-            pos++
         }
 
         return [article: found, count: count.size()]

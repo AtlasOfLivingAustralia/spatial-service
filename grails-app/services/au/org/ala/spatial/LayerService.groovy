@@ -20,10 +20,6 @@ import au.org.ala.spatial.intersect.SimpleShapeFileCache
 import groovy.sql.Sql
 import org.apache.commons.lang.StringUtils
 
-/**
- * @author ajay
- */
-//@CompileStatic
 class LayerService {
 
     Sql groovySql
@@ -67,61 +63,38 @@ class LayerService {
 
 
     Layers getLayerByName(String name, boolean enabledLayersOnly) {
-        log.info("Getting enabled layer info for name = " + name)
-        String sql = "select * from layers where name = :name "
-        if (enabledLayersOnly) {
-            sql += " and enabled=true"
-        }
-
         Layers layer = null
+        if (enabledLayersOnly) {
+            layer = Layers.findByNameAndEnabled(name, true)
+        } else {
+            layer = Layers.findByNameAndEnabled(name)
+        }
+        fieldService.updateDisplayPaths([layer])
 
-        groovySql.query(sql, [name: name], {
-            layer = it as Layers
-            fieldService.updateDisplayPaths([layer])
-        })
         layer
     }
 
 
     Layers getLayerByDisplayName(String name) {
-        log.info("Getting enabled layer info for name = " + name)
-        String sql = "select * from layers where enabled=true and displayname = ?"
-        Layers layer = null
+        Layers layer = Layers.findByDisplaynameAndEnabled(name, true)
+        fieldService.updateDisplayPaths([layer])
 
-        groovySql.query(sql, [name: name], {
-            layer = it as Layers
-            fieldService.updateDisplayPaths([layer])
-        })
         layer
     }
 
 
     List<Layers> getLayersByEnvironment() {
-        String type = "Environmental"
-        log.info("Getting a list of all enabled environmental layers")
-        String sql = "select * from layers where enabled=true and type = :type "
-        List<Layers> layers = []
+        List<Layers> layers = Layers.findAllByTypeAndEnabled('Environmental', true)
+        fieldService.updateDisplayPaths(layers)
 
-        groovySql.query(sql, [type: type], {
-            Layers layer = it as Layers
-            fieldService.updateDisplayPaths([layer])
-            layers.add(layer)
-        })
         layers
     }
 
 
     List<Layers> getLayersByContextual() {
-        String type = "Contextual"
-        log.info("Getting a list of all enabled Contextual layers")
-        String sql = "select * from layers where enabled=true and type = ?"
-        List<Layers> layers = []
+        List<Layers> layers = Layers.findAllByTypeAndEnabled('Contextual', true)
+        fieldService.updateDisplayPaths(layers)
 
-        groovySql.query(sql, [type: type], {
-            Layers layer = it as Layers
-            fieldService.updateDisplayPaths([layer])
-            layers.add(layer)
-        })
         layers
     }
 
@@ -153,35 +126,22 @@ class LayerService {
 
 
     Layers getLayerByIdForAdmin(int id) {
-        log.info("Getting enabled layer info for id = " + id)
-        String sql = "select * from layers where id = :id"
-        Layers layer
+        Layers layer = Layers.findById(id)
+        fieldService.updateDisplayPaths([layer])
 
-        groovySql.query(sql, [id: id], {
-            layer = it as Layers
-            fieldService.updateDisplayPaths([layer])
-        })
         layer
     }
 
 
     Layers getLayerByNameForAdmin(String name) {
-        log.info("Getting enabled layer info for name = " + name)
-        String sql = "select * from layers where name = :name"
-        Layers layer
+        Layers layer = Layers.findByName(name)
+        fieldService.updateDisplayPaths([layer])
 
-        groovySql.query(sql, [name: name], {
-            layer = it as Layers
-            fieldService.updateDisplayPaths([layer])
-        })
         layer
     }
 
 
     List<Layers> getLayersForAdmin() {
-        log.info("Getting a list of all layers")
-        String sql = "select * from layers"
-
         List<Layers> layers = Layers.findAll()
 
         fieldService.updateDisplayPaths(layers)

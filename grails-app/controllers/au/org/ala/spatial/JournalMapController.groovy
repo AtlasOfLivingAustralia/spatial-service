@@ -44,14 +44,14 @@ class JournalMapController {
                             name = "wkt",
                             in = QUERY,
                             schema = @Schema(implementation = String),
-                            description = "WKT to filter",
+                            description = "WKT to filter. Required if pid is not provided.",
                             required = false
                     ),
                     @Parameter(
                             name = "pid",
                             in = QUERY,
                             schema = @Schema(implementation = String),
-                            description = "Object ID to filter",
+                            description = "Object ID to filter. Required if wkt is not provided.",
                             required = false
                     ),
                     @Parameter(

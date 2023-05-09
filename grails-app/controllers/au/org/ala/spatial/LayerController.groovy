@@ -70,10 +70,10 @@ class LayerController {
             summary = "Get thumbnail image of layer",
             parameters = [
                     @Parameter(
-                            name = "id",
-                            in = QUERY,
+                            name = "name",
+                            in = PATH,
                             schema = @Schema(implementation = String),
-                            description = "Layer ID",
+                            description = "Layer short name",
                             required = false
                     )
             ],
@@ -90,7 +90,7 @@ class LayerController {
             ],
             security = []
     )
-    @Path("layer/img")
+    @Path("layer/img/{name}")
     @Produces("image/jpg")
     def img(String id) {
         if (layerService.getLayerByName(id)) {
@@ -112,6 +112,13 @@ class LayerController {
                             in = QUERY,
                             schema = @Schema(implementation = Boolean),
                             description = "Set as True to include layer usage information",
+                            required = false
+                    ),
+                    @Parameter(
+                            name = "months",
+                            in = QUERY,
+                            schema = @Schema(implementation = Integer),
+                            description = "Number of months for the usage. Default is 12",
                             required = false
                     )
             ],
@@ -156,7 +163,7 @@ class LayerController {
         Map<String, Map> usage = null
         if ("true".equalsIgnoreCase(params.usage as String)) {
             header = ArrayUtils.addAll(header, "Usage")
-            usage = layerUsage(params.months as Integer).get("Total")
+            usage = layerUsage(params.months as Integer ?: 12).get("Total")
         }
 
         response.setContentType("text/csv charset=UTF-8")
@@ -193,7 +200,7 @@ class LayerController {
                         String.valueOf(lyr.getDt_added() == null ? '' : sdf.format(lyr.getDt_added()))]
 
                 if ("true".equalsIgnoreCase(params.usage as String)) {
-                    row = ArrayUtils.add(row, (String) usage.get("Totals").getOrDefault(lyr.id , 0) as String)
+                    row = ArrayUtils.add(row, (String) usage.getOrDefault(String.valueOf(lyr.id) , 0) as String)
                 }
 
                 cw.writeNext(row)
@@ -274,7 +281,7 @@ class LayerController {
         Map<String, Map> layerUsage = [:]
 
         def c = Calendar.getInstance()
-        c.add(Calendar.MONTH, params.ageInMonths as Integer ?: -1 * months)
+        c.add(Calendar.MONTH, params.ageInMonths as Integer ?: (Integer.valueOf(-1) * months))
 
         // Use as layer
         def fields = fieldService.getFields(false)
@@ -439,7 +446,7 @@ class LayerController {
             parameters = [
                     @Parameter(
                             name = "id",
-                            in = QUERY,
+                            in = PATH,
                             schema = @Schema(implementation = String),
                             description = "Layer ID",
                             required = false
@@ -458,11 +465,14 @@ class LayerController {
             ],
             security = []
     )
-    @Path("layer/download")
+    @Path("layer/download/{id}")
     @Produces("application/zip")
     @RequirePermission
     def download(String id) {
         Layers layer = layerService.getLayerByDisplayName(id)
+        if (!layer) {
+            layer = layerService.getLayerById(Long.valueOf(id), false)
+        }
         if (layer) {
             if (downloadAllowed(layer)) {
                 OutputStream outputStream = null
@@ -470,7 +480,7 @@ class LayerController {
                     outputStream = response.outputStream as OutputStream
                     //write resource
                     response.setContentType("application/octet-stream")
-                    response.setHeader("Content-disposition", "attachment;filename=${id}.zip")
+                    response.setHeader("Content-disposition", "attachment;filename=${layer.displayname}.zip")
 
                     // When a geotiff exists, only download the geotiff
                     def path = "/layer/${layer.name}"
@@ -478,6 +488,8 @@ class LayerController {
                     if (geotiff.exists()) {
                         path += ".tif"
                     }
+
+                    // TODO: allow download of the shapefile
 
                     fileService.write(outputStream, path)
                     outputStream.flush()
@@ -581,7 +593,7 @@ class LayerController {
             ],
             security = []
     )
-    @Path("layer")
+    @Path("layer/{id}")
     @Produces("application/json")
     def show(String id) {
         if (id == null) {
@@ -668,7 +680,7 @@ class LayerController {
             ],
             security = []
     )
-    @Path("layers")
+    @Path("layers/grids")
     @Produces("application/json")
     def grids() {
         render layerService.getLayersByEnvironment() as JSON
@@ -695,7 +707,7 @@ class LayerController {
             ],
             security = []
     )
-    @Path("layers")
+    @Path("layers/shapes")
     @Produces("application/json")
     def shapes() {
         render layerService.getLayersByContextual() as JSON
@@ -722,8 +734,8 @@ class LayerController {
             ],
             security = []
     )
-    @Path("layers")
-    @Produces("application/json")
+    @Path("layers/rif-cs")
+    @Produces("text/xml")
     def "rif-cs"() {
         // Build XML by hand here because JSP processing seems to omit CDATA sections from the output
         StringBuilder sb = new StringBuilder()
