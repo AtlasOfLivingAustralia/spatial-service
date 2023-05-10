@@ -31,7 +31,6 @@ import javax.ws.rs.Produces
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
-//@CompileStatic
 class ObjectController {
 
     FieldService fieldService
@@ -44,7 +43,7 @@ class ObjectController {
             summary = "Get a spatial object",
             parameters = [
                     @Parameter(
-                            name = "id",
+                            name = "pid",
                             in = PATH,
                             description = "Id of the checklist item",
                             schema = @Schema(implementation = Long),
@@ -64,7 +63,7 @@ class ObjectController {
             ],
             security = []
     )
-    @Path('object/$pid')
+    @Path('object/{pid}')
     @Produces("application/json")
     def show(String pid) {
         def obj
@@ -136,7 +135,7 @@ class ObjectController {
             ],
             security = []
     )
-    @Path('objects/$id/$lat/$lng')
+    @Path('objects/{fid}/{lat}/{lng}')
     @Produces("application/json")
     def listByLocation(String id, Double lat, Double lng) {
         if (lat == null) {
@@ -155,14 +154,15 @@ class ObjectController {
         if (field == null) {
             render(status: 404, text: 'Invalid field id')
         } else {
-            def objects = spatialObjectsService.getNearestObjectByIdAndLocation(id, limit, lng, lat) as JSON
+            def objects = spatialObjectsService.getNearestObjectByIdAndLocation(id, limit, lng, lat)
 
             render objects as JSON
         }
     }
 
+    @Deprecated
     def listByWkt(String id) {
-        Integer limit = params.containsKey('limit') ? params.limit as Integer  : 40
+        Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
         String wkt = params?.wkt
 
         Fields field = fieldService.getFieldById(id)
@@ -175,8 +175,7 @@ class ObjectController {
                 //get results of each filter term
                 def filters = LayerFilter.parseLayerFilters(wkt.toString())
                 def all = []
-                filters.each {LayerFilter it ->
-                    all.add(spatialObjectsService.getObjectsByIdAndIntersection(id, limit, it))
+                filters.each { LayerFilter it ->
                     all.add(spatialObjectsService.getObjectsByIdAndIntersection(id, limit, it))
                 }
 
@@ -195,7 +194,7 @@ class ObjectController {
                     }
                 }
                 def inAllGroups = []
-                list.each {SpatialObjects it ->
+                list.each { SpatialObjects it ->
                     if (objectCounts.get(it.getPid()) == all.size()) {
                         inAllGroups.add(it)
                     }
@@ -266,7 +265,8 @@ class ObjectController {
             ],
             security = []
     )
-    @Path('objects/$fid')
+    @Deprecated
+    @Path('objects/{fid}')
     @Produces("application/json")
     def fieldObjects(String id) {
         Integer start = params.containsKey('start') ? params.start as Integer : 0
@@ -275,6 +275,49 @@ class ObjectController {
         render spatialObjectsService.getObjectsById(id, start, pageSize, null) as JSON
     }
 
+    @Operation(
+            method = "GET",
+            tags = "spatialObject",
+            operationId = "nearestObjects",
+            summary = "Test if a point intersects a single object",
+            parameters = [
+                    @Parameter(
+                            name = "pid",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "lat",
+                            in = PATH,
+                            description = "latitude",
+                            schema = @Schema(implementation = Double),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "lng",
+                            in = PATH,
+                            description = "longitude",
+                            schema = @Schema(implementation = Double),
+                            required = true
+                    )],
+            responses = [
+                    @ApiResponse(
+                            description = "Spatial Object",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = SpatialObjects)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path('object/intersect/{pid}/{lat}/{lng}')
+    @Produces("application/json")
     def intersectObject(String pid, Double lat, Double lng) {
         if (lat == null) {
             render status: 400, text: "Path parameter `lat` is not a number."
@@ -292,11 +335,11 @@ class ObjectController {
             method = "POST",
             tags = "spatialObject",
             operationId = "objectsInWkt",
-            summary = "Get a list of objects that intersect with provided WKT",
+            summary = "Get a list of a field's objects that intersect with provided WKT",
             parameters = [
                     @Parameter(
                             name = "fid",
-                            in = QUERY,
+                            in = PATH,
                             description = "Field ID",
                             schema = @Schema(implementation = String),
                             required = true
@@ -308,18 +351,19 @@ class ObjectController {
                             schema = @Schema(implementation = String),
                             required = false
                     ), @Parameter(
-                    name = "limit",
-                    in = QUERY,
-                    description = "Maximum number of objects to return",
-                    schema = @Schema(implementation = String),
-                    required = true
-            ), @Parameter(
-                    name = "pid",
-                    in = QUERY,
-                    description = "Object ID. pid or wkt is required",
-                    schema = @Schema(implementation = String),
-                    required = false
-            ),],
+                            name = "limit",
+                            in = QUERY,
+                            description = "Maximum number of objects to return",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ), @Parameter(
+                            name = "pid",
+                            in = QUERY,
+                            description = "Object ID. pid or wkt is required",
+                            schema = @Schema(implementation = String),
+                            required = false
+                    )
+            ],
             responses = [
                     @ApiResponse(
                             description = "Spatial Object",
@@ -334,7 +378,7 @@ class ObjectController {
             ],
             security = []
     )
-    @Path('objects/inarea/$fid')
+    @Path('objects/inarea/{fid}')
     @Produces("application/json")
     def objectsInArea(String id) {
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40

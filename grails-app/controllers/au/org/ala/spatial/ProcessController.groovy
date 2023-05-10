@@ -15,11 +15,9 @@
 
 package au.org.ala.spatial
 
-import au.org.ala.spatial.SpatialConfig
-
 import javax.imageio.ImageIO
 
-class SlaveController {
+class ProcessController {
 
     SpatialConfig spatialConfig
 

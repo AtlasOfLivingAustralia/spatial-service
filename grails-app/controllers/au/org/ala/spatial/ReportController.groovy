@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 
 import javax.ws.rs.Produces
 
-//@CompileStatic
 class ReportController {
 
     ReportService reportService

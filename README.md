@@ -65,7 +65,7 @@ The default develop url is http://devt.ala.org.au:8080/ws
     
     batch_sampling_passwords: ""
 
-    # au.org.ala.spatial.slave config
+    # au.org.ala.spatial.process config
     spatialService.url: "https://spatial-test.ala.org.au/ws"
     shp2pgsql.path: "/usr/bin/shp2pgsql"
     gdal.dir: "/usr/bin/"

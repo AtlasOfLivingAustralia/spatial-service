@@ -28,10 +28,8 @@ import org.springframework.web.util.UriUtils
 import javax.ws.rs.Produces
 import java.nio.charset.Charset
 
-import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
-//@CompileStatic
 class SearchController {
 
     SearchService searchService
@@ -44,7 +42,7 @@ class SearchController {
             parameters = [
                     @Parameter(
                             name = "q",
-                            in = PATH,
+                            in = QUERY,
                             description = "Search term",
                             schema = @Schema(implementation = String),
                             required = true

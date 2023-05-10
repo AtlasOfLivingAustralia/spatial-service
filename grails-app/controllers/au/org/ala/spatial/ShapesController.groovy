@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import au.org.ala.plugins.openapi.Path
 import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import au.org.ala.spatial.util.SpatialConversionUtils
@@ -23,6 +23,11 @@ import grails.converters.JSON
 import groovy.json.JsonOutput
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -37,7 +42,10 @@ import org.locationtech.jts.io.WKTReader
 import org.springframework.web.multipart.MultipartFile
 
 import javax.imageio.ImageIO
+import javax.ws.rs.Produces
 import java.awt.image.BufferedImage
+
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 
 class ShapesController {
 
@@ -69,6 +77,36 @@ class ShapesController {
 
     private static final String KML_FOOTER = "</Placemark></Document></kml>"
 
+    @Operation(
+            method = "GET",
+            tags = "object",
+            operationId = "getWKT",
+            summary = "Get WKT for an object",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "WKT",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "plain/text",
+                                            schema = @Schema(implementation = Distributions)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shapes/wkt/{id}")
+    @Produces("plain/text")
     def wkt(String id) {
         String filename = params?.filename ?: id
         filename = makeValidFilename(filename)
@@ -96,6 +134,36 @@ class ShapesController {
         }
     }
 
+    @Operation(
+            method = "GET",
+            tags = "object",
+            operationId = "getKML",
+            summary = "Get KML for an object",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "KML",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "plain/text",
+                                            schema = @Schema(implementation = Distributions)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shapes/kml/{id}")
+    @Produces("plain/text")
     def kml(String id) {
         String filename = params?.filename ?: id
         filename = makeValidFilename(filename)
@@ -104,9 +172,9 @@ class ShapesController {
             response.setContentType("application/vnd.google-earth.kml+xml")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".kml\"")
             if (id.startsWith("ENVELOPE")) {
-                streamEnvelope(os, id.replace("ENVELOPE", ""), 'kml')
+                spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'kml')
             } else if (id.contains('~')) {
-                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+                List ids = id.split('~').collect { LayerIntersectService.cleanObjectId(it).toString() }
 
                 os.write(KML_HEADER
                         .replace("<name></name>", "<name><![CDATA[" + filename + "]]></name>")
@@ -119,7 +187,7 @@ class ShapesController {
 
                 os.write(KML_FOOTER.bytes)
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'kml')
+                spatialObjectsService.streamObjectsGeometryById(os, LayerIntersectService.cleanObjectId(id).toString(), 'kml')
             }
             os.flush()
         } catch (err) {
@@ -138,6 +206,36 @@ class ShapesController {
         }
     }
 
+    @Operation(
+            method = "GET",
+            tags = "object",
+            operationId = "getGeoJSON",
+            summary = "Get GeoJSON for an object",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "GeoJSON",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "plain/text",
+                                            schema = @Schema(implementation = Distributions)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shapes/geojson/{id}")
+    @Produces("plain/text")
     def geojson(String id) {
         String filename = params?.filename ?: id
         filename = makeValidFilename(filename)
@@ -146,16 +244,16 @@ class ShapesController {
             response.setContentType("application/json; subtype=geojson")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".geojson\"")
             if (id.startsWith("ENVELOPE")) {
-                streamEnvelope(os, id.replace("ENVELOPE", ""), 'geojson')
+                spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'geojson')
             } else if (id.contains('~')) {
-                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+                List ids = id.split('~').collect { LayerIntersectService.cleanObjectId(it).toString() }
 
                 String query = "select st_asgeojson(st_collect(geom)) as geojson from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 groovySql.eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject('geojson').toString().bytes)
                 })
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'geojson')
+                spatialObjectsService.streamObjectsGeometryById(os, LayerIntersectService.cleanObjectId(id).toString(), 'geojson')
             }
 
             os.flush()
@@ -175,6 +273,36 @@ class ShapesController {
         }
     }
 
+    @Operation(
+            method = "GET",
+            tags = "object",
+            operationId = "getShapefile",
+            summary = "Get zipped shapefile for an object",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Zipped Shapefile",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/zip",
+                                            schema = @Schema(implementation = Distributions)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shapes/shp/{id}")
+    @Produces("application/zip")
     def shp(String id) {
         String filename = params?.filename ?: id
         filename = makeValidFilename(filename)
@@ -183,9 +311,9 @@ class ShapesController {
             response.setContentType("application/zip")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".zip\"")
             if (id.startsWith("ENVELOPE")) {
-                streamEnvelope(os, id.replace("ENVELOPE", ""), 'shp')
+                spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'shp')
             } else if (id.contains('~')) {
-                List ids = id.split('~').collect { cleanObjectId(it).toString() }
+                List ids = id.split('~').collect { LayerIntersectService.cleanObjectId(it).toString() }
 
                 String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 String wkt = ""
@@ -196,7 +324,7 @@ class ShapesController {
                 File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, 'area', filename, ids.join(','))
                 FileUtils.copyFile(zippedShapeFile, os)
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'shp')
+                spatialObjectsService.streamObjectsGeometryById(os, LayerIntersectService.cleanObjectId(id).toString(), 'shp')
             }
             os.flush()
         } catch (err) {
@@ -643,7 +771,7 @@ class ShapesController {
 
     private static boolean isWKTValid(String wkt) {
         // only validate POLYGON and MULTIPOLYGON
-        if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON")) {
+        if (wkt.startsWith("POLYGON") || wkt.startsWith("MULTIPOLYGON") || wkt.startsWith("POINT")) {
             WKTReader wktReader = new WKTReader()
             Geometry geom = wktReader.read(wkt.toString())
             return geom.isValid()

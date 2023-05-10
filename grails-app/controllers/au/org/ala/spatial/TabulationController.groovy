@@ -19,18 +19,17 @@ package au.org.ala.spatial
 import com.opencsv.CSVReader
 import grails.converters.JSON
 
-//@CompileStatic
 class TabulationController {
 
-    FieldService fieldDao
+    FieldService fieldService
     TabulationService tabulationService
-    SpatialObjectsService objectDao
+    SpatialObjectsService spatialObjectsService
     SpatialConfig spatialConfig
 
     def index() {
         def tabulations = tabulationService.listTabulations()
 
-        if (params.containsKey('format') && params.format == 'json') {
+        if (params.format == 'json') {
             render tabulations as JSON
         } else {
             render(view: "index.gsp", model: [tabulations: tabulations])
@@ -48,7 +47,7 @@ class TabulationController {
             pid = params.containsKey('wkt') ? params.wkt : ''
         }
         if (!params.wkt && pid) {
-            pid = objectDao.getObjectsGeometryById(pid, 'wkt')
+            pid = spatialObjectsService.getObjectsGeometryById(pid, 'wkt')
         }
 
         // tabulationDao.getTabulationSingle is slow, force a timeout
@@ -86,7 +85,7 @@ class TabulationController {
     def show(String func1, String fid1, String fid2, String type) {
         String wkt = params?.wkt
         if (params?.wkt && params.wkt.toString().isNumber()) {
-            wkt = objectDao.getObjectsGeometryById(params.wkt.toString(), "wkt")
+            wkt = spatialObjectsService.getObjectsGeometryById(params.wkt.toString(), "wkt")
         }
         if (!wkt) wkt = ''
 
@@ -106,8 +105,8 @@ class TabulationController {
                 List<String[]> csv = reader.readAll()
                 reader.close()
 
-                String label = 'Tabulation for "' + fieldDao.getFieldById(fid1).name + '" and "' +
-                        fieldDao.getFieldById(fid2).name + '"'
+                String label = 'Tabulation for "' + fieldService.getFieldById(fid1).name + '" and "' +
+                        fieldService.getFieldById(fid2).name + '"'
                 if ('area' == func1) label += ' - (sq km) for Area (square kilometres)'
                 if ('species' == func1) label += ' - Number of species'
                 if ('occurrences' == func1) label += ' - Number of occurrences'

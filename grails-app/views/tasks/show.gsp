@@ -66,7 +66,7 @@
                                                                          default="Slave"/></span>
 
                 <span class="property-value" aria-labelledby="slave-label"><g:fieldValue bean="${taskInstance}"
-                                                                                         field="slave"/></span>
+                                                                                         field="process"/></span>
 
             </li>
         </g:if>

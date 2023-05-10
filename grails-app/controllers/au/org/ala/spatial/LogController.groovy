@@ -33,7 +33,6 @@ import javax.ws.rs.Produces
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
-//@CompileStatic
 class LogController {
 
     LogService logService
@@ -97,12 +96,6 @@ class LogController {
                             description = "Format of response, application/csv or application/json. The default is application/json.",
                             required = false,
                             example = 'application/json'
-                    ),
-                    @Parameter(
-                            name = "api_key",
-                            in = QUERY,
-                            description = "Valid apiKey to provide admin role permissions to the request.",
-                            required = false
                     ),
                     @Parameter(
                             name = "max",
@@ -195,7 +188,6 @@ class LogController {
     @Path("/log/search")
     @Produces("application/json")
     def search() {
-        // TODO api key for auth permission
         def searchResult = logService.search(params, authService.getUserId(), authService.userInRole(spatialConfig.auth.admin_role))
         def totalCount = logService.searchCount(params, authService.getUserId(), authService.userInRole(spatialConfig.auth.admin_role))
         log.info("Logs: " + totalCount)

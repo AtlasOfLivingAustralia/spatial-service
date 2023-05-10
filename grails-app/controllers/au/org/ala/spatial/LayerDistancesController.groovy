@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 
 import javax.ws.rs.Produces
 
-//@CompileStatic
 class LayerDistancesController {
 
     LayerDistancesService layerDistancesService
@@ -66,10 +65,10 @@ class LayerDistancesController {
                                     )
                             ])]
     )
-    @Path("layerDistances/layerdistancesJSON")
+    @Path("layerDistances/csvRawnames")
     @Produces("text/csv")
     def csvRawnames() {
-        render file: layerDistancesService.makeCSV("name"), contentType: 'text/csv'
+        render text: layerDistancesService.makeCSV("name"), contentType: 'text/csv'
     }
 
     @Operation(
@@ -91,7 +90,7 @@ class LayerDistancesController {
     @Path("layerDistances/csv")
     @Produces("text/csv")
     def csv() {
-        render file: layerDistancesService.makeCSV("displayname"), contentType: 'text/csv'
+        render text: layerDistancesService.makeCSV("displayname"), contentType: 'text/csv'
     }
 
 }

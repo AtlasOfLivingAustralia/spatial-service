@@ -29,11 +29,19 @@ class LayerDistancesService {
     String makeCSV(String type) {
         def map = loadDistances()
 
+        List<Fields> fields = fieldService.getFields(false)
+        List<String> fieldList = []
+        fields.each { fieldList.add(it.id) }
+
         Set<String> layerSet = [] as Set
         for (String k : map.keySet()) {
             String [] ks = k.split(" ")
-            layerSet.add(ks[0])
-            layerSet.add(ks[1])
+
+            // exclude fields that are disabled
+            if (fieldList.contains(ks[0]) && fieldList.contains(ks[1])) {
+                layerSet.add(ks[0])
+                layerSet.add(ks[1])
+            }
         }
         List<String> layersOrdered = layerSet as List<String>
         def layerNames = new String[layersOrdered.size()]
@@ -41,7 +49,6 @@ class LayerDistancesService {
         //match against layers
         def layerMatch = (0..layerSet.size()).collect { null }
 
-        List<Fields> fields = fieldService.getFields(false)
         List<Layers> layers = layerService.getLayers()
         layersOrdered.eachWithIndex { l, idx ->
             fields.each { f ->

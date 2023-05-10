@@ -21,32 +21,17 @@ import grails.converters.JSON
 import groovy.sql.Sql
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 
+import java.sql.ResultSet
 import java.util.Map.Entry
 
-//@CompileStatic
 class SearchService {
 
     LayerService layerService
     Sql groovySql
 
-//
-//
-//    List<SearchObject> findByCriteria(final String criteria, int limit) {
-//        log.info("Getting search results for query: " + criteria)
-//        String sql = "select pid, id, name, \"desc\" as description, fid, fieldname from searchobjects(?,?)"
-//        return addGridClassesToSearch(jdbcTemplate.query(sql, "%" + criteria + "%", limit), criteria, limit, null, null)
-//    }
-//
-
     List<SearchObject> findByCriteria(String criteria, int offset, int limit) {
         return findByCriteria(criteria, offset, limit, new ArrayList<String>(), new ArrayList<String>())
     }
-
-//
-//    List<SearchObject> findByCriteria(final String criteria, int limit, List<String> includeFieldIds, List<String> excludeFieldIds) {
-//        return findByCriteria(criteria, 0, limit, includeFieldIds, excludeFieldIds)
-//    }
-
 
     List<SearchObject> findByCriteria(String criteria, int offset, int limit, List<String> includeFieldIds, List<String> excludeFieldIds) {
         log.info("Getting search results for query: " + criteria)
@@ -61,7 +46,7 @@ class SearchService {
         }
 
         String sql = 'with o as (select o.pid as pid ,o.id as id, o.name as name, o.desc as description, o.fid as fid, f.name as fieldname from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true ' + fieldFilter + ")" +
-                ' select pid, id, name, description, fid, fieldname, (select json_agg(a.f) from (select distinct (fid || ' | ' || fieldname) as f from o) a) as fields, position(:nativeQ in lower(name)) as rank from o order by rank, name, pid limit :limit offset :offset'
+                " select pid, id, name, description, fid, fieldname, (select json_agg(a.f) from (select distinct (fid || ' | ' || fieldname) as f from o) a) as fields, position(:nativeQ in lower(name)) as rank from o order by rank, name, pid limit :limit offset :offset"
 
         List<SearchObject> searchObjects = new ArrayList()
 
@@ -76,18 +61,33 @@ class SearchService {
             parameters.addValue("fieldIds", fieldIds)
         }
 
-        groovySql.execute(sql, parameters) {
-            searchObjects.add(it as SearchObject)
-        }
+        groovySql.execute(sql, parameters, { ResultSet rs ->
+            while (rs.next()) {
+                SearchObject so = new SearchObject()
+                so.pid = rs.getObject(1)
+                so.id = rs.getObject(2)
+                so.name = rs.getObject(3)
+                so.description = rs.getObject(4)
+                so.fid = rs.getObject(5)
+                so.fieldname = rs.getObject(6)
+                so.fields = rs.getObject(7)
+
+                searchObjects.add(so)
+            }
+        })
 
         // get a list of fieldMatches to include when `offset` > 0 makes searchObjects empty
         List<SearchObject> additionalFields = new ArrayList<>()
         String fieldMatches = null
         if (searchObjects.size() == 0 && offset > 0) {
             sql = "select distinct (f.id || '|' || f.name) as fields from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true " + fieldFilter
-            groovySql.execute(sql, parameters) {
-                additionalFields.add(it as SearchObject)
-            }
+            groovySql.execute(sql, parameters, { ResultSet rs ->
+                if (rs.next()) {
+                    SearchObject so = new SearchObject()
+                    so.fields = rs.getObject(1)
+                    additionalFields.add(so)
+                }
+            })
         }
 
         List<SearchObject> result = addGridClassesToSearch(searchObjects, criteria, limit, includeFieldIds, excludeFieldIds)

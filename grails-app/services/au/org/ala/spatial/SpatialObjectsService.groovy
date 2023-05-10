@@ -569,13 +569,31 @@ class SpatialObjectsService {
     List<SpatialObjects> getNearestObjectByIdAndLocation(String fid, int limit, Double lng, Double lat) {
         log.info("Getting " + limit + " nearest objects in field fid = " + fid + " to loc: (" + lng + ", " + lat + ") ")
 
-        String sql = "select fid, name, \"desc\", pid, id, ST_AsText(the_geom) as geometry, " +
+        String sql = "select fid, name, o.desc, pid, id, st_astext(the_geom), " +
                 "ST_DistanceSphere(ST_SETSRID(ST_Point( ? , ? ),4326), the_geom) as distance, " +
                 "degrees(Azimuth( ST_SETSRID(ST_Point( ? , ? ),4326), the_geom)) as degrees, " +
                 "area_km " +
-                "from objects where fid= ? order by the_geom <#> st_setsrid(st_makepoint( ? , ? ),4326) limit ? "
+                "from objects o where fid= ? and GeometryType(the_geom) = 'POINT' " +
+                "order by the_geom <#> st_setsrid(st_makepoint( ? , ? ),4326) limit ? "
 
-        List<SpatialObjects> objects = SpatialObjects.executeQuery(sql, [lng, lat, lng, lat, fid, lng, lat, limit])
+        WKTReader reader = new WKTReader()
+
+        List<SpatialObjects> objects = []
+        groovySql.query(sql, [lng, lat, lng, lat, fid, lng, lat, limit], { ResultSet rs ->
+            while (rs.next()) {
+                SpatialObjects so = new SpatialObjects()
+                so.fid = rs.getObject(1)
+                so.name = rs.getObject(2)
+                so.description = rs.getObject(3)
+                so.pid = rs.getObject(4)
+                so.id = rs.getObject(5)
+                so.geometry = reader.read(rs.getObject(6))
+                so.distance = rs.getObject(7)
+                so.degrees = rs.getObject(8)
+                so.area_km = rs.getObject(9)
+                objects.add(so)
+            }
+        })
         updateObjectWms(objects)
         return objects
     }
@@ -894,7 +912,7 @@ class SpatialObjectsService {
         id.replaceAll("[^a-zA-Z0-9]:", "")
     }
 
-    private void streamEnvelope(OutputStream os, String envelopeTaskId, String type) {
+    void streamEnvelope(OutputStream os, String envelopeTaskId, String type) {
         String dir = spatialConfig.data.dir + "/public/" + envelopeTaskId.toInteger()
         String filePrefix = dir + "/envelope"
 
