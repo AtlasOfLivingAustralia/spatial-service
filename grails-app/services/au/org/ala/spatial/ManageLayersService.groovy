@@ -222,12 +222,12 @@ class ManageLayersService {
                 } else if (f.getPath().toLowerCase().endsWith(".grd")) {
                     grd = f
                 }
-                log.info("Files found..." + f.getName())
+                log.debug("Files found..." + f.getName())
             }
 
             //diva to bil
             if (grd != null && bil == null) {
-                log.info("Converting DIVA to BIL")
+                log.debug("Converting DIVA to BIL")
                 def n = grd.getPath().substring(0, grd.getPath().length() - 4)
                 Diva2bil.diva2bil(n, n)
                 bil = n + '.hdr'
@@ -243,25 +243,25 @@ class ManageLayersService {
                         def newF = new File(f.getParent() + "/" + f.getName().replace(name, newName))
                         if (newF.getPath() != f.getPath() && !newF.exists()) {
                             FileUtils.moveFile(f, newF)
-                            log.info("Moving file ${f.getName()} to ${newF.getName()}")
+                            log.debug("Moving file ${f.getName()} to ${newF.getName()}")
                         }
                     }
                 }
 
                 //store name
                 new File(pth.getPath() + "/original.name").write(name)
-                log.info("Original file name stored..." + name)
+                log.debug("Original file name stored..." + name)
             }
 
             shp = new File(pth.getPath() + "/" + newName + ".shp")
             bil = new File(pth.getPath() + "/" + newName + ".bil")
             def tif = new File(pth.getPath() + "/" + newName + ".tif")
             if (!shp.exists() && bil.exists() && !tif.exists()) {
-                log.info("BIL detected...")
+                log.debug("BIL detected...")
                 bilToGTif(bil, tif)
             } else {
-                log.info("SHP: ${shp.getPath()}, TIF: ${tif.getPath()}, BIL: ${bil.getPath()}")
-                log.info("SHP available: ${shp.exists()}, TIF available: ${tif.exists()}, BIL available: ${bil.exists()}")
+                log.debug("SHP: ${shp.getPath()}, TIF: ${tif.getPath()}, BIL: ${bil.getPath()}")
+                log.debug("SHP available: ${shp.exists()}, TIF available: ${tif.exists()}, BIL available: ${bil.exists()}")
             }
 
             def map = [:]
@@ -350,7 +350,7 @@ class ManageLayersService {
 
     def bilToGTif(File bil, File geotiff) {
 
-        log.info("BIL conversion to GeoTIFF with gdal_translate...")
+        log.debug("BIL conversion to GeoTIFF with gdal_translate...")
         //bil 2 geotiff (?)
         String[] cmd = [spatialConfig.gdal.dir.toString() + "/gdal_translate", "-of", "GTiff",
                         "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
@@ -387,7 +387,7 @@ class ManageLayersService {
         List<Fields> fields
         if (!url) {
             layers = layerService.getLayersForAdmin()
-            fields = fieldService.getFields()
+            fields = fieldService.getFields(true)
         } else {
             try {
                 layers = []
@@ -420,7 +420,7 @@ class ManageLayersService {
                     fs.add(f)
                 }
             }
-            l.fields = fields
+            l.fields = fs
 
             list.add(l)
         }
@@ -443,7 +443,11 @@ class ManageLayersService {
         } catch (Exception ignored) {
             try {
                 Layers l = layerService.getLayerById(Integer.parseInt(layerId.replaceAll('[ec]l', "")), false)
-                if (!upload.name) map.putAll(l as Map)
+                if (!upload.name) {
+                    map.putAll(l.properties)
+                    map.put('id', l.id)
+                }
+
                 //try to get from layer info
                 map.put("raw_id", l.getId())
                 if (!map.containsKey("layer_id")) {
@@ -843,8 +847,20 @@ class ManageLayersService {
         map
     }
 
+    def createOrUpdateLayer(Map map, String id, boolean createTask = true) {
+        Layers layer = new Layers()
+        layer.properties.each {
+            if (map.containsKey(it.key)) {
+                it.value = map.get(it.key)
+            }
+        }
+        if (map.containsKey('id')) {
+            layer.id = map.get('id')
+        }
+        createOrUpdateLayer(layer, id, createTask)
+    }
 
-    def createOrUpdateLayer(Map layer, String id, boolean createTask = true) {
+    def createOrUpdateLayer(Layers layer, String id, boolean createTask = true) {
         Map retMap = [:]
 
         retMap.put('layer_id', id)
@@ -852,7 +868,7 @@ class ManageLayersService {
         if (!layer.name) {
             retMap.put("error", "name parameter missing")
             retMap.putAll(layerMap(String.valueOf(id)))
-            retMap.putAll(layer)
+            retMap.putAll(layer.properties)
         } else {
             //UPDATE
             Integer intId = null
@@ -863,34 +879,34 @@ class ManageLayersService {
                     //update id
                     layer.id = idFile.text
                 }
-                intId = Integer.parseInt(layer.id.toString())
+                intId = layer.id
             } catch (ignored) {
                 log.debug 'unable to read uploads layer.id for ' + id
             }
-            def originalLayer = intId == null ? null : layerService.getLayerById(intId, false)
+            Layers originalLayer = intId == null ? null : layerService.getLayerById(intId, false)
             if (originalLayer != null) {
                 try {
-                    if (layer.containsKey('classification1')) originalLayer.setClassification1(layer.classification1.toString())
-                    if (layer.containsKey('classification2')) originalLayer.setClassification2(layer.classification2.toString())
-                    if (layer.containsKey('citation_date')) originalLayer.setCitation_date(layer.citation_date.toString())
-                    if (layer.containsKey('datalang')) originalLayer.setDatalang(layer.datalang.toString())
-                    if (layer.containsKey('description')) originalLayer.setDescription(layer.description.toString())
-                    if (layer.containsKey('displayname')) originalLayer.setDisplayname(layer.displayname.toString())
-                    if (layer.containsKey('domain')) originalLayer.setDomain(layer.domain.toString())
-                    if (layer.containsKey('enabled')) originalLayer.setEnabled('on' == layer.enabled)
-                    if (layer.containsKey('environmentalvalueunits')) originalLayer.setEnvironmentalvalueunits(layer.environmentalvalueunits.toString())
-                    if (layer.containsKey('keywords')) originalLayer.setKeywords(layer.keywords.toString())
-                    if (layer.containsKey('licence_level')) originalLayer.setLicence_level(layer.licence_level.toString())
-                    if (layer.containsKey('licence_link')) originalLayer.setLicence_link(layer.licence_link.toString())
-                    if (layer.containsKey('licence_notes')) originalLayer.setLicence_notes(layer.licence_notes.toString())
-                    if (layer.containsKey('mddatest')) originalLayer.setMddatest(layer.mddatest.toString())
-                    if (layer.containsKey('mdhrlv')) originalLayer.setMdhrlv(layer.mdhrlv.toString())
-                    if (layer.containsKey('metadatapath')) originalLayer.setMetadatapath(layer.metadatapath.toString())
-                    if (layer.containsKey('notes')) originalLayer.setNotes(layer.notes.toString())
-                    if (layer.containsKey('respparty_role')) originalLayer.setRespparty_role(layer.respparty_role.toString())
-                    if (layer.containsKey('source_link')) originalLayer.setSource_link(layer.source_link.toString())
-                    if (layer.containsKey('source')) originalLayer.setSource(layer.source.toString())
-                    if (layer.containsKey('type')) originalLayer.setType(layer.type.toString())
+                    if (layer.classification1)originalLayer.classification1 = layer.classification1
+                    if (layer.classification2)originalLayer.classification2 = layer.classification2
+                    if (layer.citation_date)originalLayer.citation_date = layer.citation_date
+                    if (layer.datalang)originalLayer.datalang=layer.datalang
+                    if (layer.description)originalLayer.description=layer.description
+                    if (layer.displayname)originalLayer.displayname=layer.displayname
+                    if (layer.domain)originalLayer.domain=layer.domain
+                    if (layer.enabled)originalLayer.enabled = layer.enabled
+                    if (layer.environmentalvalueunits)originalLayer.environmentalvalueunits=layer.environmentalvalueunits
+                    if (layer.keywords)originalLayer.keywords=layer.keywords
+                    if (layer.licence_level)originalLayer.licence_level=layer.licence_level
+                    if (layer.licence_link)originalLayer.licence_link=layer.licence_link
+                    if (layer.licence_notes)originalLayer.licence_notes=layer.licence_notes
+                    if (layer.mddatest)originalLayer.mddatest=layer.mddatest
+                    if (layer.mdhrlv)originalLayer.mdhrlv=layer.mdhrlv
+                    if (layer.metadatapath)originalLayer.metadatapath=layer.metadatapath
+                    if (layer.notes)originalLayer.notes=layer.notes
+                    if (layer.respparty_role)originalLayer.respparty_role = layer.respparty_role
+                    if (layer.source_link)originalLayer.source_link = layer.source_link
+                    if (layer.source)originalLayer.source = layer.source
+                    if (layer.type)originalLayer.type = layer.type
 
                     layerService.updateLayer(originalLayer)
 
@@ -906,94 +922,62 @@ class ManageLayersService {
                 try {
                     //defaults, in case of missing values
                     def defaultLayer = layerMap(id)
-                    if (!layer.containsKey('name')) layer.put('name', defaultLayer.name)
-                    if (!layer.containsKey('environmentalvaluemin')) layer.put('environmentalvaluemin', defaultLayer.environmentalvaluemin)
-                    if (!layer.containsKey('environmentalvaluemax')) layer.put('environmentalvaluemax', defaultLayer.environmentalvaluemax)
-                    if (!layer.containsKey('extent')) layer.put('extent', defaultLayer.extent)
-                    if (!layer.containsKey('domain')) layer.put('domain', defaultLayer.domain)
-                    if (!layer.containsKey('maxlatitude')) layer.put('maxlatitude', String.valueOf(defaultLayer.maxlatitude))
-                    if (!layer.containsKey('minlatitude')) layer.put('minlatitude', String.valueOf(defaultLayer.minlatitude))
-                    if (!layer.containsKey('maxlongitude')) layer.put('maxlongitude', String.valueOf(defaultLayer.maxlongitude))
-                    if (!layer.containsKey('minlongitude')) layer.put('minlongitude', String.valueOf(defaultLayer.minlongitude))
-                    if (!layer.containsKey('displayname')) layer.put('displayname', defaultLayer.displayname)
-                    if (!layer.containsKey('enabled')) layer.put('enabled', 'on')
-                    else if (layer.enabled != null && String.valueOf(layer.enabled).equalsIgnoreCase('true')) layer.put('enabled', 'on')
-                    if (!layer.containsKey('environmentalvalueunits')) layer.put('environmentalvalueunits', defaultLayer.environmentalvalueunits)
-                    if (!layer.containsKey('type')) layer.put('type', defaultLayer.type)
-
-                    //CREATE
-                    layer.remove('id')
+                    if (!layer.name) layer.name= defaultLayer.name
+                    if (!layer.environmentalvaluemin) layer.environmentalvaluemin= defaultLayer.environmentalvaluemin
+                    if (!layer.environmentalvaluemax) layer.environmentalvaluemax= defaultLayer.environmentalvaluemax
+                    if (!layer.extents) layer.extents = defaultLayer.extents
+                    if (!layer.domain) layer.domain = defaultLayer.domain
+                    if (!layer.maxlatitude) layer.maxlatitude= Double.valueOf(defaultLayer.maxlatitude)
+                    if (!layer.minlatitude) layer.minlatitude= Double.valueOf(defaultLayer.minlatitude)
+                    if (!layer.maxlongitude) layer.maxlongitude= Double.valueOf(defaultLayer.maxlongitude)
+                    if (!layer.minlongitude) layer.minlongitude= Double.valueOf(defaultLayer.minlongitude)
+                    if (!layer.displayname) layer.displayname= defaultLayer.displayname
+                    if (layer.enabled == null) layer.enabled = true
+                    if (!layer.environmentalvalueunits) layer.environmentalvalueunits= defaultLayer.environmentalvalueunits
+                    if (!layer.type) layer.type= defaultLayer.type
 
                     if (layerService.getLayerByName(layer.name.toString(), false) != null) {
                         retMap.put("error", "name: " + layer.name + " is not unique")
                         retMap.putAll(layerMap(String.valueOf(id)))
-                        retMap.putAll(layer)
+                        retMap.putAll(layer.properties)
+                        retMap.put('id', layer.id)
                     }
 
                     //default values from the name
-                    layer.displayPath = spatialConfig.geoserver.url +
+                    layer.displaypath = spatialConfig.geoserver.url +
                             "/gwc/service/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" +
                             layer.name + "&format=image/png&styles="
 
-                    def newLayer = new Layers()
-                    if (layer.displayPath != null) newLayer.setDisplaypath(layer.displayPath.toString())
-                    if (layer.environmentalvaluemin != null) newLayer.setEnvironmentalvaluemin(layer.environmentalvaluemin.toString())
-                    if (layer.environmentalvaluemax != null) newLayer.setEnvironmentalvaluemax(layer.environmentalvaluemax.toString())
-                    if (layer.extent != null) newLayer.setExtent(layer.extent.toString())
-                    if (layer.maxlatitude != null) newLayer.setMaxlatitude(Double.parseDouble(String.valueOf(layer.maxlatitude)))
-                    if (layer.minlatitude != null) newLayer.setMinlatitude(Double.parseDouble(String.valueOf(layer.minlatitude)))
-                    if (layer.maxlongitude != null) newLayer.setMaxlongitude(Double.parseDouble(String.valueOf(layer.maxlongitude)))
-                    if (layer.minlongitude != null) newLayer.setMinlongitude(Double.parseDouble(String.valueOf(layer.minlongitude)))
-                    if (layer.name != null) newLayer.setName(layer.name.toString())
-                    if (layer.classification1 != null) newLayer.setClassification1(layer.classification1.toString())
-                    if (layer.classification2 != null) newLayer.setClassification2(layer.classification2.toString())
-                    if (layer.citation_date != null) newLayer.setCitation_date(layer.citation_date.toString())
-                    if (layer.datalang != null) newLayer.setDatalang(layer.datalang.toString())
-                    if (layer.description != null) newLayer.setDescription(layer.description.toString())
-                    if (layer.displayname != null) newLayer.setDisplayname(layer.displayname.toString())
-                    if (layer.domain != null) newLayer.setDomain(layer.domain.toString())
-                    newLayer.setEnabled('on' == layer.enabled)
-                    if (layer.environmentalvalueunits != null) newLayer.setEnvironmentalvalueunits(layer.environmentalvalueunits.toString())
-                    if (layer.keywords != null) newLayer.setKeywords(layer.keywords.toString())
-                    if (layer.licence_level != null) newLayer.setLicence_level(layer.licence_level.toString())
-                    if (layer.licence_link != null) newLayer.setLicence_link(layer.licence_link.toString())
-                    if (layer.licence_notes != null) newLayer.setLicence_notes(layer.licence_notes.toString())
-                    if (layer.mddatest != null) newLayer.setMddatest(layer.mddatest.toString())
-                    if (layer.mdhrlv != null) newLayer.setMdhrlv(layer.mdhrlv.toString())
-                    if (layer.metadatapath != null) newLayer.setMetadatapath(layer.metadatapath.toString())
-                    if (layer.notes != null) newLayer.setNotes(layer.notes.toString())
-                    if (layer.respparty_role != null) newLayer.setRespparty_role(layer.respparty_role.toString())
-                    if (layer.source != null) newLayer.setSource_link(layer.source_link.toString())
-                    if (layer.source != null) newLayer.setSource(layer.source.toString())
-                    if (layer.type != null) newLayer.setType(layer.type.toString())
-                    if (layer?.path_orig) {
-                        newLayer.setPath_orig(layer.path_orig.toString())
-                    } else {
-                        newLayer.setPath_orig('layer/' + layer.name)
+                    if (!layer?.path_orig) {
+                        layer.path_orig = 'layer/' + layer.name
                     }
 
-                    newLayer.setDt_added(new Date())
+                    layer.dt_added = new Date()
 
                     //attempt to set layer id
-                    if (layer.containsKey('requestedId') && layer.requestedId.length() > 0) {
-                        newLayer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
+                    if (layer.requestedId) {
+                        layer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
                     } else {
-                        newLayer.setId(0)
+                        layer.setId(0)
                     }
 
                     //create default layers table entry, this updates layer.id
                     Task.withNewTransaction {
-                        layerService.addLayer(newLayer)
+                        if (!layer.save()) {
+                            layer.errors.each {
+                                log.error(it)
+                            }
+                        }
                     }
 
                     //record layer.id
-                    FileUtils.write(new File(spatialConfig.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(newLayer.getId()))
+                    FileUtils.write(new File(spatialConfig.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(layer.getId()))
 
                     if (createTask) {
-                        tasksService.create('LayerCreation', id, [layerId: String.valueOf(newLayer.getId()), uploadId: String.valueOf(id)], null, null, null)
+                        tasksService.create('LayerCreation', id, [layerId: String.valueOf(layer.getId()), uploadId: String.valueOf(id)], null, null, null)
                     }
 
-                    retMap.put('layer_id', newLayer.id)
+                    retMap.put('layer_id', layer.id)
                     retMap.put('message', 'Layer creation task started')
                 } catch (err) {
                     log.error 'error creating layer: ' + id, err
@@ -1028,7 +1012,20 @@ class ManageLayersService {
         columns
     }
 
-    def createOrUpdateField(Map field, String id, boolean createTask = true) {
+    def createOrUpdateField(Map map, String id, boolean createTask = true) {
+        Fields field = new Fields()
+        field.properties.each {
+            if (map.containsKey(it.key)) {
+                field.properties.put(it.key, map.get(it.key))
+            }
+        }
+        if (map.containsKey('id')) {
+            field.id = map.get('id')
+        }
+        createOrUpdateField(field, id, createTask)
+    }
+
+    def createOrUpdateField(Fields field, String id, boolean createTask = true) {
 
         def retMap = [:]
 
@@ -1038,18 +1035,8 @@ class ManageLayersService {
         } else {
             //make it simple, sname = sid
             if (!field.sname) {
-                field.put('sname', field.sid)
+                field.sname = field.sid
             }
-
-            //swap 'true' with 'on'
-            if (field.containsKey('addtomap') && "true".equalsIgnoreCase(String.valueOf(field.addtomap))) field.addtomap = 'on'
-            if (field.containsKey('analysis') && "true".equalsIgnoreCase(String.valueOf(field.analysis))) field.analysis = 'on'
-            if (field.containsKey('defaultlayer') && "true".equalsIgnoreCase(String.valueOf(field.defaultlayer))) field.defaultlayer = 'on'
-            if (field.containsKey('enabled') && "true".equalsIgnoreCase(String.valueOf(field.enabled))) field.enabled = 'on'
-            if (field.containsKey('indb') && "true".equalsIgnoreCase(String.valueOf(field.indb))) field.indb = 'on'
-            if (field.containsKey('intersect') && "true".equalsIgnoreCase(String.valueOf(field.intersect))) field.intersect = 'on'
-            if (field.containsKey('layerbranch') && "true".equalsIgnoreCase(String.valueOf(field.layerbranch))) field.layerbranch = 'on'
-            if (field.containsKey('namesearch') && "true".equalsIgnoreCase(String.valueOf(field.namesearch))) field.namesearch = 'on'
 
             //UPDATE
             Fields originalField = fieldService.getFieldById(id, false)
@@ -1059,37 +1046,41 @@ class ManageLayersService {
                 try {
                     //flag background processes that need running
                     boolean updateIntersect = field.intersect != null && field.intersect != originalField.intersect && field.intersect
-                    boolean updateNameSearch = field.namesearch != null && "on".equalsIgnoreCase(field.namesearch.toString()) != originalField.isNamesearch()
+                    boolean updateNameSearch = field.namesearch != null && field.namesearch != originalField.namesearch
 
-                    boolean b = field.addtomap != null ? "on".equalsIgnoreCase(field.addtomap.toString()) : false
+                    boolean b = field.addtomap != null ? field.addtomap: false
                     originalField.setAddtomap(b)
 
-                    b = field.analysis != null ? "on".equalsIgnoreCase(field.analysis.toString()) : false
+                    b = field.analysis != null ? field.analysis: false
                     originalField.setAnalysis(b)
 
-                    b = field.defaultlayer != null ? "on".equalsIgnoreCase(field.defaultlayer.toString()) : false
+                    b = field.defaultlayer != null ? field.defaultlayer: false
                     originalField.setDefaultlayer(b)
                     originalField.setDesc(field.desc.toString())
                     originalField.setName(field.name.toString())
 
-                    b = field.enabled != null ? "on".equalsIgnoreCase(field.enabled.toString()) : false
+                    b = field.enabled != null ? field.enabled: false
                     originalField.setEnabled(b)
 
-                    b = field.indb != null ? "on".equalsIgnoreCase(field.indb.toString()) : false
+                    b = field.indb != null ? field.indb: false
                     originalField.setIndb(b)
 
-                    b = field.intersect != null ? "on".equalsIgnoreCase(field.intersect.toString()) : false
+                    b = field.intersect != null ? field.intersect: false
                     originalField.setIntersect(b)
 
-                    b = field.layerbranch != null ? "on".equalsIgnoreCase(field.layerbranch.toString()) : false
+                    b = field.layerbranch != null ? field.layerbranch: false
                     originalField.setLayerbranch(b)
 
-                    b = field.namesearch != null ? "on".equalsIgnoreCase(field.namesearch.toString()) : false
+                    b = field.namesearch != null ? field.namesearch: false
                     originalField.setNamesearch(b)
 
                     originalField.setType(field.type.toString())
 
-                    fieldService.updateField(originalField)
+                    if (!originalField.save()) {
+                        originalField.errors.each {
+                            log.error(it)
+                        }
+                    }
 
                     if (createTask && updateIntersect) {
                         tasksService.create('TabulationCreate', null, [:])
@@ -1107,18 +1098,18 @@ class ManageLayersService {
 
                 //defaults, in case of missing values
                 def defaultField = fieldMapDefault(id)
-                if (!field.containsKey('addtomap')) field.put('addtomap', 'on')
-                if (!field.containsKey('analysis')) field.put('analysis', 'on')
-                if (!field.containsKey('defaultlayer')) field.put('defaultlayer', 'on')
-                if (!field.containsKey('enabled')) field.put('enabled', 'on')
-                if (!field.containsKey('intersect')) field.put('intersect', 'off')
-                if (!field.containsKey('namesearch')) field.put('namesearch', 'on')
-                if (!field.containsKey('layerbranch')) field.put('layerbranch', 'off')
-                if (!field.containsKey('name')) field.put('name', defaultField.name)
-                if (!field.containsKey('type')) field.put('name', defaultField.type)
+                if (field.addtomap == null) field.addtomap = true
+                if (field.analysis == null) field.analysis = true
+                if (field.defaultlayer == null) field.defaultlayer = true
+                if (field.enabled == null) field.enabled = true
+                if (field.intersect == null) field.intersect = false
+                if (field.namesearch == null) field.namesearch = true
+                if (field.layerbranch == null) field.layerbranch = false
+                if (field.name == null) field.name = defaultField.name
+                if (field.type == null) field.type = defaultField.type
 
                 Map lyr
-                if (field.containsKey('spid')) {
+                if (field.spid) {
                     lyr = layerMap(field.spid)
                 } else {
                     lyr = layerMap(id)
@@ -1127,13 +1118,13 @@ class ManageLayersService {
                 if ("contextual".equalsIgnoreCase(lyr.type.toString())) {
                     //match case insensitive for sname, sid, sdesc
                     if (defaultField.columns instanceof List) {
-                        if (field.containsKey('sid') && !defaultField.columns.contains(field.sid)) {
+                        if (field.sid && !defaultField.columns.contains(field.sid)) {
                             defaultField.columns.each { if (it.equalsIgnoreCase(field.sid)) field.sid = it }
                         }
-                        if (field.containsKey('sname') && !defaultField.columns.contains(field.sname)) {
+                        if (field.sname && !defaultField.columns.contains(field.sname)) {
                             defaultField.columns.each { if (it.equalsIgnoreCase(field.sname)) field.sname = it }
                         }
-                        if (field.containsKey('sdesc') && !defaultField.columns.contains(field.sdesc)) {
+                        if (field.sdesc && !defaultField.columns.contains(field.sdesc)) {
                             defaultField.columns.each { if (it.equalsIgnoreCase(field.sdesc)) field.sdesc = it }
                         }
                     }
@@ -1143,31 +1134,31 @@ class ManageLayersService {
 
                 newField.setSpid(String.valueOf(lyr.id))
 
-                boolean b = field.analysis != null ? "on" == field.addtomap : false
+                boolean b = field.analysis != null ? field.addtomap : false
                 newField.setAddtomap(b)
 
-                b = field.analysis != null ? "on" == field.analysis : false
+                b = field.analysis != null ?  field.analysis : false
                 newField.setAnalysis(b)
 
-                b = field.defaultlayer != null ? "on" == field.defaultlayer : false
+                b = field.defaultlayer != null ? field.defaultlayer : false
                 newField.setDefaultlayer(b)
 
                 newField.setDesc(field.desc.toString())
                 newField.setName(field.name.toString())
 
-                b = field.enabled != null ? "on" == field.enabled : false
+                b = field.enabled != null ? field.enabled : false
                 newField.setEnabled(b)
 
-                b = field.indb != null ? "on" == field.indb : false
+                b = field.indb != null ? field.indb : false
                 newField.setIndb(b)
 
-                b = field.intersect != null ? "on" == field.intersect : false
+                b = field.intersect != null ? field.intersect : false
                 newField.setIntersect(b)
 
-                b = field.layerbranch != null ? "on" == field.layerbranch : false
+                b = field.layerbranch != null ? field.layerbranch : false
                 newField.setLayerbranch(b)
 
-                b = field.namesearch != null ? "on" == field.namesearch : false
+                b = field.namesearch != null ?  field.namesearch : false
                 newField.setNamesearch(b)
                 if ("contextual".equalsIgnoreCase(lyr.type.toString())) {
                     newField.setSdesc(field.sdesc.toString())
@@ -1177,7 +1168,7 @@ class ManageLayersService {
                 newField.setType(field.type.toString())
 
                 //attempt to set field id
-                if (field.containsKey('requestedId')) {
+                if (field.requestedId) {
                     newField.setId(field.requestedId.toString())
                 } else {
                     newField.setId(null)
@@ -1185,7 +1176,12 @@ class ManageLayersService {
 
                 //create default layers table entry, this updates field.id
                 Task.withNewTransaction {
-                    fieldService.addField(newField)
+                    if (!newField.save()) {
+                        newField.errors.each {
+                            log.error(it)
+                        }
+                    }
+                    //fieldService.addField(newField)
                 }
 
                 if (createTask) {
@@ -1408,19 +1404,23 @@ class ManageLayersService {
      * @return
      */
     def updateFromRemote(String spatialServiceUrl, String fieldId) {
-        Fields field = JSON.parse(httpCall("GET",
+        def f = JSON.parse(httpCall("GET",
                 spatialServiceUrl + "/field/${fieldId}?pageSize=0",
                 null, null,
                 null,
                 null,
-                "application/json")[1]) as Fields
+                "application/json")[1])
+        Fields field = f as Fields
+        field.id = f.id
 
-        Layers layer = JSON.parse(httpCall("GET",
+        def l = JSON.parse(httpCall("GET",
                 spatialServiceUrl + "/layer/${field.spid}?pageSize=0",
                 null, null,
                 null,
                 null,
-                "application/json")[1]) as Layers
+                "application/json")[1])
+        Layers layer = l as Layers
+        layer.id = l.id
 
         //update postgres
         layer.requestedId = layer.id
@@ -1434,13 +1434,13 @@ class ManageLayersService {
         if (!layerService.getLayerById(layer.id, false)) {
             layer.enabled = false
         }
-        createOrUpdateLayer(layer as Map, layer.id + '', false)
+        createOrUpdateLayer(layer, layer.id + '', false)
 
         if (fieldService.getFieldById(field.id, false) == null) {
             field.enabled = false
-            createOrUpdateField(field as Map, field.requestedId + '', false)
+            createOrUpdateField(field, field.requestedId + '', false)
         } else {
-            createOrUpdateField(field as Map, field.id + '', false)
+            createOrUpdateField(field, field.id + '', false)
         }
 
         Map input = [layerId: layer.requestedId, fieldId: field.id, sourceUrl: spatialServiceUrl, displayPath: origDisplayPath] as Map

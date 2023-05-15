@@ -844,7 +844,7 @@ class ShapeRecord implements Serializable {
                 shape = new PolygonZ(bb, contentlength)
                 break
             default:
-                log.info("unknown shape type: " + shapetype)
+                log.debug("unknown shape type: " + shapetype)
         }
     }
 
@@ -1202,7 +1202,7 @@ class CPG implements Serializable {
             String cpg = Files.readAllLines(Paths.get(filename)).get(0)
             charset = Charset.forName(cpg)
         } catch (Exception e) {
-            log.info("loading cpg issue, assuming default ISO-8859-1 encoding: " + filename + ": " + e.toString(), e)
+            log.debug("loading cpg issue, assuming default ISO-8859-1 encoding: " + filename + ": " + e.toString(), e)
         }
     }
 
@@ -1709,7 +1709,7 @@ class DBFRecords implements Serializable {
         FileInputStream fis = null
         try {
             /* load all records */
-            log.info("start reading shapefile: " + filename)
+            log.debug("start reading shapefile: " + filename)
             fis = new FileInputStream(filename)
             FileChannel fc = fis.getChannel()
             ByteBuffer buffer = ByteBuffer.allocate((int) fc.size() - header.getRecordsOffset())
@@ -1744,7 +1744,7 @@ class DBFRecords implements Serializable {
         records = new ArrayList()
         isvalid = false
 
-        log.info("reading shapefile: " + filename)
+        log.debug("reading shapefile: " + filename)
         FileInputStream fis = null
         try {
             /* load all records */
@@ -2201,7 +2201,7 @@ class IntersectionThread implements Runnable {
             while (true) {
                 start = lbq.take()
 
-                //log.info("A*: " + start.intValue());
+                //log.debug("A*: " + start.intValue());
 
                 int end = start.intValue() + step
                 if (end > target.length) {

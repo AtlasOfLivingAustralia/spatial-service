@@ -297,7 +297,7 @@ class uses to generate the
                     cutoffMins[cutoffPos] = d[i]
                 }
                 if (d[i] > cutoffs[cutoffPos]) {
-                    log.info("WARNING: cutoff position " + cutoffs[cutoffPos] + " is < max value " + d[i])
+                    log.debug("WARNING: cutoff position " + cutoffs[cutoffPos] + " is < max value " + d[i])
                 }
             }
             grpSizes[cutoffPos]++
@@ -349,7 +349,7 @@ class uses to generate the
         try {
             //adjust size
             while (scaleDownBy > 1 && (d.length / width / scaleDownBy < 50 || width / scaleDownBy < 50)) {
-                log.info("adjusting image size; points:" + d.length +
+                log.debug("adjusting image size; points:" + d.length +
                         ", width: " + width / scaleDownBy + ", height: " + d.length / width / scaleDownBy)
 
                 scaleDownBy--

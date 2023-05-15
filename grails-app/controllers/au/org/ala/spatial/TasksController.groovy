@@ -35,7 +35,7 @@ class TasksController {
      * @return
      */
     def capabilities() {
-        render tasksService.spec(authService.userInRole(spatialConfig.auth.admin_role)) as JSON
+        render tasksService.getSpecification(authService.userInRole(spatialConfig.auth.admin_role)) as JSON
     }
 
     /**

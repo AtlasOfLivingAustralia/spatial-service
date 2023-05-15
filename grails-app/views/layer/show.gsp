@@ -8,7 +8,7 @@
 </head>
 
 <body>
-
+<g:set var="spatialConfig" bean="spatialConfig"/>
 <h1>${layer.displayname}</h1>
 
 <div>

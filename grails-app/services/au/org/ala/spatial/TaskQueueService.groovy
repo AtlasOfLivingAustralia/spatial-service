@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.process.SlaveProcess
 import au.org.ala.spatial.dto.TaskWrapper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
@@ -41,10 +41,10 @@ class TaskQueueService {
                 new ThreadFactoryBuilder().setNameFormat("general-tasks-%d").setPriority(Thread.NORM_PRIORITY).build())
     }
 
-    TaskWrapper queue(Task task, spec) {
+    TaskWrapper queue(Task task, ProcessSpecification spec) {
         TaskWrapper taskWrapper = wrapTask(task, spec)
 
-        if (taskWrapper.spec.private.public) {
+        if (taskWrapper.spec.privateSpecification.isPublic) {
             generalEecutor.submit(new TaskThread(tasksService, spatialConfig, taskWrapper))
         } else {
             adminExecutor.submit(new TaskThread(tasksService, spatialConfig, taskWrapper))
@@ -74,57 +74,57 @@ class TaskQueueService {
         }
     }
 
-    TaskWrapper wrapTask(Task task, spec) {
-        def isPublic = spec.private.public
+    TaskWrapper wrapTask(Task task, ProcessSpecification spec) {
+        def isPublic = spec.privateSpecification.isPublic
 
         //format inputs
-        def i = [:]
-        task.input.each { k ->
-            if (i.containsKey(k.name)) {
-                def old = i.get(k.name)
-                if (old instanceof List) {
-                    old.add(k.value)
-                } else {
-                    old = [old, k.value]
-                }
-                i.put(k.name, old)
-            } else {
-                i.put(k.name, k.value)
-            }
-        }
+//        def i = [:]
+//        task.input.each { k ->
+//            if (i.containsKey(k.name)) {
+//                def old = i.get(k.name)
+//                if (old instanceof List) {
+//                    old.add(k.value)
+//                } else {
+//                    old = [old, k.value]
+//                }
+//                i.put(k.name, old)
+//            } else {
+//                i.put(k.name, k.value)
+//            }
+//        }
 
-        //add default inputs
-        def shpResolutions = spatialConfig.shpResolutions
-        if (!(shpResolutions instanceof List)) {
-            // comma separated or JSON list
-            if (shpResolutions.toString().startsWith("[")) {
-                shpResolutions = new org.json.simple.parser.JSONParser().parse(shpResolutions.toString())
-            } else {
-                shpResolutions = Arrays.asList(shpResolutions.toString().split(","))
-            }
-        }
-        def grdResolutions = spatialConfig.gridResolutions
-        if (!(grdResolutions instanceof List)) {
-            // comma separated or JSON list
-            if (grdResolutions.toString().startsWith("[")) {
-                grdResolutions = new org.json.simple.parser.JSONParser().parse(grdResolutions.toString())
-            } else {
-                grdResolutions = Arrays.asList(grdResolutions.toString().split(","))
-            }
-        }
-        i.put('layersServiceUrl', spatialConfig.grails.serverURL)
-        i.put('bieUrl', spatialConfig.bie.baseURL)
-        i.put('biocacheServiceUrl', spatialConfig.biocacheServiceUrl)
-        i.put('phyloServiceUrl', spatialConfig.phyloServiceUrl)
-        i.put('shpResolutions', shpResolutions)
-        i.put('grdResolutions', grdResolutions)
-        i.put('sandboxHubUrl', spatialConfig.sandboxHubUrl)
-        i.put('sandboxBiocacheServiceUrl', spatialConfig.sandboxBiocacheServiceUrl)
-        i.put('namematchingUrl', spatialConfig.namematching.url)
-        i.put('geoserverUrl', spatialConfig.geoserver.url)
-        i.put('userId', task.userId)
+//        //add default inputs
+//        def shpResolutions = spatialConfig.shpResolutions
+//        if (!(shpResolutions instanceof List)) {
+//            // comma separated or JSON list
+//            if (shpResolutions.toString().startsWith("[")) {
+//                shpResolutions = new JSONParser().parse(shpResolutions.toString())
+//            } else {
+//                shpResolutions = Arrays.asList(shpResolutions.toString().split(","))
+//            }
+//        }
+//        def grdResolutions = spatialConfig.gridResolutions
+//        if (!(grdResolutions instanceof List)) {
+//            // comma separated or JSON list
+//            if (grdResolutions.toString().startsWith("[")) {
+//                grdResolutions = new JSONParser().parse(grdResolutions.toString())
+//            } else {
+//                grdResolutions = Arrays.asList(grdResolutions.toString().split(","))
+//            }
+//        }
+//        i.put('layersServiceUrl', spatialConfig.grails.serverURL)
+//        i.put('bieUrl', spatialConfig.bie.baseURL)
+//        i.put('biocacheServiceUrl', spatialConfig.biocacheServiceUrl)
+//        i.put('phyloServiceUrl', spatialConfig.phyloServiceUrl)
+//        i.put('shpResolutions', shpResolutions)
+//        i.put('grdResolutions', grdResolutions)
+//        i.put('sandboxHubUrl', spatialConfig.sandboxHubUrl)
+//        i.put('sandboxBiocacheServiceUrl', spatialConfig.sandboxBiocacheServiceUrl)
+//        i.put('namematchingUrl', spatialConfig.namematching.url)
+//        i.put('geoserverUrl', spatialConfig.geoserver.url)
+//        i.put('userId', task.userId)
 
-        TaskWrapper wrapper = new TaskWrapper(input: i, task: task, spec: spec,
+        TaskWrapper wrapper = new TaskWrapper(task: task, spec: spec,
                 path: spatialConfig.data.dir + "/" + (isPublic ? 'public' : 'private') + "/" + task.id + "/")
 
         wrapper
@@ -154,7 +154,7 @@ class TaskQueueService {
                 new File(taskWrapper.path).mkdirs()
 
                 //find operator
-                SlaveProcess operator = Class.forName(taskWrapper.spec.private.classname.toString()).newInstance()
+                SlaveProcess operator = Class.forName(taskWrapper.spec.privateSpecification.classname.toString()).newInstance()
 
                 if (operator == null) {
                     throw new Exception("missing process for task: ${taskWrapper.task.name}")
@@ -164,6 +164,14 @@ class TaskQueueService {
                 operator.taskWrapper = taskWrapper
                 operator.tasksService = tasksService
                 operator.spatialConfig = spatialConfig
+                operator.fieldService = tasksService.fieldService
+                operator.layerService = tasksService.layerService
+                operator.distributionsService = tasksService.distributionsService
+                operator.tasksService = tasksService.tasksService
+                operator.tabulationService = tasksService.tabulationService
+                operator.spatialObjectsService = tasksService.spatialObjectsService
+                operator.gridCutterService = tasksService.gridCutterService
+                operator.tabulationGeneratorService = tasksService.tabulationGeneratorService
 
                 //start
                 operator.start()
@@ -175,6 +183,24 @@ class TaskQueueService {
 
                 //publish
                 tasksService.publish(taskWrapper)
+
+                // flush task
+                if (!taskWrapper.task.save(flush: true)) {
+                    taskWrapper.task.errors.each {
+                        log.error 'save task failed', it
+                    }
+                }
+
+                // flush outputs
+                OutputParameter.withTransaction {
+                    taskWrapper.task.output.each {
+                        if (!it.save(flush: true)) {
+                            it.errors.each {
+                                log.error 'save OutputParameter failed', it
+                            }
+                        }
+                    }
+                }
             } catch (err) {
                 if (err instanceof InterruptedException) {
                     taskWrapper.task.history[System.currentTimeMillis() as String] = "cancelled (id:${taskWrapper.task.id})" as String
@@ -198,7 +224,13 @@ class TaskQueueService {
                 taskWrapper.task.status = 3
                 taskWrapper.task.message = 'failed'
 
-                tasksService.publish(taskWrapper)
+                //tasksService.publish(taskWrapper)
+
+                if (!taskWrapper.task.save(flush: true)) {
+                    it.errors.each {
+                        log.error 'save task failed', it
+                    }
+                }
             }
         }
     }

@@ -92,7 +92,7 @@ class AnalysisLayerUtil {
         Runtime runtime = Runtime.getRuntime()
         try {
 
-            log.info("Got gdal_path: " + gdalPath)
+            log.debug("Got gdal_path: " + gdalPath)
 
             //gdalwarp -te 109.51 -44.37 157.28 -8.19 -tr 0.01 -0.01
             //-s_srs '" + edlconfig.s_srs + "' -t_srs '" + edlconfig.t_srs + "'
@@ -101,29 +101,29 @@ class AnalysisLayerUtil {
 
             String command = base_command + srcFilename + " " + dstFilename
 
-            log.info("Exec'ing " + command)
+            log.debug("Exec'ing " + command)
             Process proc = runtime.exec(command)
 
-            log.info("Setting up output stream readers")
+            log.debug("Setting up output stream readers")
             InputStreamReader isr = new InputStreamReader(proc.getInputStream())
             InputStreamReader eisr = new InputStreamReader(proc.getErrorStream())
             BufferedReader br = new BufferedReader(isr)
             BufferedReader ebr = new BufferedReader(eisr)
             String line
 
-            log.info(String.format("Output of running %s is:", command))
+            log.debug(String.format("Output of running %s is:", command))
 
             while ((line = br.readLine()) != null) {
-                log.info(line)
+                log.debug(line)
             }
 
             while ((line = ebr.readLine()) != null) {
-                log.info(line)
+                log.debug(line)
             }
 
             int exitVal = proc.waitFor()
 
-            log.info(exitVal as String)
+            log.debug(exitVal as String)
 
             if (exitVal == 0) {
                 return true
@@ -181,7 +181,7 @@ class AnalysisLayerUtil {
         Runtime runtime = Runtime.getRuntime()
         try {
 
-            log.info("Got gdal_path: " + gdalPath)
+            log.debug("Got gdal_path: " + gdalPath)
 
             String layername = new File(srcFilename).getName().replace(".shp", "")
 
@@ -190,29 +190,29 @@ class AnalysisLayerUtil {
 
             String command = base_command + srcFilename + " " + dstFilename
 
-            log.info("Exec'ing " + command)
+            log.debug("Exec'ing " + command)
             Process proc = runtime.exec(command)
 
-            log.info("Setting up output stream readers")
+            log.debug("Setting up output stream readers")
             InputStreamReader isr = new InputStreamReader(proc.getInputStream())
             InputStreamReader eisr = new InputStreamReader(proc.getErrorStream())
             BufferedReader br = new BufferedReader(isr)
             BufferedReader ebr = new BufferedReader(eisr)
             String line
 
-            log.info(String.format("Output of running %s is:", command))
+            log.debug(String.format("Output of running %s is:", command))
 
             while ((line = br.readLine()) != null) {
-                log.info(line)
+                log.debug(line)
             }
 
             while ((line = ebr.readLine()) != null) {
-                log.info(line)
+                log.debug(line)
             }
 
             int exitVal = proc.waitFor()
 
-            log.info(exitVal as String)
+            log.debug(exitVal as String)
 
             if (exitVal == 0) {
                 return true

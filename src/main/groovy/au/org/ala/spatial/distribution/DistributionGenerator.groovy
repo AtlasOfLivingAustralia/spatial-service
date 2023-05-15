@@ -54,7 +54,7 @@ class DistributionGenerator {
     }
 
     static void main(String[] args) {
-        log.info("Calculates and fills empty area_km in table distributionshapes.\n\nargs[0] = threadcount, args[1] = db connection string,\n args[2] = db username,\n args[3] = password\n")
+        log.debug("Calculates and fills empty area_km in table distributionshapes.\n\nargs[0] = threadcount, args[1] = db connection string,\n args[2] = db username,\n args[3] = password\n")
         if (args.length >= 4) {
             CONCURRENT_THREADS = Integer.parseInt(args[0])
             db_url = args[1]
@@ -63,7 +63,7 @@ class DistributionGenerator {
         }
         long start = System.currentTimeMillis()
         while (updateArea() > 0) {
-            log.info("time since start= " + (System.currentTimeMillis() - start) + "ms")
+            log.debug("time since start= " + (System.currentTimeMillis() - start) + "ms")
         }
     }
 
@@ -86,7 +86,7 @@ class DistributionGenerator {
                 data.put(new String[]{rs1.getString("id"), rs1.getString("wkt")})
             }
 
-            log.info("next " + data.size())
+            log.debug("next " + data.size())
 
             int size = data.size()
 

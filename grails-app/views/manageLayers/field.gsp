@@ -16,7 +16,7 @@
 </head>
 
 <body class="fluid">
-
+<g:set var="spatialConfig" bean="spatialConfig"/>
 <div class="col-lg-8">
     <h1>Edit Field ${item && item.id ? ' : ' + item.id : ''}</h1>
 

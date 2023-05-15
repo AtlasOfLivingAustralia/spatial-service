@@ -32,11 +32,11 @@ class Occurrences {
 
         //TODO: use info from the original analysis request instead of doing this
         boolean isUserData = server.contains("spatial")
-        log.info("isUserData=" + isUserData + ", server=" + server)
+        log.debug("isUserData=" + isUserData + ", server=" + server)
 
         if (isUserData) {
             String url = server + "/userdata/sample?q=" + q + "&fl=" + fields
-            log.info("getting occurrences from : " + url)
+            log.debug("getting occurrences from : " + url)
             InputStream is = null
             try {
                 is = getUrlStream(url)
@@ -68,7 +68,7 @@ class Occurrences {
         } else {
             while (start < 300000000) {
                 String url = server + "/webportal/occurrences.gz?q=" + q + "&pageSize=" + pageSize + "&start=" + start + "&fl=" + fields
-                log.info("retrieving from biocache : " + url)
+                log.debug("retrieving from biocache : " + url)
                 int tryCount = 0
                 InputStream is = null
                 String csv = null

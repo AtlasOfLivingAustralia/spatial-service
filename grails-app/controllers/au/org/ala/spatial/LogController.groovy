@@ -190,7 +190,7 @@ class LogController {
     def search() {
         def searchResult = logService.search(params, authService.getUserId(), authService.userInRole(spatialConfig.auth.admin_role))
         def totalCount = logService.searchCount(params, authService.getUserId(), authService.userInRole(spatialConfig.auth.admin_role))
-        log.info("Logs: " + totalCount)
+        log.debug("Logs: " + totalCount)
         log.debug("Return as " + request.getHeader("accept"))
         if ("application/csv" == request.getHeader("accept") || "application/csv" == params['accept']) {
             response.contentType = 'application/csv'

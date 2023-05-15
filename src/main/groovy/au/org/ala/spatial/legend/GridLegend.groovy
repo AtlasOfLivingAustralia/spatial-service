@@ -85,7 +85,7 @@ class GridLegend {
             g = new Grid(filename)
             d = g.getGrid(sampleInterval)
             if (sampleInterval > 1) {
-                log.info("test output image is messed up because of >1 sample interval (large file)")
+                log.debug("test output image is messed up because of >1 sample interval (large file)")
             }
             if (g.ncols > 0) {
                 legends[i].exportImage(d, g.ncols, output_name + ".png", Math.max(scaleDown, g.ncols / 50 as double) as int, minAsTransparent)
@@ -96,7 +96,7 @@ class GridLegend {
 
             legends[i].exportSLD(g, output_name + ".sld", g.units, true, minAsTransparent)
 
-            log.info(output_name + ", " + legends[i].getTypeName() + ": " + String.valueOf(e2))
+            log.debug(output_name + ", " + legends[i].getTypeName() + ": " + String.valueOf(e2))
             if (firstTime || e2 <= minE) {
                 minE = e2
                 minI = i

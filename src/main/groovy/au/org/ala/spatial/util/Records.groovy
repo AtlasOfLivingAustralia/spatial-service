@@ -75,7 +75,7 @@ class Records {
             line[3] = rawline.substring(p3 + 1)
 
             if (currentCount % 100000 == 0) {
-                log.info("reading row: " + currentCount)
+                log.debug("reading row: " + currentCount)
             }
 
             String facetName = "names_and_lsid"
@@ -95,8 +95,8 @@ class Records {
                         header[3] = i
                     }
                 }
-                log.info("line: " + line[0] + "," + line[1] + "," + line[2] + "," + (line.length > 3 ? line[3] : "null"))
-                log.info("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
+                log.debug("line: " + line[0] + "," + line[1] + "," + line[2] + "," + (line.length > 3 ? line[3] : "null"))
+                log.debug("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
                 boolean notZero = header[1] == 0 || header[2] == 0 || (header[3] == 0 && line.length > 3)
                 //'year' may be absent
                 boolean notOne = line.length < 1 || header[1] == 1 || header[2] == 1 || header[3] == 1
@@ -106,7 +106,7 @@ class Records {
                 if (!notOne) header[0] = 1
                 if (!notTwo) header[0] = 2
                 if (!notThree) header[0] = 3
-                log.info("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
+                log.debug("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
             } else {
                 if (line.length >= 3) {
                     try {
@@ -136,7 +136,7 @@ class Records {
             lsids[e.getValue()] = e.getKey()
         }
 
-        log.info("Got " + getRecordsSize() + " records of " + getSpeciesSize() + " species")
+        log.debug("Got " + getRecordsSize() + " records of " + getSpeciesSize() + " species")
     }
 
     Records(String filename, SimpleRegion region) throws IOException {
@@ -174,7 +174,7 @@ class Records {
             line[3] = rawline.substring(p3 + 1)
 
             if (currentCount % 100000 == 0) {
-                log.info("reading row: " + currentCount)
+                log.debug("reading row: " + currentCount)
             }
 
             String facetName = "names_and_lsid"
@@ -194,8 +194,8 @@ class Records {
                         header[3] = i
                     }
                 }
-                log.info("line: " + line[0] + "," + line[1] + "," + line[2] + "," + line[3])
-                log.info("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
+                log.debug("line: " + line[0] + "," + line[1] + "," + line[2] + "," + line[3])
+                log.debug("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
                 boolean notZero = header[1] == 0 || header[2] == 0 || (header[3] == 0 && line.length > 3)
                 //'year' may be absent
                 boolean notOne = line.length < 1 || header[1] == 1 || header[2] == 1 || header[3] == 1
@@ -205,7 +205,7 @@ class Records {
                 if (!notOne) header[0] = 1
                 if (!notTwo) header[0] = 2
                 if (!notThree) header[0] = 3
-                log.info("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
+                log.debug("header: " + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
             } else {
                 if (line.length >= 3) {
                     try {
@@ -238,7 +238,7 @@ class Records {
             lsids[e.getValue()] = e.getKey()
         }
 
-        log.info("\nGot " + getRecordsSize() + " records of " + getSpeciesSize() + " species")
+        log.debug("\nGot " + getRecordsSize() + " records of " + getSpeciesSize() + " species")
     }
 
     static InputStream getUrlStream(String url) throws IOException {
@@ -251,8 +251,8 @@ class Records {
     }
 
     static void main(String[] args) {
-        log.info("args[0] = path to save the records file")
-        log.info("args[1] = biocache service URL")
+        log.debug("args[0] = path to save the records file")
+        log.debug("args[1] = biocache service URL")
 
         if (args.length > 0) {
             download(args[0], args[1])
@@ -384,7 +384,7 @@ class Records {
                             header[3] = i
                         }
                     }
-                    log.info("header info:" + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
+                    log.debug("header info:" + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
                 } else {
                     if (line.length >= 3) {
                         try {
@@ -444,7 +444,7 @@ class Records {
             lsids[e.getValue()] = e.getKey()
         }
 
-        log.info("Got " + getRecordsSize() + " records of " + getSpeciesSize() + " species")
+        log.debug("Got " + getRecordsSize() + " records of " + getSpeciesSize() + " species")
     }
 
     String getSpecies(int pos) {

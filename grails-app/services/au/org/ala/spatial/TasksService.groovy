@@ -15,12 +15,13 @@
 
 package au.org.ala.spatial
 
-
+import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.process.SlaveProcess
 import au.org.ala.spatial.dto.TaskWrapper
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.apache.commons.lang3.StringUtils
+import org.apache.tomcat.jni.Proc
 
 //@CompileStatic
 class TasksService {
@@ -28,6 +29,13 @@ class TasksService {
     SpatialObjectsService spatialObjectsService
     FieldService fieldService
     LayerIntersectService layerIntersectService
+    LayerService layerService
+    DistributionsService distributionsService
+    TasksService tasksService
+    TaskWrapper taskWrapper
+    TabulationService tabulationService
+    GridCutterService gridCutterService
+    TabulationGeneratorService tabulationGeneratorService
 
     PublishService publishService
     TaskQueueService taskQueueService
@@ -71,7 +79,7 @@ class TasksService {
         if (input == null) input = [:] as Map
 
         //get task spec
-        def spec = spec(true).get(name)
+        ProcessSpecification spec = getSpecification(true).get(name)
 
         if (spec == null) {
             log.error("failed to find spec for: " + name)
@@ -80,7 +88,7 @@ class TasksService {
         def task = null
 
         def tasks
-        if (spec != null && spec?.private?.unique && (tasks = Task.findAllByStatusLessThanAndName(2, name)).size() > 0) {
+        if (spec != null && spec?.privateSpecification?.unique && (tasks = Task.findAllByStatusLessThanAndName(2, name)).size() > 0) {
             //is it a unique process already running or in queue?
             log.debug 'unique process:' + name + ' already running or in queue'
             task = tasks.get(0)
@@ -107,7 +115,7 @@ class TasksService {
             input.each { k, v ->
                 if (v == null || v == null) {
                     //skip
-                } else if (spec.input[k]?.type == 'area') {
+                } else if (spec.inputSpecification[k]?.type == 'area') {
                     //register area pid
                     def list = []
                     v.each { a ->
@@ -260,7 +268,7 @@ class TasksService {
         if (input == null) input = [:] as Map
 
         //get task spec
-        def spec = spec(isAdmin).get(name)
+        def spec = getSpecification(isAdmin).get(name)
 
         def errors = [:]
 
@@ -471,20 +479,20 @@ class TasksService {
 
         transientTasks.put(task.id as Long, task)
 
-        taskQueueService.queue(task, spec(true)[task.name])
+        taskQueueService.queue(task, getSpecification(true)[task.name])
     }
 
     def _spec = [:]
     def _specAdmin = [:]
 
-    def spec(boolean includePrivate) {
+    def getSpecification(boolean includePrivate) {
         if (!_spec) {
 
-            getAllSpec().each { it ->
+            getAllSpec().each { ProcessSpecification it ->
                 def name = it.name
                 def cap = it
                 _specAdmin.put(name, cap)
-                boolean iPrivate = !cap.containsKey('private') || !cap.private.containsKey('public') || cap.private.public
+                boolean iPrivate = !cap.privateSpecification?.isPublic
                 if (iPrivate) {
                     _spec.put(name, cap.findAll { i ->
                         if (!includePrivate && i.key == 'private') {
@@ -555,11 +563,13 @@ class TasksService {
         Map map = [:]
         try {
             // update spec.output.files for files to add to download.zip
-            taskWrapper.spec.output.each { k, v ->
-                if (taskWrapper.task.output.containsKey(k)) {
-                    v.put('files', taskWrapper.task.output.get(k))
-                }
-            }
+//            taskWrapper.spec.output.each { k, v ->
+//                taskWrapper.task.output.each { o ->
+//                    if (o.name.toUpperCase() == k) {
+//                        v.files = taskWrapper.task.output.get(k)
+//                    }
+//                }
+//            }
 
             // do publishing
             publishService.publish(taskWrapper)

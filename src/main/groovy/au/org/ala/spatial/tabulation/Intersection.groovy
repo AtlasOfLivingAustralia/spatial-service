@@ -179,7 +179,7 @@ class Intersection {
      * @param filenames2
      */
     static void intersectShapefiles(String filename1, List filenames2, String outputDir) {
-        log.info("intersectShapefiles START")
+        log.debug("intersectShapefiles START")
         DataStore dataStore1 = null
         DataStore dataStore2 = null
         FeatureIterator iterator1 = null
@@ -200,7 +200,7 @@ class Intersection {
 
             iterator1 = source1.getFeatures().features()
 
-            log.info(filename1 + ": shape count=" + source1.getCount(Query.ALL))
+            log.debug(filename1 + ": shape count=" + source1.getCount(Query.ALL))
 
             int count1 = 0
 
@@ -244,7 +244,7 @@ class Intersection {
                     dataStore2 = DataStoreFinder.getDataStore(map2)
                     String typeName2 = dataStore2.getTypeNames()[0]
                     source2 = dataStore2.getFeatureSource(typeName2)
-                    log.info((String) filenames2.get(h) + ": shape count=" + source2.getCount(Query.ALL))
+                    log.debug((String) filenames2.get(h) + ": shape count=" + source2.getCount(Query.ALL))
 
                     //fetch all feature 2 bounding boxes
                     iterator2 = source2.getFeatures().features()
@@ -273,7 +273,7 @@ class Intersection {
                     }
 
 
-                    log.info("bounding box compare")
+                    log.debug("bounding box compare")
                     //compare to all in (2)
                     for (int n = 0; n < geoms1.size(); n++) {
                         Geometry geom1 = (Geometry) geoms1.get(n)
@@ -303,7 +303,7 @@ class Intersection {
                     if (iterator2 != null) iterator2.close()
                     if (dataStore2 != null) dataStore2.dispose()
                 }
-                log.info("comparisons required: " + lbq.size())
+                log.debug("comparisons required: " + lbq.size())
 
                 //wait until finished
                 final CountDownLatch cdl = new CountDownLatch(lbq.size())
@@ -409,7 +409,7 @@ class Intersection {
                     }
                 }
 
-                log.info("total time: " + outf.getName() + " = " + (System.currentTimeMillis() - startTime) + "ms")
+                log.debug("total time: " + outf.getName() + " = " + (System.currentTimeMillis() - startTime) + "ms")
                 //zip
                 ZipOutputStream zos = null
                 BufferedInputStream bis = null

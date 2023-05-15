@@ -91,7 +91,7 @@ class SamplingThread extends Thread {
         String fileName = intersectionFile.getFilePath()
         String name = intersectionFile.getFieldId()
         long start = System.currentTimeMillis()
-        log.info("Starting sampling " + points.length + " points in " + name + ':' + fileName + (shapeFieldName == null ? "" : " field: " + shapeFieldName))
+        log.debug("Starting sampling " + points.length + " points in " + name + ':' + fileName + (shapeFieldName == null ? "" : " field: " + shapeFieldName))
         callback.progressMessage("Started sampling layer:" + intersectionFile.getLayerName())
         if (StringUtils.isNotEmpty(shapeFieldName)) {
             intersectShape(fileName, shapeFieldName, points, sb)
@@ -101,7 +101,7 @@ class SamplingThread extends Thread {
             intersectGrid(fileName, points, sb)
         }
 
-        log.info("Finished sampling " + points.length + " points in " + name + ':' + fileName + " in " + (System.currentTimeMillis() - start) + "ms")
+        log.debug("Finished sampling " + points.length + " points in " + name + ':' + fileName + " in " + (System.currentTimeMillis() - start) + "ms")
 
         callback.progressMessage("Finished sampling layer: " + intersectionFile.getLayerName() + ". Points processed: " + points.length / 2)
     }

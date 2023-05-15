@@ -38,9 +38,10 @@ class PublishService {
     // before flagging task as finished.
     //
     // returns error map
-    Map publish(TaskWrapper taskWrapper) {
+    void publish(TaskWrapper taskWrapper) {
         // deploy outputs
-        taskWrapper.spec.output.each { String k, output ->
+        taskWrapper.task.output.each { OutputParameter output ->
+            String k = output.name
             if ('file'.equalsIgnoreCase(k) || 'metadata'.equalsIgnoreCase(k)) {
                 // no activity required. The unzip takes care of this
 
@@ -68,10 +69,11 @@ class PublishService {
                 // trigger sql execution
                 taskWrapper.task.history.putAll(runSql(output, taskWrapper.path))
             } else if ('append'.equalsIgnoreCase(k)) {
-                if (output.files != null) {
-                    def idx = output.files.get(0).indexOf('?')
-                    String file = output.files.get(0).substring(0, idx)
-                    String append = output.files.get(0).substring(idx + 1) + '\n'
+                if (output.file != null) {
+                    String f = JSON.parse(output.file).get(0)
+                    def idx = f.indexOf('?')
+                    String file = f.substring(0, idx)
+                    String append = f.substring(idx + 1) + '\n'
                     new File(spatialConfig.data.dir + file).append(append)
                 }
             }
@@ -79,9 +81,10 @@ class PublishService {
 
         // create requested tasks
         // deploy outputs
-        taskWrapper.spec.output.each { k, output ->
+        taskWrapper.task.output.each { OutputParameter output ->
+            String k = output.name
             if ('process'.equalsIgnoreCase(k)) {
-                output.files.each { file ->
+                JSON.parse(output.file).each { file ->
                     def pos = file.toString().indexOf(' ')
                     def name
                     def input
@@ -101,9 +104,10 @@ class PublishService {
         }
 
         // create download zip
-        taskWrapper.spec.output.each { k, output ->
+        taskWrapper.task.output.each { OutputParameter output ->
+            String k = output.name
             if ('download'.equalsIgnoreCase(k)) {
-                fileService.zip(taskWrapper.path + File.separator + "download.zip", taskWrapper.path, output.files)
+                fileService.zip(taskWrapper.path + File.separator + "download.zip", taskWrapper.path, JSON.parse(output.file))
             }
         }
 
@@ -111,11 +115,9 @@ class PublishService {
         if (taskWrapper.spec.name == 'LayerCopy' || taskWrapper.spec.name == 'FieldCreation') {
             manageLayersService.fixLayerStyles()
         }
-
-        taskWrapper.spec
     }
 
-    def addStyle(output, path) {
+    def addStyle(OutputParameter output, path) {
         def errors = [:]
         try {
             if (spatialConfig.geoserver.canDeploy.toBoolean()) {
@@ -124,7 +126,7 @@ class PublishService {
                 def geoserverUsername = spatialConfig.geoserver.username
                 def geoserverPassword = spatialConfig.geoserver.password
 
-                output.files.each { file ->
+                JSON.parse(output.file).each { file ->
 
                     def p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
                     def name = new File(p).getName().replace(".sld", "")
@@ -188,10 +190,10 @@ class PublishService {
 
     }
 
-    def delete(output, path) {
+    def delete(OutputParameter output, path) {
         def errors = [:]
         try {
-            output.files.each { file ->
+            JSON.parse(output.file).each { file ->
 
                 def p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
                 def f = new File(p)
@@ -211,11 +213,11 @@ class PublishService {
 
     }
 
-    def addArea(output, String path) {
+    def addArea(OutputParameter output, String path) {
         def errors = [:]
         try {
             def newAreas = []
-            output.files.each { json ->
+            JSON.parse(output.file).each { json ->
 
                 def values = JSON.parse(json)
                 String p = (values.file.startsWith('/') ? spatialConfig.data.dir + values.file : path + '/' + values.file)
@@ -227,7 +229,7 @@ class PublishService {
                 newAreas.add(generatedPid)
             }
             //replace areas with pids
-            output.files = newAreas
+            output.file = (newAreas as JSON).toString()
         } catch (err) {
             log.error 'failed to upload area: ' + output + ', ' + path, err
         }
@@ -235,12 +237,12 @@ class PublishService {
         errors
     }
 
-    def runSql(output, path) {
+    def runSql(OutputParameter output, path) {
         def errors = [:]
         def conn = dataSource.getConnection()
         def statement = conn.createStatement()
         try {
-            output.files.each { file ->
+            JSON.parse(output.file).each { file ->
                 String p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
                 try {
                     statement.execute(new File(p).text)
@@ -289,7 +291,7 @@ class PublishService {
         }
     }
 
-    Map<String, String> layerToGeoserver(output, path) {
+    Map<String, String> layerToGeoserver(OutputParameter output, path) {
         Map<String, String> errors = [:]
         if (spatialConfig.geoserver.canDeploy.toBoolean()) {
 
@@ -297,7 +299,7 @@ class PublishService {
             def geoserverUsername = spatialConfig.geoserver.username
             def geoserverPassword = spatialConfig.geoserver.password
 
-            output.files.each { f ->
+            JSON.parse(output.file).each { f ->
                 def p = path == null ? f : (f.startsWith('/') ? spatialConfig.data.dir + f : path + '/' + f)
                 def file = f
 

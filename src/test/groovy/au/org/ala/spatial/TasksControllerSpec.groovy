@@ -58,7 +58,7 @@ class TasksControllerSpec extends Specification implements ControllerUnitTest<Ta
         controller.authService.userInRole(_) >> true
 
         controller.tasksService = Mock(TasksService)
-        controller.tasksService.spec(_) >> { return [key1: "test1"] }
+        controller.tasksService.getSpecification(_) >> { return [key1: "test1"] }
 
     }
 

@@ -77,7 +77,7 @@ class Diva2bil {
             }
             fos.flush()
 
-            log.info("finished")
+            log.debug("finished")
         } catch (Exception e) {
             ret = false
             log.error(e.getMessage(), e)
@@ -161,7 +161,7 @@ class Diva2bil {
         } else if (datatype == "REAL") {
             datatype = "FLOAT"
         } else {
-            log.info("GRID unknown type: " + datatype)
+            log.debug("GRID unknown type: " + datatype)
             datatype = "UNKNOWN"
         }
 

@@ -42,7 +42,9 @@ import au.org.ala.spatial.legend.GridLegend
 import au.org.ala.spatial.legend.Legend
 import au.org.ala.spatial.legend.LegendEqualArea
 import au.org.ala.spatial.dto.LayerFilter
+import com.fasterxml.jackson.annotation.JsonProperty
 import grails.converters.JSON
+import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
 import org.geotools.geometry.jts.WKTReader2
 import org.grails.web.json.JSONArray
@@ -77,19 +79,61 @@ class SlaveProcess {
     void stop() {}
 
 
-    def getFile(path) {
+    def getFile(path, source) {
         // placeholder for the future
     }
 
     String getInput(String name) {
-        taskWrapper.task.input.find { it.name == name}.value as String
+        taskWrapper.task.input.find { it.name == name}?.value as String
     }
 
     // define inputs and outputs
     ProcessSpecification spec(ProcessSpecification config) {
         ProcessSpecification s
         if (config == null) {
-            s = JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text) as ProcessSpecification
+            def json = JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text)
+            s = new ProcessSpecification()
+            s.name = json.name
+            s.description = json.description
+            s.isBackground = json.isBackground
+            s.version = json.version
+
+            s.inputSpecification = new HashMap()
+            json.input.each { key, value ->
+                ProcessSpecification.InputSpecification is = new ProcessSpecification.InputSpecification()
+                is.description = value.description
+                is.type = value.type.toUpperCase()
+
+                ProcessSpecification.ConstraintSpecification c = new ProcessSpecification.ConstraintSpecification()
+                value.constraints?.each { ckey, cvalue ->
+                    if (ckey == 'selection') {
+                        c.selection = cvalue.toUpperCase()
+                    } else if (ckey == 'content') {
+                        c.content = cvalue
+                    } else if (c.properties.containsKey(ckey)) {
+                        c.setProperty(ckey, cvalue)
+                    }
+                }
+                is.constraintSpecification = c
+
+                s.inputSpecification.put(key, is)
+            }
+
+            s.output = new HashMap()
+            json.output?.each { key, value ->
+                ProcessSpecification.OutputSpecification is = new ProcessSpecification.OutputSpecification()
+                is.description = value.description
+
+                s.output.put(key.toUpperCase(), is)
+            }
+
+            s.privateSpecification = new ProcessSpecification.PrivateSpecification()
+            json.private?.each { key, value ->
+                if (s.privateSpecification.properties.containsKey(key)) {
+                    s.privateSpecification.setProperty(key, value)
+                }
+            }
+
         } else {
             s = config.clone()
         }
@@ -912,7 +956,7 @@ class SlaveProcess {
             if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
             String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q + fq
             taskLog("Loading species ...")
-            log.info("Loading species from: " + url)
+            log.debug("Loading species from: " + url)
             speciesList = Util.getUrl(url)
         } catch (err) {
             taskLog("Failed to get species list.")

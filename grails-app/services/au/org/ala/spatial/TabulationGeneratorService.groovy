@@ -91,7 +91,7 @@ class TabulationGeneratorService {
 //    }
 //
 //    static public void main(String[] args) throws IOException {
-//        log.info("args[0] = threadcount," + "\nargs[1] = db connection string," +
+//        log.debug("args[0] = threadcount," + "\nargs[1] = db connection string," +
 ////                "\n args[2] = db username," + "\n args[3] = password,"
 ////                + "\n args[4] = (optional) specify one step to run, " +
 ////                "'1' pair objects, '3' delete invalid objects, '4' area, '5' occurrences, '6' grid x grid comparisons"
@@ -105,7 +105,7 @@ class TabulationGeneratorService {
 //        }
 //
 //        if (args.length < 5) {
-//            log.info("all");
+//            log.debug("all");
 //
 //            updatePairObjects();
 //
@@ -113,25 +113,25 @@ class TabulationGeneratorService {
 //
 //            long start = System.currentTimeMillis();
 //            while (updateArea() > 0) {
-//                log.info("time since start= " + (System.currentTimeMillis() - start) + "ms");
+//                log.debug("time since start= " + (System.currentTimeMillis() - start) + "ms");
 //            }
 //        } else if (args[4].equals("1")) {
-//            log.info("1");
+//            log.debug("1");
 //            updatePairObjects();
 //        } else if (args[4].equals("2")) {
-//            log.info("2");
+//            log.debug("2");
 //            // updateSingleObjects();
 //        } else if (args[4].equals("3")) {
-//            log.info("3");
+//            log.debug("3");
 //            deleteInvalidObjects();
 //        } else if (args[4].equals("4")) {
-//            log.info("4");
+//            log.debug("4");
 //            long start = System.currentTimeMillis();
 //            while (updateArea() > 0) {
-//                log.info("time since start= " + (System.currentTimeMillis() - start) + "ms");
+//                log.debug("time since start= " + (System.currentTimeMillis() - start) + "ms");
 //            }
 //        } else if (args[4].equals("5")) {
-//            log.info("5");
+//            log.debug("5");
 //            // some init
 //            FieldDAO fieldDao = Client.getFieldDao();
 //            LayerDAO layerDao = Client.getLayerDao();
@@ -139,22 +139,22 @@ class TabulationGeneratorService {
 //            LayerIntersectDAO layerIntersectDao = Client.getLayerIntersectDao();
 //
 //            // test fieldDao
-//            log.info("TEST: " + fieldDao.getFields());
-//            log.info("RECORDS FILE: " + args[5]);
+//            log.debug("TEST: " + fieldDao.getFields());
+//            log.debug("RECORDS FILE: " + args[5]);
 //
 //            File f = new File(args[5]);
 //            if (f.exists()) {
 //                Records records = new Records(f.getAbsolutePath());
 //                // while (updateOccurrencesSpecies(records) > 0) {
-//                // log.info("time since start= " +
+//                // log.debug("time since start= " +
 //                // (System.currentTimeMillis() - start) + "ms");
 //                // }
 //                updateOccurrencesSpecies2(records, CONCURRENT_THREADS, null);
 //            } else {
-//                log.info("Please provide a valid path to the species occurrence file");
+//                log.debug("Please provide a valid path to the species occurrence file");
 //            }
 //        } else if (args[4].equals("6")) {
-//            log.info("6");
+//            log.debug("6");
 //
 //            // some init
 //            FieldDAO fieldDao = Client.getFieldDao();
@@ -163,15 +163,15 @@ class TabulationGeneratorService {
 //            LayerIntersectDAO layerIntersectDao = Client.getLayerIntersectDao();
 //
 //            // test fieldDao
-//            log.info("TEST: " + fieldDao.getFields());
-//            log.info("RECORDS FILE: " + args[5]);
+//            log.debug("TEST: " + fieldDao.getFields());
+//            log.debug("RECORDS FILE: " + args[5]);
 //
 //            File f = new File(args[5]);
 //            if (f.exists()) {
 //                Records records = new Records(f.getAbsolutePath());
 //                updatePairObjectsGridToGrid(records);
 //            } else {
-//                log.info("Please provide a valid path to the species occurrence file");
+//                log.debug("Please provide a valid path to the species occurrence file");
 //            }
 //        }
 //
@@ -208,7 +208,7 @@ class TabulationGeneratorService {
 //
 //            updatePairObjectsGridToGrid(recordsOne);
 //        } else {
-//            log.info("Please provide a valid path to the species occurrence file");
+//            log.debug("Please provide a valid path to the species occurrence file");
 //        }
 //    }
 //
@@ -270,7 +270,7 @@ class TabulationGeneratorService {
 //                //domain test
 //                if (isSameDomain(parseDomain(rs1.getString("domain1")), parseDomain(rs1.getString("domain2")))) {
 //                    //if (f1.exists() && f2.exists() && f1.length() < 50 * 1024 * 1024 && f2.length() < 50 * 1024 * 1024) {
-//                    log.info("will do tabulation on: " + rs1.getString("fid1") + ", " + rs1.getString("fid2"));
+//                    log.debug("will do tabulation on: " + rs1.getString("fid1") + ", " + rs1.getString("fid2"));
 //                    data.add(rs1.getString("fid1") + "," + rs1.getString("fid2"));
 //                    // } else {
 //                    //for gridToGrid
@@ -280,7 +280,7 @@ class TabulationGeneratorService {
 //            rs1.close();
 //            s1.close();
 //
-//            log.info("next " + data.size());
+//            log.debug("next " + data.size());
 //
 //            int size = data.size();
 //
@@ -349,7 +349,7 @@ class TabulationGeneratorService {
 //                    if (f1.exists() && f2.exists() && f1.length() < 50 * 1024 * 1024 && f2.length() < 50 * 1024 * 1024) {
 //                        // for shape comparisons
 //                    } else {
-//                        log.info("gridToGrid: " + rs1.getString("fid1") + ", " + rs1.getString("fid2"));
+//                        log.debug("gridToGrid: " + rs1.getString("fid1") + ", " + rs1.getString("fid2"));
 //                        // for gridToGrid
 //                        sql = gridToGrid(rs1.getString("fid1"), rs1.getString("fid2"), records);
 //                        s2.execute(sql);
@@ -381,33 +381,33 @@ class TabulationGeneratorService {
 
             // check if resolution needs changing
             resolution = Double.parseDouble(confirmResolution(new String[]{fieldId1, fieldId2}, String.valueOf(resolution)))
-            log.info("RESOLUTION: " + resolution)
+            log.debug("RESOLUTION: " + resolution)
 
             // get extents for all layers
             double[][] field1Extents = getLayerExtents(String.valueOf(resolution), fieldId1)
-            log.info("Extents for " + fieldId1 + ": " + field1Extents)
+            log.debug("Extents for " + fieldId1 + ": " + field1Extents)
 
             double[][] field2Extents = getLayerExtents(String.valueOf(resolution), fieldId2)
-            log.info("Extents for " + fieldId2 + ": " + field2Extents)
+            log.debug("Extents for " + fieldId2 + ": " + field2Extents)
 
             double[][] extents = internalExtents(field1Extents, field2Extents)
-            log.info("Internal extents: " + extents)
+            log.debug("Internal extents: " + extents)
             if (!isValidExtents(extents)) {
-                log.info("Warning, no overlap between grids: " + fieldId1 + " and " + fieldId2)
+                log.debug("Warning, no overlap between grids: " + fieldId1 + " and " + fieldId2)
                 return null
             }
 
             // get mask and adjust extents for filter
             int width = 0, height = 0
-            log.info("resolution: " + resolution)
+            log.debug("resolution: " + resolution)
             height = (int) Math.ceil((extents[1][1] - extents[0][1]) / resolution)
             width = (int) Math.ceil((extents[1][0] - extents[0][0]) / resolution)
 
             // prep grid files
             String pth1 = getLayerPath("" + resolution, fieldId1)
             String pth2 = getLayerPath("" + resolution, fieldId2)
-            log.info("PATH 1: " + pth1)
-            log.info("PATH 2: " + pth2)
+            log.debug("PATH 1: " + pth1)
+            log.debug("PATH 2: " + pth2)
             Grid grid1 = new Grid(pth1)
             Grid grid2 = new Grid(pth2)
             Properties p1 = new Properties()
@@ -698,7 +698,7 @@ class TabulationGeneratorService {
                 for (File dir : new File(analysisLayerDir).listFiles()) {
                     if (dir.isDirectory()) {
                         try {
-                            log.info(dir.getName())
+                            log.debug(dir.getName())
                             resolutionDirs.put(Double.parseDouble(dir.getName()), dir.getName())
                         } catch (Exception ignored) {
                         }
@@ -723,12 +723,12 @@ class TabulationGeneratorService {
             return layerPath
         } else {
             // look for an analysis layer
-            log.info("getLayerPath, not a default layer, checking analysis output for: " + layer)
+            log.debug("getLayerPath, not a default layer, checking analysis output for: " + layer)
             String[] info = layerService.getAnalysisLayerInfo(layer)
             if (info != null) {
                 return info[1]
             } else {
-                log.info("getLayerPath, cannot find for: " + layer + ", " + resolution)
+                log.debug("getLayerPath, cannot find for: " + layer + ", " + resolution)
                 return null
             }
         }
@@ -756,9 +756,9 @@ class TabulationGeneratorService {
 //            conn = getConnection();
 //            String sql = "SELECT pid1, pid2, ST_AsText(the_geom) as wkt FROM tabulation WHERE pid1 is not null AND area is null " + " limit 100";
 //            if (conn == null) {
-//                log.info("connection is null");
+//                log.debug("connection is null");
 //            } else {
-//                log.info("connection is not null");
+//                log.debug("connection is not null");
 //            }
 //            Statement s1 = conn.createStatement();
 //            ResultSet rs1 = s1.executeQuery(sql);
@@ -768,7 +768,7 @@ class TabulationGeneratorService {
 //                data.add(new String[]{rs1.getString("pid1"), rs1.getString("pid2"), rs1.getString("wkt")});
 //            }
 //
-//            log.info("next " + data.size());
+//            log.debug("next " + data.size());
 //
 //            int size = data.size();
 //
@@ -834,7 +834,7 @@ class TabulationGeneratorService {
 //                    Layer l = layerDao.getLayerById(Integer.valueOf(f.getSpid()));
 //                    String filename = spatialConfig.data.dir + File.separator + l.getPath_orig();
 //
-//                    log.info(filename);
+//                    log.debug(filename);
 //
 //                    //shapefile
 //                    File shp = new File(filename + ".shp");
@@ -877,7 +877,7 @@ class TabulationGeneratorService {
 //                            } else {
 //                                tmp = new File(path + "/" + f.getId() + "_sample");
 //                            }
-//                            log.info("**** tmp file **** > " + tmp.getPath());
+//                            log.debug("**** tmp file **** > " + tmp.getPath());
 //                            fields.add(f);
 //                            files.add(tmp);
 //                            fw = new FileWriter(tmp);
@@ -977,7 +977,7 @@ class TabulationGeneratorService {
 //                    String fid2 = files.get(j).getName().split("_")[0];
 //
 //                    // compare
-//                    log.info("|" + fid1 + "," + fid2);
+//                    log.debug("|" + fid1 + "," + fid2);
 //                    ArrayList<String> sqlUpdates = compare(records, pointIdx, s1, s2, fid1, fid2);
 //
 //                    // batch
@@ -998,7 +998,7 @@ class TabulationGeneratorService {
 //
 //            if (path == null) {
 //                for (int i = 0; i < files.size(); i++) {
-//                    log.info("FILE: " + files.get(i).getPath());
+//                    log.debug("FILE: " + files.get(i).getPath());
 //                    files.get(i).delete();
 //                }
 //            }
@@ -1122,21 +1122,21 @@ class TabulationGeneratorService {
         field1Extents[1][0] = grid1.xmax
         field1Extents[0][1] = grid1.ymin
         field1Extents[1][1] = grid1.ymax
-        log.info("Extents for " + fid + ": " + field1Extents)
+        log.debug("Extents for " + fid + ": " + field1Extents)
 
         SimpleRegion sr = SimpleShapeFile.parseWKT(wkt)
         double[][] field2Extents = sr.getBoundingBox()
 
         double[][] extents = internalExtents(field1Extents, field2Extents)
-        log.info("Internal extents: " + extents)
+        log.debug("Internal extents: " + extents)
         if (!isValidExtents(extents)) {
-            log.info("Warning, no overlap between grids: " + fid)
+            log.debug("Warning, no overlap between grids: " + fid)
             return tabulations
         }
 
         // get mask and adjust extents for filter
         int width = 0, height = 0
-        log.info("resolution: " + resolution)
+        log.debug("resolution: " + resolution)
         height = (int) Math.ceil((extents[1][1] - extents[0][1]) / resolution)
         width = (int) Math.ceil((extents[1][0] - extents[0][0]) / resolution)
 
@@ -1215,13 +1215,13 @@ class TabulationGeneratorService {
 //                        + "ST_Intersects(ST_ENVELOPE(o1.the_geom), ST_ENVELOPE(o2.the_geom));";
 //                //fetch
 //
-//                log.info("start: " + fid1 + "," + fid2);
+//                log.debug("start: " + fid1 + "," + fid2);
 //                long start = System.currentTimeMillis();
 //                PreparedStatement ps = TabulationGenerator.getConnection().prepareStatement(sql);
 //                int update = ps.executeUpdate();
 //                long end = System.currentTimeMillis();
-//                log.info("processed: " + fid1 + "," + fid2 + " in " + (end - start) / 1000 + "s (" + update + ") rows");
-//                log.info(sql);
+//                log.debug("processed: " + fid1 + "," + fid2 + " in " + (end - start) / 1000 + "s (" + update + ") rows");
+//                log.debug(sql);
 //                ps.close();
 //
 //            }

@@ -34,7 +34,7 @@ class SearchService {
     }
 
     List<SearchObject> findByCriteria(String criteria, int offset, int limit, List<String> includeFieldIds, List<String> excludeFieldIds) {
-        log.info("Getting search results for query: " + criteria)
+        log.debug("Getting search results for query: " + criteria)
         String fieldFilter = ""
         List<String> fieldIds = null
         if (includeFieldIds != null && !includeFieldIds.isEmpty()) {
@@ -50,18 +50,18 @@ class SearchService {
 
         List<SearchObject> searchObjects = new ArrayList()
 
-        MapSqlParameterSource parameters = new MapSqlParameterSource()
-        parameters.addValue("nativeQ", criteria)
-        parameters.addValue("criteria", "%" + criteria + "%")
-        parameters.addValue("limit", limit)
-        parameters.addValue("offset", offset)
+        Map parameters = [:]
+        parameters.put("nativeQ", criteria)
+        parameters.put("criteria", "%" + criteria + "%")
+        parameters.put("limit", limit)
+        parameters.put("offset", offset)
 
         if (!fieldFilter.isEmpty()) {
             // use fieldFilter
-            parameters.addValue("fieldIds", fieldIds)
+            parameters.put("fieldIds", fieldIds)
         }
 
-        groovySql.execute(sql, parameters, { ResultSet rs ->
+        groovySql.query(sql, parameters, { ResultSet rs ->
             while (rs.next()) {
                 SearchObject so = new SearchObject()
                 so.pid = rs.getObject(1)
@@ -80,7 +80,7 @@ class SearchService {
         List<SearchObject> additionalFields = new ArrayList<>()
         String fieldMatches = null
         if (searchObjects.size() == 0 && offset > 0) {
-            sql = "select distinct (f.id || '|' || f.name) as fields from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true " + fieldFilter
+            sql = "select distinct (f.id || ' | ' || f.name) as fields from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true " + fieldFilter
             groovySql.execute(sql, parameters, { ResultSet rs ->
                 if (rs.next()) {
                     SearchObject so = new SearchObject()

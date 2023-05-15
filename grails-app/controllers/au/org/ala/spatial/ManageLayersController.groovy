@@ -49,7 +49,7 @@ class ManageLayersController {
      * @return
      */
     def layers() {
-        log.info("List avaliable layers")
+        log.debug("List avaliable layers")
         Map map = [:]
         map.put("layers", manageLayersService.getAllLayers(null))
 
@@ -175,25 +175,25 @@ class ManageLayersController {
      */
     @RequireAdmin
     def upload() {
-        log.info("Receiving upload of zip file")
+        log.debug("Receiving upload of zip file")
         String id = String.valueOf(System.currentTimeMillis())
 
         def file
         try {
             file = request.getFile('file')
-            log.info("Receiving upload of zip file: " + file)
+            log.debug("Receiving upload of zip file: " + file)
             File uploadPath = new File((spatialConfig.data.dir + '/uploads/' + id) as String)
             File uploadFile = new File((spatialConfig.data.dir + '/uploads/' + id + '/id.zip') as String)
             uploadPath.mkdirs()
             file.transferTo(uploadFile)
 
-            log.info("Unzipping upload of zip file...")
+            log.debug("Unzipping upload of zip file...")
             fileService.unzip(uploadFile.getPath(), uploadFile.getParent(), true)
-            log.info("Unzipped upload of zip file.")
+            log.debug("Unzipped upload of zip file.")
 
             //delete uploaded zip now that it has been unzipped
             uploadFile.delete()
-            log.info("Deleting original zip. File moved to: " + spatialConfig.data.dir + '/uploads/' + id)
+            log.debug("Deleting original zip. File moved to: " + spatialConfig.data.dir + '/uploads/' + id)
 
             def result = manageLayersService.processUpload(uploadFile.getParentFile(), id)
             if (result.error){
@@ -435,7 +435,8 @@ class ManageLayersController {
             if ("POST".equalsIgnoreCase(request.method)) {
                 //add field to layerId
                 if (params.containsKey("name")) {
-                    map.putAll manageLayersService.createOrUpdateField(params, id)
+                    def f =  manageLayersService.createOrUpdateField(params, id)
+                    map.putAll(f.properties)
                 } else {
                     map.putAll manageLayersService.createOrUpdateField(request.JSON as Map, id)
                 }

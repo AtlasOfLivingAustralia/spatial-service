@@ -16,6 +16,7 @@
 package au.org.ala.spatial
 
 import au.org.ala.plugins.openapi.Path
+import au.org.ala.spatial.dto.UploadObject
 import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import au.org.ala.spatial.util.SpatialConversionUtils
@@ -27,6 +28,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.io.FileUtils
@@ -84,7 +86,7 @@ class ShapesController {
             summary = "Get WKT for an object",
             parameters = [
                     @Parameter(
-                            name = "id",
+                            name = "pid",
                             in = PATH,
                             description = "Object ID",
                             schema = @Schema(implementation = String),
@@ -105,7 +107,7 @@ class ShapesController {
             ],
             security = []
     )
-    @Path("/shapes/wkt/{id}")
+    @Path("/shapes/wkt/{pid}")
     @Produces("plain/text")
     def wkt(String id) {
         String filename = params?.filename ?: id
@@ -121,8 +123,6 @@ class ShapesController {
         } catch (err) {
             log.error 'failed to get wkt for object: ' + id, err
             response.status = 400
-            Map error = [error: 'failed to get wkt for object: ' + id + "(" + err +")"]
-            render error as JSON
         } finally {
             if (os != null) {
                 try {
@@ -141,7 +141,7 @@ class ShapesController {
             summary = "Get KML for an object",
             parameters = [
                     @Parameter(
-                            name = "id",
+                            name = "pid",
                             in = PATH,
                             description = "Object ID",
                             schema = @Schema(implementation = String),
@@ -162,7 +162,7 @@ class ShapesController {
             ],
             security = []
     )
-    @Path("/shapes/kml/{id}")
+    @Path("/shapes/kml/{pid}")
     @Produces("plain/text")
     def kml(String id) {
         String filename = params?.filename ?: id
@@ -174,7 +174,7 @@ class ShapesController {
             if (id.startsWith("ENVELOPE")) {
                 spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'kml')
             } else if (id.contains('~')) {
-                List ids = id.split('~').collect { LayerIntersectService.cleanObjectId(it).toString() }
+                List ids = id.split('~').collect { cleanObjectId(it) }
 
                 os.write(KML_HEADER
                         .replace("<name></name>", "<name><![CDATA[" + filename + "]]></name>")
@@ -187,14 +187,12 @@ class ShapesController {
 
                 os.write(KML_FOOTER.bytes)
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, LayerIntersectService.cleanObjectId(id).toString(), 'kml')
+                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id), 'kml')
             }
             os.flush()
         } catch (err) {
             log.error 'failed to get kml for object: ' + id, err
             response.status = 400
-            Map error = [error: 'failed to get kml for object: ' + id + "(" + err +")"]
-            render error as JSON
         } finally {
             if (os != null) {
                 try {
@@ -213,7 +211,7 @@ class ShapesController {
             summary = "Get GeoJSON for an object",
             parameters = [
                     @Parameter(
-                            name = "id",
+                            name = "pid",
                             in = PATH,
                             description = "Object ID",
                             schema = @Schema(implementation = String),
@@ -234,7 +232,7 @@ class ShapesController {
             ],
             security = []
     )
-    @Path("/shapes/geojson/{id}")
+    @Path("/shapes/geojson/{pid}")
     @Produces("plain/text")
     def geojson(String id) {
         String filename = params?.filename ?: id
@@ -246,22 +244,20 @@ class ShapesController {
             if (id.startsWith("ENVELOPE")) {
                 spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'geojson')
             } else if (id.contains('~')) {
-                List ids = id.split('~').collect { LayerIntersectService.cleanObjectId(it).toString() }
+                List ids = id.split('~').collect { cleanObjectId(it) }
 
                 String query = "select st_asgeojson(st_collect(geom)) as geojson from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 groovySql.eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject('geojson').toString().bytes)
                 })
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, LayerIntersectService.cleanObjectId(id).toString(), 'geojson')
+                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id), 'geojson')
             }
 
             os.flush()
         } catch (err) {
             log.error 'failed to get geojson for object: ' + id, err
             response.status = 400
-            Map error = [error: 'failed to get geojson for object: ' + id + "(" + err +")"]
-            render error as JSON
         } finally {
             if (os != null) {
                 try {
@@ -280,7 +276,7 @@ class ShapesController {
             summary = "Get zipped shapefile for an object",
             parameters = [
                     @Parameter(
-                            name = "id",
+                            name = "pid",
                             in = PATH,
                             description = "Object ID",
                             schema = @Schema(implementation = String),
@@ -301,7 +297,7 @@ class ShapesController {
             ],
             security = []
     )
-    @Path("/shapes/shp/{id}")
+    @Path("/shapes/shp/{pid}")
     @Produces("application/zip")
     def shp(String id) {
         String filename = params?.filename ?: id
@@ -313,7 +309,7 @@ class ShapesController {
             if (id.startsWith("ENVELOPE")) {
                 spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'shp')
             } else if (id.contains('~')) {
-                List ids = id.split('~').collect { LayerIntersectService.cleanObjectId(it).toString() }
+                List ids = id.split('~').collect { cleanObjectId(it) }
 
                 String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 String wkt = ""
@@ -324,7 +320,7 @@ class ShapesController {
                 File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, 'area', filename, ids.join(','))
                 FileUtils.copyFile(zippedShapeFile, os)
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, LayerIntersectService.cleanObjectId(id).toString(), 'shp')
+                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id), 'shp')
             }
             os.flush()
         } catch (err) {
@@ -388,7 +384,44 @@ class ShapesController {
         return retMap
     }
 
-    // Create from geoJSON
+    @Operation(
+            method = "POST",
+            tags = "object",
+            operationId = "createFromGeoJSON",
+            summary = "Create an object from GeoJSON",
+            parameters = [
+                    @Parameter(
+                            name = "pid",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                mediaType = "application/json",
+                                schema = @Schema(implementation = UploadObject)
+                            )
+                    ]
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Zipped Shapefile",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/zip",
+                                            schema = @Schema(implementation = Distributions)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shapes/uploadGeojson/{pid}")
+    @Produces("application/zip")
     @RequirePermission
     def uploadGeojson(Integer id) {
         //id can be null
@@ -783,7 +816,9 @@ class ShapesController {
         return filename.replaceAll("[^a-zA-Z0-9\\(\\)\\[\\]\\-]", "_")
     }
 
-
+    private static cleanObjectId(String id) {
+        String.valueOf(Long.valueOf(id))
+    }
 
 }
 

@@ -15,8 +15,6 @@
 
 package au.org.ala.spatial
 
-
-import au.org.ala.spatial.dto.Upload
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.services.ServiceUnitTest
 import org.apache.commons.io.FileUtils
@@ -87,7 +85,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
             field
         }
 
-        Upload list = service.getUpload(uploadId)
+        def list = service.getUpload(uploadId)
         list.created = null // do not test for timestamp
 
         then:

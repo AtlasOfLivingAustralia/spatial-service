@@ -113,7 +113,7 @@ class Scatterplot {
         }
 
         //if >2 layers, build all of them and html for displaying them
-//        log.info ("Get layers ....");
+//        log.debug ("Get layers ....");
         int layercount = scatterplotDTO.getLayers().length
         String[] layers = scatterplotDTO.getLayers()
         if (layercount > 2) {
@@ -766,7 +766,7 @@ class Scatterplot {
 
     private void resample(boolean foreground) {
         //no change = no data refresh
-        log.info("Resample....")
+        log.debug("Resample....")
         if (foreground) {
             if (scatterplotDataDTO.getPoints() != null
                     && scatterplotDataDTO.getColourMode() != null && scatterplotDataDTO.getColourMode() == scatterplotStyleDTO.getColourMode()) {
@@ -1084,7 +1084,7 @@ class Scatterplot {
     private double[][] samplePoints(double[][] p, java.util.List<String[]>  layersToSample) {
 
         String[] layers = layersToSample
-        log.info("Sampling points... ")
+        log.debug("Sampling points... ")
         java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p)
 
         double[][] d = new double[p.length][layers.length]
@@ -1106,14 +1106,14 @@ class Scatterplot {
             scanners[i].close()
         }
 
-        log.info( p.length + " sampling points done.")
+        log.debug( p.length + " sampling points done.")
         return d
     }
 
     private String[] sampleSeries(double[][] p, String seriesName) {
 
         String[] layers = [seriesName]
-        log.info("Sampling series... ")
+        log.debug("Sampling series... ")
         java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p)
 
         String[] series = new String[p.length]

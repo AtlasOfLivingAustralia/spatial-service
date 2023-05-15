@@ -30,19 +30,24 @@ class Fields {
         table 'fields'
         id generator: 'assigned'
         version false
+        desc column: '"desc"'
+        intersect column: '"intersect"'
+    }
+
+    static constraints = {
         spid nullable: true
         last_update nullable: true
         sid nullable: true
         sname nullable: true
         sdesc nullable: true
-        desc column: '"desc"', nullable: true
+        desc nullable: true
         name nullable: true
         type nullable: true
         indb nullable: true
         enabled nullable: true
         namesearch nullable: true
         defaultlayer nullable: true
-        intersect column: '"intersect"', nullable: true
+        intersect nullable: true
         layerbranch nullable: true
         analysis nullable: true
         addtomap nullable: true

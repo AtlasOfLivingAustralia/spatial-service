@@ -47,8 +47,7 @@ class LayerCopy extends SlaveProcess {
         }
 
         //get layer files
-        //TODO: do not download layer files if they are already up to date
-        //getFile("/layer/${layer.name}", sourceUrl)
+        getFile("/layer/${layer.name}", sourceUrl)
         addOutputFiles("/layer/${layer.name}", true)
 
         //get standardized files

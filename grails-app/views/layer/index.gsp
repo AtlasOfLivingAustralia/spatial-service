@@ -16,6 +16,7 @@
 </head>
 
 <body class="fluid">
+<g:set var="spatialConfig" bean="spatialConfig"/>
 <div class="pull-right">
     <button onclick="downloadCSV()" class="btn btn-sm btn-default">
         <i class="glyphicon glyphicon-download-alt"></i> Download as CSV

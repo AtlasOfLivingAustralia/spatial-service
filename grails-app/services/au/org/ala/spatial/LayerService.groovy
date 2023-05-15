@@ -28,7 +28,7 @@ class LayerService {
     FieldService fieldService
 
     List<Layers> getLayers() {
-        log.info("Getting a list of all enabled layers")
+        log.debug("Getting a list of all enabled layers")
         List<Layers> l = Layers.findAllByEnabled(true)
         fieldService.updateDisplayPaths(l)
         return l
@@ -39,19 +39,21 @@ class LayerService {
     }
 
     Layers getLayerById(Long id, boolean enabledLayersOnly = true) {
-        log.info("Getting enabled layer info for id = " + id)
+        log.debug("Getting enabled layer info for id = " + id)
         Layers l
-        if (enabledLayersOnly) {
-            l = Layers.findByIdAndEnabled(id, enabledLayersOnly)
-        } else {
-            l = Layers.findById(id)
+        Layers.withTransaction {
+            if (enabledLayersOnly) {
+                l = Layers.findByIdAndEnabled(id, enabledLayersOnly)
+            } else {
+                l = Layers.findById(id)
+            }
         }
         fieldService.updateDisplayPaths([l])
         l
     }
 
     void updateLayer(Layers layer) {
-        log.info("Updating layer metadata for " + layer.getName())
+        log.debug("Updating layer metadata for " + layer.getName())
         String sql = "update layers set citation_date=:citation_date, classification1=:classification1, classification2=:classification2, datalang=:datalang, description=:description, displayname=:displayname, displaypath=:displaypath, enabled=:enabled, domain=:domain, environmentalvaluemax=:environmentalvaluemax, environmentalvaluemin=:environmentalvaluemin, environmentalvalueunits=:environmentalvalueunits, extents=:extents, keywords=:keywords, licence_link=:licence_link, licence_notes=:licence_notes, licence_level=:licence_level, lookuptablepath=:lookuptablepath, maxlatitude=:maxlatitude, maxlongitude=:maxlongitude, mddatest=:mddatest, mdhrlv=:mdhrlv, metadatapath=:metadatapath, minlatitude=:minlatitude, minlongitude=:minlongitude, name=:name, notes=:notes, path=:path, path_1km=:path_1km, path_250m=:path_250m, path_orig=:path_orig, pid=:pid, respparty_role=:respparty_role, scale=:scale, source=:source, source_link=:source_link, type=:type, uid=:uid where id=:id"
         Layers.executeUpdate(sql, layer)
     }
@@ -67,7 +69,7 @@ class LayerService {
         if (enabledLayersOnly) {
             layer = Layers.findByNameAndEnabled(name, true)
         } else {
-            layer = Layers.findByNameAndEnabled(name)
+            layer = Layers.findByName(name)
         }
         fieldService.updateDisplayPaths([layer])
 
@@ -100,7 +102,7 @@ class LayerService {
 
 
     List<Layers> getLayersByCriteria(String keywords) {
-        log.info("Getting a list of all enabled layers by criteria: " + keywords)
+        log.debug("Getting a list of all enabled layers by criteria: " + keywords)
         String sql = ""
         sql += "select * from layers where "
         sql += " enabled=true AND ( "
@@ -151,7 +153,7 @@ class LayerService {
 
 
 //    void addLayer(Layer layer) {
-//        log.info("Add new layer metadta for " + layer.getName())
+//        log.debug("Add new layer metadta for " + layer.getName())
 //
 //        Map<String, Object> parameters = layer.toMap()
 //        parameters.remove("uid")
@@ -175,7 +177,7 @@ class LayerService {
 //
 //
 //    void updateLayer(Layer layer) {
-//        log.info("Updating layer metadata for " + layer.getName())
+//        log.debug("Updating layer metadata for " + layer.getName())
 //        String sql = "update layers set citation_date=:citation_date, classification1=:classification1, classification2=:classification2, datalang=:datalang, description=:description, displayname=:displayname, displaypath=:displaypath, enabled=:enabled, domain=:domain, environmentalvaluemax=:environmentalvaluemax, environmentalvaluemin=:environmentalvaluemin, environmentalvalueunits=:environmentalvalueunits, extents=:extents, keywords=:keywords, licence_link=:licence_link, licence_notes=:licence_notes, licence_level=:licence_level, lookuptablepath=:lookuptablepath, maxlatitude=:maxlatitude, maxlongitude=:maxlongitude, mddatest=:mddatest, mdhrlv=:mdhrlv, metadatapath=:metadatapath, minlatitude=:minlatitude, minlongitude=:minlongitude, name=:name, notes=:notes, path=:path, path_1km=:path_1km, path_250m=:path_250m, path_orig=:path_orig, pid=:pid, respparty_role=:respparty_role, scale=:scale, source=:source, source_link=:source_link, type=:type, uid=:uid where id=:id"
 //        namedParameterJdbcTemplate.update(sql, layer.toMap())
 //    }
@@ -191,7 +193,7 @@ class LayerService {
 
     Map<String, IntersectionFile> getIntersectionFiles() {
         //TODO
-        null
+        [:]
     }
 
     String[] getAnalysisLayerInfoV2(String id) {
@@ -279,7 +281,7 @@ class LayerService {
             filename = spatialConfig.data.dir + File.separator + 'layer' + File.separator + "gdm" + File.separator + gid + File.separator + gdmparts[1] + "Tran"
             log.error("id: " + id)
             log.error("parts: " + gdmparts[0] + ", " + gdmparts[1])
-            log.info("parts: " + gdmparts[0] + ", " + gdmparts[1])
+            log.debug("parts: " + gdmparts[0] + ", " + gdmparts[1])
             log.error("filename: " + filename)
             IntersectionFile f = getIntersectionFile(gdmparts[1])
             name = "Transformed " + (f != null ? f.getFieldName() : gdmparts[1])

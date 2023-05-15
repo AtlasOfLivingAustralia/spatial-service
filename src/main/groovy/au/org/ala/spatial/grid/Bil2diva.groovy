@@ -46,7 +46,7 @@ class Bil2diva {
             return success
         }
 
-        log.info("Running .bil to diva grid conversion for: " + bilFilename)
+        log.debug("Running .bil to diva grid conversion for: " + bilFilename)
         boolean ret = true
         BufferedReader br = null
         FileWriter fw = null
@@ -151,7 +151,7 @@ class Bil2diva {
                 missingValue = Double.parseDouble(noDataValueString)
             }
 
-            log.info("Reading .bil min and max values")
+            log.debug("Reading .bil min and max values")
             double[] minmax = getMinMax(nbits, pixelType, nrows, ncols, byteOrder, missingValue, bilFile)
 
             //If no nodata value was supplied, use the minimum value - 1.
@@ -171,7 +171,7 @@ class Bil2diva {
 
             fw.flush()
 
-            log.info("Creating diva grid file: " + divaFilename)
+            log.debug("Creating diva grid file: " + divaFilename)
 
             //copy bil to gri
             fis = new FileInputStream(bilFile)
@@ -216,7 +216,7 @@ class Bil2diva {
             }
         }
 
-        log.info(".bil to diva grid conversion complete")
+        log.debug(".bil to diva grid conversion complete")
         return ret
     }
 
@@ -311,7 +311,7 @@ class Bil2diva {
                         updateMinMax(minmax, byteBuffer.getDouble(), missingValue)
 
                     } else {
-                        log.info("UNKNOWN TYPE: " + datatype)
+                        log.debug("UNKNOWN TYPE: " + datatype)
                     }
                 }
             }

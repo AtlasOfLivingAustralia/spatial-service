@@ -31,7 +31,7 @@ class FieldService {
     SpatialConfig spatialConfig
 
     Fields getFieldById(String id, boolean enabledFieldsOnly = true) {
-        log.info("Getting enabled field info for id = " + id)
+        log.debug("Getting enabled field info for id = " + id)
         String sql = "select *, number_of_objects from fields, (select count(*) as number_of_objects from objects where fid = :id ) o where id = :id "
         if (enabledFieldsOnly) {
             sql += " and enabled=true"
@@ -59,13 +59,13 @@ class FieldService {
     }
 
     List<Fields> getFieldsByDB() {
-        log.info("Getting a list of all enabled fields with indb")
+        log.debug("Getting a list of all enabled fields with indb")
         Fields.findAllByEnabledAndIndb(true, true)
     }
 
 
 //    synchronized void addField(Field field) {
-//        log.info("Add new field for " + field.getName())
+//        log.debug("Add new field for " + field.getName())
 //
 //        Map<String, Object> parameters = field.toMap()
 //        parameters.remove("id")
@@ -119,23 +119,6 @@ class FieldService {
 //    }
 //
 //
-//    void updateField(Field field) {
-//        log.info("Updating field metadata for " + field.getName())
-//
-//        String sql = "update fields set name=:name, " +
-//                "\"desc\"=:desc, type=:type, " +
-//                "spid=:spid, sid=:sid, sname=:sname, " +
-//                "sdesc=:sdesc, indb=:indb, enabled=:enabled, " +
-//                "namesearch=:namesearch, defaultlayer=:defaultlayer, " +
-//                "\"intersect\"=:intersect, layerbranch=:layerbranch, analysis=:analysis," +
-//                " addtomap=:addtomap where id=:id"
-//
-//        Map map = field.toMap()
-//        map.remove("layer")
-//        namedParameterJdbcTemplate.update(sql, map)
-//    }
-//
-//
     void delete(String fieldId) {
         Fields f = getFieldById(fieldId)
 
@@ -146,7 +129,7 @@ class FieldService {
     }
 
     void updateField(Fields field) {
-        log.info("Updating field metadata for " + field.getName())
+        log.debug("Updating field metadata for " + field.getName())
 
         String sql = "update fields set name=:name, " +
                 "\"desc\"=:desc, type=:type, " +
@@ -156,8 +139,8 @@ class FieldService {
                 "\"intersect\"=:intersect, layerbranch=:layerbranch, analysis=:analysis," +
                 " addtomap=:addtomap where id=:id"
 
-        Map map = field as Map
-        map.remove("layer")
+        Map map = field.properties
+        map.put('id', field.id)
         Fields.executeUpdate(sql, map)
     }
 
@@ -166,7 +149,7 @@ class FieldService {
     }
 
     List<Fields> getByKeywords(String keywords) {
-        log.info("Getting a list of all enabled fields by criteria: " + keywords)
+        log.debug("Getting a list of all enabled fields by criteria: " + keywords)
         String sql = ""
         sql += "select f.*, l.* from fields f inner join layers l on f.spid = l.id || '' where "
         sql += "l.enabled=true AND f.enabled=true AND ( "
@@ -285,7 +268,7 @@ class FieldService {
         if (field) {
 
             //include field objects
-            log.info('field id: ' + id)
+            log.debug('field id: ' + id)
             field.objects = spatialObjectsService.getObjectsById(id, start, pageSize, q)
         }
 

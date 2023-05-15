@@ -224,7 +224,7 @@ class GridCutterService {
             if (info != null) {
                 return info[1]
             } else {
-                log.info("getLayerPath, cannot find for: " + layer + ", " + resolution)
+                log.debug("getLayerPath, cannot find for: " + layer + ", " + resolution)
                 return null
             }
         }

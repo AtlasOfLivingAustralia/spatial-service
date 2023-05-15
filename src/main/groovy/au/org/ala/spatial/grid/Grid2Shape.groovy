@@ -300,7 +300,7 @@ import java.util.Map.Entry
         int groupCount = 0
         for (int i = 0; i < nrows; i++) {
             if (time < System.currentTimeMillis()) {
-                log.info(sdf.format(new Date()) + " processing row " + i + " of " + nrows)
+                log.debug(sdf.format(new Date()) + " processing row " + i + " of " + nrows)
                 time = System.currentTimeMillis() + 10000
             }
             for (int j = 0; j < ncols; j++) {
@@ -489,7 +489,7 @@ import java.util.Map.Entry
 
         //follow edges
         if (keys == null || keys.isEmpty()) {
-            log.info("no polygons for this key value")
+            log.debug("no polygons for this key value")
             return characterPos
         }
         int thisKey = keys.get(0)
@@ -856,7 +856,7 @@ import java.util.Map.Entry
                             break
                         }
                     }
-                    log.info("path not coded")
+                    log.debug("path not coded")
                     break
                 case rEdge:
                     if ((edges[current.pos] & bEdge) > 0) {
@@ -880,7 +880,7 @@ import java.util.Map.Entry
                             break
                         }
                     }
-                    log.info("path not coded")
+                    log.debug("path not coded")
                     break
                 case tEdge:
                     if ((edges[current.pos] & rEdge) > 0) {
@@ -904,7 +904,7 @@ import java.util.Map.Entry
                             break
                         }
                     }
-                    log.info("path not coded")
+                    log.debug("path not coded")
                     break
                 case bEdge:
                     if ((edges[current.pos] & lEdge) > 0) {
@@ -928,11 +928,11 @@ import java.util.Map.Entry
                             break
                         }
                     }
-                    log.info("path not coded")
+                    log.debug("path not coded")
                     break
             }
         } else { //!currentCw
-            log.info("path not coded")
+            log.debug("path not coded")
         }
     }
 

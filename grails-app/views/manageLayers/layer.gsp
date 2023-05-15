@@ -14,6 +14,7 @@
 </head>
 
 <body class="fluid">
+<g:set var="spatialConfig" bean="spatialConfig"/>
 
 <div>
     <div class="col-lg-8">

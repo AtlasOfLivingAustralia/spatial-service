@@ -64,7 +64,7 @@ class AreaReport extends SlaveProcess {
         }
 
         // add page names to list of available pages
-        spec.inputSpecification.ignoredPages.constraintSpecification.content = headers
+        spec.inputSpecification?.ignoredPages?.constraintSpecification?.content = headers
     }
 
     static byte[] getFileAsBytes(String file, String configPath) throws Exception {

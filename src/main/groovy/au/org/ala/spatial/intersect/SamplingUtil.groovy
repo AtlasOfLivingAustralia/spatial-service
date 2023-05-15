@@ -129,7 +129,7 @@ class SamplingUtil {
 
                 long end = System.currentTimeMillis()
 
-                log.info("sample time for " + layers.length + " layers and " + 3 + " coordinates: get response="
+                log.debug("sample time for " + layers.length + " layers and " + 3 + " coordinates: get response="
                         + (mid - start) + "ms, write response=" + (end - mid) + "ms")
 
             } else {

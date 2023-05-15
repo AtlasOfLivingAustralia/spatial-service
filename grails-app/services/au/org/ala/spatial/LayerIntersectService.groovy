@@ -32,7 +32,6 @@ import java.util.concurrent.LinkedBlockingQueue
  *
  * @author adam
  */
-//@CompileStatic
 class LayerIntersectService {
 
     /**
@@ -547,7 +546,7 @@ class LayerIntersectService {
     }
 
     ArrayList<String> localSampling(IntersectionFile[] intersectionFiles, double[][] points, IntersectCallback callback) {
-        log.info("begin LOCAL sampling, number of threads " + spatialConfig.batch_thread_count
+        log.debug("begin LOCAL sampling, number of threads " + spatialConfig.batch_thread_count
                 + ", number of layers=" + intersectionFiles.length + ", number of coordinates=" + points.length)
         long start = System.currentTimeMillis()
         int threadCount = spatialConfig.batch_thread_count
@@ -561,7 +560,7 @@ class LayerIntersectService {
         }
 
         callback.setLayersToSample(intersectionFiles)
-        log.info("Initialising sampling threads: " + threadCount)
+        log.debug("Initialising sampling threads: " + threadCount)
         for (int i = 0; i < threadCount; i++) {
             threads[i] = new SamplingThread(lbq,
                     cdl,
@@ -590,7 +589,7 @@ class LayerIntersectService {
             }
         }
 
-        log.info("End sampling, threads=" + threadCount
+        log.debug("End sampling, threads=" + threadCount
                 + " layers=" + intersectionFiles.length
                 + " in " + (System.currentTimeMillis() - start) + "ms")
         return output

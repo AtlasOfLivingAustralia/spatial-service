@@ -2,7 +2,9 @@ package au.org.ala.spatial.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
+import groovy.transform.CompileStatic
 
+@CompileStatic
 @AutoClone
 class ProcessSpecification {
     String name
@@ -32,11 +34,11 @@ class ProcessSpecification {
     @JsonProperty("input")
     Map<String, InputSpecification> inputSpecification
 
-    class InputSpecification {
+    static class InputSpecification {
         String description
         InputType type
 
-        @JsonProperty("constraint")
+        @JsonProperty("constraints")
         ConstraintSpecification constraintSpecification
     }
 
@@ -51,10 +53,13 @@ class ProcessSpecification {
         STRING, // String value
         UPLOAD, // Uploaded layer file. Admin processes only.
         ENVELOPE, // Layer and ranges used to define an envelope\
-        LAYER // List of Fields
+        LAYER, // List of Fields
+        COLOUR, // Colour selection
+        TEXT, // Text area
+        PROCESS // A prior process
     }
 
-    class ConstraintSpecification {
+    static class ConstraintSpecification {
         Double min  // (DOUBLE, INT, BOOLEAN): min value, (AREA, SPECIES, LIST, LAYER): min number of items
         Double max  // (DOUBLE, INT), BOOLEAN: max value, (AREA, SPECIES, LIST, LAYER): max number of items
         Double defaultvalue // (DOUBLE, INT, BOOLEAN, LIST): defalut value,
@@ -86,7 +91,7 @@ class ProcessSpecification {
         PROCESS, // Tasks to queue
     }
 
-    class OutputSpecification {
+    static class OutputSpecification {
         String description
     }
 }

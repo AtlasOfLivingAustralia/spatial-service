@@ -95,7 +95,7 @@ class SpatialObjectsService {
 
 
     List<SpatialObjects> getObjects() {
-        log.info("Getting a list of all objects")
+        log.debug("Getting a list of all objects")
         String sql = "select o.pid as pid, o.id as id, o.name as name, o.desc as description, o.fid as fid, " +
                 "f.name as fieldname, o.area_km as area_km from objects o, fields f where o.fid = f.id"
         List<SpatialObjects> objects = SpatialObjects.executeQuery(sql)
@@ -108,7 +108,7 @@ class SpatialObjectsService {
         String upperCaseFilter = filter.toUpperCase()
         filter = "%" + filter + "%"
 
-        log.info("Getting object info for fid = " + id)
+        log.debug("Getting object info for fid = " + id)
         String limit_offset = " limit " + (pageSize < 0 ? "all" : pageSize) + " offset " + start
         String sql = "select o.pid as pid, o.id as id, o.name as name, o.desc as description, " +
                 "o.fid as fid, f.name as fieldname, o.bbox, o.area_km, " +
@@ -267,7 +267,7 @@ class SpatialObjectsService {
 
 
     void streamObjectsGeometryById(OutputStream os, String id, String geomtype) throws IOException {
-        log.info("Getting object info for id = " + id + " and geometry as " + geomtype)
+        log.debug("Getting object info for id = " + id + " and geometry as " + geomtype)
 
 
         List<SpatialObjects> l = SpatialObjects.findAllByPid(id)
@@ -297,13 +297,6 @@ class SpatialObjectsService {
                 Encoder encoder = new Encoder(new KMLConfiguration())
                 encoder.setIndenting(true)
                 encoder.encode(featureCollection, KML.kml, os )
-
-//                os.write(KML_HEADER
-//                        .replace("<name></name>", "<name><![CDATA[" + l.get(0).getName() + "]]></name>")
-//                        .replace("<description></description>", "<description><![CDATA[" + l.get(0).desc + "]]></description>").bytes)
-//
-//                os.write(l.get(0).geometry.toString().bytes)
-//                os.write(KML_FOOTER.bytes)
             } else if ("wkt" == geomtype) {
                 os.write(l.get(0).geometry.toText().bytes)
             } else if ("geojson" == geomtype) {
@@ -322,10 +315,10 @@ class SpatialObjectsService {
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
 
-                fjson.writeFeature(feature(1), writer)
+                fjson.writeFeature(feature, writer)
 
                 String json = writer.toString()
-                os.write(json)
+                os.write(json.bytes)
             }
 
         } else {
@@ -456,7 +449,7 @@ class SpatialObjectsService {
 
 
     SpatialObjects getObjectByPid(String pid) {
-        log.info("Getting object info for pid = " + pid)
+        log.debug("Getting object info for pid = " + pid)
         String sql = "select o.pid, o.id, o.name, o.desc as description, o.fid as fid, f.name as fieldname, " +
                 "o.bbox, o.area_km from objects o inner join fields f on o.fid = f.id where o.pid = ?"
         List<SpatialObjects> l = []
@@ -520,7 +513,7 @@ class SpatialObjectsService {
 
 
     SpatialObjects getObjectByIdAndLocation(String fid, Double lng, Double lat) {
-        log.info("Getting object info for fid = " + fid + " at loc: (" + lng + ", " + lat + ") ")
+        log.debug("Getting object info for fid = " + fid + " at loc: (" + lng + ", " + lat + ") ")
         String sql = "select o.pid, o.id, o.name, o.desc as description, o.fid as fid, f.name as fieldname, " +
                 "o.bbox, o.area_km from search_objects_by_geometry_intersect(?, " +
                 "ST_GeomFromText('POINT(" + lng + " " + lat + ")', 4326)) o, fields f WHERE o.fid = f.id"
@@ -567,7 +560,7 @@ class SpatialObjectsService {
 
 
     List<SpatialObjects> getNearestObjectByIdAndLocation(String fid, int limit, Double lng, Double lat) {
-        log.info("Getting " + limit + " nearest objects in field fid = " + fid + " to loc: (" + lng + ", " + lat + ") ")
+        log.debug("Getting " + limit + " nearest objects in field fid = " + fid + " to loc: (" + lng + ", " + lat + ") ")
 
         String sql = "select fid, name, o.desc, pid, id, st_astext(the_geom), " +
                 "ST_DistanceSphere(ST_SETSRID(ST_Point( ? , ? ),4326), the_geom) as distance, " +

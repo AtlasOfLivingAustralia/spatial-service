@@ -96,14 +96,14 @@ class GridCacheReader {
                 })
             }
 
-            log.info("starting...")
+            log.debug("starting...")
             long start = System.currentTimeMillis()
 
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount)
             List<Future<ArrayList<HashMap<String, Float>>>> output = executorService.invokeAll(tasks)
 
             long end = System.currentTimeMillis() - start
-            log.info("sampling time " + end + "ms for " + points.size() / 2)
+            log.debug("sampling time " + end + "ms for " + points.size() / 2)
 
             return end
         } catch (Exception e) {

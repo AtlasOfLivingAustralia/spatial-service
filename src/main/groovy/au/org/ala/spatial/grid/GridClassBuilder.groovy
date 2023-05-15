@@ -88,7 +88,7 @@ import java.util.zip.ZipOutputStream
                 translateKeys.put(k, translateValues.get(value))
 
             } catch (NumberFormatException ignored) {
-                log.info("Excluding shape key '" + key + "'")
+                log.debug("Excluding shape key '" + key + "'")
             } catch (Exception e) {
                 log.error(e.getMessage(), e)
             }
@@ -128,7 +128,7 @@ import java.util.zip.ZipOutputStream
 
                     if (klist.size() == 1) klist = null
 
-                    log.info("getting wkt for " + filePath + " > " + key)
+                    log.debug("getting wkt for " + filePath + " > " + key)
 
                     Map wktIndexed = Envelope.getGridSingleLayerEnvelopeAsWktIndexed(filePath + "," + key + "," + key, klist, wktMap)
 
@@ -167,7 +167,7 @@ import java.util.zip.ZipOutputStream
                             }
                         }
                     }
-                    log.info("wkt written to file")
+                    log.debug("wkt written to file")
                     gc.setArea_km(SpatialUtils.calculateArea((String) wktIndexed.get("wkt")) / 1000.0 / 1000.0 as Double)
 
                     //store map
@@ -233,7 +233,7 @@ import java.util.zip.ZipOutputStream
                     gc.setMinShapeIdx(minPolygonNumber)
                     gc.setMaxShapeIdx(maxPolygonNumber)
 
-                    log.info("getting multipolygon for " + filePath + " > " + key)
+                    log.debug("getting multipolygon for " + filePath + " > " + key)
                     MultiPolygon mp = Envelope.getGridEnvelopeAsMultiPolygon(filePath + "," + key + "," + key)
                     gc.setBbox(mp.getEnvelope().toText().replace(" (", "(").replace(", ", ","))
 
@@ -261,7 +261,7 @@ import java.util.zip.ZipOutputStream
                                 }
                             }
                         }
-                        log.info("kml written to file")
+                        log.debug("kml written to file")
 
                         final SimpleFeatureType TYPE = DataUtilities.createType("class", "the_geom:MultiPolygon,id:Integer,name:String")
                         FeatureJSON fjson = new FeatureJSON()
@@ -290,7 +290,7 @@ import java.util.zip.ZipOutputStream
                                 }
                             }
                         }
-                        log.info("geojson written to file")
+                        log.debug("geojson written to file")
 
                         //write class shape file
                         File newFile = new File(filePath + File.separator + key + ".shp")
@@ -371,7 +371,7 @@ import java.util.zip.ZipOutputStream
                                 }
                             }
                         }
-                        log.info("shape file written to zip")
+                        log.debug("shape file written to zip")
                     } catch (Exception e) {
                         log.error(e.getMessage(), e)
                     }

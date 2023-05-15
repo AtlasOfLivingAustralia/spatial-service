@@ -70,7 +70,7 @@ class GridFileLegends {
             legends[i].exportImage(d, g.ncols, output_name + "_" + legends[i].getTypeName() + ".jpg", Math.max(8, g.ncols / 800 as double) as int, false)
             legends[i].exportLegend(output_name + "_" + legends[i].getTypeName() + "_legend.txt")
 
-            log.info(output_name + "," + legends[i].getTypeName() + ": " + String.valueOf(e2))
+            log.debug(output_name + "," + legends[i].getTypeName() + ": " + String.valueOf(e2))
             if (firstTime || e2 <= minE) {
                 minE = e2
                 minI = i
@@ -110,6 +110,6 @@ class GridFileLegends {
             log.error(e.getMessage(), e)
         }
 
-        log.info(output_name + ",best=" + legends[minI].getTypeName())
+        log.debug(output_name + ",best=" + legends[minI].getTypeName())
     }
 }
