@@ -28,7 +28,6 @@ import javax.ws.rs.Produces
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
-//@CompileStatic
 class JournalMapController {
 
     JournalMapService journalMapService

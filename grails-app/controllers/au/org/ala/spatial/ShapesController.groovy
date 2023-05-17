@@ -368,13 +368,11 @@ class ShapesController {
         try {
             if (pid != null) {
                 spatialObjectsService.updateUserUploadedObject(pid, wkt, name, description, user_id)
-                spatialObjectsService.updateObjectNames()
                 retMap.put("updated", true)
             } else {
                 String generatedPid = spatialObjectsService.createUserUploadedObject(wkt, name, description, user_id)
-                spatialObjectsService.updateObjectNames()
                 retMap.put("id", Integer.parseInt(generatedPid))
-            }
+            } 5
 
         } catch (Exception ex) {
             log.error("Error uploading geojson", ex)
@@ -445,11 +443,9 @@ class ShapesController {
 
             if (pid != null) {
                 spatialObjectsService.updateUserUploadedObject(pid, wkt, name, description, user_id)
-                spatialObjectsService.updateObjectNames()
                 retMap.put("updated", true)
             } else {
                 String generatedPid = spatialObjectsService.createUserUploadedObject(wkt, name, description, user_id, namesearch)
-                spatialObjectsService.updateObjectNames()
                 retMap.put("id", Integer.parseInt(generatedPid))
             }
 

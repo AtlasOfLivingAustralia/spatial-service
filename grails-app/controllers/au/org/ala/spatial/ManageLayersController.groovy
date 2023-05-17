@@ -22,9 +22,12 @@ import org.apache.commons.io.IOUtils
 import org.hibernate.criterion.CriteriaSpecification
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
+
+import javax.transaction.Transactional
 import java.text.SimpleDateFormat
 
 @RequirePermission
+@Transactional
 class ManageLayersController {
 
     ManageLayersService manageLayersService
@@ -309,6 +312,7 @@ class ManageLayersController {
      * @return
      */
     @RequireAdmin
+    @Transactional
     def layer(String id) {
         String layerId = id
         Map map = [:]
@@ -629,5 +633,50 @@ class ManageLayersController {
             fieldService.updateField(field)
         }
         render ''
+    }
+
+    /**
+     * to deliver resources (area WKT and layer files) to slaves in a zip
+     * a layer: 'cl...', 'el...', will provide the sample-able files (original extents) - shape files or diva grids
+     * a layer: 'cl..._res', 'el..._res', will provide the standardized files at the requested resolution
+     *          (or next detailed) - shape files or diva grids
+     *
+     * admin only or api_key, do not redirect to CAS
+     * @return
+     */
+    @RequireAdmin
+    def resource() {
+        OutputStream outputStream = null
+        try {
+            outputStream = response.outputStream as OutputStream
+            //write resource
+            response.setContentType("application/octet-stream")
+            response.setHeader("Content-disposition", "attachment;filename=${params.resource}.zip")
+            fileService.write(outputStream, params.resource as String)
+            outputStream.flush()
+        } catch (err) {
+            log.error(err.getMessage(), err)
+        } finally {
+            if (outputStream != null) {
+                try {
+                    outputStream.close()
+                } catch (err) {
+                    log.error(err.getMessage(), err)
+                }
+            }
+        }
+    }
+
+    /**
+     * for slaves to peek at a resource on the master
+     *
+     * admin only or api_key, do not redirect to CAS
+     *
+     * @return
+     */
+    @RequireAdmin
+    def resourcePeek() {
+        //write resource
+        render fileService.info(params.resource.toString()) as JSON
     }
 }

@@ -65,13 +65,13 @@ class LayerCopy extends SlaveProcess {
         }
 
         resolutions.each { res ->
-            //getFile("/standard_layer/${res}/${field.id}", sourceUrl)
+            getFile("/standard_layer/${res}/${field.id}", sourceUrl)
             addOutputFiles("/standard_layer/${res}/${field.id}")
         }
 
         //get layerdistances
         taskLog("get layer distances")
-        getFile('/public/layerDistances.properties')
+        getFile('/public/layerDistances.properties', sourceUrl)
         JSONObject dists = JSON.parse(Util.getUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json")) as JSONObject
         def distString = ''
         for (def f : getFields()) {

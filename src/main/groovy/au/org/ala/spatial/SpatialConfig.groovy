@@ -16,6 +16,7 @@ class SpatialConfig {
         String serverURL
     }
 
+    String serviceKey   // used to authenticate copying layers from one spatial service to another
 
     DotTask task
 
@@ -62,17 +63,21 @@ class SpatialConfig {
     DotUrl lists
     DotUrl collections
     DotGeoserver geoserver
-    static
-    class DotGeoserver {
+
+    static class DotGeoserver {
         String url
         Boolean canDeploy
         String username
         String password
         DotRemote remote
+        SpatialService spatialservice
     }
 
-    static
-    class DotRemote {
+    static class SpatialService {
+        boolean colocated
+    }
+
+    static class DotRemote {
         String geoserver_data_dir
     }
     DotBaseUrl bie

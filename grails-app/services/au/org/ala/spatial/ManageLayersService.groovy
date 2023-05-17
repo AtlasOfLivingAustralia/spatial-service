@@ -473,15 +473,7 @@ class ManageLayersService {
                 map.putAll(layer.properties)
             }
 
-            List<Fields> fieldList = fieldService.getFields()
-            def fields = []
-            for (Fields fs : fieldList) {
-                if (fs.getSpid() == map.get('layer_id')) {
-                    fields.add(fs)
-                }
-            }
-
-            map.put("fields", fields)
+            map.put("fields", Fields.findAllBySpid(map.get('layer_id')))
 
         } else {
             //fetch defaults
@@ -634,18 +626,6 @@ class ManageLayersService {
 //                geoserverUsername, geoserverPassword,
 //                null,null,
 //                "text/plain");
-
-        //Soft deletes
-        File dir = new File(layersDir + "/uploads/" + id + "/")
-        if (dir.exists()) {
-            try {
-                def deletedUploadsDir = new File(layersDir + "/uploads-deleted/")
-                FileUtils.forceMkdir(deletedUploadsDir)
-                FileUtils.moveDirectory(dir, new File(layersDir + "/uploads-deleted/" + id ))
-            } catch (Exception e) {
-                log.error("Problem moving directory. Unable to move", e.getMessage())
-            }
-        }
     }
 
     def deleteField(String fieldId) {
@@ -848,15 +828,16 @@ class ManageLayersService {
     }
 
     def createOrUpdateLayer(Map map, String id, boolean createTask = true) {
-        Layers layer = new Layers()
+        Layers layer = Layers.get(id) ?: new Layers()
         layer.properties.each {
             if (map.containsKey(it.key)) {
-                it.value = map.get(it.key)
+                layer.properties.put(it.key, map.get(it.key))
             }
         }
         if (map.containsKey('id')) {
-            layer.id = map.get('id')
+            layer.id = map.get('id') as Long
         }
+
         createOrUpdateLayer(layer, id, createTask)
     }
 
@@ -883,35 +864,26 @@ class ManageLayersService {
             } catch (ignored) {
                 log.debug 'unable to read uploads layer.id for ' + id
             }
-            Layers originalLayer = intId == null ? null : layerService.getLayerById(intId, false)
-            if (originalLayer != null) {
+            if (Layers.countById(id)) {
+                //update select values
                 try {
-                    if (layer.classification1)originalLayer.classification1 = layer.classification1
-                    if (layer.classification2)originalLayer.classification2 = layer.classification2
-                    if (layer.citation_date)originalLayer.citation_date = layer.citation_date
-                    if (layer.datalang)originalLayer.datalang=layer.datalang
-                    if (layer.description)originalLayer.description=layer.description
-                    if (layer.displayname)originalLayer.displayname=layer.displayname
-                    if (layer.domain)originalLayer.domain=layer.domain
-                    if (layer.enabled)originalLayer.enabled = layer.enabled
-                    if (layer.environmentalvalueunits)originalLayer.environmentalvalueunits=layer.environmentalvalueunits
-                    if (layer.keywords)originalLayer.keywords=layer.keywords
-                    if (layer.licence_level)originalLayer.licence_level=layer.licence_level
-                    if (layer.licence_link)originalLayer.licence_link=layer.licence_link
-                    if (layer.licence_notes)originalLayer.licence_notes=layer.licence_notes
-                    if (layer.mddatest)originalLayer.mddatest=layer.mddatest
-                    if (layer.mdhrlv)originalLayer.mdhrlv=layer.mdhrlv
-                    if (layer.metadatapath)originalLayer.metadatapath=layer.metadatapath
-                    if (layer.notes)originalLayer.notes=layer.notes
-                    if (layer.respparty_role)originalLayer.respparty_role = layer.respparty_role
-                    if (layer.source_link)originalLayer.source_link = layer.source_link
-                    if (layer.source)originalLayer.source = layer.source
-                    if (layer.type)originalLayer.type = layer.type
+                    //flag background processes that need running
+//                    boolean updateIntersect = field.intersect != null && field.intersect != originalField.intersect && field.intersect
+//                    boolean updateNameSearch = field.namesearch != null && field.namesearch != originalField.namesearch
+//
+//                    // remove duplicate association
+//                    originalField = null
 
-                    layerService.updateLayer(originalLayer)
+                    Fields.withTransaction {
+                        if (!layer.save(flush: true, validate:true)) {
+                            layer.errors.each {
+                                log.error(it)
+                            }
+                        }
+                    }
 
                     //record layer.id
-                    FileUtils.write(new File(spatialConfig.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(originalLayer.getId()))
+                    FileUtils.write(new File(spatialConfig.data.dir.toString() + "/uploads/" + id + "/layer.id"), String.valueOf(layer.getId()))
 
                     retMap.put('message', 'Layer updated')
                 } catch (err) {
@@ -963,7 +935,7 @@ class ManageLayersService {
 
                     //create default layers table entry, this updates layer.id
                     Task.withNewTransaction {
-                        if (!layer.save()) {
+                        if (!layer.save(flush: true)) {
                             layer.errors.each {
                                 log.error(it)
                             }
@@ -1013,7 +985,7 @@ class ManageLayersService {
     }
 
     def createOrUpdateField(Map map, String id, boolean createTask = true) {
-        Fields field = new Fields()
+        Fields field = Fields.get(id) ?: new Fields()
         field.properties.each {
             if (map.containsKey(it.key)) {
                 field.properties.put(it.key, map.get(it.key))
@@ -1039,58 +1011,34 @@ class ManageLayersService {
             }
 
             //UPDATE
-            Fields originalField = fieldService.getFieldById(id, false)
-            if (originalField != null) {
+            if (Fields.countById(id)) {
 
                 //update select values
                 try {
                     //flag background processes that need running
-                    boolean updateIntersect = field.intersect != null && field.intersect != originalField.intersect && field.intersect
-                    boolean updateNameSearch = field.namesearch != null && field.namesearch != originalField.namesearch
+//                    boolean updateIntersect = field.intersect != null && field.intersect != originalField.intersect && field.intersect
+//                    boolean updateNameSearch = field.namesearch != null && field.namesearch != originalField.namesearch
+//
+//                    // remove duplicate association
+//                    originalField = null
 
-                    boolean b = field.addtomap != null ? field.addtomap: false
-                    originalField.setAddtomap(b)
-
-                    b = field.analysis != null ? field.analysis: false
-                    originalField.setAnalysis(b)
-
-                    b = field.defaultlayer != null ? field.defaultlayer: false
-                    originalField.setDefaultlayer(b)
-                    originalField.setDesc(field.desc.toString())
-                    originalField.setName(field.name.toString())
-
-                    b = field.enabled != null ? field.enabled: false
-                    originalField.setEnabled(b)
-
-                    b = field.indb != null ? field.indb: false
-                    originalField.setIndb(b)
-
-                    b = field.intersect != null ? field.intersect: false
-                    originalField.setIntersect(b)
-
-                    b = field.layerbranch != null ? field.layerbranch: false
-                    originalField.setLayerbranch(b)
-
-                    b = field.namesearch != null ? field.namesearch: false
-                    originalField.setNamesearch(b)
-
-                    originalField.setType(field.type.toString())
-
-                    if (!originalField.save()) {
-                        originalField.errors.each {
-                            log.error(it)
+                    Fields.withTransaction {
+                        if (!field.save(flush: true, validate:true)) {
+                            field.errors.each {
+                                log.error(it)
+                            }
                         }
                     }
 
-                    if (createTask && updateIntersect) {
-                        tasksService.create('TabulationCreate', null, [:])
-                    }
-
-                    retMap.put('message', 'Field updated')
-
-                    if (createTask && updateNameSearch) {
-                        tasksService.create('NameSearchUpdate', null, null)
-                    }
+//                    if (createTask && updateIntersect) {
+//                        tasksService.create('TabulationCreate', null, [:])
+//                    }
+//
+//                    retMap.put('message', 'Field updated')
+//
+//                    if (createTask && updateNameSearch) {
+//                        tasksService.create('NameSearchUpdate', null, null)
+//                    }
                 } catch (err) {
                     log.error 'error updating field: ' + id, err
                 }
@@ -1181,7 +1129,6 @@ class ManageLayersService {
                             log.error(it)
                         }
                     }
-                    //fieldService.addField(newField)
                 }
 
                 if (createTask) {

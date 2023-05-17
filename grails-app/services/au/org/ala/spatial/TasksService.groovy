@@ -23,7 +23,6 @@ import grails.gorm.transactions.Transactional
 import org.apache.commons.lang3.StringUtils
 import org.apache.tomcat.jni.Proc
 
-//@CompileStatic
 class TasksService {
 
     SpatialObjectsService spatialObjectsService
@@ -36,6 +35,7 @@ class TasksService {
     TabulationService tabulationService
     GridCutterService gridCutterService
     TabulationGeneratorService tabulationGeneratorService
+    FileService fileService
 
     PublishService publishService
     TaskQueueService taskQueueService
@@ -187,49 +187,50 @@ class TasksService {
     @Transactional(readOnly = false)
     def afterPublish(TaskWrapper taskWrapper) {
 
-        def formattedOutput = []
-        taskWrapper.spec.output.each { k, out ->
-            if (k == 'layers' || k == 'layer') {
-                out.files.each { f1 ->
-                    if (f1.endsWith('.tif')) {
-                        //an environmental file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-                    } else if (f1.endsWith('.shp')) {
-                        //contextual file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-                    }
-                }
-            } else if (k == 'metadata') {
-                out.files.each { f1 ->
-                    if (f1.endsWith('.html')) {
-                        //a metadata file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-                    }
-                }
-            } else if (k == 'download') {
-                //a download zip exists
-                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: taskWrapper.task))
-            } else if (k == 'areas' || k == 'envelopes') {
-                out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: taskWrapper.task))
-                }
-            } else if (k == 'species') {
-                out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: taskWrapper.task))
-                }
-            } else if (k == 'csv') {
-                out.files.each { f1 ->
-                    if (f1.endsWith('.csv')) {
-                        //a csv file
-                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-                    }
-                }
-            } else {
-                out.files.each { f1 ->
-                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: taskWrapper.task))
-                }
-            }
-        }
+//        taskWrapper.task.output.each { k, out ->
+//            if (k == 'layers' || k == 'layer') {
+//                (out.file as JSON).each { f1 ->
+//                    if (f1.endsWith('.tif')) {
+//                        //an environmental file
+//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
+//                    } else if (f1.endsWith('.shp')) {
+//                        //contextual file
+//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
+//                    }
+//                }
+//            } else if (k == 'metadata') {
+//                (out.file as JSON).each { f1 ->
+//                    if (f1.endsWith('.html')) {
+//                        //a metadata file
+//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
+//                    }
+//                }
+//            } else if (k == 'download') {
+//                //a download zip exists
+//                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: taskWrapper.task))
+//            } else if (k == 'areas' || k == 'envelopes') {
+//                (out.file as JSON).each { f1 ->
+//                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: taskWrapper.task))
+//                }
+//            } else if (k == 'species') {
+//                (out.file as JSON).each { f1 ->
+//                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: taskWrapper.task))
+//                }
+//            } else if (k == 'csv') {
+//                (out.file as JSON).each { f1 ->
+//                    if (f1.endsWith('.csv')) {
+//                        //a csv file
+//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
+//                    }
+//                }
+//            } else {
+//                (out.file as JSON).each { f1 ->
+//                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: taskWrapper.task))
+//                }
+//            }
+//        }
+
+        taskWrapper.task.output.each {it.task = taskWrapper.task }
 
         // flush task because it is finished
         Task.withTransaction {
@@ -242,7 +243,7 @@ class TasksService {
 
         // flush outputs
         OutputParameter.withTransaction {
-            formattedOutput.each {
+            taskWrapper.task.output.each {
                 if (!it.save(flush: true)) {
                     it.errors.each {
                         log.error it
@@ -250,9 +251,6 @@ class TasksService {
                 }
             }
         }
-
-        // fetch and include outputs, inputs, history
-        taskWrapper.task.output = formattedOutput
     }
 
     /**

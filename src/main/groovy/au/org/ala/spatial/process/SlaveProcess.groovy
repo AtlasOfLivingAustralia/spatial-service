@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.FileService
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.dto.SpeciesInput
@@ -46,6 +47,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import grails.converters.JSON
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
+import org.apache.commons.io.IOUtils
 import org.geotools.geometry.jts.WKTReader2
 import org.grails.web.json.JSONArray
 import org.locationtech.jts.geom.Geometry
@@ -55,8 +57,8 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.util.zip.ZipInputStream
 
-//@CompileStatic
 @Slf4j
 class SlaveProcess {
 
@@ -69,6 +71,7 @@ class SlaveProcess {
     SpatialObjectsService spatialObjectsService
     GridCutterService gridCutterService
     TabulationGeneratorService tabulationGeneratorService
+    FileService fileService
 
     SpatialConfig spatialConfig
 
@@ -79,8 +82,104 @@ class SlaveProcess {
     void stop() {}
 
 
-    def getFile(path, source) {
-        // placeholder for the future
+    def getFile(String path, String remoteSpatialServiceUrl) {
+        def remote = peekFile(path, remoteSpatialServiceUrl)
+
+        //compare p list with local files
+        def fetch = []
+        remote.each { file ->
+            if (file.exists) {
+                def local = new File(spatialConfig.data.dir + file.path)
+                if (!local.exists() || local.lastModified() < file.lastModified) {
+                    fetch.add(file.path)
+                }
+            }
+        }
+
+        if (fetch.size() < remote.size()) {
+            //fetch only some
+            fetch.each {
+                getFile(it, remoteSpatialServiceUrl)
+            }
+        } else if (fetch.size() > 0) {
+            //fetch all files
+
+            def tmpFile = File.createTempFile('resource', '.zip')
+
+            try {
+                def shortpath = path.replace(spatialConfig.data.dir, '')
+                def url = remoteSpatialServiceUrl + "/master/resource?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
+                        "&api_key=" + spatialConfig.serviceKey
+
+                def os = new BufferedOutputStream(new FileOutputStream(tmpFile))
+                def streamObj = Util.getStream(url)
+                try {
+                    if (streamObj?.call) {
+                        os << streamObj?.call?.getResponseBodyAsStream()
+                    }
+                    os.flush()
+                    os.close()
+                } catch (Exception e) {
+                    log.error e.getMessage(), e
+                }
+                streamObj?.call?.releaseConnection()
+
+                def zf = new ZipInputStream(new FileInputStream(tmpFile))
+                try {
+                    def entry
+                    while ((entry = zf.getNextEntry()) != null) {
+                        def filepath = spatialConfig.data.dir + entry.getName()
+                        def f = new File(filepath)
+                        f.getParentFile().mkdirs()
+
+                        //TODO: copyInputStreamToFile closes the stream even if there are more entries
+                        def fout = new FileOutputStream(f)
+                        IOUtils.copy(zf, fout);
+                        fout.close()
+
+                        zf.closeEntry()
+
+                        //update lastmodified time
+                        remote.each { file ->
+                            if (entry.name.equals(file.path)) {
+                                f.setLastModified(file.lastModified)
+                            }
+                        }
+                    }
+                } finally {
+                    try {
+                        zf.close()
+                    } catch (err) {
+                        log.error('Error in reading uploaded file: '+ err.printStackTrace())
+                    }
+                }
+            } catch (err) {
+                log.error "failed to get: " + path, err
+            }
+
+            tmpFile.delete()
+        }
+    }
+
+    List peekFile(String path, String spatialServiceUrl = spatialConfig.spatialService.url) {
+        String shortpath = path.replace(spatialConfig.data.dir.toString(), '')
+
+        if (spatialServiceUrl.equals(spatialConfig.grails.serverURL)) {
+            return fileService.info(shortpath.toString())
+        }
+
+        List map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]]
+
+        try {
+            String url = spatialServiceUrl + "/master/resourcePeek?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
+                    "&api_key=" + spatialConfig.serviceKey
+
+            map = JSON.parse(Util.getUrl(url)) as List
+        } catch (err) {
+            log.error "failed to get: " + path, err
+        }
+
+        map
     }
 
     String getInput(String name) {

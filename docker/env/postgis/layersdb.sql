@@ -93,7 +93,7 @@ CREATE OR REPLACE FUNCTION search_objects_by_geometry_intersect(IN fidIn charact
                 name    character varying,
                 "desc"  character varying,
                 fid     character varying,
-                bbox    character varying,
+                bbox    character varying(300),
                 area_km double precision
             )
 AS

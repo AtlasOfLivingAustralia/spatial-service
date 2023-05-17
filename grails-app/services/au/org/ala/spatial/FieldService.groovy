@@ -120,7 +120,7 @@ class FieldService {
 //
 //
     void delete(String fieldId) {
-        Fields f = getFieldById(fieldId)
+        Fields f = getFieldById(fieldId, false)
 
         if (f != null) {
             groovySql.execute("delete from objects where fid=?", [f.getId()] as List<Object>)

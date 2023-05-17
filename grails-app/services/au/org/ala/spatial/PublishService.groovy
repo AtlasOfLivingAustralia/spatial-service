@@ -21,16 +21,15 @@ import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
 import org.apache.commons.io.FileUtils
 
-//@CompileStatic
 class PublishService {
 
     def manageLayersService
     def tasksService
     def fileService
     def dataSource
-    def layerDao
-    def fieldDao
-    def objectDao
+    LayerService layerService
+    FieldService fieldService
+    SpatialObjectsService spatialObjectsService
     SpatialConfig spatialConfig
 
     // Unpacks a published zip file and performs some actions.
@@ -147,9 +146,9 @@ class PublishService {
                         errors.put(String.valueOf(System.currentTimeMillis()), out)
                     } else {
                         //when the sld is for a field, apply to the layer as the default sld
-                        def field = fieldDao.getFieldById(name, false)
+                        def field = fieldService.getFieldById(name, false)
                         if (field != null) {
-                            def layer = layerDao.getLayerById(Integer.parseInt(field.spid), false)
+                            def layer = layerService.getLayerById(Integer.parseInt(field.spid), false)
                             if (layer != null) {
                                 //Apply style
                                 String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
@@ -224,7 +223,7 @@ class PublishService {
 
                 String wkt = new File(p).text
 
-                String generatedPid = objectDao.createUserUploadedObject(wkt, values.name, values.description, null)
+                String generatedPid = spatialObjectsService.createUserUploadedObject(wkt, values.name, values.description, null)
 
                 newAreas.add(generatedPid)
             }
@@ -418,7 +417,7 @@ class PublishService {
                                 null, "file://" + shp.getPath())
                     } else {
 
-                        if (spatialConfig.geoserver.spatialservice.colocated.toBoolean()) {
+                        if (spatialConfig.geoserver.spatialservice.colocated) {
 
                             String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
                                     null, "file://" + shp.getPath())

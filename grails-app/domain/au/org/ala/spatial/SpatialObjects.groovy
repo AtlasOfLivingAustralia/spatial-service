@@ -4,7 +4,6 @@ package au.org.ala.spatial
 import org.locationtech.jts.geom.Geometry
 
 class SpatialObjects {
-    String id
     String pid
     String description
     String name
@@ -13,6 +12,7 @@ class SpatialObjects {
     Integer name_id
     String bbox
     Double area_km
+    Boolean namesearch
 
     static transients = ["degrees", "distance", "wmsurl", "featureType", "centroid", "fieldname"]
     Double degrees
@@ -25,13 +25,18 @@ class SpatialObjects {
     static mapping = {
         table 'objects'
         id name: 'pid'
-        version false
 
-        description column: '"desc"', nullable: true
+        version(false)
+
+        description column: '"desc"'
+        geometry column: 'the_geom'
+        bbox sqlType: "character varying(300)"
+    }
+
+    static constraints = {
+        description nullable: true
         name_id nullable: true
         bbox nullable: true
         area_km nullable: true
-
-        geometry column: 'the_geom'
     }
 }

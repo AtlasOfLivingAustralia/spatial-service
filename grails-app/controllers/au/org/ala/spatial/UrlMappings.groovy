@@ -120,8 +120,11 @@ class UrlMappings {
         "/tasks/output/$p1/$p2?/$p3?(.$format)?"(controller: "tasks", action: "output")
         "/tasks/output/$p1/$p2?"(controller: "tasks", action: "output")
 
-
         "/files/inter_layer_association.csv"(controller: "layerDistances", action: "csv")
+
+        // compatability with pre-refactor instances
+        "/master/resource"(controller: "manageLayers", action: "resource")
+        "/master/resourcePeek"(controller: "manageLayers", action: "resourcePeek")
 
         "/$controller/$action?/$id?(.$format)?" {
             constraints {

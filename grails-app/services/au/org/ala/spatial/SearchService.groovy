@@ -45,8 +45,8 @@ class SearchService {
             fieldIds = excludeFieldIds
         }
 
-        String sql = 'with o as (select o.pid as pid ,o.id as id, o.name as name, o.desc as description, o.fid as fid, f.name as fieldname from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true ' + fieldFilter + ")" +
-                " select pid, id, name, description, fid, fieldname, (select json_agg(a.f) from (select distinct (fid || ' | ' || fieldname) as f from o) a) as fields, position(:nativeQ in lower(name)) as rank from o order by rank, name, pid limit :limit offset :offset"
+        String sql = 'with o as (select o.pid as pid , o.name as name, o.desc as description, o.fid as fid, f.name as fieldname from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true ' + fieldFilter + ")" +
+                " select pid, name, description, fid, fieldname, (select json_agg(a.f) from (select distinct (fid || ' | ' || fieldname) as f from o) a) as fields, position(:nativeQ in lower(name)) as rank from o order by rank, name, pid limit :limit offset :offset"
 
         List<SearchObject> searchObjects = new ArrayList()
 
@@ -65,12 +65,11 @@ class SearchService {
             while (rs.next()) {
                 SearchObject so = new SearchObject()
                 so.pid = rs.getObject(1)
-                so.id = rs.getObject(2)
-                so.name = rs.getObject(3)
-                so.description = rs.getObject(4)
-                so.fid = rs.getObject(5)
-                so.fieldname = rs.getObject(6)
-                so.fields = rs.getObject(7)
+                so.name = rs.getObject(2)
+                so.description = rs.getObject(3)
+                so.fid = rs.getObject(4)
+                so.fieldname = rs.getObject(5)
+                so.fields = rs.getObject(6)
 
                 searchObjects.add(so)
             }
@@ -134,7 +133,6 @@ class SearchService {
                         if ((c.getValue().getName().toLowerCase().indexOf(criteria)) >= 0) {
                             search.add(new SearchObject([
                                     pid        : f.getLayerPid() + ':' + c.getKey(),
-                                    id         : f.getLayerPid() + ':' + c.getKey(),
                                     name       : c.getValue().getName(),
                                     description: null,
                                     fid        : f.getFieldId(),

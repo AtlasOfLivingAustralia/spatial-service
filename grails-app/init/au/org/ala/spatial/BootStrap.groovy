@@ -36,15 +36,21 @@ class BootStrap {
         }
 
         //create database required by layers-store
-        try {
-            def rs = groovySql.rows("SELECT * FROM fields WHERE id = ?", [spatialConfig.userObjectsField] as List<Object>)
-            if (rs.size() == 0) {
-                groovySql.execute("INSERT INTO fields (id, name, \"desc\", type, indb, enabled, namesearch) VALUES " +
-                        "('${spatialConfig.userObjectsField}', 'user', '', 'c', false, false, false);")
-            }
-        } catch (Exception e) {
-            if (!e.getMessage().contains("duplicate key value")) {
-                log.error("Error ", e)
+        if (Fields.get(spatialConfig.userObjectsField) == null) {
+            Fields field = new Fields()
+            field.id = spatialConfig.userObjectsField
+            field.name = 'user'
+            field.desc = ''
+            field.type = 'c'
+            field.indb = false
+            field.enabled = false
+            field.namesearch = false
+            Fields.withTransaction {
+                if (!field.save()) {
+                    field.errors {
+                        log.error(it)
+                    }
+                }
             }
         }
 
@@ -55,15 +61,19 @@ class BootStrap {
 //            log.error("Error creating missing azimuth function frmo st_azimuth", e)
 //        }
 //
-//        //create objects name idx if it is missing
-//        try {
-//            groovySql.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
-//            groovySql.execute("CREATE INDEX objects_name_idx ON objects USING gin (name gin_trgm_ops) WHERE namesearch is true;")
-//        } catch (Exception e) {
-//            if (!e.getMessage().contains("already exists")) {
-//                log.error("Error ", e)
-//            }
-//        }
+        //create objects name idx if it is missing
+        try {
+            groovySql.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
+            groovySql.execute("CREATE INDEX objects_name_idx ON objects USING gin (name gin_trgm_ops) WHERE namesearch is true;")
+        } catch (Exception ignored) {}
+        try {
+            groovySql.execute("CREATE SEQUENCE objects_id_seq\n" +
+                    "    INCREMENT 1\n" +
+                    "    MINVALUE 1\n" +
+                    "    MAXVALUE 9223372036854775807\n" +
+                    "    START 1\n" +
+                    "    CACHE 1;")
+        } catch (Exception ignored) {}
     }
 
     def destroy = {

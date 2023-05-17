@@ -29,7 +29,6 @@ class Fields {
     static mapping = {
         table 'fields'
         id generator: 'assigned'
-        version false
         desc column: '"desc"'
         intersect column: '"intersect"'
     }

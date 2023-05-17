@@ -154,8 +154,7 @@ class ChecklistCreation extends SlaveProcess {
                 "(st_area(ST_GeogFromWKB(st_asbinary(the_geom)), true)/1000000), ST_ASTEXT(ST_EXTENT(the_geom)) " +
                 "from distributions where pid is null group by the_geom);"
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
-                "distributions.pid is null and fid = '" + spatialConfig.userObjectsField + "' and " +
-                "o.id = '' || distributions.spcode;"
+                "distributions.pid is null and fid = '" + spatialConfig.userObjectsField + "' ;"
         sql += "\nupdate distributions set pid = o.pid from objects o where distributions.the_geom = o.the_geom and " +
                 "distributions.pid is null and fid = '" + spatialConfig.userObjectsField + "' and " +
                 "o.name = distributions.area_name;"

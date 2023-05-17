@@ -360,13 +360,11 @@ reporting.excludedUsers: [ '1901','92092','71707','1493','53099','34','9965','47
 hibernate:
   # flush mode changed in Grails 3.3 / Gorm 6.1 from AUTO to COMMIT
   # This means each db write should be in a transaction.
-  # TODO Check that AUTO is not required or convert missed db writes to be in transactional service methods
-  #    flush:
-  #        mode: AUTO
   cache:
     queries: false
     use_second_level_cache: false
     use_query_cache: false
+
 
 # spring-session config
 spring:
@@ -417,6 +415,7 @@ environments:
       dbCreate: update
       username: postgres
       password: 'postgres'
+      # logSql: true
 
   test:
     dataSource:
@@ -460,3 +459,4 @@ openapi:
     url: https://www.mozilla.org/en-US/MPL/1.1/
   version: '@info.app.version@'
   cachetimeoutms: 4000
+

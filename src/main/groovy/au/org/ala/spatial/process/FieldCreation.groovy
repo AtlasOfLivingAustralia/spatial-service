@@ -20,6 +20,7 @@ import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
 import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.legend.Legend
+import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.geotools.data.FeatureReader
@@ -55,7 +56,6 @@ class FieldCreation extends SlaveProcess {
 
         // get upload dir contents, and the existing files
         taskWrapper.task.message = 'getting layer files'
-        getFile('/layer/' + layer.name)
 
         //upload shp into layersdb in a table with name layer.id
         String dir = spatialConfig.data.dir
@@ -91,17 +91,13 @@ class FieldCreation extends SlaveProcess {
 
                 taskWrapper.task.message = 'aggregating shapes'
 
-                aggregateShapes(layer.name.toString(), field.sid.toString(), field.sname.toString(),
+                aggregateShapes(layer.name.toString(), field.sname.toString(),
                         (field.sdesc != null) ? field.sdesc.toString() : null, field.id.toString(), field.namesearch.toString(),
                         ignoreNullObjects as Boolean)
 
                 //Todo ignoreSLDCreation check
                 taskWrapper.task.message = 'creating sld'
-                createContextualFieldStyle(field.id.toString(), field.sid.toString(), name)
-
-                if (field.namesearch) {
-                    addOutput("process", "NameSearchUpdate")
-                }
+                createContextualFieldStyle(field.id.toString(), field.sname.toString(), name)
 
                 //layer.intersect, TabulationCreate. This process is triggered by StandardizeLayers
             }
@@ -114,11 +110,11 @@ class FieldCreation extends SlaveProcess {
         addOutput("process", "StandardizeLayers " + (m as JSON))
     }
 
-    def createContextualFieldStyle(String fieldId, String fieldSid, String name) {
+    def createContextualFieldStyle(String fieldId, String fieldSname, String name) {
         String path = spatialConfig.data.dir + '/layer/'
 
         //sld
-        String sld = createContextualLayerSlds(fieldSid.toString(), path + name + '.shp')
+        String sld = createContextualLayerSlds(fieldSname.toString(), path + name + '.shp')
         if (sld != null) {
             File sldFile = new File(path + fieldId + ".sld")
             sldFile.write(sld)
@@ -271,14 +267,12 @@ class FieldCreation extends SlaveProcess {
         return rawDbfString
     }
 
-    void aggregateShapes(String layername, String sid, String sname, String sdesc, String id, String namesearch,
+    void aggregateShapes(String layername, String sname, String sdesc, String id, String namesearch,
                          Boolean ignoreNullObjects) {
         //open shapefile
         try {
             String sql
             File sqlFile
-
-            getFile('/layer/' + layername + '.shp')
 
             File file = new File(spatialConfig.data.dir.toString() + '/layer/' + layername + '.shp')
             ShapefileDataStore sds = new ShapefileDataStore(file.toURI().toURL())
@@ -288,9 +282,8 @@ class FieldCreation extends SlaveProcess {
 
             def defaultType = null
 
-            String confirmedSid = null
             String confirmedSname = null
-            String confirmedSdesc = null
+            String [] confirmedSdesc = null
             taskWrapper.task.message = "reading shapefile"
             int countMissing = 0
             while (reader.hasNext()) {
@@ -301,12 +294,8 @@ class FieldCreation extends SlaveProcess {
                 }
 
                 //validateInput sid, sname, sdesc
-                if (confirmedSid == null) {
-                    f.getProperties().each { p ->
-                        if (p.getName().toString().equalsIgnoreCase(sid)) {
-                            confirmedSid = p.getName().toString()
-                        }
-                        if (p.getName().toString().equalsIgnoreCase(sname)) {
+                if (confirmedSname == null) {
+                    f.getProperties().each { p ->if (p.getName().toString().equalsIgnoreCase(sname)) {
                             confirmedSname = p.getName().toString()
                         }
                         if (sdesc != null && p.getName().toString().equalsIgnoreCase(sdesc.toString())) {
@@ -314,32 +303,38 @@ class FieldCreation extends SlaveProcess {
                         }
                     }
                 }
-                String i = String.valueOf(f.getAttribute(confirmedSid))
                 String name = String.valueOf(f.getAttribute(confirmedSname))
                 String desc = null
-                if (sdesc != null && "null" != String.valueOf(sdesc) && !sdesc.contains(',') &&
-                        confirmedSdesc != null) {
+                if ("null" != String.valueOf(sdesc) && !sdesc.contains(',') && confirmedSdesc != null) {
                     desc = String.valueOf(f.getAttribute(confirmedSdesc))
+                } else if (sdesc?.contains(',')) {
+                    sdesc.split(',').each { str ->
+                        if (desc == null) {
+                            desc = String.valueOf(f.getAttribute(str.toUpperCase()))
+                        } else {
+                            desc = desc + ', ' + String.valueOf(f.getAttribute(str.toUpperCase()))
+                        }
+                    }
                 }
 
-                if (i != null && i.trim().length() > 0) {
-                    if (!retrievedFieldValues.containsKey(i)) {
-                        retrievedFieldValues.put(i, new FieldValue([sid: i, sname: convertToUtf8(name), sdesc: convertToUtf8(desc), geom: []]))
+                if (name != null && name.trim().length() > 0) {
+                    if (!retrievedFieldValues.containsKey(name)) {
+                        retrievedFieldValues.put(name, new FieldValue([sname: convertToUtf8(name), sdesc: convertToUtf8(desc), geom: []]))
                     }
-                    retrievedFieldValues.get(i).geom.add(f.getDefaultGeometry() as Geometry)
+                    retrievedFieldValues.get(name).geom.add(f.getDefaultGeometry() as Geometry)
                 } else {
                     countMissing++
 
                 }
             }
             if (countMissing > 0) {
-                log.warn 'task:' + taskWrapper.id + ', no value for ' + countMissing + ' records (sid:' + confirmedSid + ') in layer ' + layername
+                log.warn 'task:' + taskWrapper.id + ', no value for ' + countMissing + ' records (sname:' + confirmedSname + ') in layer ' + layername
             }
             reader.close()
             sds.dispose()
             if (retrievedFieldValues.size() == 0) {
-                log.error 'task:' + taskWrapper.id + ', no valid objects found for sid:' + confirmedSid
-                taskWrapper.task.history.put(System.currentTimeMillis(), 'no valid objects found for sid:' + confirmedSid)
+                log.error 'task:' + taskWrapper.id + ', no valid objects found for sid:' + confirmedSname
+                taskWrapper.task.history.put(System.currentTimeMillis(), 'no valid objects found for sid:' + confirmedSname)
                 return
             }
 
@@ -352,7 +347,7 @@ class FieldCreation extends SlaveProcess {
 
                 List<Polygon> union = new ArrayList()
 
-                for (int i = 0; i < ((List) v.geom).size(); i++) {
+                 for (int i = 0; i < ((List) v.geom).size(); i++) {
                     Geometry g = v.geom.get(i).copy()
                     if (!g.isValid()) {
 
@@ -372,7 +367,7 @@ class FieldCreation extends SlaveProcess {
                             union.add((Polygon) g)
                         }
                     } else {
-                        log.error 'task:' + taskWrapper.id + ', invalid geometry at: ' + k + ', ' + layername + ', ' + sid
+                        log.error 'task:' + taskWrapper.id + ', invalid geometry at: ' + k + ', ' + layername + ', ' + sname
                     }
                 }
 
@@ -386,14 +381,13 @@ class FieldCreation extends SlaveProcess {
                     } else if (union.size() == 1) {
                         newg = union.get(0) as Polygon
                     } else {
-                        log.error 'task:' + taskWrapper.id + ', >1 non-Polygon geometry at: ' + k + ', ' + layername + ', ' + sid
+                        log.error 'task:' + taskWrapper.id + ', >1 non-Polygon geometry at: ' + k + ', ' + layername + ', ' + sname
                     }
 
                     double area = newg.getArea() == 0 ? 0 : SpatialUtils.calculateArea(newg.toText()) / 1000000.0
-                    sql = MessageFormat.format("INSERT INTO objects (pid, id, name, \"desc\", fid, the_geom, namesearch, area_km)" +
-                            " VALUES (nextval(''objects_id_seq''::regclass), ''{0}'', ''{1}'', ''{2}'', ''{3}'', " +
-                            "ST_GEOMFROMTEXT(''{4}'', 4326), {5}, {6});",
-                            sqlEscapeString(v.sid),
+                    sql = MessageFormat.format("INSERT INTO objects (pid, name, \"desc\", fid, the_geom, namesearch, area_km)" +
+                            " VALUES (nextval(''objects_id_seq''::regclass), ''{0}'', ''{1}'', ''{2}'',  " +
+                            "ST_GEOMFROMTEXT(''{3}'', 4326), {4}, {5});",
                             sqlEscapeString(v.sname),
                             sqlEscapeString(v.sdesc),
                             sqlEscapeString(id),
