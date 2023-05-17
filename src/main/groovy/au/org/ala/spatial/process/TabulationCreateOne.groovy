@@ -113,7 +113,7 @@ class TabulationCreateOne extends SlaveProcess {
 
                     if (field1sid == null) {
                         for (Property k : feature1.value) {
-                            if (k.getName().toString().equalsIgnoreCase(field1.sid.toString())) {
+                            if (k.getName().toString().equalsIgnoreCase(field1.sname.toString())) {
                                 field1sid = k.getName().toString()
                             }
                         }
@@ -135,7 +135,7 @@ class TabulationCreateOne extends SlaveProcess {
 
                     if (field2sid == null) {
                         for (Property k : feature2.value) {
-                            if (k.getName().toString().equalsIgnoreCase(field2.sid.toString())) {
+                            if (k.getName().toString().equalsIgnoreCase(field2.sname.toString())) {
                                 field2sid = k.getName().toString()
                             }
                         }

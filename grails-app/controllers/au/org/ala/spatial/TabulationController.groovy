@@ -15,9 +15,20 @@
 
 package au.org.ala.spatial
 
-
+import au.org.ala.plugins.openapi.Path
 import com.opencsv.CSVReader
 import grails.converters.JSON
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+
+import javax.ws.rs.Produces
+
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
 class TabulationController {
 
@@ -36,10 +47,68 @@ class TabulationController {
         }
     }
 
+    @Operation(
+            method = "GET",
+            tags = "tabulation",
+            operationId = "listTabulations",
+            summary = "List of field pairs with pre-generated tabulations",
+            responses = [
+                    @ApiResponse(
+                            description = "List of tabulations",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Tabulation))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/tabulation/list")
+    @Produces("application/json")
     def list() {
         render tabulationService.listTabulations() as JSON
     }
 
+    @Operation(
+            method = "GET",
+            tags = "tabulation",
+            operationId = "intersectTabulation",
+            summary = "Intersect a field with an area and return tabulated intersection information",
+            parameters = [
+                    @Parameter(
+                            name = "fid",
+                            in = PATH,
+                            description = "Field ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "pid",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Intersections as Tabulations",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Tabulation))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/tabulation/single/{fid}/{pid}")
+    @Produces("application/json")
     def single(String fid, String pid) {
         if (pid) pid = pid.replace(".json", "")
         if ("single".equalsIgnoreCase(fid)) {
@@ -77,11 +146,55 @@ class TabulationController {
 
         if (tabulation) {
             render tabulation as JSON
+        } else {
+            render status: 404
         }
-
-        render status: 404
     }
 
+    @Operation(
+            method = "GET",
+            tags = "tabulation",
+            operationId = "showTabulation",
+            summary = "Get details of a field pair intersection",
+            parameters = [
+                    @Parameter(
+                            name = "fid1",
+                            in = PATH,
+                            description = "Field ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "fid2",
+                            in = PATH,
+                            description = "Field ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "wkt",
+                            in = QUERY,
+                            description = "WKT to restrict the tabulated area",
+                            schema = @Schema(implementation = String),
+                            required = false
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Intersections as Tabulations",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Tabulation))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/tabulation/data/{fid1}/{fid2}/tabulation.json")
+    @Produces("application/json")
     def show(String func1, String fid1, String fid2, String type) {
         String wkt = params?.wkt
         if (params?.wkt && params.wkt.toString().isNumber()) {

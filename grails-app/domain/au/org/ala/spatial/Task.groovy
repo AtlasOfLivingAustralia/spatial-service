@@ -38,9 +38,6 @@ class Task {
     // status base url
     String url
 
-    // running slave
-    String slave
-
     // email
     String email
 
@@ -56,7 +53,6 @@ class Task {
     static constraints = {
         message nullable: true
         url nullable: true
-        slave nullable: true
         email nullable: true
         tag nullable: true
         userId nullable: true
@@ -67,7 +63,6 @@ class Task {
         tag type: 'text'
         url type: 'text'
         email type: 'text'
-        slave type: 'text'
         message type: 'text'
 
         userId index: 'task_userId_idx'

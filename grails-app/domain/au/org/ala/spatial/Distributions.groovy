@@ -54,6 +54,7 @@ class Distributions {
 
     static mapping = {
         id name: 'spcode', generator: 'assigned'
+        version(false)
 
         geometry column: 'the_geom'
 

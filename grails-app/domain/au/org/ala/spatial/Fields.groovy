@@ -13,7 +13,6 @@ class Fields {
     String desc
     String type
     String spid
-    String sid
     String sname
     String sdesc
     Boolean indb
@@ -29,14 +28,16 @@ class Fields {
     static mapping = {
         table 'fields'
         id generator: 'assigned'
+        version(false)
+
         desc column: '"desc"'
         intersect column: '"intersect"'
+        type sqlType: "character(1)"
     }
 
     static constraints = {
         spid nullable: true
         last_update nullable: true
-        sid nullable: true
         sname nullable: true
         sdesc nullable: true
         desc nullable: true
@@ -50,7 +51,6 @@ class Fields {
         layerbranch nullable: true
         analysis nullable: true
         addtomap nullable: true
-
     }
 
     static transients = ["number_of_objects", "layer", "wms", "objects", "requestedId"]

@@ -104,12 +104,6 @@ class TasksService {
 
             task.history.put(System.currentTimeMillis() as String, "created")
 
-            if (!task.save()) {
-                task.errors.each {
-                    log.error it
-                }
-            }
-
             def inputs = []
 
             input.each { k, v ->
@@ -144,16 +138,26 @@ class TasksService {
                     inputs.add(new InputParameter(name: k, value: v, task: task))
                 }
             }
+
+            task.input = inputs
+
+            Task.withTransaction {
+                if (!task.save()) {
+                    task.errors.each {
+                        log.error 'create task failed', it
+                    }
+                }
+            }
             InputParameter.withTransaction {
                 inputs.each {
                     if (!it.save(flush: true)) {
                         it.errors.each {
-                            log.error 'create task failed', it
+                            log.error 'create task input failed', it
                         }
                     }
                 }
             }
-            task.input = inputs
+
             task.output = []
         }
 

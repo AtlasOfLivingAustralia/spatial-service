@@ -293,7 +293,7 @@ class FieldCreation extends SlaveProcess {
                     defaultType = f.getDefaultGeometry()
                 }
 
-                //validateInput sid, sname, sdesc
+                //validateInput sname, sdesc
                 if (confirmedSname == null) {
                     f.getProperties().each { p ->if (p.getName().toString().equalsIgnoreCase(sname)) {
                             confirmedSname = p.getName().toString()
@@ -333,8 +333,8 @@ class FieldCreation extends SlaveProcess {
             reader.close()
             sds.dispose()
             if (retrievedFieldValues.size() == 0) {
-                log.error 'task:' + taskWrapper.id + ', no valid objects found for sid:' + confirmedSname
-                taskWrapper.task.history.put(System.currentTimeMillis(), 'no valid objects found for sid:' + confirmedSname)
+                log.error 'task:' + taskWrapper.id + ', no valid objects found for sname:' + confirmedSname
+                taskWrapper.task.history.put(System.currentTimeMillis(), 'no valid objects found for sname:' + confirmedSname)
                 return
             }
 

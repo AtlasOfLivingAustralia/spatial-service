@@ -31,6 +31,8 @@ class SpatialObjects {
         description column: '"desc"'
         geometry column: 'the_geom'
         bbox sqlType: "character varying(300)"
+        fid sqlType: "character varying(8)", index: 'objects_fid_idx'
+        namesearch index: 'objects_namesearch_idx'
     }
 
     static constraints = {
@@ -38,5 +40,9 @@ class SpatialObjects {
         name_id nullable: true
         bbox nullable: true
         area_km nullable: true
+        name nullable: true
+        geometry nullable: true
+        fid nullable: true
+        namesearch nullable: true
     }
 }

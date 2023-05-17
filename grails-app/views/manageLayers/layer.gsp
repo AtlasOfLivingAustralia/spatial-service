@@ -77,7 +77,6 @@
                             <th>Id</th>
                             <th>Name</th>
                             <th>Description</th>
-                            <th>sid</th>
                             <th>sname</th>
                             <th></th>
                             <th></th>
@@ -88,7 +87,6 @@
                                     <td>${item.id}</td>
                                     <td>${item.name}</td>
                                     <td>${item.desc}</td>
-                                    <td>${item.sid}</td>
                                     <td>${item.sname}</td>
                                     <td><g:link controller="manageLayers" action="field" id="${item.id}">
                                         <i class="glyphicon glyphicon-edit"></i>

@@ -60,20 +60,21 @@ class BootStrap {
 //        } catch (Exception e) {
 //            log.error("Error creating missing azimuth function frmo st_azimuth", e)
 //        }
-//
-        //create objects name idx if it is missing
-        try {
-            groovySql.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
-            groovySql.execute("CREATE INDEX objects_name_idx ON objects USING gin (name gin_trgm_ops) WHERE namesearch is true;")
-        } catch (Exception ignored) {}
-        try {
-            groovySql.execute("CREATE SEQUENCE objects_id_seq\n" +
-                    "    INCREMENT 1\n" +
-                    "    MINVALUE 1\n" +
-                    "    MAXVALUE 9223372036854775807\n" +
-                    "    START 1\n" +
-                    "    CACHE 1;")
-        } catch (Exception ignored) {}
+
+        // manual db modification
+        String [] dbModificationSql = [
+                "CREATE EXTENSION IF NOT EXISTS pg_trgm;",
+                "CREATE INDEX objects_name_idx ON objects USING gin (name gin_trgm_ops) WHERE namesearch is true;",
+                "CREATE INDEX objects_geom_idx ON objects USING gist (the_geom);",
+                "CREATE SEQUENCE objects_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1;",
+                "CREATE INDEX distributions_geom ON distributions USING GIST (the_geom);",
+                "CREATE INDEX tabulation_geom ON tabulation USING GIST (the_geom);",
+                "ALTER TABLE ONLY ud_header ADD CONSTRAINT ud_header_unique UNIQUE (user_id, analysis_id);"
+        ].each { String sql ->
+            try {
+                groovySql.execute(sql)
+            } catch (Exception ignored) {}
+        }
     }
 
     def destroy = {

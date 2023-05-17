@@ -50,10 +50,17 @@ class Layers {
         table 'layers'
         id generator: 'assigned'
 
+        version(false)
+
         notes sqlType: 'text'
         description sqlType: 'text'
         licence_notes sqlType: 'text'
         displaypath sqlType: 'text'
+        source_link sqlType: 'text'
+        licence_link sqlType: 'text'
+        metadatapath sqlType: 'text'
+        path sqlType: 'text'
+        lookuptablepath sqlType: 'text'
     }
 
     static constraints = {

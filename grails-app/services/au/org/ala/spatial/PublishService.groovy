@@ -333,7 +333,7 @@ class PublishService {
                             //attempt to delete
                             callGeoserverDelete("/rest/workspaces/ALA/coveragestores/" + name)
 
-                            if (spatialConfig.geoserver.remote.geoserver_data_dir) {
+                            if (!spatialConfig.geoserver.spatialservice.colocated) {
                                 // delete the tif file if it exists
                                 callGeoserverDelete("/rest/resource/data/" + name + ".tif")
 

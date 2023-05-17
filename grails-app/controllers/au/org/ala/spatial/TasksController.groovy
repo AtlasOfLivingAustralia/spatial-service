@@ -15,13 +15,25 @@
 
 package au.org.ala.spatial
 
-
+import au.org.ala.plugins.openapi.Path
+import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.grails.web.json.JSONObject
 
+import javax.ws.rs.Produces
+
 import static au.org.ala.spatial.Util.zip
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
 class TasksController {
 
@@ -34,6 +46,27 @@ class TasksController {
      * get collated capabilities specs from all registered slaves
      * @return
      */
+    @Operation(
+            method = "GET",
+            tags = "task",
+            operationId = "capabilities",
+            summary = "List of tasks and their inputs and outputs",
+            responses = [
+                    @ApiResponse(
+                            description = "List of tasks",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = ProcessSpecification))
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/tasks/capabilities")
+    @Produces("application/json")
     def capabilities() {
         render tasksService.getSpecification(authService.userInRole(spatialConfig.auth.admin_role)) as JSON
     }
@@ -139,6 +172,36 @@ class TasksController {
      * @param task
      * @return
      */
+    @Operation(
+            method = "GET",
+            tags = "task",
+            operationId = "status",
+            summary = "Task status",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Task ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Task status",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = Map<String, Object>)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/tasks/status/{id}")
+    @Produces("application/json")
     def status(Long id) {
         Map<String, Object> status = tasksService.getStatus(id)
 
@@ -187,6 +250,43 @@ class TasksController {
     /**
      * @return a map of inputs to errors, or the created task
      */
+    @Operation(
+            method = "POST",
+            tags = "task",
+            operationId = "create",
+            summary = "Create a task",
+            parameters = [
+                    @Parameter(
+                            name = "name",
+                            in = QUERY,
+                            description = "Task name",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "inputs",
+                            in = QUERY,
+                            description = "task inputs as JSON",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Task status",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = Map<String, Object>)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/tasks/create")
+    @Produces("application/json")
     @Transactional(readOnly = false)
     @RequirePermission
     create() {
@@ -222,6 +322,36 @@ class TasksController {
      * @param task
      * @return
      */
+    @Operation(
+            method = "GET",
+            tags = "task",
+            operationId = "cancel",
+            summary = "Cancel a task",
+            parameters = [
+                    @Parameter(
+                            name = "id",
+                            in = PATH,
+                            description = "Task ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Task status",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = Map<String, Object>)
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/tasks/cancel/{id}")
+    @Produces("application/json")
     @Transactional(readOnly = false)
     @RequirePermission
     cancel(Long id) {

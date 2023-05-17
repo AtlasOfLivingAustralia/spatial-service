@@ -89,7 +89,6 @@
                             <th>Id</th>
                             <th>name</th>
                             <th>description</th>
-                            <th>sid</th>
                             <th>sname</th>
                             <th></th>
                             <th></th>
@@ -100,7 +99,6 @@
                                     <td>${item.id}</td>
                                     <td>${item.name}</td>
                                     <td>${item.desc}</td>
-                                    <td>${item.sid}</td>
                                     <td>${item.sname}</td>
                                     <td>
                                         <g:link controller="manageLayers" action="field"
@@ -212,23 +210,6 @@
                         </td></tr>
 
                             <g:if test="${type == 'c'}">
-                                <tr><td>
-                                    <label for="sid"
-                                           style="color:red">Source id (contextual only; comma delimited list of shape file column names for aggregation to
-                                    create unique objects, e.g. "id") ${sid}</label></td><td>
-                                    <!--input type="text" id="sid" name="sid" value="${sid}" maxlength="256"/-->
-                                    <select class="form-control" id="sid" name="sid" style="color:red">
-                                        <option value=""
-                                                <g:if test="${sid == '' || sid == null}">selected</g:if>>(none)
-                                        </option>
-                                        <g:each in="${columns}" var="column">
-                                            <g:if test="${column != 'the_geom'}">
-                                                <option value="${column}"
-                                                        <g:if test="${sid.equalsIgnoreCase(column)}">selected</g:if>>${column}</option>
-                                            </g:if>
-                                        </g:each>
-                                    </select>
-                                </td></tr><!--tr><td>
 
                                 <label for="sname"
                                        style="color:red">Source name (contextual only; column names with optional formatting for the name for each unique

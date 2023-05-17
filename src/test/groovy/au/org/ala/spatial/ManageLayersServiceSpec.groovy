@@ -155,7 +155,7 @@ class ManageLayersServiceSpec extends Specification implements ServiceUnitTest<M
         def expect = [name     : "name1", desc: "name1", raw_id: "1", layer_id: "1", displayname: "name1", indb: true,
                       intersect: false, analysis: true, addtomap: true, enabled: true, requestedId: "cl1", type: 'c',
                       filetype : "shp", columns: ["NAME_1", "TYPE"], fields: [], has_layer: true,
-                      filename : "1", classifications: [], sid: "NAME_1", sname: "NAME_1"]
+                      filename : "1", classifications: [], sname: "NAME_1"]
 
         then:
 

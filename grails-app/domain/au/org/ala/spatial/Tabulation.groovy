@@ -18,21 +18,33 @@ package au.org.ala.spatial
  * @author Adam
  */
 import groovy.transform.CompileStatic
+import org.locationtech.jts.geom.Geometry
+
 @CompileStatic
 class Tabulation {
 
     String fid1
     String pid1
-    String name1
     String fid2
     String pid2
-    String name2
     Double area
-    String geometry
+    Geometry geometry
     int occurrences
     int species
     Integer speciest1
     Integer speciest2
 
+    static transients = ["name2", "name1"]
+    String name2
+    String name1
 
+    static mapping = {
+        version(false)
+
+        geometry column: 'the_geom'
+        fid1 index: 'tabulation_fid1_idx'
+        fid2 index: 'tabulation_fid2_idx'
+        pid1 index: 'tabulation_pid1_idx'
+        pid2 index: 'tabulation_pid2_idx'
+    }
 }

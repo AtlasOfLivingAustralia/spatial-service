@@ -286,7 +286,6 @@ class ManageLayersController {
 
         JSONObject jo = (JSONObject) JSON.parse(str)
         jo.put('requestedId', jo.get('id'))
-        if (jo.containsKey('sname')) jo.put('sid', jo.get('sname'))
 
         String id = jo.get("spid")
         jo.put('raw_id', id)

@@ -443,22 +443,25 @@ class ManageLayersService {
         } catch (Exception ignored) {
             try {
                 Layers l = layerService.getLayerById(Integer.parseInt(layerId.replaceAll('[ec]l', "")), false)
-                if (!upload.name) {
-                    map.putAll(l.properties)
-                    map.put('id', l.id)
-                }
+                if (l) {
+                    if (!upload.name) {
+                        map.putAll(l.properties)
+                        map.put('id', l.id)
+                    }
 
-                //try to get from layer info
-                map.put("raw_id", l.getId())
-                if (!map.containsKey("layer_id")) {
-                    map.put("layer_id", l.getId() + "")
+                    //try to get from layer info
+                    map.put("raw_id", l.getId())
+                    if (!map.containsKey("layer_id")) {
+                        map.put("layer_id", l.getId() + "")
+                    }
+                    //TODO: stop this failing when the table is not yet created
+                    //map.put("columns", layerDao.getLayerColumns(l.getId()));
+                    map.put("test_url",
+                            spatialConfig.geoserver.url +
+                                    "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
+                                    "&styles=&bbox" +
+                                    "=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
                 }
-                //TODO: stop this failing when the table is not yet created
-                //map.put("columns", layerDao.getLayerColumns(l.getId()));
-                map.put("test_url",
-                        spatialConfig.geoserver.url +
-                                "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + l.getName() +
-                                "&styles=&bbox=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
             } catch (Exception e2) {
                 log.error("failed to find layer for rawId: " + layerId, e2)
             }
@@ -736,7 +739,6 @@ class ManageLayersService {
 
         if (isContextual && fieldMap.containsKey("columns") && fieldMap.get("columns") != null &&
                 ((List) fieldMap.get("columns")).size > 0) {
-            fieldMap.put("sid", ((List) fieldMap.get("columns")).get(0))
             fieldMap.put("sname", ((List) fieldMap.get("columns")).get(0))
             //"sdesc" is optional
         }
@@ -810,7 +812,6 @@ class ManageLayersService {
         map.put("desc", field.getDesc())
         map.put("name", field.getName())
         map.put("sdesc", field.getSdesc())
-        map.put("sid", field.getSid())
         map.put("sname", field.getSname())
         map.put("spid", field.getSpid())
         map.put("type", field.getType())
@@ -1002,13 +1003,9 @@ class ManageLayersService {
         def retMap = [:]
 
         if (field.type.equalsIgnoreCase("c") &&
-                (field.sid == null || field.sid.isEmpty())) {
+                (field.sname == null || field.sname.isEmpty())) {
             retMap.put("error", "name parameter missing")
         } else {
-            //make it simple, sname = sid
-            if (!field.sname) {
-                field.sname = field.sid
-            }
 
             //UPDATE
             if (Fields.countById(id)) {
@@ -1064,11 +1061,8 @@ class ManageLayersService {
                 }
 
                 if ("contextual".equalsIgnoreCase(lyr.type.toString())) {
-                    //match case insensitive for sname, sid, sdesc
+                    //match case insensitive for sname, sdesc
                     if (defaultField.columns instanceof List) {
-                        if (field.sid && !defaultField.columns.contains(field.sid)) {
-                            defaultField.columns.each { if (it.equalsIgnoreCase(field.sid)) field.sid = it }
-                        }
                         if (field.sname && !defaultField.columns.contains(field.sname)) {
                             defaultField.columns.each { if (it.equalsIgnoreCase(field.sname)) field.sname = it }
                         }
@@ -1110,7 +1104,6 @@ class ManageLayersService {
                 newField.setNamesearch(b)
                 if ("contextual".equalsIgnoreCase(lyr.type.toString())) {
                     newField.setSdesc(field.sdesc.toString())
-                    newField.setSid(field.sid.toString())
                     newField.setSname(field.sname.toString())
                 }
                 newField.setType(field.type.toString())

@@ -133,7 +133,7 @@ class FieldService {
 
         String sql = "update fields set name=:name, " +
                 "\"desc\"=:desc, type=:type, " +
-                "spid=:spid, sid=:sid, sname=:sname, " +
+                "spid=:spid, sname=:sname, " +
                 "sdesc=:sdesc, indb=:indb, enabled=:enabled, " +
                 "namesearch=:namesearch, defaultlayer=:defaultlayer, " +
                 "\"intersect\"=:intersect, layerbranch=:layerbranch, analysis=:analysis," +
