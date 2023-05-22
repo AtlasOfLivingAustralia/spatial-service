@@ -16,6 +16,7 @@
 package au.org.ala.spatial
 
 import au.org.ala.plugins.openapi.Path
+import au.org.ala.spatial.dto.Tabulation
 import com.opencsv.CSVReader
 import grails.converters.JSON
 import io.swagger.v3.oas.annotations.Operation

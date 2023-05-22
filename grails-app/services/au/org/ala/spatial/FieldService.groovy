@@ -43,7 +43,9 @@ class FieldService {
             if (rs.next()) {
                 field = new Fields()
                 rs.fields.each { Field f ->
-                    field.properties.putAt(f.columnLabel, rs.getObject(f.columnLabel))
+                    if (field.properties.containsKey(f.columnLabel)) {
+                        field.properties.putAt(f.columnLabel, rs.getObject(f.columnLabel))
+                    }
                 }
                 if ("a".equalsIgnoreCase(field.type) || "b".equalsIgnoreCase(field.type)) {
                     // fetch object count for this 'grid as contextual'
@@ -173,9 +175,13 @@ class FieldService {
                 it.fields.eachWithIndex { Field fname, Integer idx ->
                     // field first, then layer
                     if (idx > 0 && fieldTableOid != fname.tableOid) {
-                        layer.setProperty(fname.columnLabel, it.getObject(idx + 1))
+                        if (layer.properties.containsKey(fname.columnLabel)) {
+                            layer.setProperty(fname.columnLabel, it.getObject(idx + 1))
+                        }
                     } else {
-                        field.setProperty(fname.columnLabel, it.getObject(idx + 1))
+                        if (field.properties.containsKey(fname.columnLabel)) {
+                            field.setProperty(fname.columnLabel, it.getObject(idx + 1))
+                        }
                         fieldTableOid = fname.tableOid
                     }
                 }

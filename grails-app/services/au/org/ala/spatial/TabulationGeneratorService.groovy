@@ -17,6 +17,7 @@ package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.dto.Pair
+import au.org.ala.spatial.dto.Tabulation
 import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion

@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import au.org.ala.spatial.dto.Tabulation
 import grails.testing.services.ServiceUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import spock.lang.Ignore

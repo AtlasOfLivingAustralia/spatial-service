@@ -17,10 +17,9 @@ package au.org.ala.spatial
 
 
 import au.org.ala.spatial.dto.IntersectionFile
+import au.org.ala.spatial.dto.Tabulation
 import au.org.ala.spatial.tabulation.TabulationUtil
 import au.org.ala.spatial.util.SpatialUtils
-
-import java.sql.ResultSet
 
 //@CompileStatic
 class TabulationService {

@@ -15,11 +15,12 @@
 
 package au.org.ala.spatial
 
+import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.plugins.openapi.Path
-import au.org.ala.spatial.dto.UploadObject
 import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.JSONRequestBodyParser
 import au.org.ala.spatial.util.SpatialConversionUtils
+import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
 import groovy.json.JsonOutput
 import groovy.sql.GroovyResultSet
@@ -48,6 +49,7 @@ import javax.ws.rs.Produces
 import java.awt.image.BufferedImage
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
 class ShapesController {
 
@@ -382,45 +384,8 @@ class ShapesController {
         return retMap
     }
 
-    @Operation(
-            method = "POST",
-            tags = "object",
-            operationId = "createFromGeoJSON",
-            summary = "Create an object from GeoJSON",
-            parameters = [
-                    @Parameter(
-                            name = "pid",
-                            in = PATH,
-                            description = "Object ID",
-                            schema = @Schema(implementation = String),
-                            required = true
-                    )
-            ],
-            requestBody = @RequestBody(
-                    content = [
-                            @Content(
-                                mediaType = "application/json",
-                                schema = @Schema(implementation = UploadObject)
-                            )
-                    ]
-            ),
-            responses = [
-                    @ApiResponse(
-                            description = "Zipped Shapefile",
-                            responseCode = "200",
-                            content = [
-                                    @Content(
-                                            mediaType = "application/zip",
-                                            schema = @Schema(implementation = Distributions)
-                                    )
-                            ]
-                    )
-            ],
-            security = []
-    )
-    @Path("/shapes/uploadGeojson/{pid}")
-    @Produces("application/zip")
-    @RequirePermission
+    @Deprecated
+    @RequireApiKey
     def uploadGeojson(Integer id) {
         //id can be null
         processGeoJSONRequest(request.getJSON() as JSONObject, id)
@@ -460,20 +425,114 @@ class ShapesController {
         return retMap
     }
 
-    @RequirePermission
+    @Operation(
+            method = "POST",
+            tags = "object",
+            operationId = "uploadWkt",
+            summary = "Create an object from WKT",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = uploadGeoJSON)
+                            )
+                    ]
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Object with the area id",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/geojson")
+    @Produces("application/json")
+    @RequireApiKey
     def uploadWkt(Integer id) {
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
         //id can be null
-        render processWKTRequest(request.JSON as JSONObject, id, namesearch) as JSON
+        def result = processWKTRequest(request.JSON as JSONObject, id, namesearch) as JSON
+        response.contentType = 'application/json'
+        render result
     }
 
-    @RequirePermission
+    @Operation(
+            method = "POST",
+            tags = "object",
+            operationId = "uploadGeoJSON",
+            summary = "Create an object from GeoJSON",
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = uploadGeoJSON)
+                            )
+                    ]
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Object with the area id",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/geojson")
+    @Produces("application/json")
+    @RequireApiKey
     def uploadGeoJSON() throws Exception {
         render processGeoJSONRequest(request.JSON as JSONObject, null) as JSON
     }
 
-    @RequirePermission
+    @Operation(
+            method = "POST",
+            tags = "object",
+            operationId = "updateGeoJSON",
+            summary = "Update an object with new GeoJSON",
+            parameters = [
+                    @Parameter(
+                            name = "pid",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )],
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = uploadGeoJSON)
+                            )
+                    ]
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Object with the area id",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/geojson/{pid}")
+    @Produces("application/json")
+    @RequireApiKey
     def updateWithGeojson(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -482,7 +541,43 @@ class ShapesController {
         render processGeoJSONRequest(request.JSON as JSONObject, pid) as JSON
     }
 
-    @RequirePermission
+    @Operation(
+            method = "POST",
+            tags = "object",
+            operationId = "updateWKT",
+            summary = "Update an object with new WKT",
+            parameters = [
+                    @Parameter(
+                            name = "pid",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )],
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = uploadGeoJSON)
+                            )
+                    ]
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Object with the area id",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/wkt/{pid}")
+    @Produces("application/json")
+    @RequireApiKey
     def updateWithWKT(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -492,6 +587,51 @@ class ShapesController {
         render processWKTRequest(request.JSON as JSONObject, pid, namesearch) as JSON
     }
 
+    @Operation(
+            method = "POST",
+            tags = "upload",
+            operationId = "uploadShapefile",
+            summary = "Upload a zipped shapefile and get a shapeId",
+            parameters = [
+                    @Parameter(
+                            name = "name",
+                            in = QUERY,
+                            description = "searchable name for the area",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "description",
+                            in = QUERY,
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            requestBody = @RequestBody(
+                    description = "Uploaded zip file",
+                    content = @Content(
+                            mediaType = 'application/zip',
+                            schema = @Schema(
+                                    type = "string",
+                                    format = "binary"
+                            )
+                    )
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Object with the shapeId and a list of all features (areas)",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/shp")
+    @Produces("application/json")
     @RequirePermission
     def uploadShapeFile() {
         // Use linked hash map to maintain key ordering
@@ -534,7 +674,8 @@ class ShapesController {
         render retMap as JSON
     }
 
-    @RequirePermission
+    @Deprecated
+    @RequireApiKey
     def uploadKMLFile() {
         String userId = params.containsKey("user_id") ? params.user_id : null
 
@@ -652,6 +793,42 @@ class ShapesController {
         return retMap
     }
 
+    @Operation(
+            method = "GET",
+            tags = "upload",
+            operationId = "getImage",
+            summary = "Return an image for an uploaded shapefile and a list of features",
+            parameters = [
+                    @Parameter(
+                            name = "shapeId",
+                            in = PATH,
+                            description = "Uploaded shapefile ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    ),
+                    @Parameter(
+                            name = "featureIndexxes",
+                            in = PATH,
+                            description = "Comma delimited list of feature indexes or the keyword `all` for all features",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )
+            ],
+            responses = [
+                    @ApiResponse(
+                            description = "Image of features",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "image/png"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/shp/image/{shapeId}/{featureIndexes}")
+    @Produces("image/png")
     def shapeImage(String shapeId, String featureIndexes) {
         OutputStream os = response.outputStream
         try {
@@ -681,7 +858,43 @@ class ShapesController {
      * @param featureIndex
      * @return
      */
-    @RequirePermission
+    @Operation(
+            method = "POST",
+            tags = "object",
+            operationId = "uploadShapefileFeature",
+            summary = "Create an object from a list of features of an uploaded shapefile",
+            parameters = [
+                    @Parameter(
+                            name = "shapeId",
+                            in = PATH,
+                            description = "Shapefile ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )],
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = UploadFeatures)
+                            )
+                    ]
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Object with the area id",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/shp/{shapeId}/featureIndex")
+    @Produces("application/json")
+    @RequireApiKey
     def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
         JSONObject json = request.JSON as JSONObject
         if (!featureIndex) {
@@ -694,7 +907,8 @@ class ShapesController {
         render processShapeFileFeatureRequest(json, null, shapeId, featureIndex) as JSON
     }
 
-    @RequirePermission
+    @Deprecated
+    @RequireApiKey
     def updateFromShapeFileFeature(Integer objectPid, String shapeId, String featureIndex) throws Exception {
         if (objectPid == null) {
             render status: 400, text: "Path parameter `objectPid` is not an integer."
@@ -703,7 +917,8 @@ class ShapesController {
         render processShapeFileFeatureRequest(request.JSON as JSONObject, objectPid, shapeId, featureIndex) as JSON
     }
 
-    @RequirePermission
+    @Deprecated
+    @RequireApiKey
     def createPointRadius(Double latitude, Double longitude, Double radius) {
         if (latitude == null) {
             render status: 400, text: "Path parameter `latitude` is not a number."
@@ -720,7 +935,8 @@ class ShapesController {
         render processPointRadiusRequest(request.JSON as JSONObject, null, latitude, longitude, radius) as JSON
     }
 
-    @RequirePermission
+    @Deprecated
+    @RequireApiKey
     def updateWithPointRadius(Double latitude, Double longitude, Double radius, Integer objectPid) {
         if (latitude == null) {
             render status: 400, text: "Path parameter `latitude` is not a number."
@@ -761,7 +977,42 @@ class ShapesController {
         return retMap
     }
 
-    @RequirePermission
+    @Operation(
+            method = "DELETE",
+            tags = "object",
+            operationId = "deleteObject",
+            summary = "Delete an object",
+            parameters = [
+                    @Parameter(
+                            name = "pid",
+                            in = PATH,
+                            description = "Object ID",
+                            schema = @Schema(implementation = String),
+                            required = true
+                    )],
+            requestBody = @RequestBody(
+                    content = [
+                            @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = UploadFeatures)
+                            )
+                    ]
+            ),
+            responses = [
+                    @ApiResponse(
+                            description = "Object with the area id",
+                            responseCode = "200",
+                            content = [
+                                    @Content(
+                                            mediaType = "application/json"
+                                    )
+                            ]
+                    )
+            ],
+            security = []
+    )
+    @Path("/shape/upload/{pid}")
+    @RequireApiKey
     def deleteShape(Integer pid) {
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
@@ -816,5 +1067,22 @@ class ShapesController {
         String.valueOf(Long.valueOf(id))
     }
 
+    class UploadWkt {
+        String wkt
+        String name
+        String description
+        String user_id
+    }
+
+    class uploadGeoJSON {
+        String name
+        String description
+        String user_id
+        Map geojson
+    }
+
+    class UploadFeatures {
+        List<String> featureIndex
+    }
 }
 

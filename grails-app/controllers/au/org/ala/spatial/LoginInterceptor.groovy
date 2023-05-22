@@ -30,69 +30,70 @@ class LoginInterceptor {
     }
 
     boolean before() {
-        if (!spatialConfig.security.oidc.enabled) {
-            return true
-        }
-
-        def isAdmin = authService.userInRole(spatialConfig.auth.admin_role)
-
-        def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
-        Class controllerClass = controller?.clazz
-        def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
-
-        if (method?.isAnnotationPresent(SkipSecurityCheck)) {
-            return true
-        }
-
-        //Calculating the required permission.
-        def permissionLevel = null
-        //Permission on method has the top priority
-        if (method?.isAnnotationPresent(RequirePermission.class)) {
-            permissionLevel = RequirePermission
-        } else if (method?.isAnnotationPresent(RequireLogin.class)) {
-            permissionLevel = RequireLogin
-        } else if (method?.isAnnotationPresent(RequireAdmin.class)) {
-            permissionLevel = RequireAdmin
-        }
-
-        if (Objects.isNull(permissionLevel)) {
-            if (controllerClass?.isAnnotationPresent(RequirePermission.class)) {
-                permissionLevel = RequirePermission
-            } else if (controllerClass?.isAnnotationPresent(RequireLogin.class)) {
-                permissionLevel = RequireLogin
-            } else if (controllerClass?.isAnnotationPresent(RequireAdmin.class)) {
-                permissionLevel = RequireAdmin
-            }
-        }
-
-        //Permission check
-        def role  // if require a certain level of ROLE
-        if (permissionLevel == RequirePermission) {
-            if (authService.getUserId()) {
-                return true
-            } else {
-                return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, ApiKey or user login required!')
-            }
-        } else if (permissionLevel == RequireAdmin) {
-            role = spatialConfig.auth.admin_role
-        } else if (permissionLevel == RequireLogin) {
-            RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
-            role = requireAuthentication?.role()
-        } else {
-            return true
-        }
-
-        if (authService.getUserId()) {
-            //Check role
-            if (!Strings.isNullOrEmpty(role)) {
-                if (false && !authService.userInRole(role)) {
-                    return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: ' + role)
-                }
-            }
-            return true
-        } else {
-            return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, user login required!')
-        }
+//        if (!spatialConfig.security.oidc.enabled) {
+//            return true
+//        }
+//
+//        def isAdmin = authService.userInRole(spatialConfig.auth.admin_role)
+//
+//        def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
+//        Class controllerClass = controller?.clazz
+//        def method = controllerClass?.getMethod(actionName ?: "index", [] as Class[])
+//
+//        if (method?.isAnnotationPresent(SkipSecurityCheck)) {
+//            return true
+//        }
+//
+//        //Calculating the required permission.
+//        def permissionLevel = null
+//        //Permission on method has the top priority
+//        if (method?.isAnnotationPresent(RequirePermission.class)) {
+//            permissionLevel = RequirePermission
+//        } else if (method?.isAnnotationPresent(RequireLogin.class)) {
+//            permissionLevel = RequireLogin
+//        } else if (method?.isAnnotationPresent(RequireAdmin.class)) {
+//            permissionLevel = RequireAdmin
+//        }
+//
+//        if (Objects.isNull(permissionLevel)) {
+//            if (controllerClass?.isAnnotationPresent(RequirePermission.class)) {
+//                permissionLevel = RequirePermission
+//            } else if (controllerClass?.isAnnotationPresent(RequireLogin.class)) {
+//                permissionLevel = RequireLogin
+//            } else if (controllerClass?.isAnnotationPresent(RequireAdmin.class)) {
+//                permissionLevel = RequireAdmin
+//            }
+//        }
+//
+//        //Permission check
+//        def role  // if require a certain level of ROLE
+//        if (permissionLevel == RequirePermission) {
+//            if (authService.getUserId()) {
+//                return true
+//            } else {
+//                return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, ApiKey or user login required!')
+//            }
+//        } else if (permissionLevel == RequireAdmin) {
+//            role = spatialConfig.auth.admin_role
+//        } else if (permissionLevel == RequireLogin) {
+//            RequireLogin requireAuthentication = method.getAnnotation(RequireLogin.class)
+//            role = requireAuthentication?.role()
+//        } else {
+//            return true
+//        }
+//
+//        if (authService.getUserId()) {
+//            //Check role
+//            if (!Strings.isNullOrEmpty(role)) {
+//                if (false && !authService.userInRole(role)) {
+//                    return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: ' + role)
+//                }
+//            }
+//            return true
+//        } else {
+//            return accessDenied(STATUS_UNAUTHORISED, 'Forbidden, user login required!')
+//        }
+        return true
     }
 
 

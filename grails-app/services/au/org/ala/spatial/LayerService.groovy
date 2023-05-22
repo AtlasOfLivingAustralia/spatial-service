@@ -14,18 +14,27 @@
  ***************************************************************************/
 package au.org.ala.spatial
 
-
+import au.org.ala.spatial.dto.GridClass
 import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.intersect.SimpleShapeFileCache
 import groovy.sql.Sql
+import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
+import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.type.TypeReference
 
+import java.util.concurrent.ConcurrentHashMap
+
+@Slf4j
 class LayerService {
 
     Sql groovySql
 
     SpatialConfig spatialConfig
     FieldService fieldService
+
+    ConcurrentHashMap<String, IntersectionFile> intersectionFiles = new ConcurrentHashMap()
+    ConcurrentHashMap<String, HashMap<Integer, GridClass>> classGrids = new ConcurrentHashMap<>()
 
     List<Layers> getLayers() {
         log.debug("Getting a list of all enabled layers")
@@ -187,13 +196,71 @@ class LayerService {
 //    }
 //
     IntersectionFile getIntersectionFile(String id) {
-        //TODO
-        null
+        IntersectionFile file = intersectionFiles.get(id)
+
+        // rebuild intersectionFiles if not found
+        if (!file) {
+            file = getIntersectionFiles().get(id)
+        }
+
+        file
+    }
+
+    static private HashMap<Integer, GridClass> getGridClasses(String filePath, String type) throws IOException {
+        ObjectMapper mapper = new ObjectMapper()
+        HashMap<Integer, GridClass> classes = null
+        if (type.equals("Contextual")) {
+            if (new File(filePath + ".gri").exists()
+                    && new File(filePath + ".grd").exists()
+                    && new File(filePath + ".txt").exists()) {
+                File gridClassesFile = new File(filePath + ".classes.json");
+                if (gridClassesFile.exists()) {
+                    classes = mapper.readValue(gridClassesFile, new TypeReference<Map<Integer, GridClass>>() {})
+                    log.info("found grid classes for " + gridClassesFile.getPath())
+                } else {
+                    log.error("classes unavailable for " + gridClassesFile.getPath() + ", build classes offline")
+                }
+            } else if (new File(filePath + ".gri").exists()
+                    && new File(filePath + ".grd").exists()) {
+                log.error("missing grid classes for " + filePath)
+            }
+        } else {
+
+        }
+        return classes
     }
 
     Map<String, IntersectionFile> getIntersectionFiles() {
-        //TODO
-        [:]
+        for (Fields f : fieldService.getFields()) {
+            Layers layer = getLayerById(Integer.parseInt(f.getSpid()), false)
+            if (layer == null) {
+                log.error("cannot find layer with id '" + f.getSpid() + "'")
+                continue
+            }
+            HashMap<Integer, GridClass> gridClasses = getGridClasses(spatialConfig.data.dir + File.separator + layer.getPath_orig(), layer.getType())
+            IntersectionFile intersectionFile = new IntersectionFile(f.getName(),
+                    spatialConfig.data.dir + File.separator + layer.getPath_orig(),
+                    f.getSname(),
+                    layer.getName(),
+                    f.getId(),
+                    f.getName(),
+                    String.valueOf(layer.getId()),
+                    f.getType(),
+                    gridClasses)
+
+            intersectionFiles.put(f.getId(), intersectionFile);
+            //also register it under the layer name
+            //- only if default layer not already added
+            if (f.defaultlayer || intersectionFiles.get(layer.getName()) == null) {
+                intersectionFiles.put(layer.getName(), intersectionFile)
+            }
+            //also register it under the layer pid
+            if (f.defaultlayer || intersectionFiles.get(String.valueOf(layer.getId())) == null) {
+                intersectionFiles.put(String.valueOf(layer.getId()), intersectionFile)
+            }
+            //classGrids.put(f.getId(), gridClasses)
+        }
+        intersectionFiles
     }
 
     String[] getAnalysisLayerInfoV2(String id) {

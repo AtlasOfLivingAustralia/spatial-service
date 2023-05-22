@@ -43,9 +43,7 @@ import au.org.ala.spatial.legend.GridLegend
 import au.org.ala.spatial.legend.Legend
 import au.org.ala.spatial.legend.LegendEqualArea
 import au.org.ala.spatial.dto.LayerFilter
-import com.fasterxml.jackson.annotation.JsonProperty
 import grails.converters.JSON
-import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.IOUtils
 import org.geotools.geometry.jts.WKTReader2
@@ -197,7 +195,7 @@ class SlaveProcess {
             s.isBackground = json.isBackground
             s.version = json.version
 
-            s.inputSpecification = new HashMap()
+            s.input = new HashMap()
             json.input.each { key, value ->
                 ProcessSpecification.InputSpecification is = new ProcessSpecification.InputSpecification()
                 is.description = value.description
@@ -213,9 +211,9 @@ class SlaveProcess {
                         c.setProperty(ckey, cvalue)
                     }
                 }
-                is.constraintSpecification = c
+                is.constraints = c
 
-                s.inputSpecification.put(key, is)
+                s.input.put(key, is)
             }
 
             s.output = new HashMap()

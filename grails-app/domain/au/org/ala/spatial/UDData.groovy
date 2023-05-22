@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-class UDData {
+class UDData implements Serializable {
     Integer ud_header_id
     String ref
     String data_type
@@ -33,5 +33,6 @@ class UDData {
         version(false)
 
         ud_header_id index: 'ud_data_x_header_idx'
+        ref sqlType: "character varying(20)"
     }
 }

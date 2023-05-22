@@ -29,6 +29,8 @@ class UploadedObjectsMetadata {
     static mapping = {
         version(false)
 
+        id name: 'pid'
+
         pid index: 'uploaded_objects_metadata_pid_idx'
     }
 }

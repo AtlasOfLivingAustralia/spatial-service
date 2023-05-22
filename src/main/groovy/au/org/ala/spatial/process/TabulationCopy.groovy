@@ -16,7 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.Tabulation
+import au.org.ala.spatial.dto.Tabulation
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 

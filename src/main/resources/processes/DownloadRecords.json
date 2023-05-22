@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": true,
-    "public": false
+    "isPublic": false
   },
   "input": {
     "biocacheServiceUrl": {

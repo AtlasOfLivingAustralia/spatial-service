@@ -12,15 +12,14 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package au.org.ala.spatial
+package au.org.ala.spatial.dto
 
 /**
  * @author Adam
  */
-import groovy.transform.CompileStatic
 import org.locationtech.jts.geom.Geometry
 
-@CompileStatic
+// Table accessed only with SQL
 class Tabulation {
 
     String fid1
@@ -29,8 +28,8 @@ class Tabulation {
     String pid2
     Double area
     Geometry geometry
-    int occurrences
-    int species
+    Integer occurrences
+    Integer species
     Integer speciest1
     Integer speciest2
 
@@ -38,13 +37,27 @@ class Tabulation {
     String name2
     String name1
 
-    static mapping = {
-        version(false)
-
-        geometry column: 'the_geom'
-        fid1 index: 'tabulation_fid1_idx'
-        fid2 index: 'tabulation_fid2_idx'
-        pid1 index: 'tabulation_pid1_idx'
-        pid2 index: 'tabulation_pid2_idx'
-    }
+//    static mapping = {
+//        version(false)
+//
+//        geometry column: 'the_geom'
+//        fid1 index: 'tabulation_fid1_idx'
+//        fid2 index: 'tabulation_fid2_idx'
+//        pid1 index: 'tabulation_pid1_idx'
+//        pid2 index: 'tabulation_pid2_idx'
+//    }
+//
+//    static constraints = {
+//        fid1 nullable: true
+//        fid2 nullable: true
+//        pid1 nullable: true
+//        pid2 nullable: true
+//
+//         area  nullable: true
+//         geometry nullable: true
+//         occurrences nullable: true
+//         species nullable: true
+//         speciest1 nullable: true
+//         speciest2 nullable: true
+//    }
 }

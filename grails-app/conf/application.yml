@@ -239,17 +239,17 @@ security:
   apikey:
     enabled: true
     auth:
-      serviceUrl: https://auth-test.ala.org.au/apikey/ws/check/
+      serviceUrl: https://auth-test.ala.org.au/apikey/
     check:
       serviceUrl: https://auth-test.ala.org.au/apikey/ws/check?apikey=
     userdetails:
-      serviceUrl: https://auth-test.ala.org.au/userdetails/userDetails/
+      serviceUrl: https://auth-test.ala.org.au/userdetails/
 
-#webservice:
-#  jwt: true
-#  jwt-scopes: openid users/read
-#  client-id: second-client-id-for-machine-to-machine-comms
-#  client-secret: second-client-secret-for-machine-to-machine-comms
+webservice:
+  jwt: true
+  jwt-scopes: openid users/read
+  client-id: second-client-id-for-machine-to-machine-comms
+  client-secret: second-client-secret-for-machine-to-machine-comms
 
 auth.admin_role: "ROLE_ADMIN"
 app.http.header.userId: "X-ALA-userId"

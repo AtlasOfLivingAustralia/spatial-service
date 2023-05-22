@@ -32,14 +32,14 @@ class ProcessSpecification {
     }
 
     @JsonProperty("input")
-    Map<String, InputSpecification> inputSpecification
+    Map<String, InputSpecification> input
 
     static class InputSpecification {
         String description
         InputType type
 
         @JsonProperty("constraints")
-        ConstraintSpecification constraintSpecification
+        ConstraintSpecification constraints
     }
 
     enum InputType {
@@ -88,7 +88,7 @@ class ProcessSpecification {
         FILES, // files produced
         DOWNLOAD, // contents of downloadable output
         SQL, // SQL to run on layersdb
-        PROCESS, // Tasks to queue
+        PROCESS // Tasks to queue
     }
 
     static class OutputSpecification {

@@ -731,22 +731,26 @@ class SpatialObjectsService {
 
         try {
             int object_id = 0
-            groovySql.execute("SELECT nextval('objects_id_seq'::regclass)") { isResultSet, result ->
-                object_id = result as int
-            }
+            groovySql.query("SELECT nextval('objects_id_seq'::regclass)", { result ->
+                if (result.next()) {
+                    object_id = result.getInt(1)
+                }
+            })
             int metadata_id = 0
-            groovySql.execute("SELECT nextval('uploaded_objects_metadata_id_seq'::regclass)") { isResultSet, result ->
-                metadata_id = result as int
-            }
+            groovySql.query("SELECT nextval('uploaded_objects_metadata_id_seq'::regclass)", { result ->
+                if (result.next()) {
+                    metadata_id = result.getInt(1)
+                }
+            })
 
             // Insert shape into geometry table
             String sql = "INSERT INTO objects (pid,  name, \"desc\", fid, the_geom, namesearch, bbox, area_km) " +
-                    "values (?, ? , ?, ?, ?, ST_GeomFromText(?, 4326), ?, ST_AsText(Box2D(ST_GeomFromText(?, 4326))), ?)"
-            SpatialObjects.executeUpdate(sql, [object_id, metadata_id, name, description, spatialConfig.userObjectsField, wkt, namesearch, wkt, area_km])
+                    "values (?, ?, ?, ?, ST_GeomFromText(?, 4326), ?, ST_AsText(Box2D(ST_GeomFromText(?, 4326))), ?)"
+            groovySql.execute(sql, [object_id, name, description, spatialConfig.userObjectsField, wkt, namesearch, wkt, area_km])
 
             // Now write to metadata table
             String sql2 = "INSERT INTO uploaded_objects_metadata (pid, id, user_id, time_last_updated) values (?, ?, ?, now())"
-            SpatialObjects.executeUpdate(sql2, object_id, metadata_id, userid)
+            groovySql.execute(sql2, object_id, metadata_id, userid)
 
             return Integer.toString(object_id)
         } catch (DataAccessException ex) {
@@ -767,13 +771,13 @@ class SpatialObjectsService {
 
             // First update metadata table
             String sql = "UPDATE uploaded_objects_metadata SET user_id = ?, time_last_updated = now() WHERE pid = ?"
-            SpatialObjects.executeUpdate(sql, userid, Integer.toString(pid))
+            groovySql.execute(sql, [userid, Integer.toString(pid)])
 
             // Then update objects table
             String sql2 = "UPDATE objects SET the_geom = ST_GeomFromText(?, 4326), " +
                     "bbox = ST_AsText(Box2D(ST_GeomFromText(?, 4326))), name = ?, \"desc\" = ?, area_km = ? where pid = ?"
-            int rowsUpdated = SpatialObjects.executeUpdate(sql2, wkt, wkt, name, description, area_km, Integer.toString(pid))
-            return (rowsUpdated > 0)
+            boolean rowsUpdated = groovySql.execute(sql2, [wkt, wkt, name, description, area_km, Integer.toString(pid)])
+            return (rowsUpdated)
         } catch (DataAccessException ex) {
             throw new IllegalArgumentException("Error writing to database. Check validity of wkt.", ex)
         }
@@ -787,8 +791,8 @@ class SpatialObjectsService {
         }
 
         String sql = "DELETE FROM uploaded_objects_metadata WHERE pid = ?; DELETE FROM objects where pid = ?"
-        int rowsAffected = SpatialObjects.executeUpdate(sql, Integer.toString(pid), Integer.toString(pid))
-        return (rowsAffected > 0)
+        boolean rowsAffected = groovySql.execute(sql, Integer.toString(pid), Integer.toString(pid))
+        return (rowsAffected)
     }
 
     private static boolean shapePidIsForUploadedShape(int pid) {

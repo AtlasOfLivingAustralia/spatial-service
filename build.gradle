@@ -143,14 +143,16 @@ dependencies {
 
     // plugins needed at runtime but not for compilation
     implementation "org.grails.plugins:ala-admin-plugin:2.3.0"
-    implementation "org.grails.plugins:ala-bootstrap3:4.1.0"
+    implementation ("org.grails.plugins:ala-bootstrap3:4.1.0") {
+        exclude module: 'ala-cas-client'
+    }
 
     implementation "org.grails.plugins:ala-auth:$alaSecurityLibsVersion"
     implementation "org.grails.plugins:ala-ws-plugin:$alaSecurityLibsVersion"
     implementation "org.grails.plugins:ala-ws-security-plugin:$alaSecurityLibsVersion"
     implementation "au.org.ala:userdetails-service-client:$alaSecurityLibsVersion"
 
-    implementation 'org.grails.plugins:ala-cors-plugin:0.1-SNAPSHOT'
+//    implementation 'org.grails.plugins:ala-cors-plugin:0.1-SNAPSHOT'
     implementation 'au.org.ala.plugins:openapi:1.1.0'
 
     //implementation 'org.grails.plugins:mail:2.0.0.RC6'

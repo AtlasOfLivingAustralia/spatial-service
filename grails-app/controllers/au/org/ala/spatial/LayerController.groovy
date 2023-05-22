@@ -52,7 +52,7 @@ class LayerController {
                 if (field.spid == layer.id.toString()) {
                     if (map?.last_update) {
                         map.put('last_update', field?.last_update?.getTime() < ((Date) map?.last_update)?.getTime() ? field.last_update : map.last_update)
-                    } else {
+                    } else if (field.last_update) {
                         map.put('last_update', field.last_update)
                     }
                 }

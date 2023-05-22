@@ -21,7 +21,6 @@ import au.org.ala.spatial.dto.TaskWrapper
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.apache.commons.lang3.StringUtils
-import org.apache.tomcat.jni.Proc
 
 class TasksService {
 
@@ -109,7 +108,7 @@ class TasksService {
             input.each { k, v ->
                 if (v == null || v == null) {
                     //skip
-                } else if (spec.inputSpecification[k]?.type == 'area') {
+                } else if (spec.input[k]?.type == 'area') {
                     //register area pid
                     def list = []
                     v.each { a ->
@@ -496,13 +495,11 @@ class TasksService {
                 _specAdmin.put(name, cap)
                 boolean iPrivate = !cap.privateSpecification?.isPublic
                 if (iPrivate) {
-                    _spec.put(name, cap.findAll { i ->
-                        if (!includePrivate && i.key == 'private') {
-                            null
-                        } else {
-                            i
-                        }
-                    })
+                    if (includePrivate) {
+                        _spec.put(name, cap)
+                    }
+                } else {
+                    _spec.put(name, cap)
                 }
             }
 
