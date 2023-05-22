@@ -38,7 +38,7 @@ class ObjectController {
 
     @Operation(
             method = "GET",
-            tags = "spatialObject",
+            tags = "objects",
             operationId = "getSpatialObject",
             summary = "Get a spatial object",
             parameters = [
@@ -89,7 +89,7 @@ class ObjectController {
 
     @Operation(
             method = "GET",
-            tags = "spatialObject",
+            tags = "objects",
             operationId = "nearestObjects",
             summary = "Get a list of objects nearest to a point",
             parameters = [
@@ -226,7 +226,7 @@ class ObjectController {
 
     @Operation(
             method = "GET",
-            tags = "spatialObject",
+            tags = "objects",
             operationId = "objectsInField",
             summary = "Get a list of objects in a field",
             parameters = [
@@ -277,7 +277,7 @@ class ObjectController {
 
     @Operation(
             method = "GET",
-            tags = "spatialObject",
+            tags = "objects",
             operationId = "nearestObjects",
             summary = "Test if a point intersects a single object",
             parameters = [
@@ -333,7 +333,7 @@ class ObjectController {
 
     @Operation(
             method = "POST",
-            tags = "spatialObject",
+            tags = "objects",
             operationId = "objectsInWkt",
             summary = "Get a list of a field's objects that intersect with provided WKT",
             parameters = [

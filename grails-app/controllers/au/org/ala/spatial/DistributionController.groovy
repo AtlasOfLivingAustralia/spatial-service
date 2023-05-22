@@ -38,7 +38,7 @@ class DistributionController {
 
     @Operation(
             method = "GET",
-            tags = "expertDistributions",
+            tags = "distributions",
             operationId = "getDistributions",
             summary = "Get list of expert distributions",
             description = "Get a list of expert distributions",
@@ -103,7 +103,7 @@ class DistributionController {
 
     @Operation(
             method = "GET",
-            tags = "expertDistributions",
+            tags = "distributions",
             operationId = "getLsids",
             summary = "Get list of species level LSIDs that have an expert distribution",
             parameters = [],
@@ -169,7 +169,7 @@ class DistributionController {
 
     @Operation(
             method = "GET",
-            tags = "expertDistributions",
+            tags = "distributions",
             operationId = "getExpertDistributionById",
             summary = "Get an expert distribution by Id",
             description = "Get an expert distribution by Id",
@@ -248,7 +248,7 @@ class DistributionController {
 
     @Operation(
             method = "GET",
-            tags = "expertDistributions",
+            tags = "distributions",
             operationId = "getExpertDistributionsByLsid",
             summary = "Get expert distributions by LSID",
             description = "Get expert distributions by LSID",
@@ -363,7 +363,7 @@ class DistributionController {
 
     @Operation(
             method = "GET",
-            tags = "expertDistributions",
+            tags = "distributions",
             operationId = "getExpertDistributionImageById",
             summary = "Get expert distribution image by id",
             description = "Get expert distribution image by id",

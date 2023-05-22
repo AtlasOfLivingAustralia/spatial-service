@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.plugins.openapi.Path
 import com.opencsv.CSVWriter
 import grails.converters.JSON
@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.ArrayUtils
@@ -65,7 +66,7 @@ class LayerController {
 
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "getLayerImage",
             summary = "Get thumbnail image of layer",
             parameters = [
@@ -103,7 +104,7 @@ class LayerController {
 
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "getLayersCSV",
             summary = "Get CSV list of layers",
             parameters = [
@@ -440,7 +441,7 @@ class LayerController {
 
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "getLayerFile",
             summary = "Get zipped copy of the layer if permitted",
             parameters = [
@@ -463,11 +464,11 @@ class LayerController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("layer/download/{id}")
     @Produces("application/zip")
-    @RequirePermission
+    @RequireApiKey
     def download(String id) {
         Layers layer = layerService.getLayerByDisplayName(id)
         if (!layer) {
@@ -534,7 +535,7 @@ class LayerController {
 
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "listLayers",
             summary = "Get a list of all layers",
             parameters = [],
@@ -567,7 +568,7 @@ class LayerController {
 
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "getLayerById",
             summary = "Get a layer by layer ID",
             parameters = [
@@ -662,7 +663,7 @@ class LayerController {
     @Deprecated
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "listEnvironmentalLayers",
             summary = "Get a list of all environmental (raster) layers",
             parameters = [],
@@ -689,7 +690,7 @@ class LayerController {
     @Deprecated
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "listContextualLayers",
             summary = "Get a list of all contextual (vector) layers",
             parameters = [],
@@ -716,7 +717,7 @@ class LayerController {
     @Deprecated
     @Operation(
             method = "GET",
-            tags = "layer",
+            tags = "layers",
             operationId = "listLayersRIFCS",
             summary = "Get a list of all layers in RIF-CS format",
             parameters = [],

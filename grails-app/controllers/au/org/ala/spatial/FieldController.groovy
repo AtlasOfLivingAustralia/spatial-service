@@ -114,7 +114,7 @@ class FieldController {
      */
     @Operation(
             method = "GET",
-            tags = "field",
+            tags = "fields",
             operationId = "getFieldById",
             summary = "Get a field by Id",
             description = "Get a field by Id. Includes all objects associated with the field.",
@@ -180,7 +180,7 @@ class FieldController {
 
     @Operation(
             method = "GET",
-            tags = "fields,layers",
+            tags = "fields",
             operationId = "searchFields",
             summary = "search for fields",
             parameters = [
@@ -215,7 +215,7 @@ class FieldController {
 
     @Operation(
             method = "GET",
-            tags = "layers,fields",
+            tags = "fields",
             operationId = "searchLayers",
             summary = "search for layers",
             parameters = [

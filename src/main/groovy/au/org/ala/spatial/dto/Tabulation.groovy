@@ -14,6 +14,8 @@
  ***************************************************************************/
 package au.org.ala.spatial.dto
 
+import io.swagger.v3.oas.annotations.Hidden
+
 /**
  * @author Adam
  */
@@ -27,7 +29,10 @@ class Tabulation {
     String fid2
     String pid2
     Double area
+
+    @Hidden
     Geometry geometry
+
     Integer occurrences
     Integer species
     Integer speciest1

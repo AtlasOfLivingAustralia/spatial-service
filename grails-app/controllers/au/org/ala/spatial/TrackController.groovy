@@ -341,7 +341,7 @@ class TrackController {
 
     @Operation(
             method = "GET",
-            tags = "track",
+            tags = "tracks",
             operationId = "getTrackImageById",
             summary = "Get image of track by id",
             parameters = [

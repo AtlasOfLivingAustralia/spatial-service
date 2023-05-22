@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.AutoClone
 import groovy.transform.CompileStatic
 
-@CompileStatic
 @AutoClone
 class ProcessSpecification {
     String name

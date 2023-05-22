@@ -126,6 +126,8 @@ class UrlMappings {
         "/master/resource"(controller: "manageLayers", action: "resource")
         "/master/resourcePeek"(controller: "manageLayers", action: "resourcePeek")
 
+        "/layerDistances/layerdistancesJSON"(controller: "layerDistances", action: "index")
+
         "/$controller/$action?/$id?(.$format)?" {
             constraints {
                 // apply constraints here

@@ -36,7 +36,7 @@ class SearchController {
 
     @Operation(
             method = "GET",
-            tags = "search,objects",
+            tags = "objects",
             operationId = "searchObjects",
             summary = "Search all objects by name",
             parameters = [

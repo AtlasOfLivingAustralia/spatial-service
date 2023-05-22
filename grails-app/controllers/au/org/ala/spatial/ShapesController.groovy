@@ -31,6 +31,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.apache.commons.fileupload.servlet.ServletFileUpload
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -427,14 +428,13 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "object",
+            tags = "upload",
             operationId = "uploadWkt",
             summary = "Create an object from WKT",
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = uploadGeoJSON)
+                                    mediaType = "application/json"
                             )
                     ]
             ),
@@ -451,7 +451,7 @@ class ShapesController {
             ],
             security = []
     )
-    @Path("/shape/upload/geojson")
+    @Path("/shape/upload/wkt")
     @Produces("application/json")
     @RequireApiKey
     def uploadWkt(Integer id) {
@@ -465,14 +465,13 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "object",
+            tags = "upload",
             operationId = "uploadGeoJSON",
             summary = "Create an object from GeoJSON",
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = uploadGeoJSON)
+                                    mediaType = "application/json"
                             )
                     ]
             ),
@@ -498,7 +497,7 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "object",
+            tags = "upload",
             operationId = "updateGeoJSON",
             summary = "Update an object with new GeoJSON",
             parameters = [
@@ -512,8 +511,7 @@ class ShapesController {
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = uploadGeoJSON)
+                                    mediaType = "application/json"
                             )
                     ]
             ),
@@ -543,7 +541,7 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "object",
+            tags = "upload",
             operationId = "updateWKT",
             summary = "Update an object with new WKT",
             parameters = [
@@ -557,8 +555,7 @@ class ShapesController {
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = uploadGeoJSON)
+                                    mediaType = "application/json"
                             )
                     ]
             ),
@@ -628,11 +625,11 @@ class ShapesController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/shape/upload/shp")
     @Produces("application/json")
-    @RequirePermission
+    @RequireApiKey
     def uploadShapeFile() {
         // Use linked hash map to maintain key ordering
         Map<Object, Object> retMap = new LinkedHashMap<Object, Object>()
@@ -874,8 +871,7 @@ class ShapesController {
             requestBody = @RequestBody(
                     content = [
                             @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = UploadFeatures)
+                                    mediaType = "application/json"
                             )
                     ]
             ),
@@ -979,7 +975,7 @@ class ShapesController {
 
     @Operation(
             method = "DELETE",
-            tags = "object",
+            tags = "upload",
             operationId = "deleteObject",
             summary = "Delete an object",
             parameters = [
@@ -990,14 +986,6 @@ class ShapesController {
                             schema = @Schema(implementation = String),
                             required = true
                     )],
-            requestBody = @RequestBody(
-                    content = [
-                            @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = UploadFeatures)
-                            )
-                    ]
-            ),
             responses = [
                     @ApiResponse(
                             description = "Object with the area id",
@@ -1067,22 +1055,23 @@ class ShapesController {
         String.valueOf(Long.valueOf(id))
     }
 
-    class UploadWkt {
-        String wkt
-        String name
-        String description
-        String user_id
-    }
-
-    class uploadGeoJSON {
-        String name
-        String description
-        String user_id
-        Map geojson
-    }
-
-    class UploadFeatures {
-        List<String> featureIndex
-    }
+    // requestBody schemas
+//    class UploadWkt {
+//        String wkt
+//        String name
+//        String description
+//        String user_id
+//    }
+//
+//    class UploadGeoJSON {
+//        String name
+//        String description
+//        String user_id
+//        Map geojson
+//    }
+//
+//    class UploadFeatures {
+//        List<String> featureIndex
+//    }
 }
 

@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial
 
+import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.plugins.openapi.Path
 import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.web.AuthService
@@ -26,6 +27,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.grails.web.json.JSONObject
 
 import javax.ws.rs.Produces
@@ -48,7 +50,7 @@ class TasksController {
      */
     @Operation(
             method = "GET",
-            tags = "task",
+            tags = "tasks",
             operationId = "capabilities",
             summary = "List of tasks and their inputs and outputs",
             responses = [
@@ -57,8 +59,8 @@ class TasksController {
                             responseCode = "200",
                             content = [
                                     @Content(
-                                            mediaType = "application/json",
-                                            array = @ArraySchema(schema = @Schema(implementation = ProcessSpecification))
+                                            mediaType = "application/json"
+                                            //array = @ArraySchema(schema = @Schema(implementation = ProcessSpecification))
                                     )
                             ]
                     )
@@ -174,7 +176,7 @@ class TasksController {
      */
     @Operation(
             method = "GET",
-            tags = "task",
+            tags = "tasks",
             operationId = "status",
             summary = "Task status",
             parameters = [
@@ -192,8 +194,8 @@ class TasksController {
                             responseCode = "200",
                             content = [
                                     @Content(
-                                            mediaType = "application/json",
-                                            schema = @Schema(implementation = Map<String, Object>)
+                                            mediaType = "application/json"
+                                            //schema = @Schema(implementation = Map)
                                     )
                             ]
                     )
@@ -252,7 +254,7 @@ class TasksController {
      */
     @Operation(
             method = "POST",
-            tags = "task",
+            tags = "tasks",
             operationId = "create",
             summary = "Create a task",
             parameters = [
@@ -277,18 +279,18 @@ class TasksController {
                             responseCode = "200",
                             content = [
                                     @Content(
-                                            mediaType = "application/json",
-                                            schema = @Schema(implementation = Map<String, Object>)
+                                            mediaType = "application/json"
+                                            //schema = @Schema(implementation = Map<String, Object>)
                                     )
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/tasks/create")
     @Produces("application/json")
     @Transactional(readOnly = false)
-    @RequirePermission
+    @RequireApiKey
     create() {
         Map input = null
         if (params.containsKey('input')) {
@@ -324,7 +326,7 @@ class TasksController {
      */
     @Operation(
             method = "GET",
-            tags = "task",
+            tags = "tasks",
             operationId = "cancel",
             summary = "Cancel a task",
             parameters = [
@@ -342,18 +344,18 @@ class TasksController {
                             responseCode = "200",
                             content = [
                                     @Content(
-                                            mediaType = "application/json",
-                                            schema = @Schema(implementation = Map<String, Object>)
+                                            mediaType = "application/json"
+                                            //schema = @Schema(implementation = Map<String, Object>)
                                     )
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/tasks/cancel/{id}")
     @Produces("application/json")
     @Transactional(readOnly = false)
-    @RequirePermission
+    @RequireApiKey
     cancel(Long id) {
         def task = tasksService.cancel(id)
 

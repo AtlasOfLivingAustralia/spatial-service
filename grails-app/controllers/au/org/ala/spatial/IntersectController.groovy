@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.plugins.openapi.Path
 import au.org.ala.spatial.util.BatchConsumer
 import au.org.ala.spatial.util.BatchProducer
@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.geotools.geojson.geom.GeometryJSON
 import org.locationtech.jts.geom.Geometry
 
@@ -92,7 +93,7 @@ class IntersectController {
             ],
             security = []
     )
-    @Path('/intersect/$ids/$lat/$lng')
+    @Path('/intersect/{ids}/{lat}/{lng}')
     @Produces("application/json")
     def intersect(String ids, Double lat, Double lng) {
         if (lat == null) {
@@ -137,10 +138,10 @@ class IntersectController {
                             content = [
                                     @Content(
                                             mediaType = "application/json",
-                                            array = @ArraySchema(schema = @Schema(implementation = Map)),
-                                            examples = [
-                                                    @ExampleObject(externalValue = "{\"statusUrl\": \"https://spatial.ala.org.au/ws/intersect/batch/15123\",\"progress\": 0,\"started\": \"09/03/20 12:17:22:353\",\"batchId\": \"15123\",\"fields\": 2,\"points\": 2,\"status\": \"started\"}")
-                                            ]
+                                            array = @ArraySchema(schema = @Schema(implementation = Map))
+//                                            examples = [
+//                                                    @ExampleObject(externalValue = "{\"statusUrl\": \"https://spatial.ala.org.au/ws/intersect/batch/15123\",\"progress\": 0,\"started\": \"09/03/20 12:17:22:353\",\"batchId\": \"15123\",\"fields\": 2,\"points\": 2,\"status\": \"started\"}")
+//                                            ]
                                     )
                             ]
                     )
@@ -256,14 +257,15 @@ class IntersectController {
                                             mediaType = "application/json",
                                             array = @ArraySchema(schema = @Schema(implementation = Map)),
                                             examples = [
-                                                    @ExampleObject(externalValue = "{\"waiting\": \"In queue\",\"statusUrl\": \"https://spatial.ala.org.au/ws/intersect/batch/1678306712973\",\"progress\": 0,\"batchId\": \"1678306712973\",\"fields\": 2,\"points\": 2,\"status\": \"waiting\"}")]
+                                                    @ExampleObject(externalValue = "{\"waiting\": \"In queue\",\"statusUrl\": \"https://spatial.ala.org.au/ws/intersect/batch/1678306712973\",\"progress\": 0,\"batchId\": \"1678306712973\",\"fields\": 2,\"points\": 2,\"status\": \"waiting\"}")
+                                            ]
                                     )
                             ]
                     )
             ],
             security = []
     )
-    @Path('/intersect/batch/$id')
+    @Path('/intersect/batch/{id}')
     @Produces("application/json")
     def batchStatus(String id) {
         File dir = new File((spatialConfig.data.dir + '/intersect/batch/') as String)
@@ -311,7 +313,7 @@ class IntersectController {
             ],
             security = []
     )
-    @Path('/intersect/batch/download/$id')
+    @Path('/intersect/batch/download/{id}')
     @Produces("application/zip")
     def batchDownload(String id) {
         Boolean csv = params.containsKey('csv') ? params.csv.toString().toBoolean() : false
@@ -389,11 +391,11 @@ class IntersectController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path('/intersect/reloadconfig')
     @Produces("application/json")
-    @RequirePermission
+    @RequireApiKey
     def reloadConfig() {
         Map map = new HashMap()
         layerIntersectService.reload()
@@ -456,7 +458,7 @@ class IntersectController {
             ],
             security = []
     )
-    @Path('/intersect/pointradius/$fid/$lat/$lng/$radius')
+    @Path('/intersect/pointradius/{fid}/{lat}/{lng}/{radius}')
     @Produces("application/json")
     def pointRadius(String fid, Double lat, Double lng, Double radius) {
         if (lat == null) {
@@ -508,7 +510,7 @@ class IntersectController {
             ],
             security = []
     )
-    @Path('/intersect/wkt/$fid')
+    @Path('/intersect/wkt/{fid}')
     @Produces("application/json")
     @SkipSecurityCheck
     // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
@@ -550,7 +552,7 @@ class IntersectController {
             ],
             security = []
     )
-    @Path('/intersect/geojson/$fid')
+    @Path('/intersect/geojson/{fid}')
     @Produces("application/json")
     @SkipSecurityCheck
     // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
@@ -608,7 +610,7 @@ class IntersectController {
             ],
             security = []
     )
-    @Path('/intersect/object/$fid/$pid')
+    @Path('/intersect/object/{fid}/{pid}')
     @Produces("application/json")
     def objectIntersect(String fid, String pid) {
         render spatialObjectsService.getObjectsIntersectingWithObject(fid, pid) as JSON

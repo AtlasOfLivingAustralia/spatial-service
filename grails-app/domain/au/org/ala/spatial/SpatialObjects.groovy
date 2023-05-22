@@ -1,6 +1,6 @@
 package au.org.ala.spatial
 
-
+import io.swagger.v3.oas.annotations.Hidden
 import org.locationtech.jts.geom.Geometry
 
 class SpatialObjects {
@@ -8,7 +8,10 @@ class SpatialObjects {
     String description
     String name
     String fid
+
+    @Hidden
     Geometry geometry
+
     Integer name_id
     String bbox
     Double area_km

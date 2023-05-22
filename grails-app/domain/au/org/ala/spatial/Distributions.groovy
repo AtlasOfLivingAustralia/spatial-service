@@ -1,6 +1,6 @@
 package au.org.ala.spatial
 
-
+import io.swagger.v3.oas.annotations.Hidden
 import org.locationtech.jts.geom.Geometry
 
 class Distributions {
@@ -40,12 +40,15 @@ class Distributions {
     String group_name
     String data_resource_uid
     String image_quality
+
+    @Hidden
     Geometry bounding_box
     Boolean endemic
 
     String genus_exemplar
     String family_exemplar
 
+    @Hidden
     Geometry geometry
 
     static transients = ["imageUrl", "intersectArea"]

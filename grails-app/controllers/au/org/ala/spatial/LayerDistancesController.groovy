@@ -45,10 +45,11 @@ class LayerDistancesController {
     )
     @Path("layerDistances/layerdistancesJSON")
     @Produces("application/json")
-    def layerdistancesJSON() {
+    def index() {
         render layerDistancesService.loadDistances() as JSON
     }
 
+    @Deprecated
     @Operation(
             method = "GET",
             tags = "layerDistances",
@@ -71,6 +72,7 @@ class LayerDistancesController {
         render text: layerDistancesService.makeCSV("name"), contentType: 'text/csv'
     }
 
+    @Deprecated
     @Operation(
             method = "GET",
             tags = "layerDistances",

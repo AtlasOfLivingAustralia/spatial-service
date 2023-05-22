@@ -17,11 +17,11 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.dto.LayerFilter
+import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
-//@CompileStatic
 @Slf4j
 class Envelope extends SlaveProcess {
 

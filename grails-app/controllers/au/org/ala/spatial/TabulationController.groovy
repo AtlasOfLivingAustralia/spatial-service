@@ -59,8 +59,8 @@ class TabulationController {
                             responseCode = "200",
                             content = [
                                     @Content(
-                                            mediaType = "application/json",
-                                            array = @ArraySchema(schema = @Schema(implementation = Tabulation))
+                                            mediaType = "application/json"
+                                            //array = @ArraySchema(schema = @Schema(implementation = Tabulation))
                                     )
                             ]
                     )
@@ -100,8 +100,8 @@ class TabulationController {
                             responseCode = "200",
                             content = [
                                     @Content(
-                                            mediaType = "application/json",
-                                            array = @ArraySchema(schema = @Schema(implementation = Tabulation))
+                                            mediaType = "application/json"
+                                            //array = @ArraySchema(schema = @Schema(implementation = Tabulation))
                                     )
                             ]
                     )
@@ -186,8 +186,8 @@ class TabulationController {
                             responseCode = "200",
                             content = [
                                     @Content(
-                                            mediaType = "application/json",
-                                            array = @ArraySchema(schema = @Schema(implementation = Tabulation))
+                                            mediaType = "application/json"
+                                            //array = @ArraySchema(schema = @Schema(implementation = Tabulation))
                                     )
                             ]
                     )
