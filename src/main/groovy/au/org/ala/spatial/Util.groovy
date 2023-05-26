@@ -17,6 +17,7 @@ package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.dto.TaskWrapper
+import au.org.ala.ws.service.WebService
 import com.opencsv.CSVReader
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
@@ -213,22 +214,13 @@ class Util {
         return null
     }
 
-    static makeQid(SpeciesInput query) {
+    static makeQid(SpeciesInput query, WebService webService) {
         List<NameValuePair> params = new ArrayList<>()
 
-//        if (query.q instanceof List) {
-//            params.add(new NameValuePair('q', query.q[0].toString()))
-//            if (query.q.size() > 1) query.q.subList(1, query.q.size()).each {
-//                params.add(new NameValuePair('fq', it.toString()))
-//            }
-//        } else {
-            params.add(new NameValuePair('q', query.q.toString()))
-            if (query.fq) query.fq.each {
-                if (it instanceof String) {
-                    params.add(new NameValuePair('fq', it))
-                }
-            }
-//        }
+        params.add(new NameValuePair('q', query.q[0].toString()))
+        if (query.q.size() > 1) query.q.subList(1, query.q.size()).each {
+            params.add(new NameValuePair('fq', it.toString()))
+        }
 
         if (query.wkt) {
             params.add(new NameValuePair('wkt', query.wkt.toString()))
@@ -236,11 +228,18 @@ class Util {
 
         params.add(new NameValuePair('bbox', 'true'))
 
-        return postUrl("${query.bs}/webportal/params", new NameValuePair[0])
+        // TODO: JWT and /ws/qid
+        return postUrl("${query.bs}/webportal/params".toString(), (NameValuePair[]) params.toArray(new NameValuePair[0]))
     }
 
     static SpeciesInput getQid(bs, qid) {
-        JSON.parse(getUrl("$bs/webportal/params/details/$qid")) as SpeciesInput
+        def json = JSON.parse(getUrl("$bs/qid/$qid"))
+        SpeciesInput s = new SpeciesInput()
+        s.q = [json.q]
+        if (json.fq) {
+            s.q.addAll(json.fq)
+        }
+        s.wkt = json.wkt
     }
 
     static String[] getDistributionsOrChecklists(JSONArray ja) {
@@ -435,68 +434,6 @@ class Util {
         }
 
         exitValue
-    }
-
-    static int occurrenceCount(SpeciesInput query) {
-        int count = 0
-        String q
-        try {
-//            if (query.q instanceof List) {
-//                q = ((List) query.q)[0]
-//                if (query.q.size() > 1) query.q.subList(1, query.q.size()).each { q += "&fq=$it" }
-//            } else {
-                q = query.q
-                if (query.fq) query.fq.each {
-                    if (it instanceof String) q += "&fq=$it"
-                }
-//            }
-            org.grails.web.json.JSONObject json = JSON.parse(getUrl("${query.bs}/occurrences/search?q=${q}&facet=off&pageSize=0")) as org.grails.web.json.JSONObject
-            if (json != null) count = json.totalRecords
-        } catch (Exception e) {
-            log.debug(e.getMessage())
-
-            //retry with a qid
-            if (q != null && !q.contains("qid:")) {
-                count = occurrenceCount(new SpeciesInput([q:
-                "qid:" + makeQid(query),
-                    bs:
-                    query.bs,
-                    ws:
-                    query.ws ]))
-            }
-        }
-        return count
-    }
-
-    static int speciesCount(SpeciesInput query) {
-        int count = 0
-        String q
-        try {
-//            if (query.q instanceof List) {
-//                q = ((List) query.q)[0]
-//                if (query.q.size() > 1) query.q.subList(1, query.q.size()).each { q += "&fq=$it" }
-//            } else {
-                q = query.q
-                if (query.fq) query.fq.each {
-                    if (it instanceof String) q += '&fq=' + it
-                }
-//            }
-            JSONObject json = (JSONObject) JSON.parse(getUrl("${query.bs}/occurrences/facets/download?facets=names_and_lsid&flimit=0&q=$q"))
-            if (json != null) count = (Integer) ((List) json.data)[0].getAt('count')
-        } catch (Exception e) {
-            log.debug(e.getMessage())
-
-            //retry with a qid
-            if (q != null && !q.contains("qid:")) {
-                count = occurrenceCount(new SpeciesInput([ q:
-                "qid:" + makeQid(query),
-                    bs:
-                    query.bs,
-                    ws:
-                    query.ws ]))
-            }
-        }
-        return count
     }
 
     static JSONObject getChecklistsBySpcode(String spcode, JSONArray list) {

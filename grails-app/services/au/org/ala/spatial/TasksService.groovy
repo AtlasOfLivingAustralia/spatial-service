@@ -16,11 +16,23 @@
 package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.ProcessSpecification
+import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.process.SlaveProcess
 import au.org.ala.spatial.dto.TaskWrapper
+import au.org.ala.spatial.util.SpatialUtils
+import au.org.ala.ws.service.WebService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import org.apache.commons.lang3.StringUtils
+
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.AREA
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.DOUBLE
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.INT
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.LAYER
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.PROCESS
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.SPECIES
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.STRING
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.UPLOAD
 
 class TasksService {
 
@@ -35,9 +47,11 @@ class TasksService {
     GridCutterService gridCutterService
     TabulationGeneratorService tabulationGeneratorService
     FileService fileService
+    WebService webService
 
     PublishService publishService
     TaskQueueService taskQueueService
+    SpatialConfig spatialConfig
 
     Map<String, Task> transientTasks = [:]
 
@@ -57,8 +71,9 @@ class TasksService {
                 map.history = task.history
             }
 
-            if (task.output) {
+            if (task.output && task.message == 'finished') {
                 // e.g. .zip requires a download URL, .html requires link URL, .tif and .shp require mappable information
+                task.output.each { it.task = null } // for marshalling
                 map.put('output', task.output)
             }
 
@@ -106,16 +121,16 @@ class TasksService {
             def inputs = []
 
             input.each { k, v ->
-                if (v == null || v == null) {
+                if (v == null || v == "") {
                     //skip
-                } else if (spec.input[k]?.type == 'area') {
+                } else if (spec.input[k]?.type == ProcessSpecification.InputType.AREA) {
                     //register area pid
                     def list = []
                     v.each { a ->
                         if (a instanceof Map && a.containsKey('wkt') && a.containsKey('name') && a.wkt.length() > 0 &&
                                 (!a.containsKey('pid') || a.get('pid').length() == 0)) {
                             String pid = spatialObjectsService.createUserUploadedObject(a.wkt.toString(), a.name.toString(), '', null)
-                            Objects object = spatialObjectsService.getObjectByPid(pid)
+                            SpatialObjects object = spatialObjectsService.getObjectByPid(pid)
                             a.put('area_km', object.area_km)
                             a.put('pid', object.pid)
                             list.push(a)
@@ -124,13 +139,13 @@ class TasksService {
                         }
                     }
                     inputs.add(new InputParameter(name: k, value: (list as JSON).toString(), task: task))
-                } else if (v instanceof List) {
+                } else if (v instanceof List && spec.input[k]?.type == ProcessSpecification.InputType.SPECIES) {
                     for (def item : v) {
-                        registerSpeciesQid(item)
+                        registerSpeciesQid(new SpeciesInput(item))
                     }
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
-                } else if (v instanceof Map) {
-                    registerSpeciesQid(v)
+                } else if (v instanceof Map && spec.input[k]?.type == ProcessSpecification.InputType.SPECIES) {
+                    registerSpeciesQid(new SpeciesInput(v))
 
                     inputs.add(new InputParameter(name: k, value: (v as JSON).toString(), task: task))
                 } else {
@@ -141,7 +156,7 @@ class TasksService {
             task.input = inputs
 
             Task.withTransaction {
-                if (!task.save()) {
+                if (!task.save(flush: true)) {
                     task.errors.each {
                         log.error 'create task failed', it
                     }
@@ -165,12 +180,11 @@ class TasksService {
         taskQueueService.queue(task, spec)
     }
 
-    def registerSpeciesQid(v) {
-        if (v instanceof Map && v.containsKey('q') && v.containsKey('bs') &&
-                v.q instanceof List && v.q.size() > 0) {
-            def qid = Util.makeQid(v)
+    def registerSpeciesQid(SpeciesInput v) {
+        if (v.q.size() > 1 && v.bs) {
+            def qid = Util.makeQid(v, webService)
             if (validateQID(qid)) {
-                v.put('q', 'qid:' + qid)
+                v.q = ['qid:' + qid]
             } else {
                 log.error("Failed to generate QID. Returned: " + qid)
                 log.debug(v.toString())
@@ -190,70 +204,55 @@ class TasksService {
     @Transactional(readOnly = false)
     def afterPublish(TaskWrapper taskWrapper) {
 
-//        taskWrapper.task.output.each { k, out ->
-//            if (k == 'layers' || k == 'layer') {
-//                (out.file as JSON).each { f1 ->
-//                    if (f1.endsWith('.tif')) {
-//                        //an environmental file
-//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-//                    } else if (f1.endsWith('.shp')) {
-//                        //contextual file
-//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-//                    }
-//                }
-//            } else if (k == 'metadata') {
-//                (out.file as JSON).each { f1 ->
-//                    if (f1.endsWith('.html')) {
-//                        //a metadata file
-//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-//                    }
-//                }
-//            } else if (k == 'download') {
-//                //a download zip exists
-//                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: taskWrapper.task))
-//            } else if (k == 'areas' || k == 'envelopes') {
-//                (out.file as JSON).each { f1 ->
-//                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: taskWrapper.task))
-//                }
-//            } else if (k == 'species') {
-//                (out.file as JSON).each { f1 ->
-//                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: taskWrapper.task))
-//                }
-//            } else if (k == 'csv') {
-//                (out.file as JSON).each { f1 ->
-//                    if (f1.endsWith('.csv')) {
-//                        //a csv file
-//                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
-//                    }
-//                }
-//            } else {
-//                (out.file as JSON).each { f1 ->
-//                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: taskWrapper.task))
-//                }
-//            }
-//        }
+        List<OutputParameter> formattedOutput = []
 
-        taskWrapper.task.output.each {it.task = taskWrapper.task }
-
-        // flush task because it is finished
-        Task.withTransaction {
-            if (!taskWrapper.task.save(flush: true)) {
-                taskWrapper.task.errors.each {
-                    log.error it
-                }
-            }
-        }
-
-        // flush outputs
-        OutputParameter.withTransaction {
-            taskWrapper.task.output.each {
-                if (!it.save(flush: true)) {
-                    it.errors.each {
-                        log.error it
+        taskWrapper.task.output.each { OutputParameter outputParameter ->
+            String k = outputParameter.name
+            String file = outputParameter.file
+            if (k == 'layers' || k == 'layer') {
+                JSON.parse(file).each { f1 ->
+                    if (f1.endsWith('.tif')) {
+                        //an environmental file
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
+                    } else if (f1.endsWith('.shp')) {
+                        //contextual file
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
                     }
                 }
+            } else if (k == 'metadata') {
+                JSON.parse(file).each { f1 ->
+                    if (f1.endsWith('.html')) {
+                        //a metadata file
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
+                    }
+                }
+            } else if (k == 'download') {
+                //a download zip exists
+                formattedOutput.push(new OutputParameter(name: 'download.zip', file: 'download.zip', task: taskWrapper.task))
+            } else if (k == 'areas' || k == 'envelopes') {
+                JSON.parse(file).each { f1 ->
+                    formattedOutput.push(new OutputParameter(name: 'area', file: f1, task: taskWrapper.task))
+                }
+            } else if (k == 'species') {
+                JSON.parse(file).each { f1 ->
+                    formattedOutput.push(new OutputParameter(name: 'species', file: f1, task: taskWrapper.task))
+                }
+            } else if (k == 'csv') {
+                JSON.parse(file).each { f1 ->
+                    if (f1.endsWith('.csv')) {
+                        //a csv file
+                        formattedOutput.push(new OutputParameter(name: f1, file: f1, task: taskWrapper.task))
+                    }
+                }
+            } else {
+                JSON.parse(file).each { f1 ->
+                    formattedOutput.push(new OutputParameter(name: k, file: f1, task: taskWrapper.task))
+                }
             }
         }
+
+        taskWrapper.task.output = formattedOutput
+        taskWrapper.task.output.each {it.task = taskWrapper.task }
     }
 
     /**
@@ -279,20 +278,20 @@ class TasksService {
         }
 
         //input init from spec
-        spec?.input.each { k, v ->
+        spec?.input.each { k, ProcessSpecification.InputSpecification v ->
 
-            if (v.containsKey('constraints')) {
+            if (v.constraints) {
                 def i = !input.containsKey(k) ? null : input.get(k)
 
                 //mandatory
-                if (i == null && v.constraints.containsKey('mandatory') && v.constraints.mandatory.toString().toBoolean()) {
+                if (i == null && v.constraints?.optional == false) {
                     errors.put(k, "Input parameter $k has no value.")
                 }
 
                 //default
-                if (i == null && v.constraints.containsKey('default')) {
+                if (i == null && v.constraints.defaultValue) {
                     //no value provided, use the default
-                    input.put(k, v.constraints.default)
+                    input.put(k, v.constraints.defaultValue)
                 }
 
                 //restrictions
@@ -301,30 +300,30 @@ class TasksService {
                     //- the actual value: double, integer
                     //- the number of list items: string, layers, areas, species
                     def number = null
-                    if ("double" == v.type) {
+                    if (DOUBLE == v.type) {
                         number = i.toString().toBigDecimal()
-                    } else if ("integer" == v.type) {
+                    } else if (INT == v.type) {
                         number = i.toString().toBigInteger()
-                    } else if ("string" == v.type) {
+                    } else if (STRING == v.type) {
                         number = i.toString().length()
-                    } else if ("layers" == v.type) {
-                        number = i.length
-                    } else if ("areas" == v.type) {
-                        number = i.length
-                    } else if ("species" == v.type) {
+                    } else if (LAYER == v.type) {
+                        number = i.size()
+                    } else if (AREA == v.type) {
+                        number = i.size()
+                    } else if (SPECIES == v.type) {
                         //number = i.length
                     }
                     //min/max
-                    if (number != null && v.constraints.containsKey('min') && v.constraints.min > number) {
-                        if ("string" == v.type)
+                    if (number != null && v.constraints.min && v.constraints.min > number) {
+                        if (STRING == v.type)
                             errors.put(k, "Input parameter $k=$v is too short. Minimum number of characters is ${v.constraints.min}.")
                         else if (v.type.toString().endsWith("s"))
                             errors.put(k, "Input parameter $k has too few ${v.type}. Only ${number} provided. Minimum number of ${v.type} is ${v.constraints.min}.")
                         else
                             errors.put(k, "Input parameter $k=$v is too small. Minimum value is ${v.constraints.min}.")
                     }
-                    if (number != null && v.constraints.containsKey('max') && v.constraints.max < number) {
-                        if ("string" == v.type)
+                    if (number != null && v.constraints.max && v.constraints.max < number) {
+                        if (STRING == v.type)
                             errors.put(k, "Input parameter $k=$v is too long. Maximum number of characters is ${v.constraints.min}.")
                         else if (v.type.toString().endsWith("s"))
                             errors.put(k, "Input parameter $k has too many ${v.type}. ${number} ${v.type} provided. Maximum number of ${v.type} is ${v.constraints.min}.")
@@ -332,7 +331,7 @@ class TasksService {
                             errors.put(k, "Input parameter $k=$v is too large. Maximum value is ${v.constraints.min}.")
                     }
 
-                    if ("areas" == v.type) {
+                    if (AREA == v.type) {
                         int envelopes = 0
                         int gridAsShp = 0
                         for (Object area : i) {
@@ -343,88 +342,88 @@ class TasksService {
                             }
                         }
                         //envelopes are not allowed (false)
-                        if (envelopes > 0 && v.constraints.containsKey('envelope') && !v.constraints.envelope?.toString()?.toBoolean()) {
-                            errors.put(k, "Input parameter $k cannot contain envelope areas.")
-                        }
-                        //gridAsShp are not allowed (false)
-                        if (envelopes > 0 && v.constraints.containsKey('gridasshape') && !v.constraints.gridasshape?.toString()?.toBoolean()) {
-                            errors.put(k, "Input parameter $k cannot contain grid as shape layer areas.")
-                        }
+//                        if (envelopes > 0 && v.constraints.envelope && !v.constraints.envelope?.toString()?.toBoolean()) {
+//                            errors.put(k, "Input parameter $k cannot contain envelope areas.")
+//                        }
+//                        //gridAsShp are not allowed (false)
+//                        if (envelopes > 0 && v.constraints.gridasshape && !v.constraints.gridasshape?.toString()?.toBoolean()) {
+//                            errors.put(k, "Input parameter $k cannot contain grid as shape layer areas.")
+//                        }
 
                         //TODO: update getObjectByPid to support envelope areas
-                        if (i.containsKey("pid") && spatialObjectsService.getObjectByPid(i.pid) == null) {
-                            errors.put(k, "Input parameter $k=${i.pid} has an invalid pid value.")
-                        } else if (i.containsKey("wkt") && !StringUtils.isEmpty(i.wkt) && SpatialUtils.calculateArea(i.wkt) <= 0 /* TODO: validateInput WKT */) {
-                            errors.put(k, "Input parameter $k has invalid WKT.")
-                        } else {
-                            //area size constraints
-                            if (v.constraints.containsKey("minArea") || v.constraints.containsKey("maxArea")) {
-                                //calc area
-                                double areaKm = 0
-                                for (Object area : i) {
-                                    if (i.containsKey("pid") && spatialObjectsService.getObjectByPid(i.pid) != null) {
-                                        areaKm += spatialObjectsService.getObjectByPid(i.pid).getArea_km()
-                                    } else if (i.containsKey("wkt")) {
-                                        areaKm += SpatialUtils.calculateArea(i.wkt)
-                                    }
-                                }
-                                if (v.constraints.containsKey("maxArea") && v.constraints.maxArea < areaKm) {
-                                    errors.put(k, "Input parameter $k area (sq km) is too large. It is $areaKm. The maximum value is ${v.constraints.areaMax}.")
-                                } else if (v.constraints.containsKey("minArea") && v.constraints.minArea > areaKm) {
-                                    errors.put(k, "Input parameter $k area (sq km) is too small. It is $areaKm. The minimum value is ${v.constraints.areaMin}.")
-                                }
-                            }
-                        }
+//                        if (i.containsKey("pid") && spatialObjectsService.getObjectByPid(i.pid) == null) {
+//                            errors.put(k, "Input parameter $k=${i.pid} has an invalid pid value.")
+//                        } else if (i.containsKey("wkt") && !StringUtils.isEmpty(i.wkt) && SpatialUtils.calculateArea(i.wkt) <= 0 /* TODO: validateInput WKT */) {
+//                            errors.put(k, "Input parameter $k has invalid WKT.")
+//                        } else {
+//                            //area size constraints
+//                            if (v.constraints.minArea || v.constraints.maxArea) {
+//                                //calc area
+//                                double areaKm = 0
+//                                for (Object area : i) {
+//                                    if (i.containsKey("pid") && spatialObjectsService.getObjectByPid(i.pid) != null) {
+//                                        areaKm += spatialObjectsService.getObjectByPid(i.pid).getArea_km()
+//                                    } else if (i.containsKey("wkt")) {
+//                                        areaKm += SpatialUtils.calculateArea(i.wkt)
+//                                    }
+//                                }
+//                                if (v.constraints.maxArea && v.constraints.maxArea < areaKm) {
+//                                    errors.put(k, "Input parameter $k area (sq km) is too large. It is $areaKm. The maximum value is ${v.constraints.areaMax}.")
+//                                } else if (v.constraints.minArea && v.constraints.minArea > areaKm) {
+//                                    errors.put(k, "Input parameter $k area (sq km) is too small. It is $areaKm. The minimum value is ${v.constraints.areaMin}.")
+//                                }
+//                            }
+//                        }
                     }
 
-                    if ("upload" == v.type) {
+                    if (UPLOAD == v.type) {
                         if (!new File(spatialConfig.data.dir + "/uploads/" + i).exists()) {
                             errors.put(k, "Input parameter $k=$i has no upload directory.")
                         }
                     }
 
-                    if ("layers" == v.type) {
+                    if (LAYER == v.type) {
                         i.each { layer ->
                             Fields f = fieldService.getFieldById(layer, false)
                             if (f == null) {
-                                if (f?.type == "e" && v.constraints.containsKey('environmental') && !v.constraints.environmental.toString().toBoolean()) {
+                                if (f?.type == "e" && v.constraints.environmental && !v.constraints.environmental.toString().toBoolean()) {
                                     errors.put(k, "Input parameter $k cannot contain environmental layers. Remove: ${f.name} (${layer}).")
                                 }
-                                if (f?.type == "c" && v.constraints.containsKey('contextual') && !v.constraints.contextual.toString().toBoolean()) {
+                                if (f?.type == "c" && v.constraints.contextual && !v.constraints.contextual.toString().toBoolean()) {
                                     errors.put(k, "Input parameter $k cannot contain contextual layers. Remove: ${f.name} (${layer}).")
                                 }
-                                if (!f?.indb && v.constraints.containsKey('indb') && !v.constraints.indb.toString().toBoolean()) {
-                                    errors.put(k, "Input parameter $k layers must be in biocache index. Remove: ${f.name} (${layer}).")
-                                }
+//                                if (!f?.indb && v.constraints.indb && !v.constraints.indb.toString().toBoolean()) {
+//                                    errors.put(k, "Input parameter $k layers must be in biocache index. Remove: ${f.name} (${layer}).")
+//                                }
                             } else if (layerService.getIntersectionFile(layer) != null &&
-                                    v.constraints.containsKey('analysis') && !v.constraints.analysis.toString().toBoolean()) {
+                                    v.constraints.analysis && !v.constraints.analysis.toString().toBoolean()) {
                                 //analysis layers have an IntersectionFile but do not have a Field.
                                 errors.put(k, "Input parameter $k cannot contain analysis layers. Remove: ${f.name} (${layer}).")
                             }
                         }
                     }
 
-                    if ("species" == v.type) {
-                        if (v.constraints.containsKey('minSpecies') || v.constraints.containsKey('maxSpecies')) {
-                            int speciesCount = Util.speciesCount(i)
-                            if (v.constraints.containsKey('minSpecies') && v.constraints.minSpecies > speciesCount) {
-                                errors.put(k, "Input parameter $k has only $speciesCount species. The minimum is ${v.constrains.minSpecies}")
-                            } else if (v.constraints.containsKey('maxSpecies') && v.constraints.maxSpecies < speciesCount) {
-                                errors.put(k, "Input parameter $k has $speciesCount species. The maximum is ${v.constrains.maxSpecies}")
-                            }
-                        }
-
-                        if (v.constraints.containsKey('maxOccurrences') || v.constraints.containsKey('minOccurrences')) {
-                            int occurrenceCount = Util.occurrenceCount(i)
-                            if (v.constraints.containsKey('maxOccurrences') && v.constraints.maxOccurrences < occurrenceCount) {
-                                errors.put(k, "Input parameter $k has only $speciesCount species. The maximum is ${v.constrains.maxSpecies}")
-                            } else if (v.constraints.containsKey('minOccurrences') && v.constraints.minOccurrences > occurrenceCount) {
-                                errors.put(k, "Input parameter $k has only $speciesCount species. The minimum is ${v.constrains.minSpecies}")
-                            }
-                        }
+                    if (SPECIES == v.type) {
+//                        if (v.constraints.minSpecies || v.constraints.maxSpecies) {
+//                            int speciesCount = Util.speciesCount(i)
+//                            if (v.constraints.minSpecies && v.constraints.minSpecies > speciesCount) {
+//                                errors.put(k, "Input parameter $k has only $speciesCount species. The minimum is ${v.constrains.minSpecies}")
+//                            } else if (v.constraints.maxSpecies && v.constraints.maxSpecies < speciesCount) {
+//                                errors.put(k, "Input parameter $k has $speciesCount species. The maximum is ${v.constrains.maxSpecies}")
+//                            }
+//                        }
+//
+//                        if (v.constraints.maxOccurrences || v.constraints.minOccurrences) {
+//                            int occurrenceCount = Util.occurrenceCount(i)
+//                            if (v.constraints.maxOccurrences && v.constraints.maxOccurrences < occurrenceCount) {
+//                                errors.put(k, "Input parameter $k has only $occurrenceCount species. The maximum is ${v.constrains.maxOccurrences}")
+//                            } else if (v.constraints.minOccurrences && v.constraints.minOccurrences > occurrenceCount) {
+//                                errors.put(k, "Input parameter $k has only $occurrenceCount species. The minimum is ${v.constrains.minOccurrences}")
+//                            }
+//                        }
                     }
 
-                    if ("process" == v.type) {
+                    if (PROCESS == v.type) {
                         def process
                         Task.withNewTransaction {
                             process = Task.findById(i)
@@ -437,16 +436,16 @@ class TasksService {
                             errors.put(k, "Input parameter $k=$i is a task that was cancelled so is invalid.")
                         } else if (process.status == 3) {
                             errors.put(k, "Input parameter $k=$i is a task that failed so is invalid.")
-                        } else if (v.constraints.containsKey("name") && v.constraints.name != process.name) {
+                        } /*else if (v.constraints.name && v.constraints.name != process.name) {
                             errors.put(k, "Input parameter $k=$i, with the name ${process.name}, must be a task with the name ${v.constraints.name}.")
-                        }
+                        }*/
                     }
 
-                    if ("stringList" == v.type) {
-                        if (!v.constraints.list.contains(i)) {
-                            errors.put(k, "Input parameter $k=$i is not a valid value.")
-                        }
-                    }
+//                    if ("stringList" == v.type) {
+//                        if (!v.constraints.list.contains(i)) {
+//                            errors.put(k, "Input parameter $k=$i is not a valid value.")
+//                        }
+//                    }
                 }
             }
         }

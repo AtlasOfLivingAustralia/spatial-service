@@ -15,7 +15,7 @@
       "description": "comma delimited list of data provider ids",
       "type": "string",
       "constraints": {
-        "default": "dp4720"
+        "defaultValue": "dp4720"
       }
     }
   },

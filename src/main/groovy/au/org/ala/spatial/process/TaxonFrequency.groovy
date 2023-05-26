@@ -47,7 +47,7 @@ class TaxonFrequency extends SlaveProcess {
         def minYear = getInput('minYear').toInteger()
 
         //area to restrict
-        List<AreaInput> area = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> area = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
         //number of target species
         SpeciesInput species1 = JSON.parse(getInput('species1').toString()) as SpeciesInput

@@ -16,6 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.FileService
+import au.org.ala.spatial.LayerIntersectService
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.dto.SpeciesInput
@@ -43,6 +44,7 @@ import au.org.ala.spatial.legend.GridLegend
 import au.org.ala.spatial.legend.Legend
 import au.org.ala.spatial.legend.LegendEqualArea
 import au.org.ala.spatial.dto.LayerFilter
+import au.org.ala.ws.service.WebService
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.IOUtils
@@ -68,8 +70,10 @@ class SlaveProcess {
     TabulationService tabulationService
     SpatialObjectsService spatialObjectsService
     GridCutterService gridCutterService
+    LayerIntersectService layerIntersectService
     TabulationGeneratorService tabulationGeneratorService
     FileService fileService
+    WebService webService
 
     SpatialConfig spatialConfig
 
@@ -371,7 +375,7 @@ class SlaveProcess {
     }
 
     static def facetOccurenceCount(String facet, SpeciesInput species) {
-        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=-1&fsort=index&q=" + species.q
+        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=-1&fsort=index&q=" + species.q.join('&fq=')
         String response = Util.getUrl(url)
 
         ((JSONArray) JSON.parse(response))
@@ -385,11 +389,11 @@ class SlaveProcess {
         String fq = ''
         if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
 
-        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q + fq
+        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q.join('&fq=') + fq
         try {
             String response = Util.getUrl(url)
 
-            def results = (List) (response as JSON)
+            def results = (List) JSON.parse(response)
             if (results) {
                 return results.get(0)["count"] as Integer
             }
@@ -408,14 +412,14 @@ class SlaveProcess {
         String fq = ''
         if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
 
-        String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q + fq
+        String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q.join('&fq=') + fq
         String response = Util.getUrl(url)
 
-        ((List) (response as JSON))["totalRecords"] as Integer
+        JSON.parse(response).totalRecords as Integer
     }
 
     String [] facet(String facet, SpeciesInput species) {
-        String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q
+        String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q?.join('&fq=')
         String response = streamBytes(url, facet)
         if (response) {
             response.split("\n")
@@ -466,7 +470,7 @@ class SlaveProcess {
 
     List<File> downloadSpecies(SpeciesInput species) {
         OccurrenceData od = new OccurrenceData()
-        String[] s = od.getSpeciesData(species.q, species.bs, null, null)
+        String[] s = od.getSpeciesData(species.q.join('&fq='), species.bs, null, null)
 
         def newFiles = []
 
@@ -1051,7 +1055,7 @@ class SlaveProcess {
         try {
             String fq = ''
             if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
-            String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q + fq
+            String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q.join('&fq=') + fq
             taskLog("Loading species ...")
             log.debug("Loading species from: " + url)
             speciesList = Util.getUrl(url)
@@ -1123,21 +1127,23 @@ class SlaveProcess {
             return species
         }
 
-        if (species.q.startsWith('qid:') && species.q.substring(4).isLong()) {
-            SpeciesInput qid = Util.getQid(species.bs, species.q.substring(4))
+        if (species.q[0].startsWith('qid:') && species.q[0].substring(4).isLong()) {
+            SpeciesInput qid = Util.getQid(species.bs, species.q[0].substring(4))
             species.q = qid.q
-            species.fq.addAll(qid.fq)
             species.wkt = qid.wkt
         }
 
-        def q = [species.q] as Set
-        if (species.fq) q.addAll(species.fq)
-        if (species.fqs) q.addAll(species.fqs)
+        def q = species.q as Set
 
         def wkt = null
 
         if (area.q && area.q.size() > 0) {
-            q.addAll(area.q)
+            if (area.q.startsWith('[')) {
+                // parse list
+                q.addAll(area.q.substring(1, area.q.length() - 1).split(','))
+            } else {
+                q.add(area.q)
+            }
         } else if (area.wkt && area.wkt?.size() > 0) {
             wkt = area.wkt
         } else if (area.pid && area.pid?.size() > 0) {
@@ -1179,10 +1185,10 @@ class SlaveProcess {
 
         if (q.size() > 1) q.remove("*:*")
 
-        species.q = q[0]
-        if (q.size() > 1) species.fq = q.toList().subList(1, q.size())
+        species.q = []
+        species.q.addAll(q)
 
-        species.q = "qid:" + Util.makeQid(species)
+        species.q = ["qid:" + Util.makeQid(species, webService)]
         species.fq = null
         species.wkt = null
 

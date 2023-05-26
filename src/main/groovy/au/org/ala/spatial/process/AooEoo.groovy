@@ -43,7 +43,7 @@ class AooEoo extends SlaveProcess {
         def gridSize = getInput('resolution').toDouble()
 
         //area to restrict
-        List<AreaInput> area = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> area = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
         //number of target species
         SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
@@ -222,7 +222,7 @@ class AooEoo extends SlaveProcess {
                 }
                 sb.append(s)
                 pointCount++
-            } finally {
+            } catch (Exception ignored) {
             }
         }
         sb.append(')')
@@ -239,7 +239,7 @@ class AooEoo extends SlaveProcess {
                 Point2D pt = new Point2D.Float(round(Double.parseDouble(ll[1]), gridSize),
                         round(Double.parseDouble(ll[0]), gridSize))
                 set.add(pt)
-            } finally {
+            } catch (Exception ignored) {
             }
         }
 

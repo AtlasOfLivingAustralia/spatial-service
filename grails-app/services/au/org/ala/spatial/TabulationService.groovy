@@ -455,6 +455,7 @@ class TabulationService {
         String sql = "SELECT fid1, fid2, f1.name as name1, f2.name as name2 "+" FROM (select t1.* from "        +"(select fid1, fid2, sum(area) a from tabulation group by fid1, fid2) t1 left join "        +" (" + incompleteTabulations + ") i on t1.fid1=i.fid1 and t1.fid2=i.fid2 where i.fid1 is null"        +") t"        +", fields f1, fields f2 "        +" WHERE f1.id = fid1 AND f2.id = fid2 AND a > 0 "        +" AND f1.intersect=true AND f2.intersect=true "        +" GROUP BY fid1, fid2, name1, name2"
         List<Tabulation> result = []
 
+        List<String> fields = Fields.findAll().collect {if (it.enabled) it.id }
         groovySql.query(sql, { it ->
             while (it.next()) {
                 Tabulation t = new Tabulation()
@@ -463,7 +464,9 @@ class TabulationService {
                 t.name1 = it.getString(3)
                 t.name2 = it.getString(4)
 
-                result.add(t)
+                if (fields.contains(t.fid1) && fields.contains(t.fid2)) {
+                    result.add(t)
+                }
             }
         })
         result

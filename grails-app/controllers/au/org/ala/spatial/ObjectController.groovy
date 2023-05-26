@@ -65,7 +65,8 @@ class ObjectController {
     )
     @Path('object/{pid}')
     @Produces("application/json")
-    def show(String pid) {
+    def show() {
+        String pid = params.pid
         def obj
         if (pid.startsWith("ENVELOPE")) {
             obj = getEnvelope(pid.replace("ENVELOPE", ""))
@@ -137,7 +138,11 @@ class ObjectController {
     )
     @Path('objects/{fid}/{lat}/{lng}')
     @Produces("application/json")
-    def listByLocation(String id, Double lat, Double lng) {
+    def listByLocation() {
+        String fid = params.fid
+        Double lat = Double.parseDouble(params.lat)
+        Double lng = Double.parseDouble(params.lng)
+
         if (lat == null) {
             render status: 400, text: "Path parameter `lat` is not a number."
             return
@@ -149,12 +154,12 @@ class ObjectController {
 
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
 
-        Fields field = fieldService.getFieldById(id)
+        Fields field = fieldService.getFieldById(fid, false)
 
         if (field == null) {
             render(status: 404, text: 'Invalid field id')
         } else {
-            def objects = spatialObjectsService.getNearestObjectByIdAndLocation(id, limit, lng, lat)
+            def objects = spatialObjectsService.getNearestObjectByIdAndLocation(fid, limit, lng, lat)
 
             render objects as JSON
         }
@@ -268,11 +273,12 @@ class ObjectController {
     @Deprecated
     @Path('objects/{fid}')
     @Produces("application/json")
-    def fieldObjects(String id) {
+    def fieldObjects() {
+        String fid = params.fid
         Integer start = params.containsKey('start') ? params.start as Integer : 0
         Integer pageSize = params.containsKey('pageSize') ? params.pageSize as Integer : -1
 
-        render spatialObjectsService.getObjectsById(id, start, pageSize, null) as JSON
+        render spatialObjectsService.getObjectsById(fid, start, pageSize, null) as JSON
     }
 
     @Operation(
@@ -318,7 +324,10 @@ class ObjectController {
     )
     @Path('object/intersect/{pid}/{lat}/{lng}')
     @Produces("application/json")
-    def intersectObject(String pid, Double lat, Double lng) {
+    def intersectObject() {
+        String pid = params.pid
+        Double lat = Double.parseDouble(params.lat)
+        Double lng = Double.parseDouble(params.lng)
         if (lat == null) {
             render status: 400, text: "Path parameter `lat` is not a number."
             return
@@ -380,7 +389,8 @@ class ObjectController {
     )
     @Path('objects/inarea/{fid}')
     @Produces("application/json")
-    def objectsInArea(String id) {
+    def objectsInArea() {
+        String fid = params.fid
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
 
         String wkt = params.wkt ?: "OBJECT(${params.pid})"
@@ -390,7 +400,7 @@ class ObjectController {
             LayerFilter[] filters = LayerFilter.parseLayerFilters(wkt)
             List<List<SpatialObjects>> all = new ArrayList<List<SpatialObjects>>()
             for (int i = 0; i < filters.length; i++) {
-                all.add(spatialObjectsService.getObjectsByIdAndIntersection(id, limit, filters[i]))
+                all.add(spatialObjectsService.getObjectsByIdAndIntersection(fid, limit, filters[i]))
             }
             //merge common entries only
             HashMap<String, Integer> objectCounts = new HashMap<String, Integer>()
@@ -417,19 +427,19 @@ class ObjectController {
             render inAllGroups as JSON
         } else if (wkt.startsWith("OBJECT(")) {
             String pid = wkt.substring("OBJECT(".length(), wkt.length() - 1)
-            render spatialObjectsService.getObjectsByIdAndIntersection(id, limit, LayerFilter.parseLayerFilter(pid)) as JSON
+            render spatialObjectsService.getObjectsByIdAndIntersection(fid, limit, LayerFilter.parseLayerFilter(pid)) as JSON
         } else if (wkt.startsWith("GEOMETRYCOLLECTION")) {
             List<String> collectionParts = SpatialConversionUtils.getGeometryCollectionParts(wkt)
 
             Set<SpatialObjects> objectsSet = new HashSet<SpatialObjects>()
 
             for (String part : collectionParts) {
-                objectsSet.addAll(spatialObjectsService.getObjectsByIdAndArea(id, limit, part))
+                objectsSet.addAll(spatialObjectsService.getObjectsByIdAndArea(fid, limit, part))
             }
 
             render new ArrayList<SpatialObjects>(objectsSet) as JSON
         } else {
-            render spatialObjectsService.getObjectsByIdAndArea(id, limit, wkt) as JSON
+            render spatialObjectsService.getObjectsByIdAndArea(fid, limit, wkt) as JSON
         }
     }
 

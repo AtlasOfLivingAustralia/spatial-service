@@ -23,7 +23,7 @@
     "skipSLDCreation": {
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     }
   },

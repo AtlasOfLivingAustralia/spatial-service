@@ -204,7 +204,8 @@ class TasksController {
     )
     @Path("/tasks/status/{id}")
     @Produces("application/json")
-    def status(Long id) {
+    def status() {
+        Long id = Long.parseLong(params.id)
         Map<String, Object> status = tasksService.getStatus(id)
 
         if (params.containsKey('last')) {
@@ -313,7 +314,7 @@ class TasksController {
             render errors as JSON
         } else {
             Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, params.email).task
-
+            task.save(flush: true)
             render task as JSON
         }
     }
@@ -356,7 +357,8 @@ class TasksController {
     @Produces("application/json")
     @Transactional(readOnly = false)
     @RequireApiKey
-    cancel(Long id) {
+    cancel() {
+        Long id = Long.parseLong(params.id)
         def task = tasksService.cancel(id)
 
         if (request.contentType?.equalsIgnoreCase("application/json")) {

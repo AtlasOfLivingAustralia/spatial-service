@@ -31,7 +31,7 @@ class GeneratePoints extends SlaveProcess {
     void start() {
 
         //area to restrict
-        List<AreaInput> area = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> area = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
         Double distance = getInput('distance').toString().toDouble()
         String userId = getInput('userId')

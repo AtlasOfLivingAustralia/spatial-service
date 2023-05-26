@@ -28,7 +28,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "2.0.0-SNAPSHOT"
+version "2.0.1-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin: "eclipse"
@@ -208,6 +208,8 @@ dependencies {
     implementation "org.geotools:gt-imageio-ext-gdal:$geotoolsVersion"
 
     implementation "com.opencsv:opencsv:3.7"
+
+//    developmentOnly 'io.methvin:directory-watcher:0.15.0'
 
 
 }

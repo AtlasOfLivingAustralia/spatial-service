@@ -36,28 +36,28 @@
       "constraints": {
         "min": 0.0001,
         "max": 1,
-        "default": 0.05
+        "defaultValue": 0.05
       }
     },
     "sitesBySpecies": {
       "description": "Produce sites by species matrix.",
       "type": "boolean",
       "constraints": {
-        "default": true
+        "defaultValue": true
       }
     },
     "occurrenceDensity": {
       "description": "Produce occurrence density layer.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     },
     "speciesRichness": {
       "description": "Produce species richness layer.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     },
     "movingAverage": {
@@ -75,14 +75,14 @@
           "13x13",
           "15x15"
         ],
-        "default": "9x9"
+        "defaultValue": "9x9"
       }
     },
     "resolution": {
       "description": "The layer resolution to use.",
       "type": "list",
       "constraints": {
-        "default": "0.01",
+        "defaultValue": "0.01",
         "selection": "single",
         "content": [
           "0.01",

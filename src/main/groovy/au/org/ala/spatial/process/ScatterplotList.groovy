@@ -18,7 +18,7 @@ package au.org.ala.spatial.process
 class ScatterplotList extends ScatterplotCreate {
 
     void start() {
-        Object.start()
+        super.start()
 
         File dir = new File(getTaskPath())
         for (File file : dir.listFiles()) {

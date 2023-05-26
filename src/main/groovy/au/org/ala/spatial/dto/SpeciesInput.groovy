@@ -4,11 +4,18 @@ import groovy.transform.AutoClone
 
 @AutoClone
 class SpeciesInput {
-    String q
+    List<String> q
     String name
     String bs
-    List<String> fq
-    List<String> fqs
     String wkt
     String ws
+
+    // unnecessary
+    String speciesListName
+    String includeExpertDistributions
+    String includeAnimalMovement
+    String layerUid
+    List<String> fq
+    List<String> fqs
+
 }

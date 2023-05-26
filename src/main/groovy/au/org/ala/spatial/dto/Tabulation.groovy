@@ -38,7 +38,6 @@ class Tabulation {
     Integer speciest1
     Integer speciest2
 
-    static transients = ["name2", "name1"]
     String name2
     String name1
 

@@ -32,7 +32,7 @@
       "constraints": {
         "min": 0.0001,
         "max": 5,
-        "default": 0.1
+        "defaultValue": 0.1
       }
     }
   },

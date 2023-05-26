@@ -28,7 +28,7 @@ class MergeAreas extends SlaveProcess {
     void start() {
 
         //area to restrict
-        List<AreaInput> areas = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
         String name = getInput('name')
         String description = getInput('description')
         String type = getInput('type')

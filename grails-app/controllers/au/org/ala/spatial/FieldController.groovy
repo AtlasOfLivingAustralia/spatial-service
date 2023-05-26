@@ -164,7 +164,8 @@ class FieldController {
     )
     @Path("field/{id}")
     @Produces("application/json")
-    def show(String id) {
+    def show() {
+        String id = params.id
         Integer start = params.containsKey('start') ? Integer.parseInt(params.start.toString()) : 0
         Integer pageSize = params.containsKey('pageSize') ? Integer.parseInt(params.pageSize.toString()) : -1
         String q = params.containsKey('q') ? params.q : null

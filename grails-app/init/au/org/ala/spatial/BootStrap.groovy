@@ -41,9 +41,15 @@ class BootStrap {
         }
 
         // domain marshalling
-        [Fields, Distributions, InputParameter, Layers, Log, OutputParameter, SpatialObjects, Tabulation, Task].each {
+        [Fields, Distributions, InputParameter, Layers, Log, OutputParameter, SpatialObjects, Task].each {
             JSON.registerObjectMarshaller(it) {
                 it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null } + [id: it.id]
+            }
+        }
+
+        [Tabulation].each {
+            JSON.registerObjectMarshaller(it) {
+                it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null }
             }
         }
 

@@ -28,7 +28,7 @@ class CompareAreas extends SlaveProcess {
 
     void start() {
 
-        List<AreaInput> areas = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
         SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
 
         //get info for each area

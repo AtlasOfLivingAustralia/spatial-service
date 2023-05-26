@@ -44,7 +44,7 @@
       "constraints": {
         "min": 1800,
         "max": 2100,
-        "default": 1980
+        "defaultValue": 1980
       }
     }
   },

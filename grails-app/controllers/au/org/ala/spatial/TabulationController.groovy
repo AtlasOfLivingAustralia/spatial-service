@@ -50,7 +50,7 @@ class TabulationController {
 
     @Operation(
             method = "GET",
-            tags = "tabulation",
+            tags = "tabulations",
             operationId = "listTabulations",
             summary = "List of field pairs with pre-generated tabulations",
             responses = [
@@ -75,7 +75,7 @@ class TabulationController {
 
     @Operation(
             method = "GET",
-            tags = "tabulation",
+            tags = "tabulations",
             operationId = "intersectTabulation",
             summary = "Intersect a field with an area and return tabulated intersection information",
             parameters = [
@@ -110,7 +110,9 @@ class TabulationController {
     )
     @Path("/tabulation/single/{fid}/{pid}")
     @Produces("application/json")
-    def single(String fid, String pid) {
+    def single() {
+        String fid = params.fid
+        String pid = params.pid
         if (pid) pid = pid.replace(".json", "")
         if ("single".equalsIgnoreCase(fid)) {
             fid = pid
@@ -154,7 +156,7 @@ class TabulationController {
 
     @Operation(
             method = "GET",
-            tags = "tabulation",
+            tags = "tabulations",
             operationId = "showTabulation",
             summary = "Get details of a field pair intersection",
             parameters = [
@@ -196,7 +198,11 @@ class TabulationController {
     )
     @Path("/tabulation/data/{fid1}/{fid2}/tabulation.json")
     @Produces("application/json")
-    def show(String func1, String fid1, String fid2, String type) {
+    def show() {
+        String func1 = params.func1
+        String fid1 = params.fid1
+        String fid2 = params.fid2
+        String type = params.type
         String wkt = params?.wkt
         if (params?.wkt && params.wkt.toString().isNumber()) {
             wkt = spatialObjectsService.getObjectsGeometryById(params.wkt.toString(), "wkt")

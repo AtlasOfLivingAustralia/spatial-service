@@ -16,6 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.dto.ScatterplotSpeciesInput
 import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.scatterplot.Scatterplot
 import au.org.ala.spatial.scatterplot.ScatterplotDTO
@@ -32,13 +33,13 @@ class ScatterplotCreate extends SlaveProcess {
         Boolean grid = getInput('grid').toString().toBoolean()
 
         //area to restrict (only interested in area.q part)
-        List<AreaInput> areas = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
-        String layersServiceUrl = getInput('layersServiceUrl')
+        String layersServiceUrl = spatialConfig.grails.serverURL
 
-        SpeciesInput species1 = JSON.parse(getInput('species1').toString()) as SpeciesInput
-        SpeciesInput species2 = JSON.parse(getInput('species2').toString()) as SpeciesInput
-        List<String> layerList = JSON.parse(getInput('layer').toString()) as List<String>
+        ScatterplotSpeciesInput species1 = JSON.parse(getInput('species1').toString()) as ScatterplotSpeciesInput
+        ScatterplotSpeciesInput species2 = JSON.parse(getInput('species2').toString()) as ScatterplotSpeciesInput
+        List<String> layerList = getInput('layer').toString().split(',')
 
         SpeciesInput speciesArea1 = getSpeciesArea(species1, areas)
         SpeciesInput speciesArea2 = species2?.q ? getSpeciesArea(species2, areas) : null
@@ -55,11 +56,11 @@ class ScatterplotCreate extends SlaveProcess {
             layerUnits[idx] = l.environmentalvalueunits
         }
 
-        String fqs = speciesArea1.q
+        String fqs = speciesArea1.q[0]
         String fbs = speciesArea1.bs
         String fname = speciesArea1.name
 
-        String bqs = speciesArea2?.q
+        String bqs = speciesArea2?.q?.getAt(0)
         String bbs = speciesArea2?.bs
         String bname = speciesArea2?.name
 
@@ -73,9 +74,9 @@ class ScatterplotCreate extends SlaveProcess {
             ScatterplotStyleDTO style = new ScatterplotStyleDTO()
             taskLog("Creating scatter plot.....")
             log.debug("Creating scatter plot.")
-            Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), getInput('resolution').toString(), getInput('layersServiceUrl') as String)
+            Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), getInput('resolution').toString(), getInput('layersServiceUrl') as String, gridCutterService, layerIntersectService)
 
-            if (layers.length <= 2) {
+            if (layers.size() <= 2) {
                 taskLog("Generate plot style")
                 scatterplot.reStyle(style, false, false, false, false, false, false, false)
 
@@ -85,7 +86,7 @@ class ScatterplotCreate extends SlaveProcess {
                 File csvFile = new File(getTaskPath() + "data.csv")
                 scatterplot.saveCsv(csvFile)
 
-                species1["scatterplotId"] = taskWrapper.id
+                species1["scatterplotId"] = taskWrapper.task.id
                 def imgFile = new File(scatterplot.getImagePath())
                 species1["scatterplotUrl"] = imgFile.path.replace(spatialConfig.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
                         .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name)
@@ -99,7 +100,7 @@ class ScatterplotCreate extends SlaveProcess {
                 species1['highlightWkt'] = style.highlightWkt
 
                 //annotation
-                species1['q'] = scatterplot.getScatterplotDTO().getForegroundOccurrencesQs()
+                species1['q'] = [scatterplot.getScatterplotDTO().getForegroundOccurrencesQs()]
                 species1['bs'] = scatterplot.getScatterplotDTO().getForegroundOccurrencesBs()
                 species1['name'] = scatterplot.getScatterplotDTO().getForegroundName()
 
@@ -113,7 +114,7 @@ class ScatterplotCreate extends SlaveProcess {
             }
         } catch (Exception e) {
             taskLog("Failed to generate the scatter plot!")
-            log.error(e.message)
+            log.error(e.message, e)
             throw new Exception(e.message)
         }
     }

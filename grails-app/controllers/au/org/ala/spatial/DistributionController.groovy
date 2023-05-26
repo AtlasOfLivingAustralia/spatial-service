@@ -205,7 +205,8 @@ class DistributionController {
     )
     @Path("distribution/{id}")
     @Produces("application/json")
-    def show(Long id) {
+    def show() {
+        Long id = Long.parseLong(params.id)
         if (id == null) {
             render status: 400
             return
@@ -284,7 +285,8 @@ class DistributionController {
     )
     @Path("distribution/lsids/{lsid}")
     @Produces("application/json")
-    def lsids(String lsid) {
+    def lsids() {
+        String lsid = params.lsid
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
         List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.EXPERT_DISTRIBUTION)
@@ -392,8 +394,9 @@ class DistributionController {
     @Path("distribution/map/png/{imageId}")
     @Produces("image/png")
     @Deprecated
-    def overviewMapPng(String geomIdx) {
-        map(geomIdx)
+    def overviewMapPng() {
+        String imageId = params.imageId
+        map(imageId)
     }
 
     @Deprecated

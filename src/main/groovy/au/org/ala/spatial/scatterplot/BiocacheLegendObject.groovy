@@ -94,9 +94,13 @@ class BiocacheLegendObject extends LegendObject {
             int[] value = [new Color((Integer) item.get("red"), (Integer) item.get("green"), (Integer) item.get("blue")).getRGB(), (Integer) item.get("count")]
             categories.put(item.get("name").toString(), value)
             categoryNameOrder[i] = item.get("name").toString()
-            double d = Double.NaN
-            d = Double.parseDouble(item.get("name").toString())
-            categoriesNumeric.put((float) d, value)
+            try {
+                double d = Double.NaN
+                d = Double.parseDouble(item.get("name").toString())
+                categoriesNumeric.put((float) d, value)
+            } catch (Exception ignored) {
+
+            }
 
 
             //check for endpoint (repitition of colour)

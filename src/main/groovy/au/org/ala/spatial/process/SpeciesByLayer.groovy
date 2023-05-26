@@ -34,7 +34,7 @@ class SpeciesByLayer extends SlaveProcess {
     void start() {
 
         SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
-        List<String> fields = JSON.parse(getInput('layer').toString()) as List<String>
+        List<String> fields = getInput('layer').toString().split(',')
 
         HashMap<String, Integer> speciesMap = new HashMap()
 

@@ -1,6 +1,6 @@
 package au.org.ala.spatial.scatterplot
 
-
+import au.org.ala.spatial.LayerIntersectService
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.intersect.SamplingUtil
 import au.org.ala.spatial.GridCutterService
@@ -13,9 +13,11 @@ import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.util.Occurrences
 import com.opencsv.CSVReader
 import com.opencsv.CSVWriter
+import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
 import org.codehaus.jackson.map.ObjectMapper
+import org.grails.web.json.JSONArray
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.ChartRenderingInfo
 import org.jfree.chart.JFreeChart
@@ -88,10 +90,15 @@ class Scatterplot {
     String spatialServiceUrl
     private String htmlURL
     GridCutterService gridCutterService
+    LayerIntersectService layerIntersectService
 
-    Scatterplot(ScatterplotDTO scatterplotDTO, ScatterplotStyleDTO scatterplotStyleDTO, ScatterplotDataDTO scatterplotDataDTO, String dir, String resolution, String spatialServiceUrl) {
+    Scatterplot(ScatterplotDTO scatterplotDTO, ScatterplotStyleDTO scatterplotStyleDTO, ScatterplotDataDTO scatterplotDataDTO,
+                String dir, String resolution, String spatialServiceUrl, GridCutterService gridCutterService,
+                LayerIntersectService layerIntersectService) {
         this.scatterplotDTO = scatterplotDTO
         this.spatialServiceUrl = spatialServiceUrl
+        this.gridCutterService = gridCutterService
+        this.layerIntersectService = layerIntersectService
 
         this.dir = dir
         this.resolution = resolution
@@ -174,14 +181,14 @@ class Scatterplot {
         return facetName
     }
 
-    static Scatterplot load(File file) {
+    static Scatterplot load(File file, GridCutterService gridCutterService, LayerIntersectService layerIntersectService) {
         try {
 
             //create ObjectMapper instance
             ObjectMapper objectMapper = new ObjectMapper()
 
             //convert json string to object
-            JSONObject jo = objectMapper.readValue(new FileReader(file), JSONObject.class)
+            JSONArray jo = JSON.parse(file.text)
             ScatterplotDTO dto = objectMapper.readValue(new FileReader(new File(file.getPath() + ".dto")), ScatterplotDTO.class)
             ScatterplotStyleDTO style = objectMapper.readValue(new FileReader(new File(file.getPath() + ".style")), ScatterplotStyleDTO.class)
             ScatterplotDataDTO data = objectMapper.readValue(new FileReader(new File(file.getPath() + ".data")), ScatterplotDataDTO.class)
@@ -203,7 +210,7 @@ class Scatterplot {
                 }
             }
 
-            Scatterplot scatterplot = new Scatterplot(dto, style, data, jo.get(0).toString(), jo.get(1).toString(), jo.get(2).toString())
+            Scatterplot scatterplot = new Scatterplot(dto, style, data, jo.get(0).toString(), jo.get(1).toString(), null, gridCutterService, layerIntersectService)
 
             return scatterplot
 
@@ -297,7 +304,7 @@ class Scatterplot {
             if (legend != null) {
                 seriesNames = legend.getCategoryNameOrder()
             }
-            int[] seriesColours = new int[scatterplotDataDTO.getSeries().length]
+            int[] seriesColours = new int[seriesNames.length]
             for (int i = 0; i < seriesNames.length; i++) {
                 if (legend == null) {
                     seriesColours[i] = (int) (scatterplotStyleDTO.getRed() << 16 | scatterplotStyleDTO.getGreen() << 8 | scatterplotStyleDTO.getBlue() | 0xff000000)
@@ -1085,7 +1092,7 @@ class Scatterplot {
 
         String[] layers = layersToSample
         log.debug("Sampling points... ")
-        java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p)
+        java.util.List<String> sample = layerIntersectService.sampling(layers, p, null)
 
         double[][] d = new double[p.length][layers.length]
 
@@ -1114,7 +1121,7 @@ class Scatterplot {
 
         String[] layers = [seriesName]
         log.debug("Sampling series... ")
-        java.util.List<String> sample = SamplingUtil.sample(spatialServiceUrl, layers, p)
+        java.util.List<String> sample = layerIntersectService.sampling(layers, p, null)
 
         String[] series = new String[p.length]
 
@@ -1421,7 +1428,7 @@ class Scatterplot {
     }
 
     void save(File file) {
-        List list = new ArrayList()
+        ArrayList list = []
         list.add(dir)
         list.add(resolution)
         list.add(spatialServiceUrl)

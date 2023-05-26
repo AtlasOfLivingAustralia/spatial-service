@@ -93,12 +93,13 @@ class LayerController {
     )
     @Path("layer/img/{name}")
     @Produces("image/jpg")
-    def img(String id) {
-        if (layerService.getLayerByName(id)) {
-            File f = new File(spatialConfig.data.dir + '/public/thumbnail/' + id + '.jpg')
-            render(file: f, fileName: "${id}.jpg")
+    def img() {
+        String name = params.name
+        if (layerService.getLayerByName(name)) {
+            File f = new File(spatialConfig.data.dir + '/public/thumbnail/' + name + '.jpg')
+            render(file: f, fileName: "${name}.jpg")
         } else {
-            response.sendError(404, "$id not found")
+            response.sendError(404, "$name not found")
         }
     }
 
@@ -469,7 +470,8 @@ class LayerController {
     @Path("layer/download/{id}")
     @Produces("application/zip")
     @RequireApiKey
-    def download(String id) {
+    def download() {
+        String id = params.id
         Layers layer = layerService.getLayerByDisplayName(id)
         if (!layer) {
             layer = layerService.getLayerById(Long.valueOf(id), false)
@@ -555,7 +557,8 @@ class LayerController {
     )
     @Path("layers")
     @Produces("application/json")
-    def index(String id) {
+    def index() {
+        String id = params.id
         if (id == null)
             if (params?.all as Boolean) {
                 render layerService.getLayersForAdmin() as JSON
@@ -596,7 +599,8 @@ class LayerController {
     )
     @Path("layer/{id}")
     @Produces("application/json")
-    def show(String id) {
+    def show() {
+        String id = params.id
         if (id == null) {
             render layerService.getLayers() as JSON
         } else {

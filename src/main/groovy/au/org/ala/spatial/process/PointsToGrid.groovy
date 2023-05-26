@@ -71,7 +71,7 @@ class PointsToGrid extends SlaveProcess {
 
         // dump the species data to a file
         taskLog("getting species data")
-        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.toString(), bbox, null, null)
+        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox, null, null)
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90

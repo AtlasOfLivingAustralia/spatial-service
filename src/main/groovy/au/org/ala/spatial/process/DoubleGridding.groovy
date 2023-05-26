@@ -31,7 +31,7 @@ class DoubleGridding extends SlaveProcess {
 
     void start() {
         //area to restrict (only interested in area.q part)
-        List<AreaInput> areas = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
         RegionEnvelope regionEnvelope = processArea(areas[0])
 
         //number of target species
@@ -82,7 +82,7 @@ class DoubleGridding extends SlaveProcess {
         def minYear = years[0]
         def maxYear = years[years.size() - 1]
 
-        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.toString(), bbox, null, null)
+        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox, null, null)
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90

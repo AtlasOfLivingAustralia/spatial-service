@@ -31,7 +31,7 @@ class Maxent extends SlaveProcess {
         getFile('/modelling/maxent/maxent.jar')
 
         //list of layers
-        List<String> layers = JSON.parse(getInput('layer').toString()) as List<String>
+        List<String> layers = getInput('layer').toString().split(',')
         List<String> contextualLayers = []
         layers.each { String layer ->
             if (layer.endsWith('_aloc')) {
@@ -45,7 +45,7 @@ class Maxent extends SlaveProcess {
         }
 
         //area to restrict
-        List<AreaInput> areas = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
         RegionEnvelope regionEnvelope = processArea(areas[0])
 
         //target resolution

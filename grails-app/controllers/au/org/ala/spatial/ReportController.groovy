@@ -13,7 +13,7 @@ class ReportController {
 
     @Operation(
             method = "GET",
-            tags = "report",
+            tags = "reports",
             operationId = "getUserReport",
             summary = "Get a user report as CSV",
             parameters = [],
@@ -47,7 +47,7 @@ class ReportController {
 
     @Operation(
             method = "GET",
-            tags = "report",
+            tags = "reports",
             operationId = "getTaskReport",
             summary = "Get a task report as CSV",
             parameters = [],

@@ -333,7 +333,7 @@ class Records {
         }
 
         while (start < 300000000) {
-            String url = biocache_service_url + "/webportal/occurrences.gz?q=" + q.replace(" ", "%20") + bboxTerm + "&pageSize=" + pageSize + "&start=" + start + "&fl=longitude,latitude," + facetField + ",year"
+            String url = biocache_service_url + "/webportal/occurrences.gz?q=" + q.replace(" ", "%20") + bboxTerm + "&pageSize=" + pageSize + "&fq=year%3A*&start=" + start + "&fl=longitude,latitude," + facetField + ",year"
 
             int tryCount = 0
             InputStream is = null

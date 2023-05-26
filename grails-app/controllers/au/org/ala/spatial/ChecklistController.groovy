@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 
 import javax.ws.rs.Produces
@@ -119,6 +120,7 @@ class ChecklistController {
                             required = false
                     )
             ],
+            requestBody = @RequestBody(),
             responses = [
                     @ApiResponse(
                             description = "checklist",
@@ -135,7 +137,8 @@ class ChecklistController {
     )
     @Path("checklist/{id}")
     @Produces("application/json")
-    def show(Long id) {
+    def show() {
+        Long id = Long.parseLong(params.id)
         if (id == null) {
             render status: 400
             return
@@ -213,7 +216,8 @@ class ChecklistController {
     )
     @Path("checklist/lsids/{lsid}")
     @Produces("application/json")
-    def lsids(String lsid) {
+    def lsids() {
+        String lsid = params.lsid
         Boolean noWkt = params.containsKey('nowkt') ? params.nowkt as Boolean : false
 
         List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.SPECIES_CHECKLIST)

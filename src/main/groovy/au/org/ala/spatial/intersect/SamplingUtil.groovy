@@ -15,11 +15,11 @@ import java.util.zip.ZipInputStream
 
 
 import groovy.transform.CompileStatic
-//@CompileStatic
+
 @Slf4j
 class SamplingUtil {
 
-    static List<String> sample(String spatialServiceUrl, String[] layers, double[][] points) {
+    static List<String> sampleRemote(String spatialServiceUrl, String[] layers, double[][] points) {
         List<String> output = null
         long start = System.currentTimeMillis()
 

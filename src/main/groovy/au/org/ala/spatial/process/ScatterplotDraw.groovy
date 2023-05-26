@@ -28,7 +28,7 @@ class ScatterplotDraw extends SlaveProcess {
 
     void start() {
         //optional area to restrict
-        List<AreaInput> areas = JSON.parse(getInput('wkt') as String?: '[]') as List<AreaInput>
+        List<AreaInput> areas = JSON.parse(getInput('wkt') as String?: '[]').collect { it as AreaInput } as List<AreaInput>
         def wkt = areas.size() > 0 ? getAreaWkt(areas[0]) : null
 
         def layersServiceUrl = getInput('layersServiceUrl')
@@ -43,9 +43,8 @@ class ScatterplotDraw extends SlaveProcess {
         def taskId = getInput('scatterplotId')
 
         File dataFile = new File(spatialConfig.data.dir.toString() + '/public/' + taskId + "/data.xml")
-        getFile('/public/' + taskId + '/data.xml')
 
-        Scatterplot scatterplot = Scatterplot.load(dataFile)
+        Scatterplot scatterplot = Scatterplot.load(dataFile, gridCutterService, layerIntersectService)
 
         ScatterplotStyleDTO existingStyle = scatterplot.getScatterplotStyleDTO()
 
@@ -63,6 +62,7 @@ class ScatterplotDraw extends SlaveProcess {
 
         try {
             if (selection && selection.length < 4) {
+                scatterplot.scatterplotStyleDTO.colourMode = newStyle.colourMode
                 scatterplot.scatterplotStyleDTO.setSelection(null)
                 scatterplot.buildScatterplot()
             } else {
@@ -84,9 +84,9 @@ class ScatterplotDraw extends SlaveProcess {
                 existingStyle.getHighlightWkt() != newStyle.getHighlightWkt())
 
         def image = [:]
-        image["scatterplotId"] = taskWrapper.id
+        image["scatterplotId"] = taskWrapper.task.id
         def imgFile = new File(scatterplot.getImagePath())
-        image["scatterplotUrl"] = imgFile.path.replace(spatialConfig.data.dir + '/public/', layersServiceUrl + '/tasks/output/' as CharSequence)
+        image["scatterplotUrl"] = imgFile.path.replace(spatialConfig.data.dir + '/public/', spatialConfig.grails.serverURL + '/tasks/output/' as CharSequence)
                 .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name)
 
         //style

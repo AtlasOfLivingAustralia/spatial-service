@@ -17,6 +17,7 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
@@ -28,14 +29,14 @@ class Classification extends SlaveProcess {
     void start() {
 
         //list of layers
-        List<String> layers = JSON.parse(getInput('layer').toString()) as List<String>
+        List<String> layers = getInput('layer').toString().split(',')
         def envnameslist = new String[layers.size()]
         layers.eachWithIndex { l, idx ->
             envnameslist[idx] = l
         }
 
         //area to restrict
-        List<AreaInput> area = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> area = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
         RegionEnvelope regionEnvelope = processArea(area[0])
 
         //target resolution

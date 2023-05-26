@@ -84,7 +84,7 @@ class ShapesController {
 
     @Operation(
             method = "GET",
-            tags = "object",
+            tags = "objects",
             operationId = "getWKT",
             summary = "Get WKT for an object",
             parameters = [
@@ -112,19 +112,20 @@ class ShapesController {
     )
     @Path("/shapes/wkt/{pid}")
     @Produces("plain/text")
-    def wkt(String id) {
-        String filename = params?.filename ?: id
+    def wkt() {
+        String pid = params.pid
+        String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
         try {
             response.setContentType("application/wkt")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".wkt\"")
 
-            spatialObjectsService.wkt(id, os)
+            spatialObjectsService.wkt(pid, os)
 
             os.flush()
         } catch (err) {
-            log.error 'failed to get wkt for object: ' + id, err
+            log.error 'failed to get wkt for object: ' + pid, err
             response.status = 400
         } finally {
             if (os != null) {
@@ -139,7 +140,7 @@ class ShapesController {
 
     @Operation(
             method = "GET",
-            tags = "object",
+            tags = "objects",
             operationId = "getKML",
             summary = "Get KML for an object",
             parameters = [
@@ -167,17 +168,18 @@ class ShapesController {
     )
     @Path("/shapes/kml/{pid}")
     @Produces("plain/text")
-    def kml(String id) {
-        String filename = params?.filename ?: id
+    def kml() {
+        String pid = params.pid
+        String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
         try {
             response.setContentType("application/vnd.google-earth.kml+xml")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".kml\"")
-            if (id.startsWith("ENVELOPE")) {
-                spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'kml')
-            } else if (id.contains('~')) {
-                List ids = id.split('~').collect { cleanObjectId(it) }
+            if (pid.startsWith("ENVELOPE")) {
+                spatialObjectsService.streamEnvelope(os, pid.replace("ENVELOPE", ""), 'kml')
+            } else if (pid.contains('~')) {
+                List ids = pid.split('~').collect { cleanObjectId(it) }
 
                 os.write(KML_HEADER
                         .replace("<name></name>", "<name><![CDATA[" + filename + "]]></name>")
@@ -190,11 +192,11 @@ class ShapesController {
 
                 os.write(KML_FOOTER.bytes)
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id), 'kml')
+                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(pid), 'kml')
             }
             os.flush()
         } catch (err) {
-            log.error 'failed to get kml for object: ' + id, err
+            log.error 'failed to get kml for object: ' + pid, err
             response.status = 400
         } finally {
             if (os != null) {
@@ -209,7 +211,7 @@ class ShapesController {
 
     @Operation(
             method = "GET",
-            tags = "object",
+            tags = "objects",
             operationId = "getGeoJSON",
             summary = "Get GeoJSON for an object",
             parameters = [
@@ -237,29 +239,30 @@ class ShapesController {
     )
     @Path("/shapes/geojson/{pid}")
     @Produces("plain/text")
-    def geojson(String id) {
-        String filename = params?.filename ?: id
+    def geojson() {
+        String pid = params.pid
+        String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
         try {
             response.setContentType("application/json; subtype=geojson")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".geojson\"")
-            if (id.startsWith("ENVELOPE")) {
-                spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'geojson')
-            } else if (id.contains('~')) {
-                List ids = id.split('~').collect { cleanObjectId(it) }
+            if (pid.startsWith("ENVELOPE")) {
+                spatialObjectsService.streamEnvelope(os, pid.replace("ENVELOPE", ""), 'geojson')
+            } else if (pid.contains('~')) {
+                List ids = pid.split('~').collect { cleanObjectId(it) }
 
                 String query = "select st_asgeojson(st_collect(geom)) as geojson from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 groovySql.eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject('geojson').toString().bytes)
                 })
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id), 'geojson')
+                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(pid), 'geojson')
             }
 
             os.flush()
         } catch (err) {
-            log.error 'failed to get geojson for object: ' + id, err
+            log.error 'failed to get geojson for object: ' + pid, err
             response.status = 400
         } finally {
             if (os != null) {
@@ -274,7 +277,7 @@ class ShapesController {
 
     @Operation(
             method = "GET",
-            tags = "object",
+            tags = "objects",
             operationId = "getShapefile",
             summary = "Get zipped shapefile for an object",
             parameters = [
@@ -302,17 +305,18 @@ class ShapesController {
     )
     @Path("/shapes/shp/{pid}")
     @Produces("application/zip")
-    def shp(String id) {
-        String filename = params?.filename ?: id
+    def shp() {
+        String pid = params.pid
+        String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
         try {
             response.setContentType("application/zip")
             response.setHeader("Content-Disposition", "filename=\"" + filename + ".zip\"")
-            if (id.startsWith("ENVELOPE")) {
-                spatialObjectsService.streamEnvelope(os, id.replace("ENVELOPE", ""), 'shp')
-            } else if (id.contains('~')) {
-                List ids = id.split('~').collect { cleanObjectId(it) }
+            if (pid.startsWith("ENVELOPE")) {
+                spatialObjectsService.streamEnvelope(os, pid.replace("ENVELOPE", ""), 'shp')
+            } else if (pid.contains('~')) {
+                List ids = pid.split('~').collect { cleanObjectId(it) }
 
                 String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 String wkt = ""
@@ -323,13 +327,13 @@ class ShapesController {
                 File zippedShapeFile = SpatialConversionUtils.buildZippedShapeFile(wkt, 'area', filename, ids.join(','))
                 FileUtils.copyFile(zippedShapeFile, os)
             } else {
-                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(id), 'shp')
+                spatialObjectsService.streamObjectsGeometryById(os, cleanObjectId(pid), 'shp')
             }
             os.flush()
         } catch (err) {
-            log.error 'failed to get shapefile zip for object: ' + id, err
+            log.error 'failed to get shapefile zip for object: ' + pid, err
             response.status = 400
-            Map error = [error: 'failed to get shapefile for object: ' + id + "(" + err +")"]
+            Map error = [error: 'failed to get shapefile for object: ' + pid + "(" + err +")"]
             render error as JSON
         } finally {
             if (os != null) {
@@ -428,7 +432,7 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "upload",
+            tags = "uploads",
             operationId = "uploadWkt",
             summary = "Create an object from WKT",
             requestBody = @RequestBody(
@@ -449,7 +453,7 @@ class ShapesController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/shape/upload/wkt")
     @Produces("application/json")
@@ -465,7 +469,7 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "upload",
+            tags = "uploads",
             operationId = "uploadGeoJSON",
             summary = "Create an object from GeoJSON",
             requestBody = @RequestBody(
@@ -486,7 +490,7 @@ class ShapesController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/shape/upload/geojson")
     @Produces("application/json")
@@ -497,7 +501,7 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "upload",
+            tags = "uploads",
             operationId = "updateGeoJSON",
             summary = "Update an object with new GeoJSON",
             parameters = [
@@ -526,12 +530,13 @@ class ShapesController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/shape/upload/geojson/{pid}")
     @Produces("application/json")
     @RequireApiKey
-    def updateWithGeojson(Integer pid) {
+    def updateWithGeojson() {
+        Integer pid = Integer.parseInt(params.pid)
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return
@@ -541,7 +546,7 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "upload",
+            tags = "uploads",
             operationId = "updateWKT",
             summary = "Update an object with new WKT",
             parameters = [
@@ -570,12 +575,13 @@ class ShapesController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/shape/upload/wkt/{pid}")
     @Produces("application/json")
     @RequireApiKey
-    def updateWithWKT(Integer pid) {
+    def updateWithWKT() {
+        Integer pid = Integer.parseInt(params.pid)
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return
@@ -586,7 +592,7 @@ class ShapesController {
 
     @Operation(
             method = "POST",
-            tags = "upload",
+            tags = "uploads",
             operationId = "uploadShapefile",
             summary = "Upload a zipped shapefile and get a shapeId",
             parameters = [
@@ -792,7 +798,7 @@ class ShapesController {
 
     @Operation(
             method = "GET",
-            tags = "upload",
+            tags = "uploads",
             operationId = "getImage",
             summary = "Return an image for an uploaded shapefile and a list of features",
             parameters = [
@@ -804,7 +810,7 @@ class ShapesController {
                             required = true
                     ),
                     @Parameter(
-                            name = "featureIndexxes",
+                            name = "featureIndexes",
                             in = PATH,
                             description = "Comma delimited list of feature indexes or the keyword `all` for all features",
                             schema = @Schema(implementation = String),
@@ -826,7 +832,9 @@ class ShapesController {
     )
     @Path("/shape/upload/shp/image/{shapeId}/{featureIndexes}")
     @Produces("image/png")
-    def shapeImage(String shapeId, String featureIndexes) {
+    def shapeImage() {
+        String shapeId = params.shapeId
+        String featureIndexes = params.featureIndexes
         OutputStream os = response.outputStream
         try {
             File shpFileDir = new File(System.getProperty("java.io.tmpdir"), shapeId)
@@ -857,7 +865,7 @@ class ShapesController {
      */
     @Operation(
             method = "POST",
-            tags = "object",
+            tags = "objects",
             operationId = "uploadShapefileFeature",
             summary = "Create an object from a list of features of an uploaded shapefile",
             parameters = [
@@ -886,12 +894,14 @@ class ShapesController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/shape/upload/shp/{shapeId}/featureIndex")
     @Produces("application/json")
     @RequireApiKey
-    def saveFeatureFromShapeFile(String shapeId, String featureIndex) {
+    def saveFeatureFromShapeFile() {
+        String shapeId = params.shapeId
+        String featureIndex = params.featureIndex
         JSONObject json = request.JSON as JSONObject
         if (!featureIndex) {
             if (json["featureIdx"]) {
@@ -975,7 +985,7 @@ class ShapesController {
 
     @Operation(
             method = "DELETE",
-            tags = "upload",
+            tags = "uploads",
             operationId = "deleteObject",
             summary = "Delete an object",
             parameters = [
@@ -997,11 +1007,12 @@ class ShapesController {
                             ]
                     )
             ],
-            security = []
+            security = [@SecurityRequirement(name = 'openIdConnect')]
     )
     @Path("/shape/upload/{pid}")
     @RequireApiKey
-    def deleteShape(Integer pid) {
+    def deleteShape() {
+        Integer pid = Integer.parseInt(params.pid)
         if (pid == null) {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return

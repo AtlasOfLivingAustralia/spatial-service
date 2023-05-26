@@ -202,7 +202,8 @@ class TrackController {
     )
     @Path("track/{id}")
     @Produces("application/json")
-    def show(Long id) {
+    def show() {
+        Long id = Long.parseLong(params.id)
         if (id == null) {
             render status: 400
             return
@@ -280,7 +281,8 @@ class TrackController {
     )
     @Path("tracks/lsids/{lsid}")
     @Produces("application/json")
-    def lsids(String lsid) {
+    def lsids() {
+        String lsid = params.lsid
         Boolean noWkt = params.containsKey('nowkt') ? params.notwkt as Boolean : false
 
         List distributions = distributionsService.queryDistributions([lsids: lsid?.toString()?.replace("https:/", "https://")], noWkt, Distributions.TRACK)
@@ -369,8 +371,9 @@ class TrackController {
     @Path("track/map/png/{imageId}")
     @Produces("image/png")
     @Deprecated
-    def overviewMapPng(String geomIdx) {
-        map(geomIdx)
+    def overviewMapPng() {
+        String imageId = params.imageId
+        map(imageId)
     }
 
     @Deprecated

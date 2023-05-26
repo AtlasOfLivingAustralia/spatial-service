@@ -81,13 +81,13 @@ class AreaReport extends SlaveProcess {
 
     void start() {
 
-        List<AreaInput> area = JSON.parse(getInput('area').toString()) as List<AreaInput>
+        List<AreaInput> area = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
         SpeciesInput allSpecies = [bs: spatialConfig.biocacheServiceUrl.toString(), q: "*:*"]
         def speciesQuery = getSpeciesArea(allSpecies, area)
 
         //qid for this area
-        def q = "qid:" + Util.makeQid(speciesQuery)
+        def q = "qid:" + Util.makeQid(speciesQuery,webService)
 
         //override config path
         def configPath = taskWrapper.spec.privateSpecification.configPath ?: '/data/spatial-service/config'

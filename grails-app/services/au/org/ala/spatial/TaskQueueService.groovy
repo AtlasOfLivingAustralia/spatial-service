@@ -172,22 +172,43 @@ class TaskQueueService {
                     operator.tabulationService = tasksService.tabulationService
                     operator.spatialObjectsService = tasksService.spatialObjectsService
                     operator.gridCutterService = tasksService.gridCutterService
+                    operator.layerIntersectService = tasksService.layerIntersectService
                     operator.tabulationGeneratorService = tasksService.tabulationGeneratorService
                     operator.fileService = tasksService.fileService
+                    operator.webService = tasksService.webService
 
                     //start
                     operator.start()
-
-                    //finished
-                    taskWrapper.task.status = 4
-                    taskWrapper.task.message = 'finished'
-                    taskWrapper.task.history.put(System.currentTimeMillis() as String, "finished (id:${taskWrapper.task.id})" as String)
-
 
                 }
 
                 //publish
                 tasksService.publish(taskWrapper)
+
+                //finished
+                taskWrapper.task.status = 4
+                taskWrapper.task.message = 'finished'
+                taskWrapper.task.history.put(System.currentTimeMillis() as String, "finished (id:${taskWrapper.task.id})" as String)
+
+                // flush task because it is finished
+                Task.withTransaction {
+                    if (!taskWrapper.task.save(flush: true)) {
+                        taskWrapper.task.errors.each {
+                            log.error it
+                        }
+                    }
+                }
+
+                // flush outputs
+                OutputParameter.withTransaction {
+                    taskWrapper.task.output.each {
+                        if (!it.save(flush: true)) {
+                            it.errors.each {
+                                log.error it
+                            }
+                        }
+                    }
+                }
             } catch (err) {
                 if (err instanceof InterruptedException) {
                     taskWrapper.task.history[System.currentTimeMillis() as String] = "cancelled (id:${taskWrapper.task.id})" as String

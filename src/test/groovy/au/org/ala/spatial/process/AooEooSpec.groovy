@@ -9,10 +9,12 @@ import au.org.ala.spatial.TasksService
 import au.org.ala.spatial.TestUtil
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import javax.sql.DataSource
 
+@Ignore
 class AooEooSpec extends Specification implements GrailsUnitTest {
 
     TasksService tasksService

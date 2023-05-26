@@ -61,7 +61,7 @@ class ProcessSpecification {
     static class ConstraintSpecification {
         Double min  // (DOUBLE, INT, BOOLEAN): min value, (AREA, SPECIES, LIST, LAYER): min number of items
         Double max  // (DOUBLE, INT), BOOLEAN: max value, (AREA, SPECIES, LIST, LAYER): max number of items
-        Double defaultvalue // (DOUBLE, INT, BOOLEAN, LIST): defalut value,
+        Object defaultValue // (DOUBLE, INT, BOOLEAN, LIST): a deflaut value,
         Double minArea  // AREA: min area size in sq km
         Double maxArea // AREA: max area size in sq km
         Boolean optional // ALL: input when true

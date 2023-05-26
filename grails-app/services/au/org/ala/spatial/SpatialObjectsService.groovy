@@ -21,6 +21,7 @@ import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.util.SpatialConversionUtils
 import au.org.ala.spatial.util.SpatialUtils
+import grails.converters.JSON
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
@@ -92,7 +93,7 @@ class SpatialObjectsService {
     LayerIntersectService layerIntersectDao
     LayerService layerService
     def Holders
-
+    def dataSource
 
     List<SpatialObjects> getObjects() {
         log.debug("Getting a list of all objects")
@@ -652,10 +653,16 @@ class SpatialObjectsService {
 
 
     List<SpatialObjects> getObjectsByIdAndArea(String id, Integer limit, String wkt) {
-        String sql = "select fid, name, \"desc\", pid, ST_AsText(the_geom) as geometry, GeometryType(the_geom) as featureType, area_km from objects where fid= ? and " +
+        String sql = "SELECT o.pid, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, o.bbox, " +
+                "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o inner join fields f on o.fid = f.id  WHERE o.fid = ? AND " +
                 "ST_Within(the_geom, ST_GeomFromText( ? , 4326)) limit ? "
 
-        List<SpatialObjects> objects = SpatialObjects.executeQuery(sql, id, wkt, limit)
+        List<SpatialObjects> objects = []
+        groovySql.query(sql, [id, wkt, limit], { result ->
+            while (result.next()) {
+                objects.add(spatialObjectsFromResult(result))
+            }
+        })
         updateObjectWms(objects)
         return objects
     }
@@ -710,10 +717,16 @@ class SpatialObjectsService {
     }
 
     List<SpatialObjects> getObjectsByIdAndIntersection(String id, Integer limit, String intersectingPid) {
-        String sql = "select fid, name, \"desc\", pid, ST_AsText(the_geom) as geometry, GeometryType(the_geom) as featureType, area_km from objects, " +
-                "(select the_geom as g from Objects where pid = ? ) t where fid= ? and ST_Within(the_geom, g) limit ? "
+        String sql = "SELECT o.pid, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, o.bbox, " +
+                "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o inner join fields f on o.fid = f.id , (select the_geom as g from Objects where pid = ? ) t " +
+                "WHERE o.fid = ? AND and ST_Within(the_geom, g) limit ? "
 
-        List<SpatialObjects> objects = SpatialObjects.executeQuery(sql, intersectingPid, id, limit)
+        List<SpatialObjects> objects = []
+        groovySql.query(sql, [intersectingPid, id, limit], { result ->
+            while (result.next()) {
+                objects.add(spatialObjectsFromResult(result))
+            }
+        })
         updateObjectWms(objects)
 
         return objects

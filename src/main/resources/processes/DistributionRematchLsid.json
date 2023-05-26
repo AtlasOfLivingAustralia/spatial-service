@@ -20,7 +20,7 @@
       "description": "Update all LSIDs, not only search for missing LSIDs.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     }
   },

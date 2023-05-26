@@ -21,6 +21,7 @@ import au.org.ala.spatial.grid.GridClassBuilder
 import au.org.ala.spatial.legend.GridLegend
 import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.grid.Diva2bil
+import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils

@@ -95,7 +95,10 @@ class IntersectController {
     )
     @Path('/intersect/{ids}/{lat}/{lng}')
     @Produces("application/json")
-    def intersect(String ids, Double lat, Double lng) {
+    def intersect() {
+        String ids = params.ids
+        Double lat = Double.parseDouble(params.lat)
+        Double lng = Double.parseDouble(params.lng)
         if (lat == null) {
             render status: 400, text: "Path parameter `lat` is not a number."
             return
@@ -267,7 +270,8 @@ class IntersectController {
     )
     @Path('/intersect/batch/{id}')
     @Produces("application/json")
-    def batchStatus(String id) {
+    def batchStatus() {
+        String id = params.id
         File dir = new File((spatialConfig.data.dir + '/intersect/batch/') as String)
         dir.mkdirs()
         BatchConsumer.start(layerIntersectService, dir.getPath(), spatialConfig.sampling.threads.toInteger())
@@ -315,7 +319,8 @@ class IntersectController {
     )
     @Path('/intersect/batch/download/{id}')
     @Produces("application/zip")
-    def batchDownload(String id) {
+    def batchDownload() {
+        String id = params.id
         Boolean csv = params.containsKey('csv') ? params.csv.toString().toBoolean() : false
 
         File dir = new File((spatialConfig.data.dir + '/intersect/batch/') as String)
@@ -382,6 +387,7 @@ class IntersectController {
             parameters = [],
             responses = [
                     @ApiResponse(
+                            description = "Notification that the reload of config was successful",
                             responseCode = "200",
                             content = [
                                     @Content(
@@ -460,7 +466,11 @@ class IntersectController {
     )
     @Path('/intersect/pointradius/{fid}/{lat}/{lng}/{radius}')
     @Produces("application/json")
-    def pointRadius(String fid, Double lat, Double lng, Double radius) {
+    def pointRadius() {
+        String fid = params.fid
+        Double lat = Double.parseDouble(params.lat)
+        Double lng = Double.parseDouble(params.lng)
+        Double radius = Double.parseDouble(params.radius)
         if (lat == null) {
             render status: 400, text: "Path parameter `lat` is not a number."
             return
@@ -514,7 +524,8 @@ class IntersectController {
     @Produces("application/json")
     @SkipSecurityCheck
     // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
-    def wktGeometryIntersect(String fid) {
+    def wktGeometryIntersect() {
+        String fid = params.fid
         render spatialObjectsService.getObjectsIntersectingWithGeometry(fid, request.reader.text) as JSON
     }
 
@@ -556,7 +567,8 @@ class IntersectController {
     @Produces("application/json")
     @SkipSecurityCheck
     // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
-    def geojsonGeometryIntersect(String fid) {
+    def geojsonGeometryIntersect() {
+        String fid = params.fid
         String wkt = geoJsonToWkt(request.reader.text)
         render spatialObjectsService.getObjectsIntersectingWithGeometry(fid, wkt) as JSON
     }
@@ -612,7 +624,9 @@ class IntersectController {
     )
     @Path('/intersect/object/{fid}/{pid}')
     @Produces("application/json")
-    def objectIntersect(String fid, String pid) {
+    def objectIntersect() {
+        String fid = params.fid
+        String pid = params.pid
         render spatialObjectsService.getObjectsIntersectingWithObject(fid, pid) as JSON
     }
 

@@ -40,7 +40,7 @@
     <logger name="liquibase" level="INFO"/>
 
 
-    <root level="INFO">
+    <root level="ERROR">
         <appender-ref ref="TOMCAT_LOG"/>
     </root>
 

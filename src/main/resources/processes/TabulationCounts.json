@@ -16,7 +16,7 @@
       "name": "missingOnly",
       "type": "boolean",
       "constraints": {
-        "default": true
+        "defaultValue": true
       }
     }
   },

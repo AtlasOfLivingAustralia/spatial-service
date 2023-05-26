@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import java.sql.ResultSet
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
@@ -24,10 +24,11 @@ class LogService {
 
     def authService
     SpatialConfig spatialConfig
+    def groovySql
 
     def category1
     def category2
-    def logColumns = ["category1", "category2", "data", "sessionId", "userId"]
+    def logColumns = ["category1", "category2", "data", "session_id", "user_id"]
     def extraColumns = [year: "year(created)", month: "month(created)"]
 
     def init() {
@@ -39,7 +40,15 @@ class LogService {
         }
     }
 
+    def columnFormat(str) {
+        if (str == 'sessionId') str = 'session_id'
+        if (str == 'userId') str = 'user_id'
+        str
+    }
     def search(params, userId, userIsAdmin) {
+        params.groupBy = columnFormat(params.groupBy)
+        params.countBy = columnFormat(params.countBy)
+
         if (params.groupBy && params.countBy) { //search all over logs
             init()
             List columns = (params.groupBy as String)?.split(',')?.collect { logColumns.contains(it) ? it : extraColumns.containsKey(it) ? extraColumns.get(it) : null }?.findAll { it != null }
@@ -59,17 +68,22 @@ class LogService {
 
             response.collect { it -> toMap(it, headers) }
         } else if (params.category2) { //search a type of work log
-            def result = Log.executeQuery("SELECT userId, category2, sessionId, data, created FROM Log WHERE category2 ='" + (params.category2 as String) + "' ORDER BY created DESC", [max: params.max as Integer ?: 10, offset: params.offset as Integer ?: 0])
-            result.collect { it -> toMap(it, ["userId", "category2", "sessionId", "data", "created"]) }
+            def result = Log.executeQuery("SELECT user_id, category2, session_d, data, created FROM Log WHERE category2 ='" + (params.category2 as String) + "' ORDER BY created DESC", [max: params.max as Integer ?: 10, offset: params.offset as Integer ?: 0])
+            result.collect { it -> toMap(it, ["user_id", "category2", "session_id", "data", "created"]) }
         }
 
     }
 
     def searchCount(params, userId, userIsAdmin) {
         def sql = buildCountSql(params, userId, userIsAdmin)
-        def response = Log.executeQuery(sql.toString())
+        def response
+        groovySql.query(sql.toString(), { ResultSet rs ->
+            if (rs.next()) {
+                response = rs.getInt(1)
+            }
+        })
 
-        response[0]
+        response
     }
 
     def buildCountSql(params, userId, userIsAdmin) {
@@ -81,7 +95,7 @@ class LogService {
         }
         def where = where(params, userId, userIsAdmin)
 
-        def sql = "SELECT COUNT(DISTINCT ${columns}) FROM Log ${where}"
+        def sql = "SELECT COUNT(DISTINCT ${columns.join(',')}) FROM Log ${where}"
 
         sql
     }
@@ -116,10 +130,10 @@ class LogService {
                 category2.each { countColumns.push("SUM(CASE WHEN category2 = '${it}' THEN 1 ELSE 0 END) AS ${it}") }
             }
             if ("session" == by) {
-                countColumns.push("count(distinct sessionId) AS sessions")
+                countColumns.push("count(distinct session_id) AS sessions")
             }
             if ("user" == by) {
-                countColumns.push("count(distinct userId) AS users")
+                countColumns.push("count(distinct user_id) AS users")
             }
         }
 
@@ -130,7 +144,7 @@ class LogService {
         def clause = []
 
         if (!userIsAdmin || "true" != params.admin) {
-            clause.add("userId = '${userId}'")
+            clause.add("user_id = '${userId}'")
         }
 
         if (params.category1 && category1.contains(params.category1)) {
@@ -142,7 +156,7 @@ class LogService {
         }
 
         if (params.sessionId && params.sessionId as Long) {
-            clause.add("sessionId = '${params.sessionId}'")
+            clause.add("session_id = '${params.sessionId}'")
         }
 
         if (params.startDate && params.endDate) {
@@ -153,7 +167,7 @@ class LogService {
 
         if (params.excludeRoles) {
             // get user ids in the log
-            def userIds = Log.executeQuery("SELECT userId FROM Log WHERE userId is not null GROUP BY userId")
+            def userIds = Log.executeQuery("SELECT user_id FROM Log WHERE user_id is not null GROUP BY user_id")
 
             def roleList = (params.excludeRoles as String).split(',')
 
@@ -169,11 +183,11 @@ class LogService {
             }
 
             if (excludedUserIds.size()) {
-                clause.add("userId not in ('${excludedUserIds.join("','")}')")
+                clause.add("user_id not in ('${excludedUserIds.join("','")}')")
             }
         }
 
-        clause.add("sessionId IS NOT NULL AND category1 IS NOT NULL AND category1 <> 'httpService'")
+        clause.add("session_id IS NOT NULL AND category1 IS NOT NULL AND category1 <> 'httpService'")
 
         if (clause) {
             return "WHERE ${clause.join(" AND ")}"
