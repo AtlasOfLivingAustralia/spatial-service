@@ -377,8 +377,8 @@ class TabulationGeneratorService {
                 fw = new FileWriter(fieldId1 + "_" + fieldId2 + ".sql")
             }
 
-            List<Double> resolutions = spatialConfig.gridResolutions.split(',') as List<Double>
-            Double resolution = resolutions.get(0)
+            Double[] resolutions = spatialConfig.grdResolutions
+            Double resolution = resolutions[0]
 
             // check if resolution needs changing
             resolution = Double.parseDouble(confirmResolution(new String[]{fieldId1, fieldId2}, String.valueOf(resolution)))

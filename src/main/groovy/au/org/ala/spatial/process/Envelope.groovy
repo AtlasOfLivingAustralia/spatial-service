@@ -46,8 +46,6 @@ class Envelope extends SlaveProcess {
                     }
                 }
                 String layerFile = '/standard_layer/' + resolution + "/" + filter[i].getLayername()
-                taskLog("Fetch layer: " + layerFile)
-                getFile(layerFile)
             }
         }
 

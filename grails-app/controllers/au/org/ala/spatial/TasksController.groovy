@@ -43,6 +43,7 @@ class TasksController {
 
     AuthService authService
     SpatialConfig spatialConfig
+    SpatialAuthService spatialAuthService
 
     /**
      * get collated capabilities specs from all registered slaves
@@ -70,7 +71,7 @@ class TasksController {
     @Path("/tasks/capabilities")
     @Produces("application/json")
     def capabilities() {
-        render tasksService.getSpecification(authService.userInRole(spatialConfig.auth.admin_role)) as JSON
+        render tasksService.getSpecification(spatialAuthService.userInRole(spatialConfig.auth.admin_role)) as JSON
     }
 
     /**
@@ -302,7 +303,7 @@ class TasksController {
         def errors
         def userId
         if (spatialConfig.security.oidc.enabled || spatialConfig.security.cas.enabled) {
-            errors = tasksService.validateInput(params.name, input, authService.userInRole(spatialConfig.auth.admin_role))
+            errors = tasksService.validateInput(params.name, input, spatialAuthService.userInRole(spatialConfig.auth.admin_role))
             userId = authService.getUserId() ?: params.userId
         } else {
             errors = tasksService.validateInput(params.name, input, true)
@@ -314,9 +315,13 @@ class TasksController {
             render errors as JSON
         } else {
             Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, params.email).task
-            task.save(flush: true)
             render task as JSON
         }
+    }
+
+    @RequireAdmin
+    uiCreate() {
+        create()
     }
 
     /**

@@ -20,8 +20,8 @@ class SpatialConfig {
 
     DotTask task
 
-    String shpResolutions
-    String gridResolutions
+    Double [] shpResolutions
+    Double [] grdResolutions
 
 
     DotTimeout admin

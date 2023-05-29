@@ -21,6 +21,7 @@ import grails.converters.JSON
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.hibernate.spatial.Spatial
 import spock.lang.Specification
 
 import javax.sql.DataSource
@@ -56,6 +57,9 @@ class TasksControllerSpec extends Specification implements ControllerUnitTest<Ta
 
         controller.authService = Mock(AuthService)
         controller.authService.userInRole(_) >> true
+
+        controller.spatialAuthService = Mock(SpatialAuthService)
+        controller.spatialAuthService.userInRole(_) >> true
 
         controller.tasksService = Mock(TasksService)
         controller.tasksService.getSpecification(_) >> { return [key1: "test1"] }

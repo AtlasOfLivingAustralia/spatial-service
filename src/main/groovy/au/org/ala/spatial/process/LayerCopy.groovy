@@ -54,7 +54,7 @@ class LayerCopy extends SlaveProcess {
         taskLog("get standardized files")
         def resolutions
         if (layer.type == 'Contextual') resolutions = spatialConfig.shpResolutions
-        else resolutions = spatialConfig.gridResolutions
+        else resolutions = spatialConfig.grdResolutions
         if (!(resolutions instanceof List)) {
             // comma separated or JSON list
             if (resolutions.toString().startsWith("[")) {

@@ -226,10 +226,14 @@ class Util {
             params.add(new NameValuePair('wkt', query.wkt.toString()))
         }
 
-        params.add(new NameValuePair('bbox', 'true'))
+        // this causes the qid to fail when there are no occurrences in the area
+        //params.add(new NameValuePair('bbox', 'true'))
 
         // TODO: JWT and /ws/qid
-        return postUrl("${query.bs}/webportal/params".toString(), (NameValuePair[]) params.toArray(new NameValuePair[0]))
+        //def qid1 = webService.post("${query.bs}/qid".toString(), [body: params])
+        def qid = postUrl("${query.bs}/qid".toString(), (NameValuePair[]) params.toArray(new NameValuePair[0]))
+
+        qid
     }
 
     static SpeciesInput getQid(bs, qid) {

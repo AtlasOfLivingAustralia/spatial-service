@@ -103,7 +103,7 @@ class TaskQueueService {
 //                shpResolutions = Arrays.asList(shpResolutions.toString().split(","))
 //            }
 //        }
-//        def grdResolutions = spatialConfig.gridResolutions
+//        def grdResolutions = spatialConfig.grdResolutions
 //        if (!(grdResolutions instanceof List)) {
 //            // comma separated or JSON list
 //            if (grdResolutions.toString().startsWith("[")) {

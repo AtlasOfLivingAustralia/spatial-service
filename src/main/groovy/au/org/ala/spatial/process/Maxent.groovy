@@ -27,9 +27,6 @@ import org.apache.commons.io.FileUtils
 class Maxent extends SlaveProcess {
 
     void start() {
-        //update maxent
-        getFile('/modelling/maxent/maxent.jar')
-
         //list of layers
         List<String> layers = getInput('layer').toString().split(',')
         List<String> contextualLayers = []

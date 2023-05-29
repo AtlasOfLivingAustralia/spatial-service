@@ -402,6 +402,8 @@ class Records {
                                 lsidIdx.add(idx)
                                 years.add(Short.parseShort(line[header[3]]))
                             }
+                        } catch (Exception ignored) {
+
                         } finally {
                             if (lsidIdx.size() * 2 < points.size()) {
                                 points.remove(points.size() - 1)

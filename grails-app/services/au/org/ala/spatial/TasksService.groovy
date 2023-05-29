@@ -155,22 +155,22 @@ class TasksService {
 
             task.input = inputs
 
-            Task.withTransaction {
-                if (!task.save(flush: true)) {
-                    task.errors.each {
-                        log.error 'create task failed', it
+
+            if (!task.save(flush: true)) {
+                task.errors.each {
+                    log.error 'create task failed', it
+                }
+            }
+
+
+            inputs.each {
+                if (!it.save(flush: true)) {
+                    it.errors.each {
+                        log.error 'create task input failed', it
                     }
                 }
             }
-            InputParameter.withTransaction {
-                inputs.each {
-                    if (!it.save(flush: true)) {
-                        it.errors.each {
-                            log.error 'create task input failed', it
-                        }
-                    }
-                }
-            }
+
 
             task.output = []
         }

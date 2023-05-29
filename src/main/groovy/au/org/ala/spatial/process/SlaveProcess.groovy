@@ -185,6 +185,17 @@ class SlaveProcess {
     }
 
     String getInput(String name) {
+        // config inputs
+        if ('bieUrl' == name) return  spatialConfig.bie.baseURL
+        if ('biocacheServiceUrl' == name) return  spatialConfig.biocacheServiceUrl
+        if ('phyloServiceUrl' == name) return  spatialConfig.phyloServiceUrl
+        if ('sandboxHubUrl' == name) return  spatialConfig.sandboxHubUrl
+        if ('sandboxBiocacheServiceUrl' == name) return spatialConfig.sandboxBiocacheServiceUrl
+        if ('namematchingUrl' == name) return spatialConfig.namematching.url
+        if ('geoserverUrl' == name) return spatialConfig.geoserver.url
+        if ('userId' == name) return taskWrapper.task.userId
+
+        // task inputs
         taskWrapper.task.input.find { it.name == name}?.value as String
     }
 
@@ -470,7 +481,7 @@ class SlaveProcess {
 
     List<File> downloadSpecies(SpeciesInput species) {
         OccurrenceData od = new OccurrenceData()
-        String[] s = od.getSpeciesData(species.q.join('&fq='), species.bs, null, null)
+        String[] s = od.getSpeciesData(species.q.join('&fq='), species.bs, null)
 
         def newFiles = []
 

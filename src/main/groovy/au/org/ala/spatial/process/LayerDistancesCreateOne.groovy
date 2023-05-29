@@ -31,9 +31,6 @@ class LayerDistancesCreateOne extends SlaveProcess {
 
         String[] grdResolutions = getInput('grdResolutions')
 
-        taskWrapper.task.message = 'getting layerDistances.properties'
-        getFile('/public/layerDistances.properties')
-
         File f = new File(spatialConfig.data.dir.toString() + '/public/layerDistances.properties')
         if (!f.exists()) f.write('')
         Map distances = [:]
@@ -56,8 +53,6 @@ class LayerDistancesCreateOne extends SlaveProcess {
                     String path = '/standard_layer/' + grdResolutions[i] + '/' + fieldIds[j] + '.grd'
                     taskWrapper.task.message = 'checking file ' + path
                     if (new File(path).exists()) {
-                        taskWrapper.task.message = 'getting file ' + path
-                        getFile(path)
                         files[j] = new File(path)
                         found++
                     }

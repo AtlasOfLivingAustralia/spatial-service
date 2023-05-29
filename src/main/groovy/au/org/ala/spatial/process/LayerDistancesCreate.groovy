@@ -30,7 +30,7 @@ class LayerDistancesCreate extends SlaveProcess {
         List<Fields> fields = getFields()
         List<Layers> layers = getLayers()
 
-        String[] grdResolutions = getInput('grdResolutions')
+        Double[] grdResolutions = spatialConfig.grdResolutions
 
         //get highest resolution standardized layer files
         //only want valid fields
@@ -45,9 +45,6 @@ class LayerDistancesCreate extends SlaveProcess {
                 }
             }
         }
-
-        taskWrapper.task.message = 'getting layer distances'
-        getFile('/public/layerDistances.properties')
 
         File f = new File(spatialConfig.data.dir.toString() + '/public/layerDistances.properties')
         if (!f.exists()) {

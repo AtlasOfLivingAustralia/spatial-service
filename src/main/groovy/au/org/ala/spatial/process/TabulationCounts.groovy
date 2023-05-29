@@ -39,7 +39,6 @@ class TabulationCounts extends SlaveProcess {
         taskWrapper.task.message = 'getting field list'
         allFields.each { Fields field ->
             if (field.intersect) {
-                //getFile(taskService.getResourcePath([type: 'layer'], field.layer.name))
                 fields.add(field)
             }
         }
@@ -47,9 +46,6 @@ class TabulationCounts extends SlaveProcess {
         // load records
         taskWrapper.task.message = 'getting records'
         String dir = spatialConfig.data.dir + File.separator + "sample"
-        RecordsSmall.fileList().each { filename ->
-            //getFile(dir + File.separator + filename)
-        }
 
         RecordsSmall records = new RecordsSmall(dir)
 
@@ -222,12 +218,6 @@ class TabulationCounts extends SlaveProcess {
 
         if (!file.exists()) {
             try {
-                getFile('/layer/' + l.name + '.shp')
-                getFile('/layer/' + l.name + '.shx')
-                getFile('/layer/' + l.name + '.dbf')
-                getFile('/layer/' + l.name + '.prj')
-                getFile('/layer/' + l.name + '.grd')
-                getFile('/layer/' + l.name + '.gri')
 
                 if (new File(filename + ".shp").exists()) {
                     SimpleShapeFile ssf = new SimpleShapeFile(filename, fieldName)

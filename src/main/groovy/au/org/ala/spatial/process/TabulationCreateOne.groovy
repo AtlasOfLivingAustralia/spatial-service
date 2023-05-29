@@ -52,8 +52,6 @@ class TabulationCreateOne extends SlaveProcess {
         String intersectPath = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
 
         try {
-            getFile('/layer/' + layer1.name)
-            getFile('/layer/' + layer2.name)
 
             File file1 = new File(layersDir + layer1.name + ".shp")
             File file2 = new File(layersDir + layer2.name + ".shp")
@@ -88,7 +86,6 @@ class TabulationCreateOne extends SlaveProcess {
 
         String dir = spatialConfig.data.dir
         String intersectFile = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
-        getFile(intersectFile)
 
         try {
             File file1 = new File(dir + '/layer/' + layer1.name + ".shp")

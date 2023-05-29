@@ -27,6 +27,7 @@ class LoginInterceptor {
     static final String[] API_KEY_HEADER_NAME = ["apiKey", "api_key", "api-key"]
 
     AuthService authService
+    SpatialAuthService spatialAuthService
     SpatialConfig spatialConfig
     def testedKeys = [:]
 
@@ -35,11 +36,11 @@ class LoginInterceptor {
     }
 
     boolean before() {
-        if (!spatialConfig.security.oidc.enabled) {
+        if (!spatialConfig.security.oidc.enabled && !spatialConfig.security.cas.enabled) {
             return true
         }
 
-        def isAdmin = authService.userInRole(spatialConfig.auth.admin_role)
+        def isAdmin = spatialAuthService.userInRole(spatialConfig.auth.admin_role)
 
         def controller = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
         Class controllerClass = controller?.clazz
@@ -60,15 +61,15 @@ class LoginInterceptor {
             permissionLevel = RequireAdmin
         }
 
-//        if (Objects.isNull(permissionLevel)) {
-//            if (controllerClass?.isAnnotationPresent(RequirePermission.class)) {
-//                permissionLevel = RequirePermission
-//            } else if (controllerClass?.isAnnotationPresent(RequireLogin.class)) {
-//                permissionLevel = RequireLogin
-//            } else if (controllerClass?.isAnnotationPresent(RequireAdmin.class)) {
-//                permissionLevel = RequireAdmin
-//            }
-//        }
+        if (Objects.isNull(permissionLevel)) {
+            if (controllerClass?.isAnnotationPresent(RequirePermission.class)) {
+                permissionLevel = RequirePermission
+            } else if (controllerClass?.isAnnotationPresent(RequireLogin.class)) {
+                permissionLevel = RequireLogin
+            } else if (controllerClass?.isAnnotationPresent(RequireAdmin.class)) {
+                permissionLevel = RequireAdmin
+            }
+        }
 
         //Permission check
         def role  // if require a certain level of ROLE
@@ -92,7 +93,7 @@ class LoginInterceptor {
         if (authService.getUserId()) {
             //Check role
             if (!Strings.isNullOrEmpty(role)) {
-                if (false && !authService.userInRole(role)) {
+                if (!spatialAuthService.userInRole(role)) {
                     return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: ' + role)
                 }
             }

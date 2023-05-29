@@ -24,6 +24,7 @@ class WorkflowController {
     private static String REF = ''
     private static String PUBLIC = 'public'
 
+    SpatialAuthService spatialAuthService
     AuthService authService
     SpatialConfig spatialConfig
 
@@ -110,7 +111,7 @@ class WorkflowController {
         // check authorisation
         if (header.userId == user_id ||
                 !header.isPrivate ||
-                authService.userInRole(spatialConfig.auth.admin_role)) {
+                spatialAuthService.userInRole(spatialConfig.auth.admin_role)) {
             // keep metadata details
         } else {
             header.metadata = null
@@ -134,7 +135,7 @@ class WorkflowController {
 
         // check authorisation and that it is not minted (no analysis_id)
         if ((metadata.user_id == user_id ||
-                authService.userInRole(spatialConfig.auth.admin_role)) &&
+                spatialAuthService.userInRole(spatialConfig.auth.admin_role)) &&
                 metadata.analysis_id == null) {
 
             userDataService.delete(id)
@@ -150,7 +151,7 @@ class WorkflowController {
     def search() {
         String user_id = authService.getUserId()
 
-        String isPublic = authService.userInRole(spatialConfig.auth.admin_role) ? null : PUBLIC
+        String isPublic = spatialAuthService.userInRole(spatialConfig.auth.admin_role) ? null : PUBLIC
 
         def list = userDataService.searchDescAndTypeOr('%' + params.q + '%', RECORD_TYPE, user_id, isPublic, null, Integer.parseInt(params.start ?: '0'), Integer.parseInt(params.limit ?: '10'))
 

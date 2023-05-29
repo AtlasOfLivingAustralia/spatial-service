@@ -27,12 +27,11 @@ import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
 
 @Slf4j
-//@CompileStatic
 class StandardizeLayers extends SlaveProcess {
 
     void start() {
-        double[] shpResolutions = getInput('shpResolutions') as double[]
-        double[] grdResolutions = getInput('grdResolutions') as double[]
+        Double[] shpResolutions = spatialConfig.shpResolutions
+        Double[] grdResolutions = spatialConfig.grdResolutions
 
         //optional fieldId
         String fieldId = getInput('fieldId')
@@ -58,7 +57,7 @@ class StandardizeLayers extends SlaveProcess {
 
                         shpResolutions.each { String res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (!new File(path).exists()) {
+                            if (!new File(spatialConfig.data.dir.toString() + path).exists()) {
                                 taskWrapper.task.message = 'running: making for field ' + f.id + ' and resolution ' + res
 
                                 if (!shpFileRetrieved) {
@@ -97,11 +96,7 @@ class StandardizeLayers extends SlaveProcess {
                             }
                         }
                     } else if (('e' == f.type || 'a' == f.type || 'b' == f.type) &&
-                            new File('/layer/' + l.name + '.grd').exists()) {
-
-                        // standardized file is missing, make for this grid file
-                        getFile('/layer/' + l.name + '.grd')
-                        getFile('/layer/' + l.name + '.gri')
+                            new File(spatialConfig.data.dir.toString() + '/layer/' + l.name + '.grd').exists()) {
 
                         Grid g = new Grid(spatialConfig.data.dir.toString() + '/layer/' + l.name)
                         double minRes = Math.min(g.xres, g.yres)
@@ -111,13 +106,13 @@ class StandardizeLayers extends SlaveProcess {
                         double nearestSmallerRes = 1
                         grdResolutions.each { Double res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (!new File(path).exists()) {
+                            if (!new File(spatialConfig.data.dir.toString() + path).exists()) {
                                 taskWrapper.task.message = 'running: making for field ' + f.id + ' and resolution ' + res
 
                                 // no need to make for this resolution if it is < the actual grid resolution (and not close)
                                 double dres = res.doubleValue()
                                 if (minRes < dres * 1.2) {
-                                    standardizeGrid(f as Map, l as Map, res, dres)
+                                    standardizeGrid(f, l, res, dres)
                                     count++
                                     grdCount++
                                 } else {
@@ -132,7 +127,7 @@ class StandardizeLayers extends SlaveProcess {
                         }
                         //if no standard_layer is produced, use the nearest one found
                         if (count == 0) {
-                            standardizeGrid(f as Map, l as Map, nearestSmallerRes, nearestSmallerDRes)
+                            standardizeGrid(f, l, nearestSmallerRes, nearestSmallerDRes)
                         }
                     }
                 }
@@ -149,7 +144,7 @@ class StandardizeLayers extends SlaveProcess {
         }
     }
 
-    void standardizeGrid(Map f, Map l, double res, double dres) {
+    void standardizeGrid(f, l, double res, double dres) {
         if (AnalysisLayerUtil.diva2Analysis(
                 String.valueOf(spatialConfig.data.dir + '/layer/' + l.name),
                 String.valueOf(spatialConfig.data.dir + '/standard_layer/' + res + '/' + f.id),
