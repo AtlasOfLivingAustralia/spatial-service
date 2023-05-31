@@ -63,44 +63,53 @@ class Classification extends SlaveProcess {
             replaceMap.put(it + '.grd', getLayer(getField(it).spid).displayname)
             replaceMap.put(it, getLayer(getField(it).spid).displayname)
         }
-        replaceMap.put('http://spatial.ala.org.au', getInput('layersServiceUrl'))
+        replaceMap.put('http://spatial.ala.org.au', spatialConfig.grails.serverURL)
 
         cmd = [spatialConfig.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
-               getTaskPath() + "aloc.asc", getTaskPath() + taskWrapper.id + "_aloc.tif"]
+               getTaskPath() + "aloc.asc", getTaskPath() + taskWrapper.task.id + "_aloc.tif"]
         taskWrapper.task.message = "asc > tif"
         runCmd(cmd, true, spatialConfig.aloc.timeout)
 
-        if (new File(getTaskPath() + taskWrapper.id + "aloc.sld").exists()) {
-            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
+        if (makeShapefile.toString().toBoolean()) {
+            SpatialUtils.grid2shp(getTaskPath() + "aloc", null)
+            addOutput("files", "aloc.shp", true)
+            addOutput("files", "aloc.shx", true)
+            addOutput("files", "aloc.dbf", true)
+            addOutput("files", "aloc.prj", true)
+            addOutput("files", "aloc.fix", true)
+        }
+
+        if (new File(getTaskPath() + taskWrapper.task.id + "aloc.sld").exists()) {
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.task.id + "_aloc.sld")
             if (target.exists()) target.delete()
-            FileUtils.moveFile(new File(getTaskPath() + taskWrapper.id + "_aloc.sld"), target)
-            addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.sld")
+            FileUtils.moveFile(new File(getTaskPath() + taskWrapper.task.id + "_aloc.sld"), target)
+            addOutput("layers", "/layer/" + taskWrapper.task.id + "_aloc.sld")
         }
         if (new File(getTaskPath() + "aloc.sld").exists()) {
-            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.sld")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.task.id + "_aloc.sld")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.sld"), target)
-            addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.sld")
+            addOutput("layers", "/layer/" + taskWrapper.task.id + "_aloc.sld")
         }
-        if (new File(getTaskPath() + taskWrapper.id + "_aloc.tif").exists()) {
-            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.tif")
+        if (new File(getTaskPath() + taskWrapper.task.id + "_aloc.tif").exists()) {
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.task.id + "_aloc.tif")
             if (target.exists()) target.delete()
-            FileUtils.moveFile(new File(getTaskPath() + taskWrapper.id + "_aloc.tif"), target)
-            addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.tif")
+            FileUtils.moveFile(new File(getTaskPath() + taskWrapper.task.id + "_aloc.tif"), target)
+            addOutput("layers", "/layer/" + taskWrapper.task.id + "_aloc.tif")
         }
 
         if (new File(getTaskPath() + "aloc.grd").exists()) {
-            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.grd")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.task.id + "_aloc.grd")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.grd"), target)
-            addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.grd")
+            addOutput("layers", "/layer/" + taskWrapper.task.id + "_aloc.grd")
         }
         if (new File(getTaskPath() + "aloc.gri").exists()) {
-            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_aloc.gri")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.task.id + "_aloc.gri")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "aloc.gri"), target)
-            addOutput("layers", "/layer/" + taskWrapper.id + "_aloc.gri")
+            addOutput("layers", "/layer/" + taskWrapper.task.id + "_aloc.gri")
         }
 
         if (new File(getTaskPath() + "aloc.log").exists()) addOutput("files", "aloc.log", true)
@@ -118,15 +127,6 @@ class Classification extends SlaveProcess {
             //translate fieldId to layerName
             Util.replaceTextInFile(getTaskPath() + "classification.html", replaceMap)
             addOutput("metadata", "classification.html", true)
-        }
-
-        if (makeShapefile.toString().toBoolean()) {
-            SpatialUtils.grid2shp(getTaskPath() + "aloc", null)
-            addOutput("files", "aloc.shp", true)
-            addOutput("files", "aloc.shx", true)
-            addOutput("files", "aloc.dbf", true)
-            addOutput("files", "aloc.prj", true)
-            addOutput("files", "aloc.fix", true)
         }
     }
 }

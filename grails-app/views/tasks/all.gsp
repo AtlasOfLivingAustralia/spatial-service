@@ -44,8 +44,8 @@
         <div class="panel-body">
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-            <li><g:link controller="tasks" action="activeThreads">Show active Tasks</g:link></li>
+            <li><g:link controller="tasks" action="all">Show all Tasks</g:link></li>
+            <li><g:link controller="tasks" action="index">Show active Tasks</g:link></li>
             <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
         </div>
     </div>
@@ -93,9 +93,6 @@
         <div class="message" role="status">${flash.message}</div>
     </g:if>
 
-    <div>
-        <g:link action="cancelAll" params="${params}">Cancel these ${taskInstanceCount ?: 0} tasks</g:link>
-    </div>
     <table class="table table-bordered table-striped" name="tasks">
         <thead>
 
@@ -144,7 +141,7 @@
 
                 <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}"
                             params="${params}">re-run task</g:link>
-                    <g:link action="cancel" class="btn btn-sm btn-default" id="${taskInstance.id}"
+                    <g:link action="uiCancel" class="btn btn-sm btn-default" id="${taskInstance.id}"
                             params="${params}">cancel</g:link></td>
 
             </tr>

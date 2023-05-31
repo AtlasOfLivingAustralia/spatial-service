@@ -31,8 +31,8 @@
         <li><g:link controller="manageLayers"
                     action="layers">View available layers</g:link> - View lists of existing layers</li>
         <li><g:link controller="tasks"
-                    action="activeThreads">Check active tasks</g:link> - View the status of active tasks</li>
-        <li><g:link controller="tasks" action="index">Show all tasks</g:link> - View the status of tasks</li>
+                    action="index">Check active tasks</g:link> - View the status of active tasks</li>
+        <li><g:link controller="tasks" action="all">Show all tasks</g:link> - View the status of tasks</li>
         <li><g:link controller="manageLayers"
                     action="remote">Copy layers from remote servers</g:link> - transfer layers from test environment to production</li>
     </ul>

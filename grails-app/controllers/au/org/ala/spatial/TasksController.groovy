@@ -373,6 +373,11 @@ class TasksController {
         }
     }
 
+    @RequireAdmin
+    def uiCancel() {
+        cancel()
+    }
+
     /**
      * get zip of all task outputs (zip received from slave/publish)
      *

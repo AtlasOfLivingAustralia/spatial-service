@@ -332,8 +332,12 @@ class Records {
             raf = new RandomAccessFile(filename, "rw")
         }
 
+        String facetFieldTerm = ',' + facetField
+        if (facetField == null) {
+            facetFieldTerm = ''
+        }
         while (start < 300000000) {
-            String url = biocache_service_url + "/webportal/occurrences.gz?q=" + q.replace(" ", "%20") + bboxTerm + "&pageSize=" + pageSize + "&fq=year%3A*&start=" + start + "&fl=longitude,latitude," + facetField + ",year"
+            String url = biocache_service_url + "/webportal/occurrences.gz?q=" + q.replace(" ", "%20") + bboxTerm + "&pageSize=" + pageSize + "&fq=year%3A*&start=" + start + "&fl=longitude,latitude" + facetFieldTerm + ",year"
 
             int tryCount = 0
             InputStream is = null
@@ -393,7 +397,7 @@ class Records {
                             if (region == null || region.isWithin_EPSG900913(longitude, latitude)) {
                                 points.add(longitude)
                                 points.add(latitude)
-                                String species = line[header[0]]
+                                String species = facetField == null ? 'species' : line[header[0]]
                                 Integer idx = lsidMap.get(species)
                                 if (idx == null) {
                                     idx = lsidMap.size()

@@ -319,7 +319,7 @@ class TasksService {
                             errors.put(k, "Input parameter $k=$v is too short. Minimum number of characters is ${v.constraints.min}.")
                         else if (v.type.toString().endsWith("s"))
                             errors.put(k, "Input parameter $k has too few ${v.type}. Only ${number} provided. Minimum number of ${v.type} is ${v.constraints.min}.")
-                        else
+                        else if (AREA != v.type) // TODO: handle the area type 'all areas in a layer', e.g. compareAreas
                             errors.put(k, "Input parameter $k=$v is too small. Minimum value is ${v.constraints.min}.")
                     }
                     if (number != null && v.constraints.max && v.constraints.max < number) {

@@ -16,7 +16,8 @@
       "description": "Areas for comparison.",
       "type": "area",
       "constraints": {
-        "min": 2
+        "min": 2,
+        "max": 2
       }
     },
     "species": {

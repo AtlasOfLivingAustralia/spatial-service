@@ -22,8 +22,8 @@
         <div class="panel-body">
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-            <li><g:link controller="tasks" action="activeThreads">Show active Tasks</g:link></li>
+            <li><g:link controller="tasks" action="all">Show all Tasks</g:link></li>
+            <li><g:link controller="tasks" action="index">Show active Tasks</g:link></li>
             <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
         </div>
     </div>
@@ -63,7 +63,7 @@
                 <td><g:formatDate date="${task.activeThread}" format="yyyy-MM-dd hh:mm:ss"/></td>
 
                 <td>
-                    <g:link action="cancel" class="btn btn-sm btn-default" id="${task.taskId}"
+                    <g:link action="uiCancel" class="btn btn-sm btn-default" id="${task.taskId}"
                             params="${params}">cancel</g:link>
                 </td>
             </tr>

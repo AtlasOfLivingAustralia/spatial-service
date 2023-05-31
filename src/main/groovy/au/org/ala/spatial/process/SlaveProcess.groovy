@@ -481,7 +481,7 @@ class SlaveProcess {
 
     List<File> downloadSpecies(SpeciesInput species) {
         OccurrenceData od = new OccurrenceData()
-        String[] s = od.getSpeciesData(species.q.join('&fq='), species.bs, null)
+        String[] s = od.getSpeciesData(species.q.join('&fq='), species.bs, null, null)
 
         def newFiles = []
 

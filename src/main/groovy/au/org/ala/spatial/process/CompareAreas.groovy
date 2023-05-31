@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.SpatialObjects
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.SpeciesInput
 import com.opencsv.CSVReader
@@ -31,8 +32,27 @@ class CompareAreas extends SlaveProcess {
         List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
         SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
 
-        //get info for each area
+        // replace 'all areas in a layer' with the actual areas
+        List<AreaInput> filteredAreas = []
+        List<SpatialObjects> list = []
+        String fid = null
         for (area in areas) {
+            if (area.q?.matches('cl[0-9]+:\\*')) {
+                fid = area.q.substring(0, area.q.indexOf(':'))
+                list = getObjects(fid)
+            } else {
+                filteredAreas.add(area)
+            }
+        }
+        for (SpatialObjects so : list) {
+            AreaInput ai = new AreaInput()
+            ai.name = so.name
+            ai.q = fid + ":\"" + ai.name + '"'
+            filteredAreas.add(ai)
+        }
+
+        //get info for each area
+        for (area in filteredAreas) {
             taskLog(area.name + ": define area")
             area.speciesArea = getSpeciesArea(species, [area])
             taskLog(area.name + ": count occurrences")
@@ -41,6 +61,7 @@ class CompareAreas extends SlaveProcess {
             area.speciesList = new CSVReader(new StringReader(getSpeciesList(area.speciesArea))).readAll()
         }
 
+        // TODO: this should compare more than 2 areas.
         makeFiles(species, areas[0], areas[1])
     }
 
@@ -50,11 +71,11 @@ class CompareAreas extends SlaveProcess {
         def speciesBoth = []
 
         taskLog("sort species lists")
-        if (area1.speciesList.size() == 0) {
+        if (!area1.speciesList?.size()) {
             taskLog("no species in area: " + area1.name)
             return
         }
-        if (area2.speciesList.size() == 0) {
+        if (!area2.speciesList?.size()) {
             taskLog("no species in area: " + area2.name)
             return
         }
