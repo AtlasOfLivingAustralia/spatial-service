@@ -1,14 +1,9 @@
-import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.testing.Test
-
 buildscript {
     repositories {
         mavenLocal()
         maven { url "https://repository.jboss.org/" }
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "https://nexus.ala.org.au/content/groups/public/" }
-
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
@@ -19,15 +14,6 @@ buildscript {
     }
 }
 
-plugins {
-    id 'war'
-}
-
-ext {
-    // The drivers we want to use
-    drivers = ["firefox", "chrome", "chromeHeadless"]
-}
-
 version "1.1.3-SNAPSHOT"
 group "au.org.ala"
 
@@ -36,20 +22,11 @@ apply plugin:"idea"
 apply plugin:"war"
 apply plugin:"org.grails.grails-web"
 apply plugin:"com.github.erdi.webdriver-binaries"
-apply plugin:"org.grails.grails-gsp"
 apply plugin:"com.bertramlabs.asset-pipeline"
+apply plugin:"org.grails.grails-gsp"
+apply plugin:"maven-publish"
 
-war {
-    enabled=true
-}
 
-springBoot {
-    mainClassName = "au.org.ala.spatial.service.Application"
-}
-
-buildProperties {
-    inputs.property("info.app.build.date", new Date().format('yyyy-MM-dd HH:mm:ss'))
-}
 
 repositories {
     mavenLocal()
@@ -107,8 +84,8 @@ dependencies {
     runtime "org.glassfish.web:el-impl:2.1.2-b03"
     runtime "com.h2database:h2"
     runtime "org.apache.tomcat:tomcat-jdbc"
-    runtime "javax.xml.bind:jaxb-api:2.3.0"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.0.10"
+    runtime "javax.xml.bind:jaxb-api:2.3.1"
+    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.2.4"
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"
@@ -142,6 +119,8 @@ dependencies {
     compile "au.org.ala:userdetails-service-client:1.5.0"
     compile 'org.grails.plugins:ala-cors-plugin:0.1-SNAPSHOT'
     compile 'au.org.ala.plugins:openapi:1.1.0'
+    compile 'com.ongres.scram:client:2.1'
+
 
     //compile 'org.grails.plugins:mail:2.0.0.RC6'
 
@@ -170,7 +149,7 @@ dependencies {
     }
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
-    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.0'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.6.0'
 
     compile 'jfree:jfreechart:1.0.13'
     compile 'com.thoughtworks.xstream:xstream:1.4.2' // TODO Upgrade to latest version due to CVEs
@@ -184,8 +163,19 @@ dependencies {
 
     // db-migration
     // In newer versions use 'implementation'
-//    compile 'org.liquibase:liquibase-core:3.10.3'
-//    compile "org.grails.plugins:database-migration:3.1.0"
+    compile 'org.liquibase:liquibase-core:3.10.3'
+    compile "org.grails.plugins:database-migration:3.1.0"
+}
+
+bootWar {
+    enabled true
+}
+
+war {
+    // Include the desired files from the migrations directory
+    from('grails-app/migrations') {
+        into('/')
+    }
 }
 
 configurations {
@@ -205,8 +195,6 @@ bootRun {
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
 }
 
-
-
 assets {
     minifyJs = true
     minifyCss = true
@@ -217,10 +205,9 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-//webdriverBinaries {
-//    chromedriver '2.45.0'
-//    geckodriver '0.24.0'
-//}
+buildProperties {
+    inputs.property("info.app.build.date", new Date().format('yyyy-MM-dd HH:mm:ss'))
+}
 
 tasks.getByName("integrationTest") {
     group JavaBasePlugin.VERIFICATION_GROUP
@@ -247,8 +234,6 @@ tasks.withType(Test) {
     }
 }
 
-// Refer to FieldCapture: https://github.com/AtlasOfLivingAustralia/fieldcapture/blob/feature/grails4/gradle/publish.gradle
-apply plugin:"maven-publish"
 publishing {
     repositories {
         maven {
@@ -262,7 +247,7 @@ publishing {
     }
 
     publications {
-        MavenPublication(MavenPublication) {
+        mavenJar(MavenPublication) {
             pom.withXml {
                 def pomNode = asNode()
                 pomNode.dependencyManagement.replaceNode {}
@@ -276,7 +261,7 @@ publishing {
                     it.replaceNode {}
                 }
             }
-            artifact bootWar
+            from components.web
         }
     }
 }
