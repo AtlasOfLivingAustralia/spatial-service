@@ -12,4 +12,10 @@
     <changeSet id="1" author="ALA Dev Team">
         <modifyDataType columnName="bbox" newDataType="varchar(300)" tableName="objects"/>
     </changeSet>
+    <changeSet id="2" author="ALA Dev Team">
+        <comment>Add functions</comment>
+        <sqlFile path="WEB-INF/classes/functions.sql" relativeToChangelogFile="false" encoding="ISO-8859-1" stripComments="1"
+                 endDelimiter="$BODY$"
+        />
+    </changeSet>
 </databaseChangeLog>
