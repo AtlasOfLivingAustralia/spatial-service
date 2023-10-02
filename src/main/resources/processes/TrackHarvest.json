@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": false
+    "isPublic": false
   },
   "input": {
     "biocacheServiceUrl": {
@@ -15,7 +15,7 @@
       "description": "comma delimited list of data provider ids",
       "type": "string",
       "constraints": {
-        "default": "dp4720"
+        "defaultValue": "dp4720"
       }
     }
   },

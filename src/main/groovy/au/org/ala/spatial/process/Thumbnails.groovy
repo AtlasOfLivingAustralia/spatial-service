@@ -15,9 +15,11 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Layers
 import groovy.util.logging.Slf4j
 import org.springframework.util.StreamUtils
 
+//@CompileStatic
 @Slf4j
 class Thumbnails extends SlaveProcess {
 
@@ -29,20 +31,20 @@ class Thumbnails extends SlaveProcess {
         List layers = getLayers()
         layers.each { layer ->
             String path = '/public/thumbnail/'
-            task.message = 'checking thumbnail: ' + layer.name
+            taskWrapper.task.message = 'checking thumbnail: ' + layer.name
             if (!hasThumbnail(layer.name.toString(), path)) {
-                task.message = 'getting thumbnail: ' + layer.name
-                one(layer, grailsApplication.config.data.dir + path)
+                taskWrapper.task.message = 'getting thumbnail: ' + layer.name
+                one(layer, spatialConfig.data.dir + path)
             }
             addOutput('file', path + layer.name + '.jpg')
         }
     }
 
-    void hasThumbnail(String layerName, String thumbnailDir) {
-        slaveService.peekFile(thumbnailDir + layerName)[0].exists
+    static void hasThumbnail(String layerName, String thumbnailDir) {
+        new File(thumbnailDir + layerName).exists()
     }
 
-    void one(layer, thumbnailDir) {
+    void one(Layers layer, String  thumbnailDir) {
         try {
             String geoserverUrl = layer.displaypath
             //trim from /wms or /gwc

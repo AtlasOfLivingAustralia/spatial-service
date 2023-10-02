@@ -1,111 +1,111 @@
 ---
 grails:
-    serverURL: "http://spatial.ala.org.au/ws"
-    server:
-      port: 8080
-      servlet:
-        contextPath: '/ws'
-    cors:
-        # using ala-cors-plugin instead of grailsCorsFilter
-        enabled: true
-    profile: web
-    codegen:
-        defaultPackage: au.org.ala.spatial.service
-    config:
-        locations:
-          - file:/data/spatial-service/config/spatial-service-config.yml
-    spring:
-        transactionManagement:
-            proxies: false
-    gorm:
-        reactor:
-            # Whether to translate GORM events into Reactor events
-            # Disabled by default for performance reasons
-            events: false
-    controllers:
-      upload:
-        maxFileSize: 524288000
-        maxRequestSize: 524288000
+  serverURL: "http://localhost:8081"
+  server:
+    port: 8081
+    servlet:
+      contextPath: '/ws'
+  cors:
+    # using ala-cors-plugin instead of grailsCorsFilter
+    enabled: true
+  profile: web
+  codegen:
+    defaultPackage: au.org.ala.spatial.service
+  config:
+    locations:
+      - file:/data/spatial-service/config/spatial-service-config.yml
+  spring:
+    transactionManagement:
+      proxies: false
+  gorm:
+    reactor:
+      # Whether to translate GORM events into Reactor events
+      # Disabled by default for performance reasons
+      events: false
+  controllers:
+    upload:
+      maxFileSize: 524288000
+      maxRequestSize: 524288000
 
 info:
-    app:
-        name: '@info.app.name@'
-        version: '@info.app.version@'
-        grailsVersion: '@info.app.grailsVersion@'
-        build:
-          date: '@info.app.build.date@'
+  app:
+    name: '@info.app.name@'
+    version: '@info.app.version@'
+    grailsVersion: '@info.app.grailsVersion@'
+    build:
+      date: '@info.app.build.date@'
 spring:
-    main:
-        banner-mode: "off"
-    groovy:
-        template:
-            check-template-location: false
+  main:
+    banner-mode: "off"
+  groovy:
+    template:
+      check-template-location: false
 
 # Spring Actuator Endpoints are Disabled by Default
 endpoints:
-    enabled: false
-    jmx:
-        enabled: true
+  enabled: false
+  jmx:
+    enabled: true
 
 ---
 grails:
-    mime:
-        disable:
-            accept:
-                header:
-                    userAgents:
-                        - Gecko
-                        - WebKit
-                        - Presto
-                        - Trident
-        types:
-            all: '*/*'
-            atom: application/atom+xml
-            css: text/css
-            csv: text/csv
-            form: application/x-www-form-urlencoded
-            html:
-              - text/html
-              - application/xhtml+xml
-            js: text/javascript
-            json:
-              - application/json
-              - text/json
-            multipartForm: multipart/form-data
-            pdf: application/pdf
-            rss: application/rss+xml
-            text: text/plain
-            hal:
-              - application/hal+json
-              - application/hal+xml
-            xml:
-              - text/xml
-              - application/xml
-    urlmapping:
-        cache:
-            maxsize: 1000
-    controllers:
-        defaultScope: singleton
-    converters:
-        encoding: UTF-8
-    views:
-        default:
-            codec: html
-        gsp:
-            encoding: UTF-8
-            htmlcodec: xml
-            codecs:
-                expression: html
-                scriptlets: html
-                taglib: none
-                staticparts: none
-    spring:
-        bean:
-            packages:
-              - 'au.org.ala.layers'
+  mime:
+    disable:
+      accept:
+        header:
+          userAgents:
+            - Gecko
+            - WebKit
+            - Presto
+            - Trident
+    types:
+      all: '*/*'
+      atom: application/atom+xml
+      css: text/css
+      csv: text/csv
+      form: application/x-www-form-urlencoded
+      html:
+        - text/html
+        - application/xhtml+xml
+      js: text/javascript
+      json:
+        - application/json
+        - text/json
+      multipartForm: multipart/form-data
+      pdf: application/pdf
+      rss: application/rss+xml
+      text: text/plain
+      hal:
+        - application/hal+json
+        - application/hal+xml
+      xml:
+        - text/xml
+        - application/xml
+  urlmapping:
+    cache:
+      maxsize: 1000
+  controllers:
+    defaultScope: singleton
+  converters:
+    encoding: UTF-8
+  views:
+    default:
+      codec: html
+    gsp:
+      encoding: UTF-8
+      htmlcodec: xml
+      codecs:
+        expression: html
+        scriptlets: html
+        taglib: none
+        staticparts: none
+  spring:
+    bean:
+      packages:
+        - 'au.org.ala.layers'
 endpoints:
-    jmx:
-        unique-names: true
+  jmx:
+    unique-names: true
 
 skin:
   fluidLayout: true
@@ -149,6 +149,9 @@ serviceKey: ""
 batch_sampling_passwords: ''
 batch_sampling_points_limit: 1000000
 batch_sampling_fields_limit: 1000
+batch_thread_count: 3
+grid_buffer_size: 40960
+occurrence_species_records_filename: /data/ala/data/layers/process/density/current/records
 
 ---
 #
@@ -189,6 +192,13 @@ retryTime: 30000
 # taskTimeoutTime
 taskTimeoutTime: 900000
 
+task:
+  general:
+    threads: 10
+  admin:
+    threads: 4
+  continueOnRestart: true
+
 #
 #  CAS SETTINGS
 #
@@ -201,15 +211,15 @@ security:
     casServerUrlPrefix: 'https://auth-test.ala.org.au/cas'
     bypass: false # set to true for non-ALA deployment
     gateway: false
-    uriExclusionFilterPattern: ['/assets.*', '/images.*', '/css.*', '/js.*', '/less.*']
-    uriFilterPattern: ['/alaAdmin/*', '/alaAdmin']
+    uriExclusionFilterPattern: [ '/assets.*', '/images.*', '/css.*', '/js.*', '/less.*' ]
+    uriFilterPattern: [ '/alaAdmin/*', '/alaAdmin' ]
     #if false, ticket params always proceed
     #true, only processes urls listed in authenticateOnlyIfLoggedInFilterPattern
     applyUriFiltersToTicketValidation: false
-    authenticateOnlyIfLoggedInFilterPattern: ['/master', '/master/*', '/manageLayers', '/manageLayers/*', '/admin', '/admin/*', '/layers/view/more/*', '/layer/download/*', '/workflow/*', '/workflow']
+    authenticateOnlyIfLoggedInFilterPattern: [ '/master', '/master/*', '/manageLayers', '/manageLayers/*', '/admin', '/admin/*', '/layers/view/more/*', '/layer/download/*', '/workflow/*', '/workflow' ]
     disableCAS: true
     ignoreCase: true
-    authCookieName: ALA-Auth
+    authCookieName: ALA-Auth-Test
     enabled: false
   oidc:
     enabled: true
@@ -218,10 +228,28 @@ security:
     secret: 'change me'
     allowUnsignedIdTokens: true
     scope: 'openid profile email ala roles'
+    alaUseridClaim: username
+    logoutAction: cognito
   jwt:
     enabled: true
     discoveryUri: https://auth-test.ala.org.au/cas/oidc/.well-known
     fallbackToLegacyBehaviour: true
+  core:
+    roleAttribute: ala:role
+  apikey:
+    enabled: true
+    auth:
+      serviceUrl: https://auth-test.ala.org.au/apikey/
+    check:
+      serviceUrl: https://auth-test.ala.org.au/apikey/ws/check?apikey=
+    userdetails:
+      serviceUrl: https://auth-test.ala.org.au/userdetails/
+
+webservice:
+  jwt: true
+  jwt-scopes: openid users/read
+  client-id: second-client-id-for-machine-to-machine-comms
+  client-secret: second-client-secret-for-machine-to-machine-comms
 
 auth.admin_role: "ROLE_ADMIN"
 app.http.header.userId: "X-ALA-userId"
@@ -324,21 +352,19 @@ distributions.cache.dir: "/data/${appName}/mapCache/"
 distributions.geoserver.image.url: "/ALA/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:aus1,ALA:Distributions&styles=&bbox=109,-47,157,-7&srs=EPSG:4326&format=image/png&width=400&height=400&viewparams=s:"
 
 #download.layer.licence_levels: ["1"]
-download.layer.licence_levels: []
-reporting.excludedUsers: ['1901','92092','71707','1493','53099','34','9965','47075','27078','44','9200','82292','10549','9048','11359','61','35022','13','28057','19807','27583','27190','35','48604','47326','35774','8443','8516','46293','4228','89299','89300','28712']
+download.layer.licence_levels: [ ]
+reporting.excludedUsers: [ '1901','92092','71707','1493','53099','34','9965','47075','27078','44','9200','82292','10549','9048','11359','61','35022','13','28057','19807','27583','27190','35','48604','47326','35774','8443','8516','46293','4228','89299','89300','28712' ]
 
 ---
 
 hibernate:
-    # flush mode changed in Grails 3.3 / Gorm 6.1 from AUTO to COMMIT
-    # This means each db write should be in a transaction.
-    # TODO Check that AUTO is not required or convert missed db writes to be in transactional service methods
-#    flush:
-#        mode: AUTO
-    cache:
-        queries: false
-        use_second_level_cache: false
-        use_query_cache: false
+  # flush mode changed in Grails 3.3 / Gorm 6.1 from AUTO to COMMIT
+  # This means each db write should be in a transaction.
+  cache:
+    queries: false
+    use_second_level_cache: false
+    use_query_cache: false
+
 
 # spring-session config
 spring:
@@ -352,69 +378,74 @@ spring:
 #  level:
 #    root: INFO
 
+geoserver:
+  canDeploy: true
+  spatialservice:
+    colocated: true
+
 environments:
-    development:
-        grails:
-            server:
-                use-forward-headers: true
-            serverURL: http://devt.ala.org.au:8080/ws
+  development:
+    grails:
+      server:
+        use-forward-headers: true
+      serverURL: http://localhost:8081/ws
 
-        server:
-            port: 8080
-            servlet:
-              contextPath: '/ws'
-        gdal:
-            dir: "/Library/Frameworks/GDAL.framework/Programs"
+    server:
+      port: 8081
+      servlet:
+        contextPath: '/ws'
+    gdal:
+      dir: "/Library/Frameworks/GDAL.framework/Programs"
 
-        spatialHubUrl: "http://devt.ala.org.au:8079/"
-        # Slave config
-        spatialService:
-          url: "http://devt.ala.org.au:8080/ws"
-        geoserver:
-            # use localhost to play nice with locally running geoserver docker instance.
-            url: 'http://localhost:8079/geoserver'
-            username: 'admin'
-            password: 'geoserver'
-            canDeploy: true
-            spatialservice:
-              colocated: true
-        dataSource:
-            pooled: true
-            jmxExport: true
-            driverClassName: org.postgresql.Driver
-            url: 'jdbc:postgresql://localhost/layersdb'
-            dbCreate: update
-            username: postgres
-            password: 'postgres'
+    spatialHubUrl: "http://devt.ala.org.au:8079/"
+    # Slave config
+    spatialService:
+      url: "http://devt.ala.org.au:8081/ws"
+    geoserver:
+      # use localhost to play nice with locally running geoserver docker instance.
+      url: 'http://localhost:8079/geoserver'
+      username: 'admin'
+      password: 'geoserver'
+    dataSource:
+      pooled: true
+      jmxExport: true
+      driverClassName: org.postgresql.Driver
+      dialect: org.hibernate.spatial.dialect.postgis.PostgisPG9Dialect
+      url: 'jdbc:postgresql://localhost:5432/layersdb'
+      dbCreate: update
+      username: postgres
+      password: 'postgres'
+      # logSql: true
 
-    test:
-        dataSource:
-            dbCreate: update
-            url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+  test:
+    dataSource:
+      dbCreate: update
+      url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
 
-    production:
-        dataSource:
-            #aws-spatial-prod.ala.org.au
-            dbCreate: update
-            logSql: false
-            properties:
-                jmxEnabled: true
-                initialSize: 5
-                maxActive: 50
-                minIdle: 5
-                maxIdle: 25
-                maxWait: 10000
-                maxAge: 600000
-                timeBetweenEvictionRunsMillis: 5000
-                minEvictableIdleTimeMillis: 60000
-                validationQuery: SELECT 1
-                validationQueryTimeout: 3
-                validationInterval: 15000
-                testOnBorrow: true
-                testWhileIdle: true
-                testOnReturn: false
-                jdbcInterceptors: ConnectionState
-                defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
+  production:
+    dataSource:
+      #aws-spatial-prod.ala.org.au
+      dbCreate: update
+      logSql: false
+      dialect: org.hibernate.spatial.dialect.postgis.PostgisPG9Dialect
+      properties:
+        jmxEnabled: true
+        initialSize: 5
+        maxActive: 50
+        minIdle: 5
+        maxIdle: 25
+        maxWait: 10000
+        maxAge: 600000
+        timeBetweenEvictionRunsMillis: 5000
+        minEvictableIdleTimeMillis: 60000
+        validationQuery: SELECT 1
+        validationQueryTimeout: 3
+        validationInterval: 15000
+        testOnBorrow: true
+        testWhileIdle: true
+        testOnReturn: false
+        jdbcInterceptors: ConnectionState
+        defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
 
 openapi:
   title: SpatialService REST services
@@ -428,3 +459,4 @@ openapi:
     url: https://www.mozilla.org/en-US/MPL/1.1/
   version: '@info.app.version@'
   cachetimeoutms: 4000
+

@@ -26,8 +26,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-#      - /data/spatial-db:/data/spatial-db
+      #      - /data/spatial-db:/data/spatial-db
       - /data/spatial-db:/var/lib/postgresql
-#      - ./env/postgis/pg_hba.conf:/etc/postgresql/12/main/pg_hba.conf
+      #      - ./env/postgis/pg_hba.conf:/etc/postgresql/12/main/pg_hba.conf
       - ./env/postgis/layersdb.sql:/docker-entrypoint-initdb.d/layersdb.sql
 version: "2"

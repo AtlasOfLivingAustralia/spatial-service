@@ -10,7 +10,7 @@ class AuthModule extends Module {
     }
 
     void login() {
-        String user =""
+        String user = ""
         String passwd = ""
 
         Properties properties = new Properties()
@@ -21,15 +21,15 @@ class AuthModule extends Module {
             }
         }
 
-        user = System.getProperty("username")?: properties["username"]
-        passwd = System.getProperty("password")?: properties["password"]
+        user = System.getProperty("username") ?: properties["username"]
+        passwd = System.getProperty("password") ?: properties["password"]
 
-        if ( user && passwd) {
-            username =  user
-            password =  passwd
+        if (user && passwd) {
+            username = user
+            password = passwd
             submit.click()
         } else {
-            assert false,  "Username and password is not supplied! \nUsername and password can be passed with -Dusername, -Dpassword. \nOr stored in the default property file"
+            assert false, "Username and password is not supplied! \nUsername and password can be passed with -Dusername, -Dpassword. \nOr stored in the default property file"
         }
     }
 }

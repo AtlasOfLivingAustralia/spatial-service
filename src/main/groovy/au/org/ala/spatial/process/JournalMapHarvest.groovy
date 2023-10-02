@@ -18,11 +18,11 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Util
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.Header
-import org.json.simple.JSONArray
-import org.json.simple.JSONObject
+import org.grails.web.json.JSONArray
+import org.grails.web.json.JSONObject
 import org.json.simple.JSONValue
-import org.json.simple.parser.JSONParser
 
+//@CompileStatic
 @Slf4j
 class JournalMapHarvest extends SlaveProcess {
 
@@ -30,8 +30,8 @@ class JournalMapHarvest extends SlaveProcess {
 
         try {
 
-            String journalMapUrl = grailsApplication.config.journalmap.url
-            String journalMapKey = grailsApplication.config.journalmap.api_key
+            String journalMapUrl = spatialConfig.journalmap.url
+            String journalMapKey = spatialConfig.journalmap.api_key
 
             List<JSONObject> journalMapArticles = new ArrayList()
 
@@ -39,20 +39,20 @@ class JournalMapHarvest extends SlaveProcess {
             int maxpage = 0
             List<String> publicationsIds = new ArrayList<String>()
             while (page == 1 || page <= maxpage) {
-                task.message = "fetching publications page: " + page
+                taskWrapper.task.message = "fetching publications page: " + page
 
                 String url = journalMapUrl + "api/publications.json?version=1.0&key=" + journalMapKey + "&page=" + page
                 page = page + 1
 
                 Map response = Util.urlResponse("GET", url)
 
-                if (response &&  response?.statusCode >= 200 && response?.statusCode < 300) {
+                if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
                     //update maxpage
-                    maxpage = Integer.parseInt(getHeader(response.headers, "X-Pages")?.toString())
+                    maxpage = Integer.parseInt(getHeader(response.headers as Iterable<Header>, "X-Pages")?.toString())
 
                     //cache
-                    JSONParser jp = new JSONParser()
-                    JSONArray jcollection = (JSONArray) jp.parse(response?.text)
+
+                    JSONArray jcollection = (JSONArray) JSON.parse(response?.text as String)
                     for (int i = 0; i < jcollection.size(); i++) {
                         if (((JSONObject) jcollection.get(i)).containsKey("id")) {
                             publicationsIds.add(((JSONObject) jcollection.get(i)).get("id").toString())
@@ -70,7 +70,7 @@ class JournalMapHarvest extends SlaveProcess {
                     page = 1
                     maxpage = 0
                     while (page == 1 || page <= maxpage) {
-                        task.message = "fetching articles for publication: " + publicationsId + " page: " + page
+                        taskWrapper.task.message = "fetching articles for publication: " + publicationsId + " page: " + page
 
                         String url = journalMapUrl + "api/articles.json?version=1.0&key=" + journalMapKey + "&page=" + page + "&publication_id=" + publicationsId
                         page = page + 1
@@ -79,11 +79,11 @@ class JournalMapHarvest extends SlaveProcess {
 
                         if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
                             //update maxpage
-                            maxpage = Integer.parseInt(getHeader(response.headers, "X-Pages")?.toString())
+                            maxpage = Integer.parseInt(getHeader(response.headers as Iterable<Header>, "X-Pages")?.toString())
 
                             //cache
-                            JSONParser jp = new JSONParser()
-                            JSONArray jarticles = (JSONArray) jp.parse(response?.text)
+
+                            JSONArray jarticles = (JSONArray) JSON.parse(response?.text as String)
                             for (int j = 0; j < jarticles.size(); j++) {
                                 JSONObject o = (JSONObject) jarticles.get(j)
                                 if (o.containsKey("locations")) {
@@ -101,7 +101,7 @@ class JournalMapHarvest extends SlaveProcess {
             }
 
             //save to disk cache
-            def jaFile = new File("${grailsApplication.config.data.dir}/journalmap.json")
+            def jaFile = new File("${spatialConfig.data.dir}/journalmap.json")
             FileWriter fw = new FileWriter(jaFile)
             JSONValue.writeJSONString(journalMapArticles, fw)
             fw.flush()
@@ -114,7 +114,7 @@ class JournalMapHarvest extends SlaveProcess {
         }
     }
 
-    String getHeader(headers, key) {
+    String getHeader(Iterable<Header> headers, key) {
         for (Header h : headers) {
             if (h.name == key) {
                 return h.value

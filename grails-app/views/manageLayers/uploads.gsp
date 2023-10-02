@@ -2,13 +2,14 @@
 <html>
 <head>
     <title>Uploads</title>
-    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
+    <meta name="breadcrumbs" content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="ala-main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 
 <div class="col-lg-8">
@@ -38,11 +39,13 @@
         <br/>
     </g:form>
 </div>
+
 <div class="col-lg-4">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                Navigation
-            </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Navigation
+        </div>
+
         <div class="panel-body">
             <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
             <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
@@ -80,8 +83,10 @@
                 </td>
                 <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"
                             id="${item.containsKey('layer_id') ? item.layer_id : item.raw_id}">
-                    <g:if test="${!item.containsKey('layer_id')}"><i class="glyphicon glyphicon-plus"></i> create layer</g:if>
-                    <g:if test="${item.containsKey('layer_id')}"><i class="glyphicon glyphicon-edit"></i> edit layer</g:if>
+                    <g:if test="${!item.containsKey('layer_id')}"><i
+                            class="glyphicon glyphicon-plus"></i> create layer</g:if>
+                    <g:if test="${item.containsKey('layer_id')}"><i
+                            class="glyphicon glyphicon-edit"></i> edit layer</g:if>
                 </g:link>
                     <g:if test="${!item.containsKey('layer_id')}">
                         <br/>

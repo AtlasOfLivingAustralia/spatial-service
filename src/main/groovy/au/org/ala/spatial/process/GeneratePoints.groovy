@@ -15,34 +15,38 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.intersect.SimpleShapeFile
+import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.intersect.SimpleRegion
+import au.org.ala.spatial.intersect.SimpleShapeFile
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.NameValuePair
+import org.grails.web.json.JSONObject
 
+//@CompileStatic
 @Slf4j
 class GeneratePoints extends SlaveProcess {
 
     void start() {
 
         //area to restrict
-        def area = JSON.parse(task.input.area.toString())
+        List<AreaInput> area = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
-        def distance = task.input.distance.toString().toDouble()
-        def userId = task.input.userId
-        def sandboxBiocacheServiceUrl = task.input.sandboxBiocacheServiceUrl
-        def sandboxHubUrl = task.input.sandboxHubUrl
+        Double distance = getInput('distance').toString().toDouble()
+        String userId = getInput('userId')
+        String sandboxBiocacheServiceUrl = getInput('sandboxBiocacheServiceUrl')
+        String sandboxHubUrl = getInput('sandboxHubUrl')
 
-        double[] bbox = area[0].bbox
+        double[] bbox = area[0].bbox as double[]
 
-        def wkt = getAreaWkt(area[0])
-        def simpleArea = SimpleShapeFile.parseWKT(wkt)
+        String wkt = getAreaWkt(area[0])
+        SimpleRegion simpleArea = SimpleShapeFile.parseWKT(wkt)
 
         // dump the data to a file
-        task.message = "Loading area ..."
+        taskWrapper.task.message = "Loading area ..."
 
-        def points = []
+        List<List<Double>> points = []
         for (double x = bbox[0]; x <= bbox[2]; x += distance) {
             for (double y = bbox[1]; y <= bbox[3]; y += distance) {
                 if (simpleArea.isWithin(x, y)) {
@@ -50,12 +54,12 @@ class GeneratePoints extends SlaveProcess {
                 }
             }
         }
-        task.history.put(System.currentTimeMillis(), points.size() + " points have been created.")
+        taskWrapper.task.history.put(System.currentTimeMillis() as String, points.size() + " points have been created.")
 
         uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points, area.name, distance)
     }
 
-    def uploadPoints(sandboxBiocacheServiceUrl, sandboxHubUrl, userId, points, areaName, distance) {
+    def uploadPoints(String sandboxBiocacheServiceUrl, String sandboxHubUrl, String userId, List<List<Double>> points, areaName, distance) {
         //upload
         StringBuilder sb = new StringBuilder()
         points.each {
@@ -64,59 +68,59 @@ class GeneratePoints extends SlaveProcess {
         }
 
         def name = "Points in ${areaName} on ${distance} degree grid"
-        List nameValuePairs = [
+        NameValuePair[] nameValuePairs = [
                 new NameValuePair("csvData", sb.toString()),
                 new NameValuePair("headers", "decimalLongitude,decimalLatitude"),
                 new NameValuePair("datasetName", name),
                 new NameValuePair("separator", ","),
                 new NameValuePair("firstLineIsData", "false"),
                 new NameValuePair("customIndexedFields", ""),
-                new NameValuePair("uiUrl", grailsApplication.config.spatialServiceUrl.toString()),
+                new NameValuePair("uiUrl", spatialConfig.spatialService.url),
                 new NameValuePair("alaId", userId.toString())
         ]
 
-        task.history.put(System.currentTimeMillis(), "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
+        taskWrapper.task.history.put(System.currentTimeMillis() as String, "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
 
         def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
-                nameValuePairs.toArray(new NameValuePair[0]))
+                nameValuePairs)
 
         if (response) {
             if (response.statusCode != 200) {
-                task.message = "Error"
-                task.history.put(System.currentTimeMillis(), response.statusCode + " : " + response.text)
+                taskWrapper.task.message = "Error"
+                taskWrapper.task.history.put(System.currentTimeMillis() as String, response.statusCode + " : " + response.text)
                 return
             }
-            def dataResourceUid = JSON.parse(response.text).uid
-            task.history.put(System.currentTimeMillis(), "Sandbox data resource uid:" + dataResourceUid)
+            def dataResourceUid = ((JSONObject) JSON.parse(response.text as String)).uid
+            taskWrapper.task.history.put(System.currentTimeMillis() as String, "Sandbox data resource uid:" + dataResourceUid)
             //wait
             def statusUrl = "${sandboxBiocacheServiceUrl}/upload/status/${dataResourceUid}"
             def start = System.currentTimeMillis()
             def maxTime = 60 * 60 * 1000 //2hr
-            task.message = "Uploading ..."
+            taskWrapper.task.message = "Uploading ..."
             while (start + maxTime > System.currentTimeMillis()) {
                 Thread.sleep(10000) // 10s
-                task.history.put(System.currentTimeMillis(), "checking status of " + statusUrl)
+                taskWrapper.task.history.put(System.currentTimeMillis() as String, "checking status of " + statusUrl)
                 def txt = Util.getUrl(statusUrl)
                 if (txt == null) {
                     // retry
                 } else if (txt.contains("COMPLETE")) {
-                        task.history.put(System.currentTimeMillis(), "Uploading completed")
-                        //add species layer
-                        def species = [q   : "data_resource_uid:${dataResourceUid}",
-                                       ws  : sandboxHubUrl,
-                                       bs  : sandboxBiocacheServiceUrl,
-                                       name: name]
-                        addOutput("species", (species as JSON).toString())
-                        log.debug(species.inspect())
-                        break
+                    taskWrapper.task.history.put(System.currentTimeMillis() as String, "Uploading completed")
+                    //add species layer
+                    def species = [q   : "data_resource_uid:${dataResourceUid}",
+                                   ws  : sandboxHubUrl,
+                                   bs  : sandboxBiocacheServiceUrl,
+                                   name: name]
+                    addOutput("species", (species as JSON).toString())
+                    log.debug(species.inspect())
+                    break
                 } else if (txt.contains("FAILED")) {
-                        log.error(txt)
-                        task.message = "failed upload " + statusUrl
-                        break
+                    log.error(txt)
+                    taskWrapper.task.message = "failed upload " + statusUrl
+                    break
                 } else {
-                        log.error(txt)
-                        def json = JSON.parse(txt)
-                        task.message = json.status + ": " + json.description
+                    log.error(txt)
+                    JSONObject json = JSON.parse(txt) as JSONObject
+                    taskWrapper.task.message = json.status + ": " + json.description
                 }
             }
         }

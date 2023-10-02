@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "biocacheServiceUrl": {
@@ -24,7 +24,7 @@
       "description": "bounding box JSON",
       "type": "string",
       "constraints": {
-        "default": "[-180, -70, 180, 70]"
+        "defaultValue": "[-180, -70, 180, 70]"
       }
     },
     "baseMap": {
@@ -38,14 +38,14 @@
           "hybrid",
           "minimal"
         ],
-        "default": "outline"
+        "defaultValue": "outline"
       }
     },
     "windowSize": {
       "description": "window size JSON",
       "type": "string",
       "constraints": {
-        "default": "[1920, 1080]"
+        "defaultValue": "[1920, 1080]"
       }
     },
     "mapLayers": {
@@ -60,7 +60,7 @@
       "description": "output type",
       "type": "list",
       "constraints": {
-        "default": "png",
+        "defaultValue": "png",
         "selection": "single",
         "contents": [
           "png",
@@ -73,7 +73,7 @@
       "description": "resolution",
       "type": "list",
       "constraints": {
-        "default": "print",
+        "defaultValue": "print",
         "selection": "single",
         "contents": [
           "print",

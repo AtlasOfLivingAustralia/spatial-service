@@ -15,11 +15,12 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.grid.GridCutter
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.intersect.SimpleRegion
-import au.org.ala.spatial.analysis.layers.DoubleGriddingGenerator
-import au.org.ala.spatial.analysis.layers.Records
+import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.dto.SpeciesInput
+import au.org.ala.spatial.layers.DoubleGriddingGenerator
+import au.org.ala.spatial.util.Records
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.intersect.SimpleRegion
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 
@@ -30,20 +31,20 @@ class DoubleGridding extends SlaveProcess {
 
     void start() {
         //area to restrict (only interested in area.q part)
-        def area = JSON.parse(task.input.area.toString())
-        def (region, envelope) = processArea(area[0])
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
+        RegionEnvelope regionEnvelope = processArea(areas[0])
 
         //number of target species
-        def species = JSON.parse(task.input.species.toString())
+        SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
 
-        def speciesArea = getSpeciesArea(species, area)
+        SpeciesInput speciesArea = getSpeciesArea(species, areas)
 
         new File(getTaskPath()).mkdirs()
 
-        def primaryGridCellSize = task.input.primaryGridCellSize.toString().toDouble()
-        def secondaryGridCellSize = task.input.secondaryGridCellSize.toString().toDouble()
+        def primaryGridCellSize = getInput('primaryGridCellSize').toString().toDouble()
+        def secondaryGridCellSize = getInput('secondaryGridCellSize').toString().toDouble()
 
-        def yearSize = task.input.yearSize.toString().toInteger()
+        def yearSize = getInput('yearSize').toString().toInteger()
 
         double[] bbox = new double[4]
         bbox[0] = -180
@@ -51,22 +52,22 @@ class DoubleGridding extends SlaveProcess {
         bbox[2] = 180
         bbox[3] = 90
 
-        String envelopeFile = getTaskPath() + "envelope_" + task.id
+        String envelopeFile = getTaskPath() + "envelope_" + taskWrapper.id
         Grid envelopeGrid = null
-        if (envelope != null) {
-            String[] types = new String[envelope.length]
-            String[] fieldIds = new String[envelope.length]
-            for (int i = 0; i < envelope.length; i++) {
+        if (regionEnvelope.envelope != null) {
+            String[] types = new String[regionEnvelope.envelope.length]
+            String[] fieldIds = new String[regionEnvelope.envelope.length]
+            for (int i = 0; i < regionEnvelope.envelope.length; i++) {
                 types[i] = "e"
-                fieldIds[i] = envelope.layername
+                fieldIds[i] = regionEnvelope.envelope.layername
             }
-            GridCutter.makeEnvelope(envelopeFile, resolution, envelope, Long.MAX_VALUE, types, fieldIds)
+            gridCutterService.makeEnvelope(envelopeFile, "0.01", regionEnvelope.envelope, Long.MAX_VALUE, types, fieldIds)
             envelopeGrid = new Grid(envelopeFile)
         }
 
 
         def years = []
-        if (facetOccurenceCount('year', speciesArea).size() == 0){
+        if (facetOccurenceCount('year', speciesArea).size() == 0) {
             taskLog("Error: No occurrences in that area!")
             throw new Exception("Error: No occurrences in that area!")
         }
@@ -81,7 +82,7 @@ class DoubleGridding extends SlaveProcess {
         def minYear = years[0]
         def maxYear = years[years.size() - 1]
 
-        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.toString(), bbox, null, null)
+        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox, null, null)
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90
@@ -115,9 +116,9 @@ class DoubleGridding extends SlaveProcess {
         writeMetadata(getTaskPath() + "sxs_metadata.html", "Sites by Species", records, bbox, null, "" /*TODO: area_km*/, species.name.toString(), secondaryGridCellSize, primaryGridCellSize)
         addOutput("metadata", "sxs_metadata.html", true)
 
-        DoubleGriddingGenerator sbs = new DoubleGriddingGenerator(secondaryGridCellSize, primaryGridCellSize, bbox, minYear, maxYear, yearSize)
+        DoubleGriddingGenerator sbs = new DoubleGriddingGenerator(secondaryGridCellSize, primaryGridCellSize, bbox, minYear as int, maxYear as int, yearSize)
 
-        int[] counts = sbs.write(records, getTaskPath(), region, envelopeGrid)
+        int[] counts = sbs.write(records, getTaskPath(), regionEnvelope.region, envelopeGrid)
 
         addOutput("files", "SitesBySpecies.csv", true)
 
@@ -133,7 +134,7 @@ class DoubleGridding extends SlaveProcess {
         fw.append("<html><h1>").append(title).append("</h1>")
         fw.append("<table>")
         fw.append("<tr><td>Date/time " + sdf.format(new Date()) + "</td></tr>")
-        fw.append("<tr><td>Model reference number: " + task.id + "</td></tr>")
+        fw.append("<tr><td>Model reference number: " + taskWrapper.id + "</td></tr>")
         fw.append("<tr><td>Species selection " + speciesName + "</td></tr>")
         fw.append("<tr><td>Primary grid size (decimal degrees) " + primaryGridCellSize + "</td></tr>")
         fw.append("<tr><td>Secondary grid size (decimal degrees) " + secondaryGridCellSize + "</td></tr>")

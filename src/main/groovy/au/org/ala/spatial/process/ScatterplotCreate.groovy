@@ -15,31 +15,34 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.scatterplot.Scatterplot
-import au.org.ala.scatterplot.ScatterplotDTO
-import au.org.ala.scatterplot.ScatterplotStyleDTO
+import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.dto.ScatterplotSpeciesInput
+import au.org.ala.spatial.dto.SpeciesInput
+import au.org.ala.spatial.scatterplot.Scatterplot
+import au.org.ala.spatial.scatterplot.ScatterplotDTO
+import au.org.ala.spatial.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import sun.reflect.annotation.ExceptionProxy
 
+//@CompileStatic
 @Slf4j
 class ScatterplotCreate extends SlaveProcess {
 
     void start() {
 
-        Boolean grid = task.input.grid.toString().toBoolean()
+        Boolean grid = getInput('grid').toString().toBoolean()
 
         //area to restrict (only interested in area.q part)
-        def area = JSON.parse(task.input.area.toString())
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
-        String layersServiceUrl = task.input.layersServiceUrl
+        String layersServiceUrl = spatialConfig.grails.serverURL
 
-        def species1 = JSON.parse(task.input.species1.toString())
-        def species2 = JSON.parse(task.input.species2.toString())
-        def layerList = JSON.parse(task.input.layer.toString())
+        ScatterplotSpeciesInput species1 = JSON.parse(getInput('species1').toString()) as ScatterplotSpeciesInput
+        ScatterplotSpeciesInput species2 = JSON.parse(getInput('species2').toString()) as ScatterplotSpeciesInput
+        List<String> layerList = getInput('layer').toString().split(',')
 
-        def speciesArea1 = getSpeciesArea(species1, area)
-        def speciesArea2 = species2?.q ? getSpeciesArea(species2, area) : null
+        SpeciesInput speciesArea1 = getSpeciesArea(species1, areas)
+        SpeciesInput speciesArea2 = species2?.q ? getSpeciesArea(species2, areas) : null
 
         String[] layers = new String[layerList.size()]
         String[] layerNames = new String[layerList.size()]
@@ -53,11 +56,11 @@ class ScatterplotCreate extends SlaveProcess {
             layerUnits[idx] = l.environmentalvalueunits
         }
 
-        String fqs = speciesArea1.q
+        String fqs = speciesArea1.q[0]
         String fbs = speciesArea1.bs
         String fname = speciesArea1.name
 
-        String bqs = speciesArea2?.q
+        String bqs = speciesArea2?.q?.getAt(0)
         String bbs = speciesArea2?.bs
         String bname = speciesArea2?.name
 
@@ -70,10 +73,10 @@ class ScatterplotCreate extends SlaveProcess {
         try {
             ScatterplotStyleDTO style = new ScatterplotStyleDTO()
             taskLog("Creating scatter plot.....")
-            log.info("Creating scatter plot.")
-            Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), task.input.resolution.toString(), task.input.layersServiceUrl)
+            log.debug("Creating scatter plot.")
+            Scatterplot scatterplot = new Scatterplot(desc, style, null, getTaskPath(), getInput('resolution').toString(), getInput('layersServiceUrl') as String, gridCutterService, layerIntersectService)
 
-            if (layers.length <= 2) {
+            if (layers.size() <= 2) {
                 taskLog("Generate plot style")
                 scatterplot.reStyle(style, false, false, false, false, false, false, false)
 
@@ -83,36 +86,35 @@ class ScatterplotCreate extends SlaveProcess {
                 File csvFile = new File(getTaskPath() + "data.csv")
                 scatterplot.saveCsv(csvFile)
 
-                species1.putAt("scatterplotId", task.id)
+                species1["scatterplotId"] = taskWrapper.task.id
                 def imgFile = new File(scatterplot.getImagePath())
-                species1.putAt("scatterplotUrl",
-                        imgFile.path.replace(grailsApplication.config.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
-                                .replace(imgFile.name, "Scatterplot%20(" + task.id + ").png?filename=" + imgFile.name))
+                species1["scatterplotUrl"] = imgFile.path.replace(spatialConfig.data.dir + '/public/', layersServiceUrl + '/tasks/output/')
+                        .replace(imgFile.name, "Scatterplot%20(" + taskWrapper.id + ").png?filename=" + imgFile.name)
 
                 //style
-                species1.putAt('red', style.red)
-                species1.putAt('green', style.green)
-                species1.putAt('blue', style.blue)
-                species1.putAt('size', style.size)
-                species1.putAt('opacity', style.opacity)
-                species1.putAt('highlightWkt', style.highlightWkt)
+                species1['red'] = style.red
+                species1['green'] = style.green
+                species1['blue'] = style.blue
+                species1['size'] = style.size
+                species1['opacity'] = style.opacity
+                species1['highlightWkt'] = style.highlightWkt
 
                 //annotation
-                species1.putAt('q', scatterplot.getScatterplotDTO().getForegroundOccurrencesQs())
-                species1.putAt('bs', scatterplot.getScatterplotDTO().getForegroundOccurrencesBs())
-                species1.putAt('name', scatterplot.getScatterplotDTO().getForegroundName())
+                species1['q'] = [scatterplot.getScatterplotDTO().getForegroundOccurrencesQs()]
+                species1['bs'] = scatterplot.getScatterplotDTO().getForegroundOccurrencesBs()
+                species1['name'] = scatterplot.getScatterplotDTO().getForegroundName()
 
-                species1.putAt('scatterplotExtents', scatterplot.getScatterplotDataDTO().layerExtents())
-                species1.putAt('scatterplotSelectionExtents', scatterplot.getScatterplotStyleDTO().getSelection())
-                species1.putAt('scatterplotLayers', scatterplot.getScatterplotDTO().getLayers())
-                species1.putAt('scatterplotSelectionMissingCount', scatterplot.getScatterplotDataDTO().getMissingCount())
+                species1['scatterplotExtents'] = scatterplot.getScatterplotDataDTO().layerExtents()
+                species1['scatterplotSelectionExtents'] = scatterplot.getScatterplotStyleDTO().getSelection()
+                species1['scatterplotLayers'] = scatterplot.getScatterplotDTO().getLayers()
+                species1['scatterplotSelectionMissingCount'] = scatterplot.getScatterplotDataDTO().getMissingCount()
 
                 addOutput("species", (species1 as JSON).toString())
                 addOutput("download", csvFile.name)
             }
         } catch (Exception e) {
             taskLog("Failed to generate the scatter plot!")
-            log.error(e.message)
+            log.error(e.message, e)
             throw new Exception(e.message)
         }
     }

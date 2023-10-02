@@ -20,13 +20,13 @@
     },
     "name": {
       "description": "Area name",
-      "type": "string",
+      "type": "string"
     },
     "description": {
       "description": "Area description",
       "type": "string",
       "constraints": {
-        "mandatory": false
+        "optional": true
       }
     }
   },

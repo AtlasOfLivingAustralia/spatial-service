@@ -1,4 +1,4 @@
-<%@ page import="au.org.ala.spatial.service.Task" %>
+<%@ page import="au.org.ala.spatial.Task" %>
 
 
 
@@ -132,7 +132,7 @@
         <g:message code="task.parent.label" default="Parent"/>
         <span class="required-indicator">*</span>
     </label>
-    <g:select id="parent" name="parent.id" from="${au.org.ala.spatial.service.Task.list()}" optionKey="id" required=""
+    <g:select id="parent" name="parent.id" from="${au.org.ala.spatial.Task.list()}" optionKey="id" required=""
               value="${taskInstance?.parent?.id}" class="many-to-one"/>
 
 </div>

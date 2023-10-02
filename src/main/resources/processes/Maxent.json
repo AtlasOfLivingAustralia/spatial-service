@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "biocacheServiceUrl": {
@@ -42,7 +42,8 @@
           "0.01",
           "0.1",
           "0.5"
-        ]
+        ],
+        "defaultValue": "0.01"
       }
     },
     "species": {
@@ -59,21 +60,21 @@
       "constraints": {
         "min": 0,
         "max": 1,
-        "default": 0.5
+        "defaultValue": 0.5
       }
     },
     "jackknife": {
       "description": "Use jackknife.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     },
     "responseCurves": {
       "description": "Use response curves.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     }
   },

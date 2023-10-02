@@ -15,21 +15,22 @@
 
 package au.org.ala.spatial
 
-import au.org.ala.spatial.slave.Task
-import org.apache.log4j.Logger
+import au.org.ala.spatial.dto.TaskWrapper
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
+@Slf4j
+@CompileStatic
 class StreamGobbler extends Thread {
-
-    final Logger log = Logger.getLogger(this.class)
 
     BufferedReader br
     String logPrefix
-    Task task
+    TaskWrapper taskWrapper
 
-    StreamGobbler(InputStream is, String logPrefix, Task task) {
+    StreamGobbler(InputStream is, String logPrefix, TaskWrapper task) {
         br = new BufferedReader(new InputStreamReader(is))
         this.logPrefix = logPrefix
-        this.task = task
+        this.taskWrapper = task
     }
 
     @Override
@@ -37,8 +38,8 @@ class StreamGobbler extends Thread {
         try {
             String line
             while ((line = br.readLine()) != null) {
-                if (task != null) {
-                    task.history.put(System.currentTimeMillis(), logPrefix + ": " + line)
+                if (taskWrapper != null) {
+                    taskWrapper.task.history.put(System.currentTimeMillis() as String, logPrefix + ": " + line)
                 }
                 log.debug logPrefix + ": " + line
             }

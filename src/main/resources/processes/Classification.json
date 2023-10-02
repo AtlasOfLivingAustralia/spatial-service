@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "biocacheServiceUrl": {
@@ -37,14 +37,14 @@
       "constraints": {
         "min": 2,
         "max": 30,
-        "default": 5
+        "defaultValue": 5
       }
     },
     "resolution": {
       "description": "The layer resolution to use.",
       "type": "list",
       "constraints": {
-        "default": "0.01",
+        "defaultValue": "0.01",
         "selection": "single",
         "content": [
           "0.01",
@@ -58,7 +58,7 @@
       "description": "Produce a shapefile.",
       "type": "boolean",
       "constraints": {
-        "default": true
+        "defaultValue": true
       }
     }
   },

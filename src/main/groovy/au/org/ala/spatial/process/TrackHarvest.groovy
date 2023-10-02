@@ -15,22 +15,22 @@
 
 package au.org.ala.spatial.process
 
-import au.com.bytecode.opencsv.CSVReader
+import com.opencsv.CSVReader
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringUtils
 
 import java.text.MessageFormat
 
 @Slf4j
+//@CompileStatic
 class TrackHarvest extends SlaveProcess {
 
     void start() {
 
         try {
 
-            String biocacheServiceUrl = task.input.biocacheServiceUrl.toString()
-            String[] dataProviderIds = task.input.dataProviders.toString().split(",")
+            String biocacheServiceUrl = getInput('biocacheServiceUrl').toString()
+            String[] dataProviderIds = getInput('dataProviders').toString().split(",")
 
             StringBuilder sb = new StringBuilder()
             sb.append("DELETE FROM distributions WHERE type = 't';\n")
@@ -64,7 +64,7 @@ class TrackHarvest extends SlaveProcess {
             def columns = []
             def scientificAdded = false
             for (String s : header) {
-                if (s.equals("scientificName")) {
+                if (s == "scientificName") {
                     if (!scientificAdded) {
                         columns.add("scientific")
                         scientificAdded = true
@@ -98,7 +98,7 @@ class TrackHarvest extends SlaveProcess {
 
                 for (int i = 0; i < header.size() && i < row.length; i++) {
                     if (StringUtils.isNotEmpty(row[i])) {
-                        if (header[i].equals("footprintWKT")) {
+                        if (header[i] == "footprintWKT") {
                             values.add("ST_GEOMFROMTEXT(''" + row[i] + "'', 4326)")
                         } else {
                             values.add("\'\'" + sqlEscapeString(row[i]).replace("\'", "\'\'") + "\'\'")
@@ -119,7 +119,7 @@ class TrackHarvest extends SlaveProcess {
             String wmsurl = "<COMMON_GEOSERVER_URL>/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:Distributions&format=image/png&viewparams=s:"
             sb.append("UPDATE distributions SET bounding_box = st_envelope(the_geom), geom_idx = spcode, wmsurl = '" + wmsurl + "' || spcode WHERE type = 't';")
 
-            FileUtils.writeStringToFile(new File(getTaskPath() + "tracks.sql"), sb.toString())
+            new File(getTaskPath() + "tracks.sql").write(sb.toString())
 
             addOutput('sql', 'tracks.sql')
 

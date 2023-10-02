@@ -18,7 +18,7 @@
         </sld:ChannelSelection>
         <sld:ColorMap>
 <sld:ColorMapEntry color="#002dd0" opacity="0" quantity="0.0" label="0.0 "/>
-<sld:ColorMapEntry color="#ff0000" quantity="1.0" label="1.0 "/>
+<sld:ColorMapEntry color="#ff0000" quantity="0.0" label="0.0 "/>
  </sld:ColorMap>
       </sld:RasterSymbolizer>
     </sld:Rule>

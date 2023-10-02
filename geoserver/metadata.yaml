@@ -1,0 +1,112 @@
+attributes:
+  - key: layer
+    fieldType: COMPLEX
+    typename: layer-metadata
+  - key: field
+    fieldType: COMPLEX
+    typename: field-metadata
+    occurrence: REPEAT
+types:
+  - typename: layer-metadata
+    attributes:
+      - key: id
+        fieldType: NUMBER
+      - key: name
+        fieldType: TEXT
+      - key: displayname
+        fieldType: TEXT
+      - key: description
+        fieldType: TEXT_AREA
+      - key: scale
+        fieldType: TEXT
+      - key: extents
+        fieldType: TEXT
+      - key: notes
+        fieldType: TEXT_AREA
+      - key: enabled
+        fieldType: BOOLEAN
+      - key: environmentalvaluemin
+        fieldType: TEXT
+      - key: environmentalvaluemax
+        fieldType: TEXT
+      - key: environmentalvalueunits
+        fieldType: TEXT
+      - key: metadatapath
+        fieldType: TEXT
+      - key: classification1
+        fieldType: TEXT
+      - key: classification2
+        fieldType: TEXT
+      - key: mddatest
+        fieldType: TEXT
+      - key: citation_date
+        fieldType: TEXT
+      - key: datalang
+        fieldType: TEXT
+      - key: mdhrlv
+        fieldType: TEXT
+      - key: respparty_role
+        fieldType: TEXT
+      - key: respparty_role
+        fieldType: TEXT
+      - key: licence_level
+        fieldType: DROPDOWN
+        values:
+          - Download permitted
+          - Download not permitted
+      - key: licence_link
+        fieldType: TEXT
+      - key: licence_notes
+        fieldType: TEXT_AREA
+      - key: source_link
+        fieldType: TEXT
+      - key: keywords
+        fieldType: TEXT
+      - key: domain
+        fieldType: DROPDOWN
+        values:
+          - Marine
+          - Terrestrial
+          - Marine & Terrestrial
+      - key: dt_added
+        fieldType: DATETIME
+  - typename: field-metadata
+    attributes:
+      - key: id
+        fieldType: TEXT
+      - key: name
+        fieldType: TEXT
+      - key: desc
+        fieldType: TEXT
+      - key: type
+        fieldType: DROPDOWN
+        values:
+          - raster with categories
+          - shapefile
+          - raster
+      - key: spid
+        fieldType: NUMBER
+      - key: sid
+        fieldType: TEXT
+      - key: sname
+        fieldType: TEXT
+      - key: sdesc
+        fieldType: TEXT
+      - key: indb
+        fieldType: BOOLEAN
+      - key: enabled
+        fieldType: BOOLEAN
+      - key: last_update
+        fieldType: DATETIME
+      - key: namesearch
+        fieldType: BOOLEAN
+      - key: defaultlayer
+        fieldType: BOOLEAN
+      - key: intersect
+        fieldType: BOOLEAN
+      - key: layerbranch
+        fieldType: BOOLEAN
+      - key: analysis
+        fieldType: BOOLEAN
+      - key: addtomap
+        fieldType: BOOLEAN

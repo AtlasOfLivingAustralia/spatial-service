@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "biocacheServiceUrl": {
@@ -34,7 +34,7 @@
       "description": "Second taxon (ratio denominator)",
       "type": "species",
       "constraints": {
-        "min":0,
+        "min": 0,
         "max": 1
       }
     },
@@ -44,7 +44,7 @@
       "constraints": {
         "min": 1800,
         "max": 2100,
-        "default": 1980
+        "defaultValue": 1980
       }
     }
   },

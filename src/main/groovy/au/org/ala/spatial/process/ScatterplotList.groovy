@@ -14,10 +14,7 @@
  */
 
 package au.org.ala.spatial.process
-
-import groovy.util.logging.Slf4j
-
-@Slf4j
+//@CompileStatic
 class ScatterplotList extends ScatterplotCreate {
 
     void start() {
@@ -25,7 +22,7 @@ class ScatterplotList extends ScatterplotCreate {
 
         File dir = new File(getTaskPath())
         for (File file : dir.listFiles()) {
-            if (file.getName().equals("scatterplot.html")) addOutput("metadata", file.getName(), true)
+            if (file.getName() == "scatterplot.html") addOutput("metadata", file.getName(), true)
             else if (file.getName().endsWith(".png")) addOutput('files', file.getName(), true)
         }
     }

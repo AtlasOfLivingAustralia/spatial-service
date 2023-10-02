@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "envelope": {
@@ -21,14 +21,14 @@
       "constraints": {
         "min": 0.01,
         "max": 1.0,
-        "default": 0.5
+        "defaultValue": 0.5
       }
     },
     "shp": {
       "description": "Produce a shapefile.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     }
   },

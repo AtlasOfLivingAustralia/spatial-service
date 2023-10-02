@@ -15,10 +15,13 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.tabulation.TabulationGenerator
+import au.org.ala.spatial.Fields
+import au.org.ala.spatial.dto.Tabulation
+import au.org.ala.spatial.TabulationGeneratorService
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 
+//@CompileStatic
 @Slf4j
 class TabulationCreate extends SlaveProcess {
 
@@ -27,13 +30,13 @@ class TabulationCreate extends SlaveProcess {
         List fields = getFields()
         List tabulations = getTabulations()
 
-        fields.eachWithIndex { field1, idx1 ->
-            fields.eachWithIndex { field2, idx2 ->
+        fields.eachWithIndex { Fields field1, Integer idx1 ->
+            fields.eachWithIndex { Fields field2, Integer idx2 ->
                 if (idx1 < idx2) {
                     try {
                         if (field1.intersect && field2.intersect) {
                             boolean exists = false
-                            tabulations.each { tabulation ->
+                            tabulations.each { Tabulation tabulation ->
                                 if ((tabulation.fid1 == field1.id && tabulation.fid2 == field2.id) ||
                                         (tabulation.fid2 == field1.id && tabulation.fid1 == field2.id)) {
                                     exists = true
@@ -44,11 +47,11 @@ class TabulationCreate extends SlaveProcess {
                                 String domain1 = getLayer(field1.spid).domain
                                 String domain2 = getLayer(field2.spid).domain
 
-                                if (TabulationGenerator.isSameDomain(TabulationGenerator.parseDomain(domain1),
-                                        TabulationGenerator.parseDomain(domain2))) {
+                                if (TabulationGeneratorService.isSameDomain(TabulationGeneratorService.parseDomain(domain1),
+                                        TabulationGeneratorService.parseDomain(domain2))) {
                                     String keyA = field1.id + " " + field2.id
                                     String keyB = field2.id + " " + field1.id
-                                    String key = keyA.compareTo(keyB) < 0 ? keyA : keyB
+                                    String key = keyA < keyB ? keyA : keyB
 
                                     all.add(key)
                                 }
@@ -61,10 +64,10 @@ class TabulationCreate extends SlaveProcess {
             }
         }
 
-        getTabulations().each { t ->
-            String keyA = t.fid1 + " " + t.fid2
-            String keyB = t.fid2 + " " + t.fid1
-            String key = keyA.compareTo(keyB) < 0 ? keyA : keyB
+        getTabulations().each { Tabulation t ->
+            String keyA = t.fid1 + ' ' + t.fid2
+            String keyB = t.fid2 + ' ' + t.fid1
+            String key = keyA < keyB ? keyA : keyB
 
             all.remove(key)
         }

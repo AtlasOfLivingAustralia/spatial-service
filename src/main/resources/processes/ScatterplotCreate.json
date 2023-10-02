@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "biocacheServiceUrl": {
@@ -52,7 +52,7 @@
       "description": "Output environmental domain grid.",
       "type": "boolean",
       "constraints": {
-        "default": false
+        "defaultValue": false
       }
     },
     "resolution": {
@@ -60,7 +60,7 @@
       "type": "list",
       "constraints": {
         "selection": "single",
-        "default": 0.01,
+        "defaultValue": 0.01,
         "content": [
           "0.01",
           "0.1",

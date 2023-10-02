@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "biocacheServiceUrl": {
@@ -36,7 +36,7 @@
       "constraints": {
         "min": 0.0001,
         "max": 10,
-        "default": 0.1
+        "defaultValue": 0.1
       }
     },
     "secondaryGridCellSize": {
@@ -45,7 +45,7 @@
       "constraints": {
         "min": 0.001,
         "max": 10,
-        "default": 1
+        "defaultValue": 1
       }
     },
     "yearSize": {
@@ -54,7 +54,7 @@
       "constraints": {
         "min": 1,
         "max": 300,
-        "default": 10
+        "defaultValue": 10
       }
     }
   },

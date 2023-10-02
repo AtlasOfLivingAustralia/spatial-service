@@ -5,6 +5,7 @@
     <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 <ul class="breadcrumb">
     <li><g:link controller="main" action="index">Home</g:link></li>

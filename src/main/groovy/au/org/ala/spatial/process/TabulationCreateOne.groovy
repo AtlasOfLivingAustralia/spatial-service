@@ -15,11 +15,11 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.tabulation.Intersection
-import au.org.ala.layers.tabulation.TabulationGenerator
-import au.org.ala.layers.util.SpatialUtil
+import au.org.ala.spatial.Fields
+import au.org.ala.spatial.Layers
+import au.org.ala.spatial.tabulation.Intersection
+import au.org.ala.spatial.util.SpatialUtils
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.geotools.data.DataStore
 import org.geotools.data.DataStoreFinder
 import org.geotools.data.FeatureSource
@@ -29,55 +29,39 @@ import org.locationtech.jts.geom.GeometryCollection
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.io.WKTReader
+import org.opengis.feature.Property
 import org.opengis.feature.simple.SimpleFeature
 
 import java.util.zip.ZipInputStream
 
+//@CompileStatic
 @Slf4j
 class TabulationCreateOne extends SlaveProcess {
 
     void start() {
-        String fieldId1 = task.input.fieldId1
-        String fieldId2 = task.input.fieldId2
+        String fieldId1 = getInput('fieldId1')
+        String fieldId2 = getInput('fieldId2')
 
-        String layersDir = grailsApplication.config.data.dir + '/layer/'
+        String layersDir = spatialConfig.data.dir + '/layer/'
 
         String layerId1 = getField(fieldId1).spid
         String layerId2 = getField(fieldId2).spid
-        Map layer1 = getLayer(layerId1)
-        Map layer2 = getLayer(layerId2)
+        Layers layer1 = getLayer(layerId1)
+        Layers layer2 = getLayer(layerId2)
 
         String intersectPath = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
 
-        //lock files that will be created and can be created by other threads
-        List filesForLocking = []
-        if (!new File(grailsApplication.config.data.dir.toString() + intersectPath).exists() && !slaveService.peekFile(intersectPath)[0].exists) {
-            filesForLocking.add(grailsApplication.config.data.dir + intersectPath)
-        }
-
-        if (filesForLocking.size() > 0) {
-            Object lock = fileLockService.lock(filesForLocking, task)
-            if (lock != null) {
-                synchronized (lock) {
-                    lock.wait()
-                    log.debug 'lock released on task:' + task.id
-                }
-            }
-        }
-
         try {
-            slaveService.getFile('/layer/' + layer1.name)
-            slaveService.getFile('/layer/' + layer2.name)
 
             File file1 = new File(layersDir + layer1.name + ".shp")
             File file2 = new File(layersDir + layer2.name + ".shp")
-            File file3 = new File(grailsApplication.config.data.dir.toString() + intersectPath)
+            File file3 = new File(spatialConfig.data.dir.toString() + intersectPath)
 
             //create an intersection file if both shapefiles exist and the intesection file does not
             if (file1.exists() && file2.exists() && !file3.exists()) {
-                new File(grailsApplication.config.data.dir.toString() + "/intersect/").mkdirs()
+                new File(spatialConfig.data.dir.toString() + "/intersect/").mkdirs()
                 Intersection.intersectShapefiles(file1.getPath(), Arrays.asList(file2.getPath()),
-                        grailsApplication.config.data.dir.toString() + "/intersect/")
+                        spatialConfig.data.dir.toString() + "/intersect/")
 
                 //keep the intersection file for use with other fields that use the same 2 layers (layers can have >1 field)
                 addOutput('file', intersectPath)
@@ -85,29 +69,23 @@ class TabulationCreateOne extends SlaveProcess {
 
             importTabulation()
         } catch (err) {
-            task.history.put(System.currentTimeMillis(), 'unknown error')
+            taskWrapper.task.history.put(System.currentTimeMillis() as String, 'unknown error')
             log.error "failed to produce tabulation for: " + fieldId1 + " and " + fieldId2, err
-        }
-
-        if (filesForLocking.size() > 0) {
-            log.debug 'releasing files locked by task: ' + task.id
-            fileLockService.release(filesForLocking)
         }
     }
 
     void importTabulation() {
-        String fieldId1 = task.input.fieldId1
-        String fieldId2 = task.input.fieldId2
-        Map field1 = getField(fieldId1)
-        Map field2 = getField(fieldId2)
+        String fieldId1 = getInput('fieldId1')
+        String fieldId2 = getInput('fieldId2')
+        Fields field1 = getField(fieldId1)
+        Fields field2 = getField(fieldId2)
         String layerId1 = field1.spid
         String layerId2 = field2.spid
-        Map layer1 = getLayer(layerId1)
-        Map layer2 = getLayer(layerId2)
+        Layers layer1 = getLayer(layerId1)
+        Layers layer2 = getLayer(layerId2)
 
-        String dir = grailsApplication.config.data.dir
+        String dir = spatialConfig.data.dir
         String intersectFile = "/intersect/intersection_" + layer1.name + ".shp_" + layer2.name + ".shp.zip"
-        slaveService.getFile(intersectFile)
 
         try {
             File file1 = new File(dir + '/layer/' + layer1.name + ".shp")
@@ -131,8 +109,8 @@ class TabulationCreateOne extends SlaveProcess {
                     SimpleFeature feature1 = (SimpleFeature) iterator1.next()
 
                     if (field1sid == null) {
-                        for (Object k : feature1.value) {
-                            if (k.getName().toString().equalsIgnoreCase(field1.sid.toString())) {
+                        for (Property k : feature1.value) {
+                            if (k.getName().toString().equalsIgnoreCase(field1.sname.toString())) {
                                 field1sid = k.getName().toString()
                             }
                         }
@@ -153,8 +131,8 @@ class TabulationCreateOne extends SlaveProcess {
                     SimpleFeature feature2 = (SimpleFeature) iterator2.next()
 
                     if (field2sid == null) {
-                        for (Object k : feature2.value) {
-                            if (k.getName().toString().equalsIgnoreCase(field2.sid.toString())) {
+                        for (Property k : feature2.value) {
+                            if (k.getName().toString().equalsIgnoreCase(field2.sname.toString())) {
                                 field2sid = k.getName().toString()
                             }
                         }
@@ -185,7 +163,7 @@ class TabulationCreateOne extends SlaveProcess {
                         p = new Pair(key)
                         map.put(key, p)
                     }
-                    p.area += SpatialUtil.calculateArea(wkt) / 1000000.0
+                    p.area += SpatialUtils.calculateArea(wkt) / 1000000.0
                     p.geom.add(wkt)
                 }
 
@@ -206,7 +184,7 @@ class TabulationCreateOne extends SlaveProcess {
                 int counter = 0
                 // init sql
                 String fname = 'import' + counter + '.sql'
-                FileUtils.writeStringToFile(new File(getTaskPath() + fname), "DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
+                new File(getTaskPath() + fname).write("DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
                 addOutput('sql', fname)
                 counter++
                 for (Map.Entry<String, Pair> p : map.entrySet()) {
@@ -265,7 +243,7 @@ class TabulationCreateOne extends SlaveProcess {
                                 "ST_GEOMFROMTEXT('" + wktSb.toString() + "', 4326));"
 
                         fname = 'import' + counter + '.sql'
-                        FileUtils.writeStringToFile(new File(getTaskPath() + fname), sql)
+                        new File(getTaskPath() + fname).write(sql)
                         addOutput('sql', fname)
                         counter++
                     }
@@ -277,16 +255,16 @@ class TabulationCreateOne extends SlaveProcess {
                 def fname = 'import' + counter + '.sql'
 
                 // init sql
-                FileUtils.writeStringToFile(new File(getTaskPath() + fname), "DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
+                new File(getTaskPath() + fname).write("DELETE FROM tabulation WHERE fid1 = '" + fieldId1 + "' AND fid2 = '" + fieldId2 + "';")
                 addOutput('sql', fname)
                 counter++
 
                 fname = 'import' + counter + '.sql'
-                TabulationGenerator.gridToGrid(fieldId1, fieldId2, null, getTaskPath() + "/" + fname)
+                tabulationGeneratorService.gridToGrid(fieldId1, fieldId2, null, getTaskPath() + "/" + fname)
                 addOutput('sql', fname)
             }
         } catch (err) {
-            task.history.put(System.currentTimeMillis(), 'unknown error')
+            taskWrapper.task.history.put(System.currentTimeMillis() as String, 'unknown error')
             log.error 'failed tabulation create one for :' + fieldId1 + ', ' + fieldId2, err
         }
 

@@ -15,46 +15,45 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.client.Client
-import au.org.ala.layers.dto.IntersectionFile
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.intersect.SimpleShapeFile
+import au.org.ala.spatial.dto.IntersectionFile
+import au.org.ala.spatial.Fields
+import au.org.ala.spatial.Layers
+import au.org.ala.spatial.SpatialObjects
 import au.org.ala.spatial.util.RecordsSmall
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.intersect.SimpleShapeFile
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
 import java.nio.ByteBuffer
 
+//@CompileStatic
 @Slf4j
 class TabulationCounts extends SlaveProcess {
 
     void start() {
 
         // get all fields requiring an intersection
-        List allFields = getFields()
-        List<Map> fields = []
-        task.message = 'getting field list'
-        allFields.each { field ->
+        List<Fields> allFields = getFields()
+        List<Fields> fields = []
+        taskWrapper.task.message = 'getting field list'
+        allFields.each { Fields field ->
             if (field.intersect) {
-                slaveService.getFile(taskService.getResourcePath([type: 'layer'], field.layer.name))
-                fields.add(field as Map)
+                fields.add(field)
             }
         }
 
         // load records
-        task.message = 'getting records'
-        String dir = grailsApplication.config.data.dir + File.separator + "sample"
-        RecordsSmall.fileList().each { filename ->
-            slaveService.getFile(dir + File.separator + filename)
-        }
+        taskWrapper.task.message = 'getting records'
+        String dir = spatialConfig.data.dir + File.separator + "sample"
 
         RecordsSmall records = new RecordsSmall(dir)
 
-        task.message = 'reading records'
+        taskWrapper.task.message = 'reading records'
         float[] allPoints = records.getUniquePointsAll()
         int[] pidx = records.getUniqueIdx()
 
-        double[][] points = new double[allPoints.length / 2][2]
+        double[][] points = new double[(int)(allPoints.length / 2)][2]
         for (int i = 0; i < allPoints.length; i += 2) {
             points[(i / 2).intValue()][0] = allPoints[(i + 1).intValue()]
             points[(i / 2).intValue()][1] = allPoints[i]
@@ -63,15 +62,15 @@ class TabulationCounts extends SlaveProcess {
         List<File> pidFiles = []
 
         //produce sampling files
-        fields.eachWithIndex { field, idx ->
-            task.message = 'get/make sampling for: ' + field.id
+        fields.eachWithIndex { Fields field, idx ->
+            taskWrapper.task.message = 'get/make sampling for: ' + field.id
             pidFiles.add(sample(points, field))
         }
 
         points = null
 
         // sql, reset values
-        FileUtils.writeStringToFile(new File(getTaskPath() + "init.sql"),
+        new File(getTaskPath() + "init.sql").write(
                 "UPDATE tabulation SET occurrences=0 WHERE occurrences is null; UPDATE tabulation SET species=0 WHERE species is null;")
         addOutput('sql', 'init.sql')
 
@@ -80,7 +79,7 @@ class TabulationCounts extends SlaveProcess {
             Object[] o1 = null
             fields.eachWithIndex { field2, idx2 ->
                 if (idx1 < idx2 /*&& (field1.id.equals('cl1052') || field2.id.equals('cl1058'))*/) {
-                    task.message = 'tabulating ' + field1.id + ' and ' + field2.id
+                    taskWrapper.task.message = 'tabulating ' + field1.id + ' and ' + field2.id
                     try {
                         if (o1 == null) o1 = loadFile(pidFiles[idx1], (allPoints.length / 2).intValue())
                         Object[] o2 = loadFile(pidFiles[idx2], (allPoints.length / 2).intValue())
@@ -98,7 +97,7 @@ class TabulationCounts extends SlaveProcess {
                         }
                         fw.flush()
                         fw.close()
-                        task.message = 'finished tabulating ' + field1.id + ' and ' + field2.id
+                        taskWrapper.task.message = 'finished tabulating ' + field1.id + ' and ' + field2.id
                     } catch (err) {
                         log.error 'failed tabulating ' + field1.id + ' and ' + field2.id, err
                         taskLog('failed tabulating ' + field1.id + ' and ' + field2.id)
@@ -209,22 +208,16 @@ class TabulationCounts extends SlaveProcess {
         o
     }
 
-    def sample(double[][] points, Map field) {
+    def sample(double[][] points, Fields field) {
 
         //create new sampling file when one does not already exist
-        File file = new File(grailsApplication.config.data.dir.toString() + '/sample/' + field.spid + '.' + field.sname + '.pid')
+        File file = new File(spatialConfig.data.dir.toString() + '/sample/' + field.spid + '.' + field.sname + '.pid')
         String fieldName = field.sname
-        Map l = getLayer(field.spid)
-        String filename = grailsApplication.config.data.dir + '/layer/' + l.name
+        Layers l = getLayer(field.spid)
+        String filename = spatialConfig.data.dir + '/layer/' + l.name
 
         if (!file.exists()) {
             try {
-                slaveService.getFile('/layer/' + l.name + '.shp')
-                slaveService.getFile('/layer/' + l.name + '.shx')
-                slaveService.getFile('/layer/' + l.name + '.dbf')
-                slaveService.getFile('/layer/' + l.name + '.prj')
-                slaveService.getFile('/layer/' + l.name + '.grd')
-                slaveService.getFile('/layer/' + l.name + '.gri')
 
                 if (new File(filename + ".shp").exists()) {
                     SimpleShapeFile ssf = new SimpleShapeFile(filename, fieldName)
@@ -235,19 +228,19 @@ class TabulationCounts extends SlaveProcess {
                     int[] values = ssf.intersect(points, catagories, column_idx, 4)
 
                     // catagories to pid
-                    List fieldObjects = getObjects(field.id)
+                    List<SpatialObjects> fieldObjects = getObjects(field.id)
                     int[] catToPid = new int[catagories.length]
                     for (int j = 0; j < catToPid.length; j++) {
-                        catToPid[j] = -1;
+                        catToPid[j] = -1
                     }
                     for (int i = 0; i < catagories.length; i++) {
                         for (int j = 0; j < fieldObjects.size(); j++) {
                             if ((catagories[i] == null || fieldObjects.get(j).name == null) &&
-                                    catagories[i].compareTo(fieldObjects.get(j).name.toString())) {
+                                    catagories[i] <=> fieldObjects.get(j).name.toString()) {
                                 catToPid[i] = j
                                 break
                             } else if (catagories[i] != null && fieldObjects.get(j).name != null &&
-                                    catagories[i].compareTo(fieldObjects.get(j).name.toString()) == 0) {
+                                    catagories[i] == fieldObjects.get(j).name.toString()) {
                                 catToPid[i] = j
                                 break
                             }
@@ -260,11 +253,11 @@ class TabulationCounts extends SlaveProcess {
                             String cat = catagories[i].replaceAll("[^a-zA-Z0-9]", "")
                             for (int j = 0; j < fieldObjects.size(); j++) {
                                 if ((cat == null || fieldObjects.get(j).name == null) &&
-                                        cat.compareTo(fieldObjects.get(j).name.toString().replaceAll("[^a-zA-Z0-9]", ""))) {
+                                        cat <=> fieldObjects.get(j).name.toString().replaceAll("[^a-zA-Z0-9]", "")) {
                                     catToPid[i] = j
                                     break
                                 } else if (cat != null && fieldObjects.get(j).name != null &&
-                                        cat.compareTo(fieldObjects.get(j).name.toString().replaceAll("[^a-zA-Z0-9]", "")) == 0) {
+                                        cat == fieldObjects.get(j).name.toString().replaceAll("[^a-zA-Z0-9]", "")) {
                                     catToPid[i] = j
                                     break
                                 }
@@ -334,7 +327,7 @@ class TabulationCounts extends SlaveProcess {
                             }
 
                             catPid = new FileWriter(file.getPath() + ".cat")
-                            IntersectionFile f = Client.getLayerIntersectDao().getConfig().getIntersectionFile(field.id);
+                            IntersectionFile f = layerService.getIntersectionFile(field.id)
 
                             if (f != null) {
                                 def maxKey = f.classes.keySet().max()

@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "biocacheServiceUrl": {
@@ -18,7 +18,7 @@
       "constraints": {
         "min": 0.001,
         "max": 1,
-        "default": 0.02
+        "defaultValue": 0.02
       }
     },
     "area": {
@@ -44,7 +44,7 @@
       "type": "double",
       "constraints": {
         "min": 0.01,
-        "default": 2
+        "defaultValue": 2
       }
     },
     "radius": {
@@ -53,7 +53,7 @@
       "constraints": {
         "min": 1,
         "max": 1000000,
-        "default": 5000
+        "defaultValue": 5000
       }
     }
   },

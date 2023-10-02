@@ -30,7 +30,7 @@
 <g:if test="${searchResult.size() > 0}">
     <table class="table table-striped">
         <thead>
-        <g:each in="${searchResult.getAt(0)}" var="item">
+        <g:each in="${searchResult[0]}" var="item">
             <th>${item.key}</th>
         </g:each>
         </thead>

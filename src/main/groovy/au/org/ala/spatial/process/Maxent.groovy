@@ -15,24 +15,22 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.grid.GridCutter
+import au.org.ala.spatial.dto.AreaInput
+import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.Util
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 
+//@CompileStatic
 @Slf4j
 class Maxent extends SlaveProcess {
 
     void start() {
-        //update maxent
-        slaveService.getFile('/modelling/maxent/maxent.jar')
-
         //list of layers
-        def layers = JSON.parse(task.input.layer.toString())
-        def contextualLayers = []
-        layers.each { layer ->
+        List<String> layers = getInput('layer').toString().split(',')
+        List<String> contextualLayers = []
+        layers.each { String layer ->
             if (layer.endsWith('_aloc')) {
                 contextualLayers.add(layer)
             } else {
@@ -44,36 +42,36 @@ class Maxent extends SlaveProcess {
         }
 
         //area to restrict
-        def area = JSON.parse(task.input.area.toString())
-        def (region, envelope) = processArea(area[0])
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
+        RegionEnvelope regionEnvelope = processArea(areas[0])
 
         //target resolution
-        def resolution = task.input.resolution
+        def resolution = getInput('resolution')
 
         //number of target species
-        def species = JSON.parse(task.input.species.toString())
+        SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
 
-        def speciesArea = getSpeciesArea(species, area)
+        SpeciesInput speciesArea = getSpeciesArea(species, areas)
 
-        def jackknife = task.input.jackknife.toString().toBoolean()
-        def responseCurves = task.input.responseCurves.toString().toBoolean()
-        def testPercentage = task.input.testPercentage.toString().toDouble()
+        def jackknife = getInput('jackknife').toString().toBoolean()
+        def responseCurves = getInput('responseCurves').toString().toBoolean()
+        def testPercentage = getInput('testPercentage').toString().toDouble()
 
         new File(getTaskPath()).mkdirs()
 
-        def cutDataPath = cutGrid((layers as List).toArray(new String[layers.size()]), resolution.toString(), region, envelope, null)
+        def cutDataPath = cutGrid((layers as List).toArray(new String[layers.size()]), resolution.toString(), regionEnvelope.region, regionEnvelope.envelope, null)
         taskLog("Downloading species")
-        def speciesPath = downloadSpecies(speciesArea)
+        List<File> speciesPath = downloadSpecies(speciesArea)
 
         if (speciesPath.size() == 0) {
             //TODO: error
         }
         taskLog("Run Maxent model")
-        def cmd = ["java", "-mx" + String.valueOf(grailsApplication.config.maxent.mx),
-                   "-jar", grailsApplication.config.data.dir + '/modelling/maxent/maxent.jar',
+        def cmd = ["java", "-mx" + String.valueOf(spatialConfig.maxent.mx),
+                   "-jar", spatialConfig.data.dir + '/modelling/maxent/maxent.jar',
                    "-e", cutDataPath, "-s", speciesPath.get(0), "-a", "tooltips=false",
                    "nowarnings", "noprefixes", "-z",
-                   "threads=" + grailsApplication.config.maxent.threads, "randomtestpoints=" + (int) (testPercentage * 50),
+                   "threads=" + spatialConfig.maxent.threads, "randomtestpoints=" + (int) (testPercentage * 50),
                    "-o", getTaskPath()]
         if (jackknife) cmd.add("-J")
         if (responseCurves) cmd.add("-P")
@@ -87,7 +85,7 @@ class Maxent extends SlaveProcess {
         cmd.eachWithIndex { def entry, int i ->
             cmdList[i] = entry
         }
-        runCmd(cmdList, true, grailsApplication.config.maxent.timeout)
+        runCmd(cmdList, true, spatialConfig.maxent.timeout)
 
         //format output
 
@@ -96,11 +94,11 @@ class Maxent extends SlaveProcess {
         if (maxentError != null) {
             taskLog("Maxent model failed")
         } else {
-            def replaceMap = [:]
+            Map<String, String> replaceMap = [:]
 
             replaceMap.put("Maxent model for species", "Maxent model for " + speciesArea.name)
 
-            String paramlist = "Model reference number: " + task.id + "<br>Species: " + speciesArea.name + "<br>Layers: <ul>"
+            String paramlist = "Model reference number: " + taskWrapper.id + "<br>Species: " + speciesArea.name + "<br>Layers: <ul>"
 
             layers.each {
                 def field = getField(it)
@@ -135,11 +133,11 @@ class Maxent extends SlaveProcess {
             if (responseCurves) {
                 StringBuffer sbTable = new StringBuffer()
 
-                contextualLayers.each { ctx ->
+                contextualLayers.each { String ctx ->
                     sbTable.append("<pre>")
                     if (!ctx.endsWith("_aloc")) {
                         sbTable.append("<span style='font-weight: bold; text-decoration: underline'>" + ctx + " legend</span><br />")
-                        sbTable.append(IOUtils.toString(new FileInputStream(GridCutter.getLayerPath(resolution.toString(), ctx, ctx) + ".txt")))
+                        sbTable.append(new File(gridCutterService.getLayerPath(resolution.toString(), ctx, ctx) + ".txt").text)
                         sbTable.append("<br /><br />")
                         sbTable.append("</pre>")
                     }
@@ -161,14 +159,13 @@ class Maxent extends SlaveProcess {
                     br.close()
 
                     String header = "'Sensitive species' have been masked out of the model. See: https://www.ala.org.au/about/program-of-projects/sds/\r\n\r\nLSID,Species scientific name,Taxon rank"
-                    FileUtils.writeStringToFile(header + removedSpecies.toString(),
-                            getTaskPath() + File.separator + "Prediction_maskedOutSensitiveSpecies.csv")
+                    new File(getTaskPath() + File.separator + "Prediction_maskedOutSensitiveSpecies.csv").write(header + removedSpecies.toString())
 
                     String insertBefore = "<a href = \"species.asc\">The"
                     String insertText = "<b><a href = \"Prediction_maskedOutSensitiveSpecies.csv\">'Sensitive species' masked out of the model</a></br></b>"
                     replaceMap.put(insertBefore, insertText + insertBefore)
                 }
-            } catch (err) {
+            } catch (ignored) {
             }
 
             Util.replaceTextInFile(getTaskPath() + "species.html", replaceMap)
@@ -176,12 +173,12 @@ class Maxent extends SlaveProcess {
             //writeProjectionFile(getTaskPath());
 
             //convert .asc to .grd/.gri
-            convertAsc(getTaskPath() + "species.asc", "${grailsApplication.config.data.dir}/layer/${task.id}_species")
+            convertAsc(getTaskPath() + "species.asc", "${spatialConfig.data.dir}/layer/${taskWrapper.id}_species")
         }
-        writeMaxentsld(grailsApplication.config.data.dir + "/layer/" + task.id + "_species.sld")
-        addOutput("layers", "/layer/" + task.id + "_species.sld")
+        writeMaxentsld(spatialConfig.data.dir + "/layer/" + taskWrapper.id + "_species.sld")
+        addOutput("layers", "/layer/" + taskWrapper.id + "_species.sld")
 
-        addOutput("layers", "/layer/" + task.id + "_species.tif")
+        addOutput("layers", "/layer/" + taskWrapper.id + "_species.tif")
 
         if (new File(getTaskPath() + "species.asc").exists()) {
             addOutput("files", "species.asc", true)
@@ -204,25 +201,26 @@ class Maxent extends SlaveProcess {
         addOutput("files", "maxent.log", true)
 
         if (new File(getTaskPath() + "species.grd").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + task.id + "_species.grd")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_species.grd")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "_species.grd"), target)
-            addOutput("layers", "/layer/" + task.id + "_species.grd")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_species.grd")
         }
         if (new File(getTaskPath() + "species.gri").exists()) {
-            File target = new File(grailsApplication.config.data.dir + '/layer/' + task.id + "_species.gri")
+            File target = new File(spatialConfig.data.dir + '/layer/' + taskWrapper.id + "_species.gri")
             if (target.exists()) target.delete()
             FileUtils.moveFile(new File(getTaskPath() + "_species.gri"), target)
-            addOutput("layers", "/layer/" + task.id + "_species.gri")
+            addOutput("layers", "/layer/" + taskWrapper.id + "_species.gri")
         }
     }
 
-    def writeMaxentsld(filename) {
+    static def writeMaxentsld(filename) {
         def resource = Maxent.class.getResource("/maxent/maxent.sld")
-        FileUtils.writeStringToFile(new File(filename), resource.text)
+        new File(filename).write(
+                resource.text)
     }
 
-    private void writeProjectionFile(String outputpath) {
+    private static void writeProjectionFile(String outputpath) {
         try {
             File fDir = new File(outputpath)
             fDir.mkdir()
@@ -249,7 +247,7 @@ class Maxent extends SlaveProcess {
         }
     }
 
-    private String getMaxentError(File file, int count) {
+    private static String getMaxentError(File file, int count) {
         try {
             RandomAccessFile rf = new RandomAccessFile(file, "r")
 
@@ -257,7 +255,7 @@ class Maxent extends SlaveProcess {
             String nosp = rf.readLine() // first line: date/time
             nosp = rf.readLine() // second line: maxent version
             nosp = rf.readLine() // third line: "No species selected"
-            if (nosp.equals("No species selected")) {
+            if (nosp == "No species selected") {
                 return "No species selected"
             }
 
@@ -268,7 +266,7 @@ class Maxent extends SlaveProcess {
                 rf.seek(flen--)
                 char c = (char) rf.read()
                 lines.append(c)
-                if (c == '\n') {
+                if (c == '\n' as char) {
                     nlcnt++
                 }
 

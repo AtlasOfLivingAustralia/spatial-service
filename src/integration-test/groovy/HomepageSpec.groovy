@@ -16,7 +16,7 @@ class HomepageSpec extends GebSpec {
             authModule.login()
 
         then:
-        waitFor 10, { subTitle == "Spatial service"}
+        waitFor 10, { subTitle == "Spatial service" }
 
         when:
         clickLink("Background tasks")
@@ -26,8 +26,8 @@ class HomepageSpec extends GebSpec {
             authModule.login()
 
         then:
-        waitFor 10, { subTitle.contains("Task List")}
-        waitFor 10, { taskTable.displayed}
+        waitFor 10, { subTitle.contains("Task List") }
+        waitFor 10, { taskTable.displayed }
         numberOfTasks() > 1
     }
 }

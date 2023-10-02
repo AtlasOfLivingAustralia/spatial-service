@@ -1,8 +1,11 @@
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.intersect.Grid
-import au.org.ala.layers.util.AnalysisLayerUtil
-import au.org.ala.layers.util.Bil2diva
+import au.org.ala.spatial.Fields
+import au.org.ala.spatial.Layers
+import au.org.ala.spatial.SpatialObjects
+import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.util.AnalysisLayerUtil
+import au.org.ala.spatial.grid.Bil2diva
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.geotools.data.DataUtilities
@@ -27,49 +30,49 @@ import org.opengis.feature.simple.SimpleFeatureType
 class StandardizeLayers extends SlaveProcess {
 
     void start() {
-        double[] shpResolutions = task.input.shpResolutions as double[]
-        double[] grdResolutions = task.input.grdResolutions as double[]
+        Double[] shpResolutions = spatialConfig.shpResolutions
+        Double[] grdResolutions = spatialConfig.grdResolutions
 
         //optional fieldId
-        String fieldId = task.input.fieldId
+        String fieldId = getInput('fieldId')
 
-        task.message = 'running: getting fields'
-        List fields = getFields()
+        taskWrapper.task.message = 'running: getting fields'
+        List<Fields> fields = getFields()
 
         int shpCount = 0
         int grdCount = 0
 
-        fields.each { Map f ->
+        fields.each { Fields f ->
             try {
-                if (f.analysis && (fieldId == null || f.id.equals(fieldId))) {
+                if (f.analysis && (fieldId == null || f.id == fieldId)) {
 
-                    Map l = getLayer(f.spid)
+                    Layers l = getLayer(f.spid)
 
 
-                    if ('c'.equals(f.type) && slaveService.peekFile('/layer/' + l.name + '.shp')[0].exists) {
+                    if ('c' == f.type && new File('/layer/' + l.name + '.shp').exists()) {
 
                         boolean shpFileRetrieved = false
                         boolean hasTxt = false
-                        def shpFile
+                        File shpFile
 
-                        shpResolutions.each { res ->
+                        shpResolutions.each { String res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (!slaveService.peekFile(path)[0].exists) {
-                                task.message = 'running: making for field ' + f.id + ' and resolution ' + res
+                            if (!new File(spatialConfig.data.dir.toString() + path).exists()) {
+                                taskWrapper.task.message = 'running: making for field ' + f.id + ' and resolution ' + res
 
                                 if (!shpFileRetrieved) {
                                     shpFile = File.createTempFile(f.id.toString(), '')
 
-                                    task.message = 'running: getting field ' + f.id
+                                    taskWrapper.task.message = 'running: getting field ' + f.id
                                     hasTxt = fieldToShapeFile(f.id.toString(), shpFile.getPath())
                                     shpFileRetrieved = true
                                 }
 
                                 // standardized file is missing, make for this shapefile
                                 if (hasTxt && shp2Analysis(shpFile.getPath(),
-                                        grailsApplication.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id,
+                                        spatialConfig.data.dir.toString() + '/standard_layer/' + res + '/' + f.id,
                                         new Double(res),
-                                        grailsApplication.config.gdal.dir.toString())) {
+                                        spatialConfig.gdal.dir.toString())) {
 
                                     addOutput('file', '/standard_layer/' + res + '/' + f.id + '.grd')
                                     addOutput('file', '/standard_layer/' + res + '/' + f.id + '.gri')
@@ -92,14 +95,10 @@ class StandardizeLayers extends SlaveProcess {
                                 fd.delete()
                             }
                         }
-                    } else if (('e'.equals(f.type) || 'a'.equals(f.type) || 'b'.equals(f.type)) &&
-                            slaveService.peekFile('/layer/' + l.name + '.grd')[0].exists) {
+                    } else if (('e' == f.type || 'a' == f.type || 'b' == f.type) &&
+                            new File(spatialConfig.data.dir.toString() + '/layer/' + l.name + '.grd').exists()) {
 
-                        // standardized file is missing, make for this grid file
-                        slaveService.getFile('/layer/' + l.name + '.grd')
-                        slaveService.getFile('/layer/' + l.name + '.gri')
-
-                        Grid g = new Grid(grailsApplication.config.data.dir.toString() + '/layer/' + l.name)
+                        Grid g = new Grid(spatialConfig.data.dir.toString() + '/layer/' + l.name)
                         double minRes = Math.min(g.xres, g.yres)
 
                         int count = 0
@@ -107,13 +106,13 @@ class StandardizeLayers extends SlaveProcess {
                         double nearestSmallerRes = 1
                         grdResolutions.each { Double res ->
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
-                            if (!slaveService.peekFile(path)[0].exists) {
-                                task.message = 'running: making for field ' + f.id + ' and resolution ' + res
+                            if (!new File(spatialConfig.data.dir.toString() + path).exists()) {
+                                taskWrapper.task.message = 'running: making for field ' + f.id + ' and resolution ' + res
 
                                 // no need to make for this resolution if it is < the actual grid resolution (and not close)
                                 double dres = res.doubleValue()
                                 if (minRes < dres * 1.2) {
-                                    standardizeGrid(f as Map, l as Map, res, dres)
+                                    standardizeGrid(f, l, res, dres)
                                     count++
                                     grdCount++
                                 } else {
@@ -128,7 +127,7 @@ class StandardizeLayers extends SlaveProcess {
                         }
                         //if no standard_layer is produced, use the nearest one found
                         if (count == 0) {
-                            standardizeGrid(f as Map, l as Map, nearestSmallerRes, nearestSmallerDRes)
+                            standardizeGrid(f, l, nearestSmallerRes, nearestSmallerDRes)
                         }
                     }
                 }
@@ -145,22 +144,22 @@ class StandardizeLayers extends SlaveProcess {
         }
     }
 
-    void standardizeGrid(Map f, Map l, double res, double dres) {
+    void standardizeGrid(f, l, double res, double dres) {
         if (AnalysisLayerUtil.diva2Analysis(
-                String.valueOf(grailsApplication.config.data.dir + '/layer/' + l.name),
-                String.valueOf(grailsApplication.config.data.dir + '/standard_layer/' + res + '/' + f.id),
+                String.valueOf(spatialConfig.data.dir + '/layer/' + l.name),
+                String.valueOf(spatialConfig.data.dir + '/standard_layer/' + res + '/' + f.id),
                 new Double(dres),
-                String.valueOf(grailsApplication.config.gdal.dir),
+                String.valueOf(spatialConfig.gdal.dir),
                 false)) {
 
             addOutput('file', '/standard_layer/' + res + '/' + f.id + '.grd')
             addOutput('file', '/standard_layer/' + res + '/' + f.id + '.gri')
 
             //copy txt for 'a' and 'b'
-            if (slaveService.peekFile('/layer/' + l.name + '.txt')[0].exists) {
-                slaveService.getFile('/layer/' + l.name + '.txt')
-                FileUtils.copyFile(new File(grailsApplication.config.data.dir.toString() + '/layer/' + l.name + '.txt'),
-                        new File(grailsApplication.config.data.dir.toString() + '/standard_layer/' + res + '/' + f.id + '.txt'))
+            if (new File('/layer/' + l.name + '.txt').exists()) {
+                getFile('/layer/' + l.name + '.txt')
+                FileUtils.copyFile(new File(spatialConfig.data.dir.toString() + '/layer/' + l.name + '.txt'),
+                        new File(spatialConfig.data.dir.toString() + '/standard_layer/' + res + '/' + f.id + '.txt'))
                 addOutput('file', '/standard_layer/' + res + '/' + f.id + '.txt')
             }
 
@@ -171,7 +170,7 @@ class StandardizeLayers extends SlaveProcess {
 
     }
 
-    boolean shp2Analysis(String shp, String dstFilepath, Double resolution, String gdalPath) {
+    static boolean shp2Analysis(String shp, String dstFilepath, Double resolution, String gdalPath) {
         try {
 
             (new File(dstFilepath)).getParentFile().mkdirs()
@@ -189,7 +188,7 @@ class StandardizeLayers extends SlaveProcess {
                     (double) ((int) (re.getMinY() / resolution.doubleValue())) * resolution.doubleValue() + resolution.doubleValue()
             double maxy = (re.getMaxY() == (double) ((int) (re.getMaxY() / resolution.doubleValue())) * resolution.doubleValue()) ?
                     re.getMaxY() :
-                    (double) ((int) (re.getMaxY() / resolution.doubleValue())) * resolution.doubleValue();
+                    (double) ((int) (re.getMaxY() / resolution.doubleValue())) * resolution.doubleValue()
 
             if (maxx < minx + 2.0 * resolution.doubleValue()) {
                 maxx = minx + 2.0 * resolution.doubleValue()
@@ -253,11 +252,11 @@ class StandardizeLayers extends SlaveProcess {
                 fw = new FileWriter(path + ".txt")
                 int e1 = 1
 
-                List objects = getObjects(fid)
+                List<SpatialObjects> objects = getObjects(fid)
 
                 WKTReader r = new WKTReader()
-                objects.each {
-                    Geometry geom = r.read(getAreaWkt(it))
+                objects.each { SpatialObjects it ->
+                    Geometry geom = r.read(getWkt(it.pid))
                     featureBuilder.add(geom)
                     featureBuilder.add(Integer.valueOf(e1))
                     SimpleFeature f = featureBuilder.buildFeature(String.valueOf(e1))
@@ -277,7 +276,7 @@ class StandardizeLayers extends SlaveProcess {
                 try {
                     featureStore.addFeatures(c)
                     transaction.commit()
-                } catch (err) {
+                } catch (ignored) {
                     transaction.rollback()
                 } finally {
                     transaction.close()

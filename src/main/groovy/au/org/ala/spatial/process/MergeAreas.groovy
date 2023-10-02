@@ -15,22 +15,23 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.dto.AreaInput
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.io.WKTReader
 
 @Slf4j
+//@CompileStatic
 class MergeAreas extends SlaveProcess {
 
     void start() {
 
         //area to restrict
-        def areas = JSON.parse(task.input.area.toString())
-        def name = task.input.name
-        def description = task.input.description
-        def type = task.input.type
+        List<AreaInput> areas = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
+        String name = getInput('name')
+        String description = getInput('description')
+        String type = getInput('type')
 
         new File(getTaskPath()).mkdirs()
 
@@ -55,14 +56,14 @@ class MergeAreas extends SlaveProcess {
                         geometry = intersection
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
 
             }
         }
 
         if (geometry != null) {
             String wkt = geometry.toString()
-            FileUtils.writeStringToFile(new File(getTaskPath() + "area.wkt"), wkt)
+            new File(getTaskPath() + "area.wkt").write(wkt)
 
             def values = [file: "area.wkt", name: name ?: "Merged area", description: description ?: "Created by Merge Areas Tool (" + type + ')']
             addOutput("areas", (values as JSON).toString(), true)

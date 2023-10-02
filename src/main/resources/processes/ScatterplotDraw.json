@@ -5,7 +5,7 @@
   "version": 1.0,
   "private": {
     "unique": false,
-    "public": true
+    "isPublic": true
   },
   "input": {
     "scatterplotId": {
@@ -48,7 +48,7 @@
       "description": "Pixel coordinates of a box drawn on the scatterplot image (minx miny maxx maxy).",
       "type": "string",
       "constraints": {
-        "mandatory": false
+        "optional": true
       }
     }
   },

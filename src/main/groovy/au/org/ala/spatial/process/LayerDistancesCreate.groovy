@@ -15,41 +15,41 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.layers.tabulation.TabulationGenerator
+import au.org.ala.spatial.Fields
+import au.org.ala.spatial.Layers
+import au.org.ala.spatial.TabulationGeneratorService
 import grails.converters.JSON
 import groovy.util.logging.Slf4j
-import org.apache.commons.io.FileUtils
 
+//@CompileStatic
 @Slf4j
 class LayerDistancesCreate extends SlaveProcess {
 
     void start() {
         Set all = [] as Set
-        List fields = getFields()
-        List layers = getLayers()
+        List<Fields> fields = getFields()
+        List<Layers> layers = getLayers()
 
-        String[] grdResolutions = task.input.grdResolutions
+        Double[] grdResolutions = spatialConfig.grdResolutions
 
         //get highest resolution standardized layer files
         //only want valid fields
-        task.message = 'find suitable layers'
-        List validFields = []
-        fields.each { field ->
+        taskWrapper.task.message = 'find suitable layers'
+        List<Fields> validFields = []
+        fields.each { Fields field ->
             for (int i = grdResolutions.length - 1; i >= 0; i--) {
                 def path = '/standard_layer/' + grdResolutions[i] + '/' + field.id + '.grd'
-                def peek = slaveService.peekFile(path)
-                if (peek.exists) {
+                if (new File(path).exists()) {
                     validFields.add(field)
-                    break;
+                    break
                 }
             }
         }
 
-        task.message = 'getting layer distances'
-        slaveService.getFile('/public/layerDistances.properties')
-
-        File f = new File(grailsApplication.config.data.dir.toString() + '/public/layerDistances.properties')
-        if (!f.exists()) FileUtils.writeStringToFile(f, '')
+        File f = new File(spatialConfig.data.dir.toString() + '/public/layerDistances.properties')
+        if (!f.exists()) {
+            f.write('')
+        }
         Map distances = [:]
         FileReader fr = new FileReader(f)
         for (String line : fr.readLines()) {
@@ -59,20 +59,20 @@ class LayerDistancesCreate extends SlaveProcess {
             }
         }
 
-        task.message = 'identify missing layer distances'
-        validFields.eachWithIndex { field1, idx1 ->
-            Map layer1 = findLayer(layers, field1.spid.toString())
+        taskWrapper.task.message = 'identify missing layer distances'
+        validFields.eachWithIndex { Fields field1, Integer idx1 ->
+            Layers layer1 = findLayer(layers, field1.spid.toString())
             if (layer1 != null && layer1.type == 'Environmental') {
                 validFields.eachWithIndex { field2, idx2 ->
-                    Map layer2 = findLayer(layers, field2.spid.toString())
+                    Layers layer2 = findLayer(layers, field2.spid.toString())
                     if (layer2 != null && idx1 < idx2 && layer2.type == 'Environmental') {
                         try {
                             String domain1 = layer1.domain
                             String domain2 = layer2.domain
 
-                            if (TabulationGenerator.isSameDomain(TabulationGenerator.parseDomain(domain1),
-                                    TabulationGenerator.parseDomain(domain2))) {
-                                String key = (field1.id.compareTo(field2.id) < 0) ? field1.id + ' ' + field2.id : field2.id + ' ' + field1.id
+                            if (TabulationGeneratorService.isSameDomain(TabulationGeneratorService.parseDomain(domain1),
+                                    TabulationGeneratorService.parseDomain(domain2))) {
+                                String key = field1.id < field2.id ? field1.id + ' ' + field2.id : field2.id + ' ' + field1.id
 
                                 if (!distances.containsKey(key)) {
                                     all.add(key)
@@ -86,8 +86,8 @@ class LayerDistancesCreate extends SlaveProcess {
             }
         }
 
-        task.message = distances.size() + ' missing distances'
-        task.message = 'preparing LayerDistancesCreateOne tasks'
+        taskWrapper.task.message = distances.size() + ' missing distances'
+        taskWrapper.task.message = 'preparing LayerDistancesCreateOne tasks'
 
         Map count = [:]
         for (int i = 0; i < all.size(); i++) {
@@ -117,7 +117,7 @@ class LayerDistancesCreate extends SlaveProcess {
             //recalculate all
             int batchSize = 18
 
-            int half = batchSize / 2
+            int half = (int)(batchSize / 2)
             for (int i = 0; i < lIds.size(); i += half) {
                 for (int j = i + half; j < lIds.size(); j += half) {
 
@@ -142,11 +142,11 @@ class LayerDistancesCreate extends SlaveProcess {
         }
     }
 
-    Map findLayer(List layers, String id) {
-        Map found = null
-        layers.each { layer ->
-            if (String.valueOf(layer.id).equals(id)) {
-                found = layer as Map
+    static Layers findLayer(List<Layers> layers, String id) {
+        Layers found = null
+        layers.each { Layers layer ->
+            if (String.valueOf(layer.id) == id) {
+                found = layer
             }
         }
         return found

@@ -2,10 +2,11 @@
 <html>
 <head>
     <title>Tabulations</title>
-    <meta name="breadcrumbs" content="${g.createLink( controller: 'main', action: 'index')}, Spatial Service"/>
+    <meta name="breadcrumbs" content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service"/>
     <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
+
 <body class="fluid">
 <div class="container-fluid">
 
@@ -13,11 +14,11 @@
 
     <table class="table table-bordered">
         <thead>
-            <th>Contextual layer 1</th>
-            <th>Contextual layer 2</th>
-            <th>Area</th>
-            <th>Species</th>
-            <th>Occurrences</th>
+        <th>Contextual layer 1</th>
+        <th>Contextual layer 2</th>
+        <th>Area</th>
+        <th>Species</th>
+        <th>Occurrences</th>
         </thead>
         <g:each var="item" in="${tabulations}">
             <tr>

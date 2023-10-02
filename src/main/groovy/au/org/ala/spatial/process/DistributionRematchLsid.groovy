@@ -16,46 +16,47 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.Distributions
+import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.StringRequestEntity
-import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.StringUtils
-import org.json.simple.JSONObject
+import org.grails.web.json.JSONObject
 
+//@CompileStatic
 @Slf4j
 class DistributionRematchLsid extends SlaveProcess {
 
     void start() {
-        String updateAll = 'true'.equalsIgnoreCase(String.valueOf(task.input.updateAll))
+        String updateAll = 'true'.equalsIgnoreCase(String.valueOf(getInput('updateAll')))
 
-        List distributions = getDistributions()
+        List<Distributions> distributions = getDistributions()
         distributions.addAll(getChecklists())
 
         //unique by spcode
         int sqlCount = 0
         int count = 0
-        distributions.each { d ->
+        distributions.each { Distributions d ->
             count = count + 1
-            task.message = "Processing ${count} of ${distributions.size()}"
+            taskWrapper.task.message = "Processing ${count} of ${distributions.size()}"
 
             String spcode = d.spcode
 
-            String familyLsid = d.optString('family_lsid', '')
-            String genusLsid = d.optString('genus_lsid', '')
-            String taxonLsid = d.optString('lsid', '')
+            String familyLsid = d.family_lsid?:''
+            String genusLsid = d.genus_lsid?:''
+            String taxonLsid = d.lsid?:''
 
             if (updateAll || (familyLsid + genusLsid + taxonLsid).isEmpty()) {
 
                 String sql = ''
-                def match = processRecord([family: d.optString('family', ''), genus: d.optString('genus_name', ''), scientificName: d.optString('scientific', '')])
+                def match = processRecord([family: d.family?:'', genus: d.genus_name?:'', scientificName: d.scientific?:''])
 
-                if (!familyLsid.equals(match.familyID)) {
+                if (familyLsid != match.familyID) {
                     sql += "UPDATE distributions SET family_lsid = '" + match.familyID + "' WHERE spcode='" + spcode + "';"
                 }
-                if (!genusLsid.equals(match.genusID)) {
+                if (genusLsid != match.genusID) {
                     sql += "UPDATE distributions SET genus_lsid = '" + match.genusID + "' WHERE spcode='" + spcode + "';"
                 }
-                if (!taxonLsid.equals(match.taxonConceptID)) {
+                if (taxonLsid != match.taxonConceptID) {
                     sql += "UPDATE distributions SET lsid = '" + match.taxonConceptID + "' WHERE spcode='" + spcode + "';"
                 }
 
@@ -66,23 +67,25 @@ class DistributionRematchLsid extends SlaveProcess {
                         sqlCount++
                         sqlFile = new File(getTaskPath() + 'objects' + sqlCount + '.sql')
                         addOutput('sql', 'objects' + sqlCount + '.sql')
+                        sqlFile.write(sql)
                     }
-                    FileUtils.writeStringToFile(sqlFile, sql, append)
+                    if (append) {
+                        sqlFile.append(sql)
+                    }
                 }
             }
         }
     }
 
-    public def processRecord(def data) {
-        def input = net.sf.json.JSONObject.fromObject(data)
-        StringRequestEntity requestEntity = new StringRequestEntity(input.toString(), "application/json",  "UTF-8")
+    def processRecord(Map<String, String> data) {
+        def input = data as JSON
+        StringRequestEntity requestEntity = new StringRequestEntity(input.toString(), 'application/json', 'UTF-8')
 
-        def url = task.input.namematchingUrl
+        def url = getInput('namematchingUrl')
 
-        def headers = [accept: "application/json"]
-        def response = Util.urlResponse("POST", url + "/api/searchByClassification", null, headers, requestEntity)
+        def response = Util.urlResponse("POST", url + "/api/searchByClassification" as String, null, null, requestEntity)
 
-        def output = net.sf.json.JSONObject.fromObject(response.text)
+        JSONObject output = JSON.parse(response.text as String) as JSONObject
 
         def taxonConceptID = ''
         def familyID = ''
@@ -90,15 +93,15 @@ class DistributionRematchLsid extends SlaveProcess {
         def ignoreTaxonMatch = false
 
         def value = output.get('taxonConceptID')
-        if (StringUtils.isNotBlank(value)) {
+        if (value) {
             taxonConceptID = value
         }
         value = output.get('familyID')
-        if (StringUtils.isNotBlank(value)) {
+        if (value) {
             familyID = value
         }
         value = output.get('genusID')
-        if (StringUtils.isNotBlank(value)) {
+        if (value) {
             genusID = value
         }
 

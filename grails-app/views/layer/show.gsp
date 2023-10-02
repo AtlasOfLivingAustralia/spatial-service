@@ -8,7 +8,7 @@
 </head>
 
 <body>
-
+<g:set var="spatialConfig" bean="spatialConfig"/>
 <h1>${layer.displayname}</h1>
 
 <div>
@@ -94,7 +94,7 @@
             <td>Classification</td>
             <td>
                 <g:if test="${layer.classification1 || layer.classification2}">
-                ${layer.classification1 + ' => ' + layer.classification2}
+                    ${layer.classification1 + ' => ' + layer.classification2}
                 </g:if>
             </td>
         </tr>
@@ -125,7 +125,8 @@
         <g:if test="${downloadAllowed}">
             <tr>
                 <td>Download</td>
-                <td><a class="btn btn-default" href="${grailsApplication.config.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname)}.zip">
+                <td><a class="btn btn-default"
+                       href="${spatialConfig.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname)}.zip">
                     <i class="glyphicon glyphicon-download"></i>
                     ${layer.displayname}.zip</a>
                 </td>
@@ -133,7 +134,7 @@
         </g:if>
         <tr>
             <td>View in spatial portal</td>
-            <td><a href="${grailsApplication.config.spatialHubUrl}?layers=${layer.name}">Click to view this layer</a></td>
+            <td><a href="${spatialConfig.spatialHubUrl}?layers=${layer.name}">Click to view this layer</a></td>
         </tr>
         </tbody>
     </table>
