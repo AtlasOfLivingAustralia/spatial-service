@@ -1,6 +1,7 @@
 package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.ProcessSpecification
+import au.org.ala.spatial.dto.SearchObject
 import au.org.ala.spatial.dto.Tabulation
 import au.org.ala.userdetails.UserDetailsClient
 import au.org.ala.ws.security.ApiKeyClient
@@ -43,11 +44,16 @@ class BootStrap {
         // domain marshalling
         [Fields, Distributions, InputParameter, Layers, Log, OutputParameter, SpatialObjects, Task].each {
             JSON.registerObjectMarshaller(it) {
-                it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null } + [id: it.id]
+                def id = it.id ?: it.pid ?: it.spcode
+                def result = it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null }
+                if (id) {
+                    result += [id: id]
+                }
+                result
             }
         }
 
-        [Tabulation].each {
+        [Tabulation, SearchObject].each {
             JSON.registerObjectMarshaller(it) {
                 it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null }
             }

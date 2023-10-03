@@ -83,7 +83,7 @@ class AreaReport extends SlaveProcess {
 
         List<AreaInput> area = JSON.parse(getInput('area').toString()).collect { it as AreaInput } as List<AreaInput>
 
-        SpeciesInput allSpecies = [bs: spatialConfig.biocacheServiceUrl.toString(), q: "*:*"]
+        SpeciesInput allSpecies = [bs: spatialConfig.biocacheServiceUrl.toString(), q: ["*:*"]]
         def speciesQuery = getSpeciesArea(allSpecies, area)
 
         //qid for this area
@@ -100,10 +100,14 @@ class AreaReport extends SlaveProcess {
             }
         }
 
-        def ignoredPages = JSON.parse(getInput('ignoredPages'))
+        def ignoredPages = []
+        if (getInput('ignoredPages')) {
+            ignoredPages = getInput('ignoredPages').split(',')
+        }
 
         //test for pid
-        new AreaReportPDF(spatialConfig.geoserver.url.toString(),
+        new AreaReportPDF(distributionsService, journalMapService, tabulationService, spatialObjectsService,
+                spatialConfig.geoserver.url.toString(),
                 spatialConfig.openstreetmap.url.toString(),
                 spatialConfig.biocacheServiceUrl.toString(),
                 spatialConfig.biocacheUrl.toString(),
@@ -123,7 +127,7 @@ class AreaReport extends SlaveProcess {
         File pdf = new File(getTaskPath() + "areaReport" + taskWrapper.id + ".pdf")
         def outputStream = FileUtils.openOutputStream(pdf)
 
-        InputStream stream = new URL(spatialConfig.grails.serverURL + '/slave/areaReport/' + taskWrapper.id).openStream()
+        InputStream stream = new URL(spatialConfig.grails.serverURL + '/process/areaReport/' + taskWrapper.task.id).openStream()
         outputStream << stream
         outputStream.flush()
         outputStream.close()

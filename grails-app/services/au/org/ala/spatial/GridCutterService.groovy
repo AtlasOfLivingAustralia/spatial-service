@@ -19,6 +19,7 @@ import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
 import au.org.ala.spatial.dto.LayerFilter
+import au.org.ala.spatial.util.SpatialUtils
 
 /**
  * Class for region cutting test data grids
@@ -230,7 +231,7 @@ class GridCutterService {
         }
     }
 
-     boolean existsLayerPath(String resolution, IntersectionFile f, String layer, boolean do_not_lower_resolution) {
+    boolean existsLayerPath(String resolution, IntersectionFile f, String layer, boolean do_not_lower_resolution) {
         String field = f != null ? f.getFieldId() : null
 
         return existsLayerPath(resolution, layer, do_not_lower_resolution, field)
@@ -255,7 +256,7 @@ class GridCutterService {
         }
     }
 
-     void applyMask(String dir, String resolution, double[][] extents, int w, int h, byte[][] mask, String layer, String fieldId) {
+    void applyMask(String dir, String resolution, double[][] extents, int w, int h, byte[][] mask, String layer, String fieldId) {
         //layer output container
         double[] dfiltered = new double[w * h]
 
@@ -286,7 +287,7 @@ class GridCutterService {
                 res, res, h, w)
     }
 
-     void writeExtents(String filename, double[][] extents, int w, int h) {
+    void writeExtents(String filename, double[][] extents, int w, int h) {
         if (filename != null) {
             FileWriter fw = null
             try {
@@ -325,7 +326,7 @@ class GridCutterService {
      * @param region area for the mask as SimpleRegion.
      * @return
      */
-      byte[][] getRegionMask(double res, double[][] extents, int w, int h, SimpleRegion region) {
+    byte[][] getRegionMask(double res, double[][] extents, int w, int h, SimpleRegion region) {
         byte[][] mask = new byte[h][w]
 
         //can also use region.getOverlapGridCells_EPSG900913
@@ -345,7 +346,7 @@ class GridCutterService {
         return mask
     }
 
-      byte[][] getMask(double res, double[][] extents, int w, int h) {
+    byte[][] getMask(double res, double[][] extents, int w, int h) {
         byte[][] mask = new byte[h][w]
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
@@ -367,7 +368,7 @@ class GridCutterService {
      * @param envelopes
      * @return mask as byte[][]
      */
-      byte[][] getEnvelopeMaskAndUpdateExtents(String resolution, double res, double[][] extents, int h, int w, LayerFilter[] envelopes, String[] layerTypes, String[] fieldIds) {
+    byte[][] getEnvelopeMaskAndUpdateExtents(String resolution, double res, double[][] extents, int h, int w, LayerFilter[] envelopes, String[] layerTypes, String[] fieldIds) {
         byte[][] mask = new byte[h][w]
 
         double[][] points = new double[h * w][2]
@@ -379,7 +380,7 @@ class GridCutterService {
             }
         }
 
-          GeometryFactory gf = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 4326)
+        GeometryFactory gf = new GeometryFactory(new PrecisionModel(PrecisionModel.FLOATING), 4326)
 
         for (int k = 0; k < envelopes.length; k++) {
             LayerFilter lf = envelopes[k]
@@ -412,7 +413,7 @@ class GridCutterService {
 
                 for (int i = 0; i < d.length; i++) {
                     if (lf.isValid(d[i])) {
-                        mask[(int)(i / w)][i % w]++
+                        mask[(int) (i / w)][i % w]++
                     }
                 }
             }
@@ -452,6 +453,11 @@ class GridCutterService {
             }
         }
 
+        //test for failure. this can happen when the grid resolution in use produces no mask
+        if (maxx < minx) {
+            return null
+        }
+
         //reduce the size of the mask
         int nw = maxx - minx + 1
         int nh = maxy - miny + 1
@@ -483,7 +489,7 @@ class GridCutterService {
      * @param envelopes envelope specification as LayerFilter[].
      * @return area in sq km as double.
      */
-     double makeEnvelope(String filename, String resolution, Fields[] fields, IntersectionFile[] intersectionFiles, LayerFilter[] envelopes, long maxGridCount) {
+    double makeEnvelope(String filename, String resolution, Fields[] fields, IntersectionFile[] intersectionFiles, LayerFilter[] envelopes, long maxGridCount) {
         String[] layerTypes = new String[envelopes.length]
         String[] fieldIds = new String[envelopes.length]
         for (int i = 0; i < envelopes.length; i++) {
@@ -496,7 +502,7 @@ class GridCutterService {
         return makeEnvelope(filename, resolution, envelopes, maxGridCount, layerTypes, fieldIds)
     }
 
-     double makeEnvelope(String filename, String resolution, LayerFilter[] envelopes, long maxGridCount, String[] layerTypes, String[] fieldIds) {
+    double makeEnvelope(String filename, String resolution, LayerFilter[] envelopes, long maxGridCount, String[] layerTypes, String[] fieldIds) throws Exception {
 
         //get extents for all layers
         double[][] extents = getLayerExtents(resolution, envelopes[0].getLayername(), layerTypes[0], fieldIds[0])
@@ -528,6 +534,10 @@ class GridCutterService {
         h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
         w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res)
         mask = getEnvelopeMaskAndUpdateExtents(resolution, res, extents, h, w, envelopes, layerTypes, fieldIds)
+        if (mask == null) {
+            // failed to produce a grid at the given resolution
+            throw new Exception("No envelope exists at the requested resolution.")
+        }
         h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
         if (((int) Math.ceil((extents[1][1] + res - extents[0][1]) / res)) == h) {
             extents[1][1] += res
@@ -567,7 +577,7 @@ class GridCutterService {
         return areaSqKm
     }
 
-      double[][] getLayerFilterExtents(LayerFilter[] envelopes, String[] layerTypes) {
+    double[][] getLayerFilterExtents(LayerFilter[] envelopes, String[] layerTypes) {
 
         double[][] extents = [[-180, -90], [180, 90]]
         for (int i = 0; i < envelopes.length; i++) {
@@ -598,7 +608,7 @@ class GridCutterService {
      * @param filter layer filter as LayerFilter[].
      * @return true iff valid filter.
      */
-     boolean isValidLayerFilter(String resolution, Fields[] fields, IntersectionFile[] intersectionFiles, LayerFilter[] filter) {
+    boolean isValidLayerFilter(String resolution, Fields[] fields, IntersectionFile[] intersectionFiles, LayerFilter[] filter) {
         String[] layerTypes = new String[filter.length]
         String[] fieldIds = new String[filter.length]
         for (int i = 0; i < filter.length; i++) {
@@ -611,7 +621,7 @@ class GridCutterService {
         return isValidLayerFilter(resolution, filter, layerTypes, fieldIds)
     }
 
-     boolean isValidLayerFilter(String resolution, LayerFilter[] filter, String[] layerTypes, String[] fieldIds) {
+    boolean isValidLayerFilter(String resolution, LayerFilter[] filter, String[] layerTypes, String[] fieldIds) {
         for (int i = 0; i < filter.length; i++) {
             //it is not valid if the layer itself does not exist.
             // so if there is not grid file available to GridCutter
@@ -632,7 +642,7 @@ class GridCutterService {
      * @param resolution target resolution as String
      * @return resolution that will be used
      */
-      String confirmResolution(String[] layers, String resolution, String[] fieldIds) {
+    String confirmResolution(String[] layers, String resolution, String[] fieldIds) {
         try {
             TreeMap<Double, String> resolutions = new TreeMap<Double, String>()
             for (int i = 0; i < layers.length; i++) {

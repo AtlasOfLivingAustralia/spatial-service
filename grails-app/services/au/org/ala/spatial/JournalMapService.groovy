@@ -30,7 +30,7 @@ class JournalMapService {
     List<JSONObject> journalMapArticles = new ArrayList<JSONObject>()
     List<Loc> journalMapLocations = new ArrayList<Loc>()
 
-    def search(String wkt, int max, int offset) {
+    Map search(String wkt, int max, int offset) {
         init()
 
         WKTReader2 reader2 = new WKTReader2()

@@ -14,28 +14,28 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <fileNamePattern>${LOG_DIR}/${appName}.%i.log.gz</fileNamePattern>
             <minIndex>1</minIndex>
-            <maxIndex>4</maxIndex>
+            <maxIndex>20</maxIndex>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>10MB</maxFileSize>
+            <maxFileSize>100MB</maxFileSize>
         </triggeringPolicy>
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%15.15t] %-40.40logger{39} : %m%n%wex</pattern>
         </encoder>
     </appender>
 
-    <logger name="org.hibernate.orm.deprecation" level="OFF"/>
+    <logger name="org.hibernate.orm.deprecation" level="ERROR"/>
+    <logger name="org.grails.config.NavigableMap" level="ERROR"/>
 
     <logger name="org.springframework" level="ERROR"/>
     <logger name="grails.app" level="ERROR"/>
     <logger name="grails.plugins.mail" level="ERROR"/>
-    <logger name="org.hibernate" level="ERROR"/>
     <logger name="org.quartz" level="ERROR"/>
     <logger name="asset.pipeline" level="ERROR"/>
 
     <logger name="au.org.ala.cas" level="WARN"/>
 
-    <logger name="au.org.ala.spatial" level="INFO"/>
+    <logger name="au.org.ala.spatial" level="WARN"/>
     <logger name="org.liquibase" level="INFO"/>
     <logger name="liquibase" level="INFO"/>
 

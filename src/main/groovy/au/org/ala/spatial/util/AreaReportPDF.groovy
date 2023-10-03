@@ -1,6 +1,14 @@
 package au.org.ala.spatial.util
 
+import au.org.ala.spatial.Distributions
+import au.org.ala.spatial.DistributionsService
+import au.org.ala.spatial.JournalMapService
+import au.org.ala.spatial.SpatialObjects
+import au.org.ala.spatial.SpatialObjectsService
+import au.org.ala.spatial.TabulationService
+import au.org.ala.spatial.Task
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.dto.Tabulation
 import com.opencsv.CSVReader
 import grails.converters.JSON
 import groovy.transform.CompileStatic
@@ -46,8 +54,6 @@ class AreaReportPDF {
     Map<String, String> distributions = new HashMap()
     Map<String, Integer> distributionCounts = new HashMap()
 
-    JSONArray documents
-
     String journalMapUrl
 
     String journalMapData
@@ -62,7 +68,17 @@ class AreaReportPDF {
 
     List<String> excludedPages
 
-    AreaReportPDF(String geoserverUrl, String openstreetmapUrl, String biocacheServiceUrl, String biocacheHubUrl,
+    DistributionsService distributionsService
+
+    JournalMapService journalMapService
+
+    TabulationService tabulationService
+
+    SpatialObjectsService spatialObjectsService
+
+    AreaReportPDF(DistributionsService distributionsService, JournalMapService journalMapService,
+            TabulationService tabulationService, SpatialObjectsService spatialObjectsService,
+                  String geoserverUrl, String openstreetmapUrl, String biocacheServiceUrl, String biocacheHubUrl,
                   String bieUrl, String listsUrl,
                   String q, String pid,
                   String areaName,
@@ -70,6 +86,10 @@ class AreaReportPDF {
                   Map progress, String serverUrl,
                   String outputPath,
                   String journalMapUrl, String dataDir, String configPath, List<String> excludedPages) {
+        this.distributionsService = distributionsService
+        this.journalMapService = journalMapService
+        this.tabulationService = tabulationService
+        this.spatialObjectsService = spatialObjectsService
         this.dataDir = dataDir
         this.journalMapUrl = journalMapUrl
         this.name = areaName
@@ -250,7 +270,7 @@ class AreaReportPDF {
         if (overrideFile.exists()) {
             overrideFile.text
         } else {
-            ResourceBundle.getResource("/areareport/" + pageFile).text
+            this.class.getResourceAsStream("/areareport/" + pageFile).text
         }
     }
 
@@ -360,26 +380,26 @@ class AreaReportPDF {
                 value = text
             } else if (type == "table") {
                 // table types: species, tabulation, journalmap, distributions, checklists
-                String table = (String) item.get("table")
-                String tableValue = (String) item.get("value")
-                String endemic = String.valueOf(item.get("endemic"))
+                String table = (String) item.getOrDefault("table", null)
+                String tableValue = (String) item.getOrDefault("value", null)
+                String endemic = String.valueOf(item.getOrDefault("endemic", null))
 
                 value = makeTable(fq, table, title, tableValue, endemic, conservationLists, area, kingdom, dataResourceId)
             } else if (type == "map") {
-                Double buffer = (Double) item.get("buffer")
+                Double buffer = (Double) item.getOrDefault("buffer", null)
 
-                String layer = (String) item.get("layer")
-                String layerStyle = (String) item.get("layerStyle")
+                String layer = (String) item.getOrDefault("layer", null)
+                String layerStyle = (String) item.getOrDefault("layerStyle", null)
 
-                Integer red = (Integer) item.get("red")
-                Integer green = (Integer) item.get("green")
-                Integer blue = (Integer) item.get("blue")
-                Boolean grid = (Boolean) item.get("grid")
-                Boolean uncertainty = (Boolean) item.get("uncertainty")
-                Integer size = (Integer) item.get("size")
-                Double opacity = (Double) item.get("opacity")
+                Integer red = (Integer) item.getOrDefault("red", null)
+                Integer green = (Integer) item.getOrDefault("green", null)
+                Integer blue = (Integer) item.getOrDefault("blue", null)
+                Boolean grid = (Boolean) item.getOrDefault("grid", null)
+                Boolean uncertainty = (Boolean) item.getOrDefault("uncertainty", null)
+                Integer size = (Integer) item.getOrDefault("size", null)
+                Double opacity = (Double) item.getOrDefault("opacity", null)
 
-                String legendUrl = (String) item.get("legendUrl")
+                String legendUrl = (String) item.getOrDefault("legendUrl", null)
 
                 String map = makeMap(fq, buffer, layer, layerStyle, red, green, blue, opacity, grid, size, uncertainty)
                 if (legendUrl != null) {
@@ -705,41 +725,35 @@ class AreaReportPDF {
     String mlArea
 
     private String getTabulationCSV(String fieldId)  {
-
-        String url = serverUrl + "/tabulation/" + fieldId + "/" + pid + ".json"
-
         try {
-            JSONArray tabulation = (JSONArray) JSON.parse(Util.getUrl(url))
+            List<Tabulation> list = tabulationService.getTabulationSingle(fieldId, pid)
 
             //make csv
             StringBuilder sb = new StringBuilder()
 
             double totalArea = 0
-            for (Object o : tabulation) {
-                JSONObject jo = (JSONObject) o
-                totalArea += Double.parseDouble(jo.get("area").toString()) / 1000000.0
+            list.each {
+                totalArea += it.area / 1000000.0
             }
 
             if (totalArea > 0) {
                 int row = 0
-                for (Object o : tabulation) {
+                list.each {
                     if (row > 0) {
                         sb.append("\n")
                     }
 
-                    JSONObject jo = (JSONObject) o
-                    sb.append(StringEscapeUtils.escapeCsv(jo.get("name1").toString()))
+                    sb.append(StringEscapeUtils.escapeCsv(it.name1))
                     sb.append(",")
-                    sb.append(String.format("%.2f", Double.parseDouble(jo.get("area").toString()) / 1000000.0))
+                    sb.append(String.format("%.2f", it.area / 1000000.0))
                     sb.append(",")
-                    sb.append(String.format("%.2f", Double.parseDouble(jo.get("area").toString()) / 1000000.0 / totalArea * 100))
+                    sb.append(String.format("%.2f", it.area / 1000000.0 / totalArea * 100))
                     row++
                 }
             }
 
             return sb.toString()
         } catch (Exception e) {
-            System.out.println(url)
             e.printStackTrace()
             throw e
         }
@@ -794,7 +808,9 @@ class AreaReportPDF {
 
             List<String> familyLsids = getFamilyLsids(kingdom)
 
-            JSONArray data = Util.getDistributionsOrChecklistsData(type == "checklists" ? "checklists" : "distributions", pid, null, null, serverUrl, familyLsids, dataResourceId)
+            List<Distributions> data = distributionsService.queryDistributions([wkt: pid, dataResourceUid: dataResourceId, familyLsid: familyLsids], true,
+                    type == "expertdistributions" ? Distributions.EXPERT_DISTRIBUTION : Distributions.SPECIES_CHECKLIST)
+
             if (dataResourceId != null) {
                 csv = Util.getDistributionsOrChecklistsRollup(data)
             } else {
@@ -823,7 +839,7 @@ class AreaReportPDF {
 
     private String getWkt(String wkt) {
         if (StringUtils.isNumeric(wkt)) {
-            return (String) Util.urlResponse("GET", serverUrl + "/shape/wkt/" + wkt).get("text")
+            return spatialObjectsService.getObjectsGeometryById(wkt, 'wkt')
         } else {
             return wkt
         }
@@ -833,11 +849,13 @@ class AreaReportPDF {
         if (journalMapData == null) {
             if (isCancelled()) return
             StringBuilder sb = new StringBuilder()
-            JSONArray list = (JSONArray) ((JSONObject) JSON.parse(Util.getUrl(serverUrl + "/journalMap/search?pid=" + pid))).get("article")
+            def list = journalMapService.search(getWkt(pid), 10000, 0).article
             //empty header
             sb.append("\n")
 
+            int size = 0
             for (JSONObject jo : (list as List<JSONObject>)) {
+                size++
                 if (sb.length() > 0) {
                     sb.append("\n")
                 }
@@ -886,12 +904,10 @@ class AreaReportPDF {
                 }
             }
 
-            documents = list
-
-            if (documents.size() <= 0) {
+            if (size <= 0) {
                 journalMapCount = "0"
             } else {
-                journalMapCount = String.valueOf(documents.size())
+                journalMapCount = String.valueOf(size)
             }
 
             journalMapData = sb.toString()
@@ -972,16 +988,30 @@ class AreaReportPDF {
         return addWMSLayer(layerName + "&opacity=" + opacity)
     }
 
+    private static SpatialObjects getEnvelope(String envelopeTaskId) {
+        def task = Task.get(envelopeTaskId)
+
+        for (def output : task.output) {
+            if ("area" == output.name) {
+                return JSON.parse(output.file) as SpatialObjects
+            }
+        }
+        return null
+    }
+
     String addObjectByPid(String pid) {
-
-
-        JSONObject obj = (JSONObject) JSON.parse(Util.getUrl(serverUrl + "/object/" + pid))
+        SpatialObjects obj
+        if (pid.startsWith("ENVELOPE")) {
+            obj = getEnvelope(pid.replace("ENVELOPE", ""))
+        } else {
+            obj = spatialObjectsService.getObjectByPid(pid)
+        }
 
         //add feature to the map as a new layer
         String mapLayer = ""
         try {
             if (pid.startsWith("ENVELOPE")) {
-                mapLayer = addWMSLayer(obj.get("wmsurl").toString() + "&opacity=0.6")
+                mapLayer = addWMSLayer(obj.wmsurl + "&opacity=0.6")
             } else {
                 String filter = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><StyledLayerDescriptor version=\"1.0.0\" xmlns=\"http://www.opengis.net/sld\">"+"<NamedLayer><Name>ALA:Objects</Name>"+"<UserStyle><FeatureTypeStyle><Rule><Title>Polygon</Title><PolygonSymbolizer>"+"<Fill>"+"<GraphicFill><Graphic><Mark><WellKnownName>shape://times</WellKnownName><Stroke>"+"<CssParameter name=\"stroke\">#FF0000</CssParameter>"+"<CssParameter name=\"stroke-width\">1</CssParameter>"+"</Stroke></Mark></Graphic></GraphicFill>"+"</Fill>"+"<Stroke>"+"<CssParameter name=\"stroke\">#FF0000</CssParameter>"+"<CssParameter name=\"stroke-width\">4</CssParameter>"+"</Stroke>"+"</PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>"
                 mapLayer = addWMSLayer("Objects&viewparams=s:" + pid + "&sld_body=" + filter + "&opacity=0.6")
@@ -989,8 +1019,8 @@ class AreaReportPDF {
         } catch (Exception ignored) {
         }
         //if the layer is a point create a radius
-        bbox = obj.get("bbox").toString()
-        area_km = obj.get("area_km").toString()
+        bbox = obj.bbox.toString()
+        area_km = obj.area_km.toString()
 
         return mapLayer
     }

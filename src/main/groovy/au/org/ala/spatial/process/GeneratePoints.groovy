@@ -38,7 +38,7 @@ class GeneratePoints extends SlaveProcess {
         String sandboxBiocacheServiceUrl = getInput('sandboxBiocacheServiceUrl')
         String sandboxHubUrl = getInput('sandboxHubUrl')
 
-        double[] bbox = area[0].bbox as double[]
+        double[] bbox = JSON.parse(area[0].bbox) as double[]
 
         String wkt = getAreaWkt(area[0])
         SimpleRegion simpleArea = SimpleShapeFile.parseWKT(wkt)
@@ -79,15 +79,14 @@ class GeneratePoints extends SlaveProcess {
                 new NameValuePair("alaId", userId.toString())
         ]
 
-        taskWrapper.task.history.put(System.currentTimeMillis() as String, "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}")
+        taskWrapper.task.history.put(System.currentTimeMillis() as String, "Uploading points to sandbox: ${sandboxBiocacheServiceUrl}".toString())
 
-        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/",
-                nameValuePairs)
+        def response = Util.urlResponse("POST", "${sandboxBiocacheServiceUrl}/upload/post", nameValuePairs)
 
         if (response) {
             if (response.statusCode != 200) {
                 taskWrapper.task.message = "Error"
-                taskWrapper.task.history.put(System.currentTimeMillis() as String, response.statusCode + " : " + response.text)
+                taskWrapper.task.history.put(System.currentTimeMillis() as String, response.statusCode + " : " + response.text?.toString()?.substring(0,200))
                 return
             }
             def dataResourceUid = ((JSONObject) JSON.parse(response.text as String)).uid

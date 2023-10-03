@@ -68,10 +68,11 @@ class Classification extends SlaveProcess {
         cmd = [spatialConfig.gdal.dir + "/gdal_translate", "-of", "GTiff", "-a_srs", "EPSG:4326",
                "-co", "COMPRESS=DEFLATE", "-co", "TILED=YES", "-co", "BIGTIFF=IF_SAFER",
                getTaskPath() + "aloc.asc", getTaskPath() + taskWrapper.task.id + "_aloc.tif"]
-        taskWrapper.task.message = "asc > tif"
+        taskLog("asc > tif")
         runCmd(cmd, true, spatialConfig.aloc.timeout)
 
         if (makeShapefile.toString().toBoolean()) {
+            taskLog("generating shapefile")
             SpatialUtils.grid2shp(getTaskPath() + "aloc", null)
             addOutput("files", "aloc.shp", true)
             addOutput("files", "aloc.shx", true)

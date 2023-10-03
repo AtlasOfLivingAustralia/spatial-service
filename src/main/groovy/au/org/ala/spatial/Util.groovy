@@ -180,6 +180,7 @@ class Util {
 
                     }
 
+                    // PUT set the body with the RequestEntity
                     if (entity) {
                         ((EntityEnclosingMethod) call).setRequestEntity(entity)
                     }
@@ -246,42 +247,26 @@ class Util {
         s.wkt = json.wkt
     }
 
-    static String[] getDistributionsOrChecklists(JSONArray ja) {
+    static String[] getDistributionsOrChecklists(List<Distributions> ja) {
         if (ja == null || ja.isEmpty()) {
             return new String[0]
         } else {
             String[] lines = new String[ja.size() + 1]
             lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM"
-            for (int i = 0; i < ja.size(); i++) {
-                JSONObject jo = (JSONObject) ja.get(i)
-                String spcode = jo.containsKey('spcode') ? jo.get('spcode').toString() : ""
-                String scientific = jo.containsKey('scientific') ? jo.get('scientific').toString() : ""
-                String auth = jo.containsKey('authority') ? jo.get('authority').toString() : ""
-                String common = jo.containsKey('common_nam') ? jo.get('common_nam').toString() : ""
-                String family = jo.containsKey('family') ? jo.get('family').toString() : ""
-                String genus = jo.containsKey('genus') ? jo.get('genus').toString() : ""
-                String name = jo.containsKey('specific_n') ? jo.get('specific_n').toString() : ""
-                String min = jo.containsKey('min_depth') ? jo.get('min_depth').toString() : ""
-                String max = jo.containsKey('max_depth') ? jo.get('max_depth').toString() : ""
+            ja.eachWithIndex {Distributions it, int idx ->
+                String intersectArea = String.format("%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000.0)
 
-                String md = jo.containsKey('metadata_u') ? jo.get('metadata_u').toString() : ""
-                String lsid = jo.containsKey('lsid') ? jo.get('lsid').toString() : ""
-                String areaName = jo.containsKey('area_name') ? jo.get('area_name').toString() : ""
-                String areaKm = jo.containsKey('area_km') ? jo.get('area_km').toString() : ""
-                String dataResourceUid = jo.containsKey('data_resouce_uid') ? jo.get('data_resouce_uid').toString() : ""
-                String intersectArea = jo.containsKey('intersectArea') ? Math.round(jo.get('intersectArea') as Double / 1000000.0) as String : ""
-
-                lines[i + 1] = spcode + "," + wrap(scientific) + "," + wrap(auth) + "," + wrap(common) + "," +
-                        wrap(family) + "," + wrap(genus) + "," + wrap(name) + "," + min + "," + max +
-                        "," + wrap(md) + "," + wrap(lsid) + "," + wrap(areaName) + "," + wrap(areaKm) +
-                        "," + wrap(dataResourceUid) + "," + wrap(intersectArea)
+                lines[idx + 1] = it.spcode + "," + wrap(it.scientific) + "," + wrap(it.authority_) + "," + wrap(it.common_nam) + "," +
+                    wrap(it.family) + "," + wrap(it.genus_name) + "," + wrap(it.specific_n) + "," + (it.min_depth ?: "") + "," + (it.max_depth ?: "") +
+                        "," + wrap(it.metadata_u) + "," + wrap(it.lsid) + "," + wrap(it.area_name) + "," + String.format("%.2f", (it.area_km ?: 0) as Double) +
+                        "," + wrap(it.data_resource_uid) + "," + intersectArea
             }
 
             return lines
         }
     }
 
-    static String[] getDistributionsOrChecklistsRollup(JSONArray ja) {
+    static String[] getDistributionsOrChecklistsRollup(List<Distributions> ja) {
         if (ja == null || ja.isEmpty()) {
             return new String[0]
         } else {
@@ -289,20 +274,15 @@ class Util {
             Map<String, List<String>> maybe = new HashMap()
             Set<String> keys = new HashSet()
 
-            for (int i = 0; i < ja.size(); i++) {
-                JSONObject jo = (JSONObject) ja.get(i)
-                String scientific = jo.containsKey('scientific') ? jo.get('scientific').toString() : ""
-                String common = jo.containsKey('common_nam') ? jo.get('common_nam').toString() : ""
-                String lsid = jo.containsKey('lsid') ? jo.get('lsid').toString() : ""
-                String family = jo.containsKey('family') ? jo.get('family').toString() : ""
+            ja.each {Distributions it ->
+                String key = wrap(it.family) + "," + wrap(it.scientific) + "," + wrap(it.common_nam) + "," + wrap(it.lsid)
 
-                String areaName = jo.containsKey('area_name') ? jo.get('area_name').toString() : ""
-                String intersectArea = jo.containsKey('intersectArea') ? String.valueOf(Math.round(jo.get('intersectArea') as Double / 1000000)) : ""
+                String areaName = it.area_name
+                String intersectArea = String.format("%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000)
 
-                String key = wrap(family) + "," + wrap(scientific) + "," + wrap(common) + "," + wrap(lsid)
+                if (areaName.toLowerCase().contains("likely")) likely.put(key, intersectArea)
+                if (areaName.toLowerCase().contains("maybe")) maybe.put(key, intersectArea)
 
-                if (areaName.contains("likely")) likely.put(key, intersectArea)
-                if (areaName.contains("maybe")) maybe.put(key, intersectArea)
                 keys.add(key)
             }
 
@@ -316,53 +296,6 @@ class Util {
 
             return lines
         }
-    }
-
-    static JSONArray getDistributionsOrChecklistsData(String type, String wkt, String lsids, String geomIdx, String layersUrl, List<String> familyLsids, String dataResourceId) throws Exception {
-        StringBuilder sbProcessUrl = new StringBuilder()
-        sbProcessUrl.append("/").append(type)
-
-        List<NameValuePair> params = new ArrayList<>()
-
-        if (wkt != null) {
-            params.add(new NameValuePair('wkt', wkt))
-        }
-        if (lsids != null) {
-            params.add(new NameValuePair('lsids', lsids))
-        }
-        if (geomIdx != null) {
-            params.add(new NameValuePair('geom_idx', geomIdx))
-        }
-        if (dataResourceId != null) {
-            params.add(new NameValuePair('dataResourceUid', dataResourceId))
-        }
-        if (familyLsids != null) {
-            for (String f : familyLsids) {
-                params.add(new NameValuePair('familyLsid', f))
-            }
-        }
-
-        String response = postUrl(layersUrl + sbProcessUrl.toString(), new NameValuePair[0],
-                [Accept: "application/json, text/javascript, */*"])
-
-        if (response) {
-            try {
-                JSONArray ja = (JSONArray) JSON.parse(response)
-
-                for (Object o : ja) {
-                    JSONObject jo = (JSONObject) o
-                    if (familyLsids != null && !familyLsids.contains(jo.getOrDefault("family_lsid", null))) {
-                        jo.remove(o)
-                    }
-                }
-
-                return ja
-            } catch (Exception e) {
-                log.error(layersUrl + sbProcessUrl.toString() + " failed", e)
-            }
-        }
-
-        return null
     }
 
     static String wrap(String s) {
@@ -440,16 +373,16 @@ class Util {
         exitValue
     }
 
-    static JSONObject getChecklistsBySpcode(String spcode, JSONArray list) {
+    static Distributions getChecklistsBySpcode(String spcode, List<Distributions> list) {
         for (int i = 0; i < list.size(); i++) {
-            if (spcode == String.valueOf(list[i]["spcode"])) {
-                return (JSONObject) list.get(i)
+            if (spcode == String.valueOf(list[i].spcode)) {
+                return list.get(i)
             }
         }
         return null
     }
 
-    static String[] getAreaChecklists(String[] records, JSONArray list) {
+    static String[] getAreaChecklists(String[] records, List<Distributions> list) {
         String[] lines = null
         try {
             if (records != null && records.length > 0) {

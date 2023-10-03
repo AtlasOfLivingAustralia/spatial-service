@@ -10,6 +10,8 @@
 <body>
 <g:set var="spatialConfig" bean="spatialConfig"/>
 <h1>${layer.displayname}</h1>
+<br/>
+<h2>${field?.name}</h2>
 
 <div>
     <table class="table table-bordered table-condensed">
@@ -117,7 +119,7 @@
         <tr>
             <td>More information</td>
             <td>
-                <g:each var="u" in="${layer.metadatapath.split('\\|')}">
+                <g:each var="u" in="${layer.metadatapath?.split('\\|')}">
                     <a href="${u}">${u}</a><br/>
                 </g:each>
             </td>

@@ -89,36 +89,20 @@ class SearchService {
             })
         }
 
-        List<SearchObject> result = addGridClassesToSearch(searchObjects, criteria, limit, includeFieldIds, excludeFieldIds)
-
-        // insert fields that are missing due to `offset` > 0
-        if (additionalFields && result) {
-            // additionalFields.fields each contain a concatenated fid and field name instead of the default JSON Array
-            List<String> fields = []
-            for (SearchObject af : additionalFields) {
-                fields.add(af.fields)
-            }
-
-            for (SearchObject so : result) {
-                so.setFields((fields as JSON) as String)
-            }
-        }
+        List<SearchObject> result = addGridClassesToSearch(searchObjects, additionalFields, criteria, limit, includeFieldIds, excludeFieldIds)
 
         return result
     }
 
 
-    private List<SearchObject> addGridClassesToSearch(List<SearchObject> search, String criteria, int limit, List<String> includeFieldIds, List<String> excludeFieldIds) {
+    private List<SearchObject> addGridClassesToSearch(List<SearchObject> search, List<String> additionalFields, String criteria, int limit, List<String> includeFieldIds, List<String> excludeFieldIds) {
         criteria = criteria.toLowerCase()
         int vacantCount = limit - search.size()
 
         // insert matched fields into the fieldSet
         Set fieldSet = new HashSet()
-        List<String> initialFields = null
-        if (search.size() > 0 && search.get(0).getFields() != null) {
-            initialFields = JSON.parse(search.get(0).getFields()) as List<String>
-        } else {
-            initialFields = []
+        if (additionalFields) {
+            fieldSet.addAll(additionalFields)
         }
 
         if (vacantCount > 0) {
@@ -149,8 +133,7 @@ class SearchService {
 
             // update fields value in result list
             if (!fieldSet.isEmpty()) {
-                initialFields.addAll(fieldSet)
-                String fieldSetString = initialFields.toString()
+                String fieldSetString = (fieldSet as JSON).toString()
                 for (SearchObject so : search) {
                     so.setFields(fieldSetString)
                 }

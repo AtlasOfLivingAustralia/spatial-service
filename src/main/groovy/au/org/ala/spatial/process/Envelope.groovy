@@ -26,9 +26,9 @@ import org.apache.commons.io.FileUtils
 class Envelope extends SlaveProcess {
 
     void start() {
-        List<String> envelope = JSON.parse(getInput('envelope').toString()) as List<String>
+        List<String> envelope = getInput('envelope').toString().split(',') as List<String>
         String resolution = getInput('resolution')
-        String makeShapefile = Boolean.parseBoolean(getInput('shp') as String)
+        //String makeShapefile = Boolean.parseBoolean(getInput('shp') as String)
         String geoserverUrl = getInput('geoserverUrl')
 
         LayerFilter[] filter = new LayerFilter[envelope.size()]
@@ -64,45 +64,89 @@ class Envelope extends SlaveProcess {
             fieldIds[i] = filter[i].layername
         }
         taskLog("Making envelope.....")
-        if ((areaSqKm = gridCutterService.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
+        try {
+            if ((areaSqKm = gridCutterService.makeEnvelope(grid.getPath(), resolution, filter, Integer.MAX_VALUE, types, fieldIds)) >= 0) {
 
-            SpatialUtils.divaToAsc(dir.getPath() + File.separator + filename)
-            SpatialUtils.toGeotiff(spatialConfig.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
-            SpatialUtils.save4326prj(dir.getPath() + File.separator + filename + ".prj")
+                SpatialUtils.divaToAsc(dir.getPath() + File.separator + filename)
+                SpatialUtils.toGeotiff(spatialConfig.gdal.dir, dir.getPath() + File.separator + filename + ".asc")
+                SpatialUtils.save4326prj(dir.getPath() + File.separator + filename + ".prj")
 
-            addOutput("files", filename + ".asc")
-            addOutput("files", filename + ".prj")
-            addOutput("files", filename + ".tif")
+                writeEnvelopeStyle(dir.getPath() + File.separator + filename + ".sld")
 
-            Grid g = new Grid(grid.getPath())
+                addOutput("files", filename + ".asc")
+                addOutput("files", filename + ".prj")
+                addOutput("files", filename + ".tif", true)
+                addOutput("files", filename + ".sld")
 
-            def values = [name       : "Environmental envelope",
-                          description: "",
-                          q          : envelope,
-                          bbox       : "POLYGON((" + g.xmin + " " + g.ymin + "," + g.xmax + " " + g.ymin + "," +
-                                  g.xmax + " " + g.ymax + "," + g.xmin + " " + g.ymax + "," +
-                                  g.xmin + " " + g.ymin + "))",
-                          area_km    : areaSqKm,
-                          type       : "envelope",
-                          file       : filename + ".tif",
-                          id         : taskWrapper.id,
-                          wmsurl     : geoserverUrl + "/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + taskWrapper.id]
-            addOutput("envelopes", (values as JSON).toString(), true)
+                Grid g = new Grid(grid.getPath())
 
-            String metadata = "<html><body>Extents: " + g.xmin + "," + g.ymin + "," + g.xmax + "," + g.ymax + "<br>Area (sq km): " + areaSqKm + "</body></html>"
-            new File(dir.getPath() + File.separator + "envelope.html").write(metadata)
-            addOutput("metadata", "envelope.html")
+                def values = [name       : "Environmental envelope",
+                              description: "",
+                              q          : envelope,
+                              bbox       : "POLYGON((" + g.xmin + " " + g.ymin + "," + g.xmax + " " + g.ymin + "," +
+                                      g.xmax + " " + g.ymax + "," + g.xmin + " " + g.ymax + "," +
+                                      g.xmin + " " + g.ymin + "))",
+                              area_km    : areaSqKm,
+                              type       : "envelope",
+                              file       : filename + ".tif",
+                              id         : taskWrapper.id,
+                              wmsurl     : geoserverUrl + "/wms?service=WMS&version=1.1.0&request=GetMap&layers=ALA:" + taskWrapper.id]
+                addOutput("envelopes", (values as JSON).toString())
 
-            SpatialUtils.grid2shp(grid.getPath(), [1])
+                String metadata = "<html><body>Extents: " + g.xmin + "," + g.ymin + "," + g.xmax + "," + g.ymax + "<br>Area (sq km): " + areaSqKm + "</body></html>"
+                new File(dir.getPath() + File.separator + "envelope.html").write(metadata)
+                addOutput("metadata", "envelope.html", true)
 
-            for (String ext : [".shp", ".shx", ".fix", ".dbf"]) {
-                File newFile = new File(dir.getPath() + File.separator + "envelope" + ext)
-                if (newFile.exists()) newFile.delete()
-                FileUtils.moveFile(new File(grid.getPath() + ext), newFile)
-                addOutput("files", "envelope" + ext)
+                SpatialUtils.grid2shp(grid.getPath(), [1])
+
+                for (String ext : [".shp", ".shx", ".fix", ".dbf"]) {
+                    File newFile = new File(dir.getPath() + File.separator + "envelope" + ext)
+                    if (newFile.exists()) newFile.delete()
+                    FileUtils.moveFile(new File(grid.getPath() + ext), newFile)
+                    addOutput("files", "envelope" + ext, true)
+                }
+            } else {
+                taskLog("ERROR: Area of the envelope is 0 sq km.")
             }
-        } else {
-            taskLog("ERROR: Area of the envelope is 0 sq km.")
+        } catch (err) {
+            taskLog("ERROR: Area of the envelope is 0 sq km for the resolution " + resolution + " decimal degrees.")
         }
+    }
+
+    def writeEnvelopeStyle(String file) {
+        new File(file).write("<?xml version=\"1.0\" encoding=\"UTF-8\"?><sld:StyledLayerDescriptor xmlns=\"http://www.opengis.net/sld\" xmlns:sld=\"http://www.opengis.net/sld\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" version=\"1.0.0\">\n" +
+                "  <sld:NamedLayer>\n" +
+                "    <sld:Name>raster</sld:Name>\n" +
+                "    <sld:UserStyle>\n" +
+                "      <sld:Name>raster</sld:Name>\n" +
+                "      <sld:Title>A very simple color map</sld:Title>\n" +
+                "      <sld:Abstract>A very basic color map</sld:Abstract>\n" +
+                "      <sld:FeatureTypeStyle>\n" +
+                "        <sld:Name>name</sld:Name>\n" +
+                "        <sld:FeatureTypeName>Feature</sld:FeatureTypeName>\n" +
+                "        <sld:Rule>\n" +
+                "          <sld:RasterSymbolizer>\n" +
+                "            <sld:Geometry>\n" +
+                "              <ogc:PropertyName>geom</ogc:PropertyName>\n" +
+                "            </sld:Geometry>\n" +
+                "            <sld:ChannelSelection>\n" +
+                "              <sld:GrayChannel>\n" +
+                "                <sld:SourceChannelName>1</sld:SourceChannelName>\n" +
+                "                <sld:ContrastEnhancement>\n" +
+                "                  <sld:GammaValue>1.0</sld:GammaValue>\n" +
+                "                </sld:ContrastEnhancement>\n" +
+                "              </sld:GrayChannel>\n" +
+                "            </sld:ChannelSelection>\n" +
+                "            <sld:ColorMap>\n" +
+                "              <sld:ColorMapEntry color=\"#ffffff\" opacity=\"0\" quantity=\"0\"/>\n" +
+                "              <sld:ColorMapEntry color=\"#ff0000\" quantity=\"1\" label=\"presence\"/>\n" +
+                "            </sld:ColorMap>\n" +
+                "            <sld:ContrastEnhancement/>\n" +
+                "          </sld:RasterSymbolizer>\n" +
+                "        </sld:Rule>\n" +
+                "      </sld:FeatureTypeStyle>\n" +
+                "    </sld:UserStyle>\n" +
+                "  </sld:NamedLayer>\n" +
+                "</sld:StyledLayerDescriptor>")
     }
 }

@@ -137,7 +137,7 @@ grdResolutions:
 biocacheServiceUrl: 'https://biocache.ala.org.au/ws'
 biocacheUrl: 'https://biocache.ala.org.au'
 openstreetmap:
-  url: 'https://tile.openstreetmap.org'
+  url: 'https://spatial.ala.org.au/osm'
 
 slave.enable: true
 service.enable: true
@@ -245,11 +245,11 @@ security:
     userdetails:
       serviceUrl: https://auth-test.ala.org.au/userdetails/
 
-webservice:
-  jwt: true
-  jwt-scopes: openid users/read
-  client-id: second-client-id-for-machine-to-machine-comms
-  client-secret: second-client-secret-for-machine-to-machine-comms
+#webservice:
+#  jwt: true
+#  jwt-scopes: openid users/read
+#  client-id: second-client-id-for-machine-to-machine-comms
+#  client-secret: second-client-secret-for-machine-to-machine-comms
 
 auth.admin_role: "ROLE_ADMIN"
 app.http.header.userId: "X-ALA-userId"
@@ -389,7 +389,6 @@ environments:
       server:
         use-forward-headers: true
       serverURL: http://localhost:8081/ws
-
     server:
       port: 8081
       servlet:
@@ -403,7 +402,8 @@ environments:
       url: "http://devt.ala.org.au:8081/ws"
     geoserver:
       # use localhost to play nice with locally running geoserver docker instance.
-      url: 'http://localhost:8079/geoserver'
+      #url: 'http://localhost:8079/geoserver'
+      url: 'https://spatial-test.ala.org.au/geoserver'
       username: 'admin'
       password: 'geoserver'
     dataSource:
