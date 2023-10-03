@@ -41,6 +41,7 @@ class TasksService {
     LayerIntersectService layerIntersectService
     LayerService layerService
     DistributionsService distributionsService
+    JournalMapService journalMapService
     TasksService tasksService
     TaskWrapper taskWrapper
     TabulationService tabulationService

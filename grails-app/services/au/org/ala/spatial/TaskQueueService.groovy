@@ -168,6 +168,8 @@ class TaskQueueService {
                     operator.fieldService = tasksService.fieldService
                     operator.layerService = tasksService.layerService
                     operator.distributionsService = tasksService.distributionsService
+                    operator.journalMapService = tasksService.journalMapService
+                    operator.tabulationService = tasksService.tabulationService
                     operator.tasksService = tasksService.tasksService
                     operator.tabulationService = tasksService.tabulationService
                     operator.spatialObjectsService = tasksService.spatialObjectsService

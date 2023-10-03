@@ -225,8 +225,7 @@ bootRun {
             '-Dspring.output.ansi.enabled=always',
             '-noverify',
             '-XX:TieredStopAtLevel=1',
-            '-Xmx2048m',
-            '-Dlogging.config=grails-app/conf/logback-dev.xml')
+            '-Xmx2048m')
     sourceResources sourceSets.main
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)

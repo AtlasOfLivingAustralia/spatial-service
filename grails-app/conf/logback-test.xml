@@ -14,12 +14,11 @@
         </encoder>
     </appender>
 
-    <logger name="org.hibernate.orm.deprecation" level="OFF"/>
+    <logger name="org.hibernate.orm.deprecation" level="ERROR"/>
 
     <logger name="org.springframework" level="ERROR"/>
     <logger name="grails.app" level="ERROR"/>
     <logger name="grails.plugins.mail" level="ERROR"/>
-    <logger name="org.hibernate" level="ERROR"/>
     <logger name="org.quartz" level="ERROR"/>
     <logger name="asset.pipeline" level="ERROR"/>
 
@@ -31,7 +30,7 @@
     <logger name="org.liquibase" level="INFO"/>
     <logger name="liquibase" level="INFO"/>
 
-    <root level="warn">
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

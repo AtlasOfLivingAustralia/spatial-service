@@ -80,7 +80,7 @@ class SpeciesByLayer extends SlaveProcess {
         } else {
             // indexed only - environmental fields
 
-            String url = species.bs + "/chart?x=" + fields[0] + "&q=" + species.q
+            String url = species.bs + "/chart?x=" + fields[0] + "&q=" + joinSpeciesQ(species.q)
             String response = Util.getUrl(url)
 
 

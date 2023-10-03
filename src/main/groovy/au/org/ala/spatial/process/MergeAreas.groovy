@@ -66,7 +66,8 @@ class MergeAreas extends SlaveProcess {
             new File(getTaskPath() + "area.wkt").write(wkt)
 
             def values = [file: "area.wkt", name: name ?: "Merged area", description: description ?: "Created by Merge Areas Tool (" + type + ')']
-            addOutput("areas", (values as JSON).toString(), true)
+            addOutput("areas", (values as JSON).toString())
+            addOutput("files", "area.wkt", true)
         }
     }
 

@@ -73,7 +73,7 @@ class MapImage extends SlaveProcess {
             File pdf = new File(getTaskPath() + taskWrapper.id + ".pdf")
             def outputStream = FileUtils.openOutputStream(pdf)
 
-            InputStream stream = new URL(spatialConfig.grails.serverURL + '/slave/exportMap/' + taskWrapper.id).openStream()
+            InputStream stream = new URL(spatialConfig.grails.serverURL + '/process/exportMap/' + taskWrapper.id).openStream()
             outputStream << stream
             outputStream.flush()
             outputStream.close()

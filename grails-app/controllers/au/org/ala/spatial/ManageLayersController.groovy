@@ -211,6 +211,11 @@ class ManageLayersController {
         redirect(action: 'layer', id: id, params: [message: 'Upload successful'])
     }
 
+    @RequireAdmin
+    def defaultGeoserverStyles() {
+        manageLayersService.fixLayerStyles()
+    }
+
     /**
      * importLayer with values from layers-service/layer/{id} url
      * if /data/spatial-data/uploads/{id}/{id}.* does not exist an attempt will be made to copy it from

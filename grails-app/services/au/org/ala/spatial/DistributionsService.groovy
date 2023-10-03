@@ -133,15 +133,17 @@ class DistributionsService {
                         map.put(entry, rs.getObject(i+1))
                     }
                 }
+
+                Distributions d = new Distributions(map)
                 if (intersectArea) {
-                    map += [intersectArea: rs.getObject('intersectArea')]
+                    d.intersectArea = rs.getObject('intersectarea')
                 }
 
                 if (!noWkt) {
-                    map += [geometry: rs.getObject('the_geom')]
+                    d.geometry = rs.getObject('the_geom')
                 }
 
-                result.add(new Distributions(map))
+                result.add(d)
             }
         })
 

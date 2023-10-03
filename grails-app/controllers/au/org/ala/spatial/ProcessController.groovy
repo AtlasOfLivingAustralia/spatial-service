@@ -118,7 +118,7 @@ class ProcessController {
             css = new File(spatialConfig.data.dir + '/private/' + id + '/areaReport.css').text
         }
 
-        renderPdf(template: "/slave/areaReport", model: [pages: pages, id: id, css: css, footer: pageFooter], filename: "areaReport" + id + ".pdf", stream: isStream)
+        renderPdf(template: "areaReport", model: [pages: pages, id: id, css: css, footer: pageFooter], filename: "areaReport" + id + ".pdf", stream: isStream)
     }
 
     private def cleanPageText(text, i, file) {

@@ -48,7 +48,7 @@ class LayerController {
     def list() {
         def fields = fieldService.getFieldsByCriteria('')
         def layers = layerService.getLayers().collect { layer ->
-            def map = layer as Map
+            def map = layer.properties as Map
             fields.each { field ->
                 if (field.spid == layer.id.toString()) {
                     if (map?.last_update) {
@@ -527,12 +527,19 @@ class LayerController {
 
             try {
                 l = layerService.getLayerById(Integer.parseInt(id))
-            } catch (err) {
-                log.error 'failed to get layer: ' + id, err
+            } catch (ignored) {
             }
         }
 
-        render(view: "show.gsp", model: [layer: l as Map, downloadAllowed: downloadAllowed(l)])
+        Fields f = null
+        if (l == null) {
+            f = fieldService.getFieldById(id, false)
+            if (f) {
+                l = layerService.getLayerById(Integer.parseInt(f.spid))
+            }
+        }
+
+        render(view: "show.gsp", model: [layer: l, field: f, downloadAllowed: downloadAllowed(l)])
     }
 
     @Operation(

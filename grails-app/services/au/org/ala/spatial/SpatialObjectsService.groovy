@@ -95,15 +95,6 @@ class SpatialObjectsService {
     def Holders
     def dataSource
 
-    List<SpatialObjects> getObjects() {
-        log.debug("Getting a list of all objects")
-        String sql = "select o.pid as pid, o.name as name, o.desc as description, o.fid as fid, " +
-                "f.name as fieldname, o.area_km as area_km from objects o, fields f where o.fid = f.id"
-        List<SpatialObjects> objects = SpatialObjects.executeQuery(sql)
-        updateObjectWms(objects)
-        return objects
-    }
-
     List<SpatialObjects> getObjectsById(String id, int start, int pageSize, String filter) {
         if (filter == null) filter = ""
         String upperCaseFilter = filter.toUpperCase()
@@ -474,7 +465,6 @@ class SpatialObjectsService {
                         if (gc != null) {
                             SpatialObjects o = new SpatialObjects()
                             o.setPid(pid)
-                            o.setId(pid)
                             o.setName(gc.getName())
                             o.setFid(f.getFieldId())
                             o.setFieldname(f.getFieldName())
@@ -517,7 +507,14 @@ class SpatialObjectsService {
         String sql = "select o.pid, o.name, o.desc as description, o.fid as fid, f.name as fieldname, " +
                 "o.bbox, o.area_km from search_objects_by_geometry_intersect(?, " +
                 "ST_GeomFromText('POINT(" + lng + " " + lat + ")', 4326)) o, fields f WHERE o.fid = f.id"
-        List<SpatialObjects> l = SpatialObjects.executeQuery(sql, fid) as List<SpatialObjects>
+        List<SpatialObjects> l = new ArrayList()
+
+        groovySql.query(sql, [fid], {
+            while (it.next()) {
+                l.add(spatialObjectsFromResult(it))
+            }
+        })
+
         updateObjectWms(l)
         if (l == null || l.isEmpty()) {
             // get grid classes intersection
@@ -808,10 +805,16 @@ class SpatialObjectsService {
         return (rowsAffected)
     }
 
-    private static boolean shapePidIsForUploadedShape(int pid) {
-        String sql = "SELECT * from uploaded_objects_metadata WHERE pid = ?"
-        List<Map<String, Object>> queryResult = SpatialObjects.executeQuery(sql, Integer.toString(pid))
-        return !(queryResult == null || queryResult.isEmpty())
+    private boolean shapePidIsForUploadedShape(int pid) {
+        String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = '" + pid + "'"
+        groovySql.query(sql, {
+            while (it.next()) {
+                if (it.getObject(1) > 0) {
+                    return true
+                }
+            }
+        })
+        return false
     }
 
     List<SpatialObjects> getObjectsWithinRadius(String fid, double latitude, double longitude, double radiusKm) {

@@ -79,7 +79,7 @@ class TasksController {
      *
      * @return
      */
-    @RequireAdmin
+//    @RequireAdmin
     def index() {
         if (!params?.max) params.max = 10
         if (!params?.sort) params.sort = "created"
@@ -116,7 +116,7 @@ class TasksController {
         [taskInstanceList: list, taskInstanceCount: tasksService.transientTasks.size()]
     }
 
-    @RequireAdmin
+//    @RequireAdmin
     def all() {
         if (!params?.max) params.max = 10
         if (!params?.sort) params.sort = "created"
@@ -401,7 +401,7 @@ class TasksController {
      * @return
      */
     @Transactional(readOnly = false)
-    @RequireAdmin
+//    @RequireAdmin
     reRun(Long id) {
         def t = Task.get(id)
         t.history.each { it -> it }

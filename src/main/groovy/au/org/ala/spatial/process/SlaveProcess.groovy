@@ -16,6 +16,7 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.FileService
+import au.org.ala.spatial.JournalMapService
 import au.org.ala.spatial.LayerIntersectService
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.ProcessSpecification
@@ -65,6 +66,7 @@ class SlaveProcess {
     FieldService fieldService
     LayerService layerService
     DistributionsService distributionsService
+    JournalMapService journalMapService
     TasksService tasksService
     TaskWrapper taskWrapper
     TabulationService tabulationService
@@ -152,7 +154,7 @@ class SlaveProcess {
                     try {
                         zf.close()
                     } catch (err) {
-                        log.error('Error in reading uploaded file: '+ err.printStackTrace())
+                        log.error('Error in reading uploaded file: ' + err.printStackTrace())
                     }
                 }
             } catch (err) {
@@ -186,17 +188,17 @@ class SlaveProcess {
 
     String getInput(String name) {
         // config inputs
-        if ('bieUrl' == name) return  spatialConfig.bie.baseURL
-        if ('biocacheServiceUrl' == name) return  spatialConfig.biocacheServiceUrl
-        if ('phyloServiceUrl' == name) return  spatialConfig.phyloServiceUrl
-        if ('sandboxHubUrl' == name) return  spatialConfig.sandboxHubUrl
+        if ('bieUrl' == name) return spatialConfig.bie.baseURL
+        if ('biocacheServiceUrl' == name) return spatialConfig.biocacheServiceUrl
+        if ('phyloServiceUrl' == name) return spatialConfig.phyloServiceUrl
+        if ('sandboxHubUrl' == name) return spatialConfig.sandboxHubUrl
         if ('sandboxBiocacheServiceUrl' == name) return spatialConfig.sandboxBiocacheServiceUrl
         if ('namematchingUrl' == name) return spatialConfig.namematching.url
         if ('geoserverUrl' == name) return spatialConfig.geoserver.url
         if ('userId' == name) return taskWrapper.task.userId
 
         // task inputs
-        taskWrapper.task.input.find { it.name == name}?.value as String
+        taskWrapper.task.input.find { it.name == name }?.value as String
     }
 
     // define inputs and outputs
@@ -361,8 +363,8 @@ class SlaveProcess {
         }
     }
 
-    void addOutput(String name, String value,Boolean  download = false) {
-        OutputParameter op = taskWrapper.task.output.find {OutputParameter it -> it.name == name }
+    void addOutput(String name, String value, Boolean download = false) {
+        OutputParameter op = taskWrapper.task.output.find { OutputParameter it -> it.name == name }
         if (!op) {
             op = new OutputParameter([name: name, file: ([] as JSON).toString()])
             taskWrapper.task.output.add(op)
@@ -385,8 +387,20 @@ class SlaveProcess {
         }
     }
 
+    static def joinSpeciesQ(List list) {
+        if (!list) {
+            return ''
+        }
+
+        def str = list[0]
+        for (int i=1;i<list.size();i++) {
+            str += '&fq=' + list[i]
+        }
+        str
+    }
+
     static def facetOccurenceCount(String facet, SpeciesInput species) {
-        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=-1&fsort=index&q=" + species.q.join('&fq=')
+        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=-1&fsort=index&q=" + joinSpeciesQ(species.q)
         String response = Util.getUrl(url)
 
         ((JSONArray) JSON.parse(response))
@@ -400,7 +414,7 @@ class SlaveProcess {
         String fq = ''
         if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
 
-        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + species.q.join('&fq=') + fq
+        String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + joinSpeciesQ(species.q) + fq
         try {
             String response = Util.getUrl(url)
 
@@ -423,14 +437,14 @@ class SlaveProcess {
         String fq = ''
         if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
 
-        String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + species.q.join('&fq=') + fq
+        String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + joinSpeciesQ(species.q) + fq
         String response = Util.getUrl(url)
 
         JSON.parse(response).totalRecords as Integer
     }
 
-    String [] facet(String facet, SpeciesInput species) {
-        String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + species.q?.join('&fq=')
+    String[] facet(String facet, SpeciesInput species) {
+        String url = species.bs + "/occurrences/facets/download?facets=" + facet + "&lookup=false&count=false&q=" + joinSpeciesQ(species.q)
         String response = streamBytes(url, facet)
         if (response) {
             response.split("\n")
@@ -481,7 +495,7 @@ class SlaveProcess {
 
     List<File> downloadSpecies(SpeciesInput species) {
         OccurrenceData od = new OccurrenceData()
-        String[] s = od.getSpeciesData(species.q.join('&fq='), species.bs, null, null)
+        String[] s = od.getSpeciesData(joinSpeciesQ(species.q), species.bs, null, null)
 
         def newFiles = []
 
@@ -807,7 +821,7 @@ class SlaveProcess {
                 for (int i = 0; i < points.length; i++) {
                     for (int j = 0; j < srs.length; j++) {
                         if (srs[j].isWithin(points[i][0], points[i][1])) {
-                            mask[(int)(i / w)][i % w]++
+                            mask[(int) (i / w)][i % w]++
                             break
                         }
                     }
@@ -819,7 +833,7 @@ class SlaveProcess {
 
                 for (int i = 0; i < d.length; i++) {
                     if (lf.isValid(d[i])) {
-                        mask[(int)(i / w)][i % w]++
+                        mask[(int) (i / w)][i % w]++
                     }
                 }
             }
@@ -1066,7 +1080,7 @@ class SlaveProcess {
         try {
             String fq = ''
             if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
-            String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + species.q.join('&fq=') + fq
+            String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + joinSpeciesQ(species.q) + fq
             taskLog("Loading species ...")
             log.debug("Loading species from: " + url)
             speciesList = Util.getUrl(url)
@@ -1112,7 +1126,6 @@ class SlaveProcess {
 
         new RegionEnvelope(region, envelope)
     }
-
 
 
     /**
