@@ -27,6 +27,7 @@ import java.util.Map.Entry
 class SearchService {
 
     LayerService layerService
+    FieldService fieldService
     Sql groovySql
 
     List<SearchObject> findByCriteria(String criteria, int offset, int limit) {
@@ -38,15 +39,25 @@ class SearchService {
         String fieldFilter = ""
         List<String> fieldIds = null
         if (includeFieldIds != null && !includeFieldIds.isEmpty()) {
-            fieldFilter = ' and o.fid in ( :fieldIds ) '
-            fieldIds = includeFieldIds
+            def fields = fieldService.getFields(true).collect { it.id }
+            fieldIds = includeFieldIds.findAll{  fields.contains(it)}
+            if (fieldIds) {
+                fieldFilter = ' and o.fid in ( ' + "'" + fieldIds.join("','") + "'" + ' ) '
+            }
         } else if (excludeFieldIds != null && !excludeFieldIds.isEmpty()) {
-            fieldFilter = ' and o.fid not in ( :fieldIds ) '
-            fieldIds = excludeFieldIds
+            def fields = fieldService.getFields(true).collect { it.id }
+            fieldIds = excludeFieldIds.findAll{  fields.contains(it)}
+            if (fieldIds) {
+                fieldFilter = ' and o.fid not in ( ' + "'" + fieldIds.join("','") + "'" + ' ) '
+            }
         }
 
-        String sql = 'with o as (select o.pid as pid , o.name as name, o.desc as description, o.fid as fid, f.name as fieldname from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true ' + fieldFilter + ")" +
-                " select pid, name, description, fid, fieldname, (select json_agg(a.f) from (select distinct (fid || ' | ' || fieldname) as f from o) a) as fields, position(:nativeQ in lower(name)) as rank from o order by rank, name, pid limit :limit offset :offset"
+        String sql = 'with o as (select o.pid as pid , o.name as name, o.desc as description, o.fid as fid, ' +
+                'f.name as fieldname from objects o inner join fields f on o.fid = f.id ' +
+                'where o.name ilike :criteria and o.namesearch=true ' + fieldFilter + ")" +
+                " select pid, name, description, fid, fieldname, (select json_agg(a.f) " +
+                " from (select distinct (fid || ' | ' || fieldname) as f from o) a) as fields, " +
+                " position(:nativeQ in lower(name)) as rank from o order by rank, name, pid limit :limit offset :offset"
 
         List<SearchObject> searchObjects = new ArrayList()
 
@@ -55,11 +66,6 @@ class SearchService {
         parameters.put("criteria", "%" + criteria + "%")
         parameters.put("limit", limit)
         parameters.put("offset", offset)
-
-        if (!fieldFilter.isEmpty()) {
-            // use fieldFilter
-            parameters.put("fieldIds", fieldIds)
-        }
 
         groovySql.query(sql, parameters, { ResultSet rs ->
             while (rs.next()) {

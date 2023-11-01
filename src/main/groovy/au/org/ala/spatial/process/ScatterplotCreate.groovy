@@ -115,7 +115,7 @@ class ScatterplotCreate extends SlaveProcess {
         } catch (Exception e) {
             taskLog("Failed to generate the scatter plot!")
             log.error(e.message, e)
-            throw new Exception(e.message)
+            throw e
         }
     }
 }

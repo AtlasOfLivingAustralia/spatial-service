@@ -162,7 +162,6 @@ class LoginInterceptor {
         //Last try
         apikey = request.JSON?.api_key
 
-        log.debug("apiKey: " + apikey)
         apikey
     }
 }

@@ -11,6 +11,7 @@ import au.org.ala.spatial.legend.Legend
 import au.org.ala.spatial.legend.LegendObject
 import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.util.Occurrences
+import au.org.ala.spatial.util.SpatialUtils
 import com.opencsv.CSVReader
 import com.opencsv.CSVWriter
 import grails.converters.JSON

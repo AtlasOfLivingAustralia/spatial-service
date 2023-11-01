@@ -129,13 +129,13 @@ class GetValuesSpeciesThread extends Thread {
                         for (int k = currentRow - offset; k <= currentRow + offset; k++) {
                             if (j >= 0 && j < width && k >= 0 && k < height) {
                                 cellcount++
-                                thisCell | bsRows[k - row][j]
+                                thisCell = thisCell.or( bsRows[k - row][j])
                             } else if (worldwrap && j < 0 && k >= 0 && k < height) {
                                 cellcount++
-                                thisCell | bsRows[k - row][j + width]
+                                thisCell = thisCell.or(bsRows[k - row][j + width])
                             } else if (worldwrap && j >= width && k >= 0 && k < height) {
                                 cellcount++
-                                thisCell | bsRows[k - row][j - width]
+                                thisCell = thisCell.or(bsRows[k - row][j - width])
                             }
                         }
                     }

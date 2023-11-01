@@ -120,9 +120,9 @@ class GridCutterService {
         //mkdir in index location
         String newPath = null
         try {
-            //newPath = layerService.getAnalysisTmpLayerFilesPath() + File.separator + System.currentTimeMillis() + File.separator
+            newPath = spatialConfig.data.dir + File.separator + 'tmp' + File.separator + System.currentTimeMillis() + File.separator
             File directory = new File(newPath)
-            directory.mkdir()
+            directory.mkdirs()
         } catch (Exception e) {
             log.error(e.getMessage(), e)
         }

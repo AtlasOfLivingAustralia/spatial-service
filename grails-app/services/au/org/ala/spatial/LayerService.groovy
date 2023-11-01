@@ -17,6 +17,7 @@ package au.org.ala.spatial
 import au.org.ala.spatial.dto.GridClass
 import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.intersect.SimpleShapeFileCache
+import grails.plugin.cache.Cacheable
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
@@ -230,6 +231,7 @@ class LayerService {
         return classes
     }
 
+    @Cacheable('getIntersectionFiles')
     Map<String, IntersectionFile> getIntersectionFiles() {
         for (Fields f : fieldService.getFields()) {
             Layers layer = getLayerById(Integer.parseInt(f.getSpid()), false)
