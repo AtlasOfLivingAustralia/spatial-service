@@ -18,6 +18,7 @@ package au.org.ala.spatial
 
 import au.org.ala.spatial.util.MapCache
 import groovy.sql.Sql
+import org.locationtech.jts.io.WKTReader
 
 import java.sql.ResultSet
 
@@ -140,7 +141,15 @@ class DistributionsService {
                 }
 
                 if (!noWkt) {
-                    d.geometry = rs.getObject('the_geom')
+                    Object o = rs.getObject('the_geom')
+                    if (o instanceof net.postgis.jdbc.PGgeometry) {
+                        StringBuffer sb = new StringBuffer()
+                        o.geometry.outerWKT(sb)
+                        WKTReader wktReader = new WKTReader()
+                        d.geometry = wktReader.read(sb.toString())
+                    } else {
+                        d.geometry = o
+                    }
                 }
 
                 result.add(d)
