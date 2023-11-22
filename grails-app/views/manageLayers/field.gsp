@@ -96,10 +96,11 @@
                             <tbody>
                             <g:each in="${fields}" var="item">
                                 <tr>
-                                    <td>${item.id}</td>
-                                    <td>${item.name}</td>
-                                    <td>${item.desc}</td>
-                                    <td>${item.sname}</td>
+                                    <g:set var="disabledField" value="${item.enabled ? '' :'disabled'}" />
+                                    <td class="${disabledField}">${item.id} <g:if test="${disabledField}"> ( ${disabledField} ) </g:if></td>
+                                    <td class="${disabledField}">${item.name}</td>
+                                    <td class="${disabledField}">${item.desc}</td>
+                                    <td class="${disabledField}">${item.sname}</td>
                                     <td>
                                         <g:link controller="manageLayers" action="field"
                                                 class="btn btn-sm btn-default"
@@ -108,11 +109,13 @@
                                             edit</g:link>
                                     </td>
                                     <td>
-                                        <a onclick="return confirmDelete('${item.id}');"
-                                           class="btn btn-sm btn-default">
-                                            <i class="glyphicon glyphicon-remove"></i>
-                                            delete
-                                        </a>
+                                        <g:if test="${item.enabled}">
+                                            <a onclick="return confirmDelete('${item.id}','${item.name}' );">
+                                                <i class="glyphicon glyphicon-remove"></i> </a>
+                                        </g:if>
+                                        <g:else>
+                                            <i class="glyphicon glyphicon-ban-circle" data-toggle="tooltip" data-placement="top" title="You are not allowed to delete a disabled field."></i>
+                                        </g:else>
                                     </td>
                                 </tr>
                             </g:each>
@@ -184,131 +187,173 @@
                             <input class="form-control" type="text" id="desc" name="desc" maxlength="256"
                                    value="${desc}"/>
                         </td></tr>
-                            <tr><td>
-
-                                <label for="requestedId">requestedId (optional):</label></td><td>
+                        <tr>
+                            <td>
+                                <label for="requestedId">requestedId (optional):</label>
+                            </td>
+                            <td>
                                 <input type="text" class="form-control" id="requestedId" name="requestedId"
-                                       value="${requestedId}"
-                                       maxlength="15"/>
-                            </td></tr><tr><td>
-
+                                   value="${requestedId}" readonly
+                                   maxlength="15"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
                             <label for="type"
                                    style="color:red">[TODO make this work) Type (only for using an Environmental to a Contextual from gridfile when the appropriate textfile is available):</label>
-                        </td><td>
-                            <select class="form-control" id="type" name="type">
-                                <option value="c"
-                                        <g:if test="${type == 'c'}">selected</g:if>>Contextual from shapefile
-                                </option>
-                                <option value="a"
-                                        <g:if test="${type == 'a'}">selected</g:if>>Contextual from gridfile (creates types 'a' - classes and
-                                'b' - individual shapes)
-                                </option>
-                                <option value="e"
-                                        <g:if test="${type == 'e'}">selected</g:if>>Environmental
-                                </option>
-                            </select>
-                        </td></tr>
-
-                            <g:if test="${type == 'c'}">
-
-                                <label for="sname"
-                                       style="color:red">Source name (contextual only; column names with optional formatting for the name for each unique
-                                Objects, e.g. "name (state)"</label></td><td>
-                                <select class="form-control" id="sname" name="sname">
-                                    <option value=""
-                                <g:if test="${sname == '' || sname == null}">selected</g:if>>(none)
+                            </td>
+                            <td>
+                                <select class="form-control" id="type" name="type">
+                                    <option value="c"
+                                            <g:if test="${type == 'c'}">selected</g:if>>Contextual from shapefile
                                     </option>
-                                <g:each in="${columns}" var="column">
-                                    <g:if test="${column != 'the_geom'}">
-                                        <option value="${column}"
-                                        <g:if test="${sname == column}">selected</g:if>>${column}</option>
-                                    </g:if>
-                                </g:each>
-                                </select>
-                            </td></tr--><tr><td>
-
-                                <label for="sdesc">Source description (contextual only; column names with optional formatting for the description
-                                for each unique Objects, e.g. "state (area_km)"</label></td><td>
-                                <!--input type="text" id="sdesc" name="sdesc" value="${sdesc}" maxlength="256"/-->
-                                <select class="form-control" id="sdesc" name="sdesc">
-                                    <option value=""
-                                            <g:if test="${sdesc == '' || sdesc == null}">selected</g:if>>(none)
+                                    <option value="a"
+                                            <g:if test="${type == 'a'}">selected</g:if>>Contextual from gridfile (creates types 'a' - classes and
+                                    'b' - individual shapes)
                                     </option>
-                                    <g:each in="${columns}" var="column">
-                                        <g:if test="${column != 'the_geom'}">
-                                            <option value="${column}"
-                                                    <g:if test="${sdesc == column}">selected</g:if>>${column}</option>
-                                        </g:if>
-                                    </g:each>
+                                    <option value="e"
+                                            <g:if test="${type == 'e'}">selected</g:if>>Environmental
+                                    </option>
                                 </select>
-                            </td></tr>
-                            </g:if>
+                            </td>
+                        </tr>
 
-                            <tr><td>
+                        <g:if test="${type == 'c'}">
+                            <tr>
+                                <td>
+                                    <label for="sname"
+                                           style="color:red">Source name (contextual only; column names with optional formatting for the name for each unique
+                                    Objects, e.g. "name (state)"</label>
+                                </td>
+                                <td>
+                                    <select class="form-control" id="sname" name="sname">
+                                        <option value=""
+                                                <g:if test="${sname == '' || sname == null}">selected</g:if>>(none)
+                                        </option>
+                                        <g:each in="${columns}" var="column">
+                                            <g:if test="${column != 'the_geom'}">
+                                                <option value="${column}"
+                                                        <g:if test="${sname == column}">selected</g:if> >${column}</option>
+                                            </g:if>
+                                        </g:each>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label for="sdesc">Source description (contextual only; column names with optional formatting for the description
+                                    for each unique Objects, e.g. "state (area_km)"</label>
+                                </td>
+                                <td>
+                                    <!--input type="text" id="sdesc" name="sdesc" value="${sdesc}" maxlength="256"/-->
+                                    <select class="form-control" id="sdesc" name="sdesc">
+                                        <option value=""
+                                                <g:if test="${sdesc == '' || sdesc == null}">selected</g:if>>(none)
+                                        </option>
+                                        <g:each in="${columns}" var="column">
+                                            <g:if test="${column != 'the_geom'}">
+                                                <option value="${column}"
+                                                        <g:if test="${sdesc == column}">selected</g:if>>${column}</option>
+                                            </g:if>
+                                        </g:each>
+                                    </select>
+                                </td>
+                            </tr>
+                        </g:if>
+                        <tr>
+                            <td>
+                              <label for="indb">This field is intended for inclusion in biocache (SOLR index)</label>
+                            </td>
+                            <td>
+                            <input class="form-control" type="checkbox" id="indb" name="indb"
+                                   <g:if test="${indb}">checked</g:if>/>
+                            </td>
+                        </tr>
+                        <g:if test="${type != 'e'}">
+                            <tr>
+                                <td>
 
-                                <label for="indb">This field is intended for inclusion in biocache (SOLR index)</label>
-                            </td><td>
-                                <input class="form-control" type="checkbox" id="indb" name="indb"
-                                       <g:if test="${indb}">checked</g:if>/>
-                            </td></tr><tr><td>
-
-                            <g:if test="${type != 'e'}">
-                                <label for="namesearch">This field's objects are included in the objects search (gaz autocomplete). (Contextual
-                                only)</label></td><td>
-                                <input class="form-control" type="checkbox" id="namesearch" name="namesearch"
-                                       <g:if test="${namesearch}">checked</g:if>/>
-                            </td></tr><tr><td>
-                            </g:if>
-
+                                        <label for="namesearch">This field's objects are included in the objects search (gaz autocomplete). (Contextual
+                                        only)</label>
+                                </td>
+                                <td>
+                                    <input class="form-control" type="checkbox" id="namesearch" name="namesearch"  <g:if test="${namesearch}">checked</g:if>
+                                    />
+                                </td>
+                            </tr>
+                        </g:if>
+                        <tr>
+                            <td>
                             <label for="defaultlayer">When more than ONE field is created from a source layer, use the 'defaultlayer' for
-                            intersection requests</label></td><td>
+                            intersection requests</label>
+                            </td>
+                            <td>
                             <input class="form-control" type="checkbox" id="defaultlayer" name="defaultlayer"
                                    <g:if test="${defaultlayer}">checked</g:if>/>
-                        </td></tr><tr><td>
-
-                            <g:if test="${type != 'e'}">
-                                <label for="intersect">Include this Field in calculated Tabulations (Contextual only)</label></td><td>
-                                <input class="form-control" type="checkbox" id="intersect" name="intersect"
-                                       <g:if test="${intersect}">checked</g:if>/>
-                            </td></tr><tr><td>
-                            </g:if>
-
-                            <g:if test="${type != 'e'}">
-                                <label for="layerbranch">Used by Spatial Portal. When Contextual Layers are listed by their Classifications in a
-                                tree structure, list objects in the layer as individual leaves in the tree. (Contextual only and
-                                defaultlayer=true) [classification=${classification1} > ${classification2}]</label></td><td>
-                                <input class="form-control" type="checkbox" id="layerbranch" name="layerbranch"
-                                       <g:if test="${layerbranch}">checked</g:if>/>
-                            </td></tr><tr><td>
-                            </g:if>
-
-                            <label for="analysis">This field is available in the Spatial Portal Tool lists</label></td><td>
-                            <input class="form-control" type="checkbox" id="analysis" name="analysis"
-                                   <g:if test="${analysis}">checked</g:if>/>
-                        </td></tr><tr><td>
-
-                            <label for="addtomap">This field is available in the Spatial Portal Add To Map list</label>
-                        </td><td>
-                            <input class="form-control" type="checkbox" id="addtomap" name="addtomap"
-                                   <g:if test="${addtomap}">checked</g:if>/>
-                        </td></tr><tr><td>
-
-                            <label for="enabled">Enabled (makes the field available for use, disable to remove field from use)</label>
-                        </td><td>
-                            <input class="form-control" type="checkbox" id="enabled" name="enabled"
-                                   <g:if test="${enabled}">checked</g:if>/>
-                        </td></tr><tr><td>
-
-                        </td></tr></table>
-                        <g:if test="${layer_creation == null}">
-                            <input type="submit" class="btn btn-default"
-                                   value='${is_field ? "Update Field" : "Create Field"}'/>
+                             </td>
+                        </tr>
+                        <g:if test="${type != 'e'}">
+                            <tr>
+                                <td>
+                                    <label for="intersect">Include this Field in calculated Tabulations (Contextual only)</label>
+                                </td>
+                                <td>
+                                     <input class="form-control" type="checkbox" id="intersect" name="intersect"
+                                          <g:if test="${intersect}">checked</g:if>/>
+                                 </td>
+                            </tr>
                         </g:if>
 
-                        <input type="hidden" name="raw_id" value="${raw_id}"/>
+                        <g:if test="${type != 'e'}">
+                            <tr>
+                                <td>
+                                 <label for="layerbranch">Used by Spatial Portal. When Contextual Layers are listed by their Classifications in a
+                            tree structure, list objects in the layer as individual leaves in the tree. (Contextual only and
+                            defaultlayer=true) [classification=${classification1} > ${classification2}]</label>
+                                </td>
+                                <td>
+                                <input class="form-control" type="checkbox" id="layerbranch" name="layerbranch"
+                                       <g:if test="${layerbranch}">checked</g:if>/>
+                                </td>
+                            </tr>
+                        </g:if>
+                        <tr>
+                            <td>
+                            <label for="analysis">This field is available in the Spatial Portal Tool lists</label>
+                            </td>
+                            <td>
+                            <input class="form-control" type="checkbox" id="analysis" name="analysis"
+                                   <g:if test="${analysis}">checked</g:if>/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="addtomap">This field is available in the Spatial Portal Add To Map list</label>
+                            </td>
+                            <td>
+                                <input class="form-control" type="checkbox" id="addtomap" name="addtomap"
+                                   <g:if test="${addtomap}">checked</g:if>/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="enabled">Enabled (makes the field available for use, disable to remove field from use)</label>
+                            </td>
+                            <td>
+                                <input class="form-control" type="checkbox" id="enabled" name="enabled"
+                                   <g:if test="${enabled}">checked</g:if>/>
+                            </td>
+                        </tr>
+                    </table>
+                    <g:if test="${layer_creation == null}">
+                        <input type="submit" class="btn btn-default"
+                               value='${is_field ? "Update Field" : "Create Field"}'/>
+                    </g:if>
 
-                        <input type="hidden" name="id" value="${id}"/>
-                    </form>
+                    <input type="hidden" name="raw_id" value="${raw_id}"/>
+
+                    <input type="hidden" name="id" value="${id}"/>
+                </form>
                 </div>
 
                 <div role="tabpanel" class="tab-pane" id="backgroundProcesses">

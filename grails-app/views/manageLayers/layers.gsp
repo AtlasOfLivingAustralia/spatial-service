@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Layer Administration</title>
-    <meta name="breadcrumbs" content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service"/>
+    <g:set var="baseUrl" value="${request.scheme}://${request.serverName}:${request.serverPort}${request.contextPath}" />
+    <meta name="breadcrumbs" content="${g.createLink(uri: baseUrl)}, Spatial Service"/>
     <meta name="layout" content="ala-main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
@@ -61,13 +62,18 @@
                 <td>${item.displayname}</td>
                 <td>${item.enabled}</td>
                 <td>
-                    <g:each in="${item.fields}" var="field">
+                    <g:each in="${item.fields}" var="field" status="i">
+                        <i class="glyphicon glyphicon-edit"></i>
+                        <g:set var="disabledField" value="${field.enabled ? '' :'disabled'}" />
                         <g:link controller="manageLayers" action="field"
-                                id="${field.id}">${field.id}: ${field.name}</g:link>,
+                                id="${field.id}"  class="${disabledField}" >${field.id}: ${field.name}</g:link>,
                         ${field.type == 'c' ? 'contextual (polygon)' : ''}
                         ${field.type == 'e' ? 'environmental (raster)' : ''}
                         ${field.type == 'a' ? 'contextual (raster with classes)' : ''}
                         ${field.type == 'b' ? 'contextual (raster with polygons)' : ''}
+                        <g:if test="${i + 1 < item.fields.size()}">
+                            <br/>
+                        </g:if>
                     </g:each>
                 </td>
                 <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default" id="${item.id}">

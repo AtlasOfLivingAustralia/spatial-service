@@ -1,10 +1,10 @@
 ---
 grails:
-  serverURL: "http://localhost:8081"
-  server:
-    port: 8081
-    servlet:
-      contextPath: '/ws'
+#  serverURL: "http://localhost:8081/ws"
+#  server:
+#    port: 8081
+#    servlet:
+#      contextPath: '/ws'
   cors:
     # using ala-cors-plugin instead of grailsCorsFilter
     enabled: true
@@ -392,7 +392,7 @@ environments:
     server:
       port: 8081
       servlet:
-        contextPath: '/ws'
+        context-path: '/ws'
     gdal:
       dir: "/Library/Frameworks/GDAL.framework/Programs"
 

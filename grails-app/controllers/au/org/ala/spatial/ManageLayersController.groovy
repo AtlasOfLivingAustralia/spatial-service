@@ -444,7 +444,7 @@ class ManageLayersController {
                 //add field to layerId
                 if (params.containsKey("name")) {
                     def f =  manageLayersService.createOrUpdateField(params, id)
-                    map.putAll(f.properties)
+                    map.putAll(f)
                 } else {
                     map.putAll manageLayersService.createOrUpdateField(request.JSON as Map, id)
                 }
