@@ -109,13 +109,8 @@
                                             edit</g:link>
                                     </td>
                                     <td>
-                                        <g:if test="${item.enabled}">
-                                            <a onclick="return confirmDelete('${item.id}','${item.name}' );">
-                                                <i class="glyphicon glyphicon-remove"></i> </a>
-                                        </g:if>
-                                        <g:else>
-                                            <i class="glyphicon glyphicon-ban-circle" data-toggle="tooltip" data-placement="top" title="You are not allowed to delete a disabled field."></i>
-                                        </g:else>
+                                        <a onclick="return confirmDelete('${item.id}','${item.name}' );">
+                                            <i class="glyphicon glyphicon-remove"></i> </a>
                                     </td>
                                 </tr>
                             </g:each>

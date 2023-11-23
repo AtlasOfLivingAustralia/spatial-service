@@ -56,10 +56,11 @@
         <tbody>
         <g:each var="item" in="${layers}">
             <tr>
+                <g:set var="disabledLayer" value="${item.enabled ? '' :'disabled'}" />
                 <td>${item.dt_added}</td>
-                <td>${item.id}</td>
-                <td>${item.name}</td>
-                <td>${item.displayname}</td>
+                <td  class="${disabledLayer}" >${item.id}</td>
+                <td  class="${disabledLayer}" >${item.name}</td>
+                <td  class="${disabledLayer}" >${item.displayname}</td>
                 <td>${item.enabled}</td>
                 <td>
                     <g:each in="${item.fields}" var="field" status="i">

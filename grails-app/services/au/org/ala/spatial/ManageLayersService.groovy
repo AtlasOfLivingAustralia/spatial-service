@@ -635,7 +635,7 @@ class ManageLayersService {
         String layersDir = spatialConfig.data.dir
 
         //fields
-        Fields field = fieldService.getFieldById(fieldId)
+        Fields field = fieldService.getFieldById(fieldId, false)
         if (field != null) {
 
             fieldService.delete(fieldId)
