@@ -129,7 +129,6 @@
                         function confirmDelete(id, name) {
                             if (confirm("Permanently delete field " + name + "?")) {
                                 var url = '${createLink(action: "deleteLayer", controller:"manageLayers")}/' + id
-                                console.log(url)
                                 $(location).attr('href', url);
                             }
                         }
