@@ -2,8 +2,9 @@
 <html>
 <head>
     <title>Edit Field</title>
+    <g:set var="baseUrl" value="${request.scheme}://${request.serverName}:${request.serverPort}${request.contextPath}" />
     <meta name="breadcrumbs"
-          content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink(controller: 'manageLayers', action: 'layers')}, Layers"/>
+          content="${g.createLink(uri: baseUrl)}, Spatial Service \\ ${g.createLink(controller: 'manageLayers', action: 'layers')}, Layers"/>
 
     <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
