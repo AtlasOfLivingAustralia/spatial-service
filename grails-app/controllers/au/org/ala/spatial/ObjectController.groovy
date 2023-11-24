@@ -274,7 +274,7 @@ class ObjectController {
     @Path('objects/{fid}')
     @Produces("application/json")
     def fieldObjects() {
-        String fid = params.fid
+        String fid = params.fid ?: params.id
         Integer start = params.containsKey('start') ? params.start as Integer : 0
         Integer pageSize = params.containsKey('pageSize') ? params.pageSize as Integer : -1
 

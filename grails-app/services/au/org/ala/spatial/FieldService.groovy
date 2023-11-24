@@ -64,6 +64,34 @@ class FieldService {
         log.debug("Getting a list of all enabled fields with indb")
         Fields.findAllByEnabledAndIndb(true, true)
     }
+    /**
+     * Return the count of fields of a layer, no matter they are enabled or not
+     * @return
+     */
+    int countBySpid(spid) {
+        Fields.countBySpid(spid)
+    }
+
+    /**
+     * Return the largest sequence number + 1.
+     * Avoid getting the incorrect seq if some of the records in the middle are deleted
+     * @param spid
+     * @return
+     */
+    def calculateNextSequenceId(spid) {
+        def requestIds =   Fields.findAllBySpid(spid).collect { it.id }
+        if (requestIds.size() == 0) {
+            return ''
+        } else {
+            def maxSequenceNumber = requestIds
+                    .findAll { it.endsWith("${spid}") }
+                    .collect { it.replaceFirst(/^.{2}/, '')
+                            .replaceAll("${spid}", "") }
+                    .collect {it == '' ? 0 : it.toInteger()}
+                    .max()
+            maxSequenceNumber + 1
+        }
+    }
 
 
 //    synchronized void addField(Field field) {

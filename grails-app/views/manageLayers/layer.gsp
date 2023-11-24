@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Edit Layers</title>
-    <meta name="breadcrumbs" content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service"/>
+    <g:set var="baseUrl" value="${request.scheme}://${request.serverName}:${request.serverPort}${request.contextPath}" />
+    <meta name="breadcrumbs" content="${g.createLink(uri: baseUrl)}, Spatial Service"/>
     <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
@@ -78,30 +79,30 @@
                             <th>Name</th>
                             <th>Description</th>
                             <th>sname</th>
-                            <th></th>
-                            <th></th>
+                            <th colspan="3"></th>
                             </thead>
                             <tbody>
                             <g:each in="${fields}" var="item">
-                                <tr>
-                                    <td>${item.id}</td>
-                                    <td>${item.name}</td>
-                                    <td>${item.desc}</td>
-                                    <td>${item.sname}</td>
+                                <g:set var="disabledField" value="${item.enabled ? '' :'disabled'}" />
+                                <tr >
+                                    <td class="${disabledField}" >${item.id} <g:if test="${disabledField}"> ( ${disabledField} ) </g:if></td>
+                                    <td class="${disabledField}">${item.name}</td>
+                                    <td class="${disabledField}">${item.desc}</td>
+                                    <td class="${disabledField}">${item.sname}</td>
+
                                     <td><g:link controller="manageLayers" action="field" id="${item.id}">
                                         <i class="glyphicon glyphicon-edit"></i>
                                         edit
-                                    </g:link>
+                                      </g:link>
                                     </td>
                                     <td><g:link controller="object" action="fieldObjects" id="${item.id}">
                                         <i class="glyphicon glyphicon-list"></i>
                                         list objects
-                                    </g:link>
+                                       </g:link>
                                     </td>
-                                    <td><a onclick="return confirmDelete('${item.id}');">
-                                        <i class="glyphicon glyphicon-remove"></i>
-                                        delete
-                                    </a>
+                                    <td>
+                                        <a onclick="return confirmDelete('${item.id}','${item.name}' );">
+                                            <i class="glyphicon glyphicon-remove"></i> </a>
                                     </td>
                                 </tr>
                             </g:each>

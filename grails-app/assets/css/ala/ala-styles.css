@@ -1363,6 +1363,9 @@ a:hover, .link-list .heading a:hover {
 a:hover, a:focus {
     color: #DA644E;
 }
+a.disabled {
+    color: #999999; /* or any other styles for a disabled link */
+}
 
 .breadcrumb {
     background-color: transparent;
@@ -2146,6 +2149,10 @@ li .login-soc-bell:hover {
     th.visible-sm,
     td.visible-sm {
         display: table-cell !important;
+    }
+
+    td.disabled {
+        color: #999999; /* or any other styles for a disabled link */
     }
 
     /* (@media print) Typography

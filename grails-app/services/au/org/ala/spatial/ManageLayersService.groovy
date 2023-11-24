@@ -635,7 +635,7 @@ class ManageLayersService {
         String layersDir = spatialConfig.data.dir
 
         //fields
-        Fields field = fieldService.getFieldById(fieldId)
+        Fields field = fieldService.getFieldById(fieldId, false)
         if (field != null) {
 
             fieldService.delete(fieldId)
@@ -689,20 +689,19 @@ class ManageLayersService {
 
         fieldMap.put("raw_id", layerId)
 
-        int countInDB = 0
-        for (Fields f : fieldService.getFieldsByDB()) {
-            if (f.getSpid() == String.valueOf(fieldMap.get("id"))) {
-                countInDB++
-            }
-        }
+        int countInDB = fieldService.countBySpid(layerId)
         boolean isContextual = "Contextual".equalsIgnoreCase(String.valueOf(layerMap.get("type")))
+
         fieldMap.put("indb", countInDB == 0)
         fieldMap.put("intersect", false) //countInDB == 0 && isContextual);
         fieldMap.put("analysis", countInDB == 0)
         fieldMap.put("addtomap", countInDB == 0)
         fieldMap.put("enabled", true)
 
-        fieldMap.put("requestedId", (isContextual ? "cl" : "el") + layerId)
+        // convention of field name
+        def sid = fieldService.calculateNextSequenceId(layerId)
+        fieldMap.put("requestedId", (isContextual ? "cl" : "el") + sid + layerId)
+
 
         //type
         //Contextual and shapefile = c, Environmental = e, Contextual and grid file = a & b
@@ -738,7 +737,7 @@ class ManageLayersService {
         }
 
         if (isContextual && fieldMap.containsKey("columns") && fieldMap.get("columns") != null &&
-                ((List) fieldMap.get("columns")).size > 0) {
+                ((List) fieldMap.get("columns")).size() > 0) {
             fieldMap.put("sname", ((List) fieldMap.get("columns")).get(0))
             //"sdesc" is optional
         }
@@ -801,6 +800,20 @@ class ManageLayersService {
         return extents
     }
 
+    /**
+     * Have to determine if it is creating a new field or editing an existing field
+     *
+     * Assumption:
+     * If it is field id, it is an 'edit an existing field' function
+     * If it is a layer id, then it should be 'create new field' function
+     *
+     * Since function fieldMapDefault creates a new 'requestId' ( assigned to id after ) with incremental sequence number
+     * So, if it is an edit function, the requestId should be unchanged.
+     *
+     *
+     * @param fieldId  It is field id if starts with el/cl, otherwise layer id
+     * @return
+     */
     def fieldMap(String fieldId) {
         def layer = layerService.getLayerById(Integer.parseInt(fieldService.getFieldById(fieldId, false).spid), false)
 
@@ -808,6 +821,12 @@ class ManageLayersService {
         map.put("layerName", layer.name) // layer name for wms requests
 
         def field = fieldService.getFieldById(fieldId, false)
+
+        if (fieldId.startsWith('cl') || fieldId.startsWith('el')) {
+            //It stands for 'editing' not creating a new field
+            //Restore  requestedId
+            map.put("requestedId", field.getId())
+        }
         map.put("id", field.getId())
         map.put("desc", field.getDesc())
         map.put("name", field.getName())
@@ -828,7 +847,23 @@ class ManageLayersService {
         map
     }
 
+    /**
+     *
+     * @param map params without kv pair of checkbox
+     * @param id
+     * @param createTask
+     * @return
+     */
     def createOrUpdateLayer(Map map, String id, boolean createTask = true) {
+        // Unchecked checkbox won't be post via params
+        Map checkboxFields = [:]
+        checkboxFields["enabled"] = false
+        checkboxFields.each { key, value ->
+            if (!map.containsKey(key)) {
+                map.put(key,value)
+            }
+        }
+
         Layers layer = Layers.get(id) ?: new Layers()
         layer.properties.each {
             if (map.containsKey(it.key)) {
@@ -985,7 +1020,33 @@ class ManageLayersService {
         columns
     }
 
+    /**
+     *
+     * @param map params from http post
+     * @param id
+     * @param createTask
+     * @return
+     */
     def createOrUpdateField(Map map, String id, boolean createTask = true) {
+        //Fields of checkbox
+        //If checkboxes in form are unchecked, the kv pairs of those checkboxes won't be in form params
+        Map checkboxFields = [:]
+        checkboxFields["enabled"] = false
+        checkboxFields["indb"] = false
+        checkboxFields["namesearch"] = false
+        checkboxFields["defaultlayer"] = false
+        checkboxFields["intersect"] = false
+        checkboxFields["layerbranch"] = false
+        checkboxFields["analysis"] = false
+        checkboxFields["addtomap"] = false
+
+        checkboxFields.each { key, value ->
+            if (!map.containsKey(key)) {
+                map.put(key,value)
+            }
+        }
+
+
         Fields field = Fields.get(id) ?: new Fields()
         field.properties.each {
             if (map.containsKey(it.key)) {
@@ -1117,7 +1178,7 @@ class ManageLayersService {
 
                 //create default layers table entry, this updates field.id
                 Task.withNewTransaction {
-                    if (!newField.save()) {
+                    if (!newField.save(true)) {
                         newField.errors.each {
                             log.error(it)
                         }

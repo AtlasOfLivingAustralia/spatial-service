@@ -2,8 +2,9 @@
 <html>
 <head>
     <title>${layer.displayname}</title>
+    <g:set var="baseUrl" value="${request.scheme}://${request.serverName}:${request.serverPort}${request.contextPath}" />
     <meta name="breadcrumbs"
-          content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service \\ ${g.createLink(controller: 'layer', action: 'list')}, Layers"/>
+          content="${g.createLink(uri: baseUrl)}, Spatial Service \\ ${g.createLink(controller: 'layer', action: 'list')}, Layers"/>
     <meta name="layout" content="ala-main"/>
 </head>
 

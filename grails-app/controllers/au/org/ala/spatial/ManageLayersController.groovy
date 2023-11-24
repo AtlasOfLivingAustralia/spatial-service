@@ -393,7 +393,12 @@ class ManageLayersController {
      */
     @RequireAdmin
     def delete(String id, String action) {
-        if (fieldService.getFieldById(id, false) == null) {
+        def field = fieldService.getFieldById(id, false)
+        if (field) {
+            def layerId = field.spid
+            manageLayersService.deleteField(id)
+            redirect(action: action, id: layerId)
+        } else {
             Map m = manageLayersService.getUpload(id, false)
             if (m == null || (!m.containsKey('data_resource_uid') && !m.containsKey('checklist'))) {
                 manageLayersService.deleteLayer(id)
@@ -403,11 +408,6 @@ class ManageLayersController {
                 manageLayersService.deleteChecklist(id)
             }
             redirect(action: action)
-        } else {
-            def layerId = fieldService.getFieldById(id, false).spid
-            manageLayersService.deleteField(id)
-
-            redirect(action: action, id: layerId)
         }
     }
 
@@ -444,7 +444,7 @@ class ManageLayersController {
                 //add field to layerId
                 if (params.containsKey("name")) {
                     def f =  manageLayersService.createOrUpdateField(params, id)
-                    map.putAll(f.properties)
+                    map.putAll(f)
                 } else {
                     map.putAll manageLayersService.createOrUpdateField(request.JSON as Map, id)
                 }
