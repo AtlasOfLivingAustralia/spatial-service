@@ -451,7 +451,7 @@ environments:
 openapi:
   title: SpatialService REST services
   description: REST services for interacting with the spatial-service webapp
-  terms: https://www.ala.org.au/terms
+  terms: https://www.ala.org.au/terms-of-use
   contact:
     name: Support
     email: support@ala.org.au
