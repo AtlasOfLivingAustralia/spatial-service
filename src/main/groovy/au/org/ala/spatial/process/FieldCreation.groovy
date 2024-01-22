@@ -306,7 +306,12 @@ class FieldCreation extends SlaveProcess {
                 String name = String.valueOf(f.getAttribute(confirmedSname))
                 String desc = null
                 if ("null" != String.valueOf(sdesc) && !sdesc.contains(',') && confirmedSdesc != null) {
-                    desc = String.valueOf(f.getAttribute(confirmedSdesc))
+                    if (confirmedSdesc.getClass().isArray()){
+                        desc = String.valueOf(f.getAttribute(confirmedSdesc.join()))
+                    } else if (confirmedSdesc instanceof String) {
+                        desc = String.valueOf(f.getAttribute(confirmedSdesc))
+                    }
+
                 } else if (sdesc?.contains(',')) {
                     sdesc.split(',').each { str ->
                         if (desc == null) {

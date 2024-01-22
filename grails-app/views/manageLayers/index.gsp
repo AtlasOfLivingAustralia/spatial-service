@@ -22,6 +22,5 @@
     <br/>
 </g:if>
 
-</div>
 </body>
 </html>

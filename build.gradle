@@ -28,7 +28,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "2.1.0-SNAPSHOT"
+version "2.1.1-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin: "eclipse"
@@ -279,7 +279,7 @@ tasks.getByName("integrationTest") {
 
     systemProperty "geb.env", System.properties['driver'] ?: "firefox"  // firefox by default
     // pass test server by -DbaseUrl
-    systemProperty "geb.build.baseUrl", System.properties['baseUrl'] ?: "http://devt.ala.org.au:8080/ws"
+    systemProperty "geb.build.baseUrl", System.properties['baseUrl'] ?: "http://devt.ala.org.au:8081/ws"
     //Store username and password into the default config file
     systemProperty "configFile", System.properties['configFile'] ?: "/data/spatial-service/test/default.properties"
     //or pass with -Dusername, -Dpassword

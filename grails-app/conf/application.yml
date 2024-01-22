@@ -120,8 +120,8 @@ gdal:
   dir: "/usr/local/bin/"
 # To use a remote geoserver instance, set geoserver.remote.geoserver_data_dir to the geoserver_data_dir path on the
 # remote server. This will cause layer files to be copied to geoserver_data_dir/data/
-#  remote:
-geoserver_data_dir: '/data/geoserver_data_dir'
+remote:
+  geoserver_data_dir: '/data/geoserver_data_dir'
 
 shpResolutions:
   - 0.5
@@ -380,8 +380,13 @@ spring:
 
 geoserver:
   canDeploy: true
+
   spatialservice:
+    #if colocated, geoserver will load data from spatial service data folder, /data/spatial-data by default
     colocated: true
+  remote:
+    #In some cases, geoserver need to know its data folder.
+    geoserver_data_dir: "/data/geoserver_data_dir"
 
 environments:
   development:
@@ -407,6 +412,7 @@ environments:
       #url: 'https://spatial-test.ala.org.au/geoserver'
       username: 'admin'
       password: 'geoserver'
+
     dataSource:
       pooled: true
       jmxExport: true
@@ -414,8 +420,8 @@ environments:
       dialect: org.hibernate.spatial.dialect.postgis.PostgisPG9Dialect
       url: 'jdbc:postgresql://localhost:5432/layersdb'
       dbCreate: update
-      username: postgres
-      password: 'postgres'
+      username: layers
+      password: layers
       # logSql: true
 
   test:
