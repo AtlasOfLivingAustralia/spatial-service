@@ -27,7 +27,7 @@ import org.apache.commons.io.FileUtils
 class Classification extends SlaveProcess {
 
     void start() {
-
+        taskLog("Classification is about to start")
         //list of layers
         List<String> layers = getInput('layer').toString().split(',')
         def envnameslist = new String[layers.size()]

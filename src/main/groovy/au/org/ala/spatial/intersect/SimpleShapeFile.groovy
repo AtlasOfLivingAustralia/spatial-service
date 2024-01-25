@@ -274,8 +274,14 @@ class SimpleShapeFile implements Serializable {
     static ArrayList<SimpleRegion> parsePolygon(String polygon) {
         ArrayList<SimpleRegion> regions = new ArrayList<SimpleRegion>()
         for (String p : polygon.split("\\),( )*\\(")) {
+            //remove return/space that immediately occur after ','
+            p = p.replaceAll('[\\n]+', '')
+            //remove space that immediately occur after ','
+            p = p.replaceAll(',[\\s]+', ',').trim()
+
             regions.add(SimpleRegion.parseSimpleRegion(p))
         }
+
         return regions
     }
 

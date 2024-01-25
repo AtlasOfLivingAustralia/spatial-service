@@ -1114,6 +1114,7 @@ class SlaveProcess {
     }
 
     RegionEnvelope processArea(AreaInput area) {
+        log.info("Parsing WKT ")
         def wkt = getAreaWkt(area)
 
         def region = null
@@ -1123,7 +1124,7 @@ class SlaveProcess {
         } else {
             region = SimpleShapeFile.parseWKT(wkt)
         }
-
+        log.info("Check BBox: " + region?.bounding_box)
         new RegionEnvelope(region, envelope)
     }
 
