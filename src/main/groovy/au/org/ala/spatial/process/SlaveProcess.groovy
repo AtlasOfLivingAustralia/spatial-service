@@ -678,12 +678,12 @@ class SlaveProcess {
         }
 
         String layerPath = standardLayersDir + File.separator + resolution + File.separator + layer
-        taskLog("Loading " + layerPath)
+        taskLog("Loading " + layer)
 
         if (new File(layerPath + ".grd").exists()) {
             return layerPath
         } else {
-            taskLog("Fatal error: Cannot calculate grid due to missing the layer file: " + layerPath)
+            taskLog("Fatal error: Cannot calculate grid due to missing the layer: " + layer)
             log.error("Fatal error: Cannot calculate grid due to missing the layer file: " + layerPath)
             return null
         }
