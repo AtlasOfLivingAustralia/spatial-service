@@ -215,7 +215,7 @@ class SimpleShapeFile implements Serializable {
         } else if (pointsString.startsWith("MULTIPOLYGON")) {
             regions.addAll(parseMultipolygon(pointsString.substring(bracket3rd + 1, pointsString.length() - 3)))
         } else if (pointsString.startsWith("POLYGON")) {
-            regions.add(parsePolygon(pointsString.substring(bracket2nd + 1, pointsString.length() - 2)))
+           regions.add(parsePolygon(pointsString.substring(bracket2nd + 1, pointsString.length() - 2)))
         }
 
         if (regions.size() == 0) {

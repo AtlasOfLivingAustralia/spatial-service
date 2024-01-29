@@ -107,6 +107,7 @@ dependencies {
     implementation "org.hibernate:hibernate-spatial"
     implementation "org.grails.plugins:gsp"
     implementation "io.micronaut:micronaut-inject-groovy"
+
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
     runtimeOnly "com.h2database:h2"
