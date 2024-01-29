@@ -27,7 +27,7 @@ import org.apache.commons.io.FileUtils
 class Classification extends SlaveProcess {
 
     void start() {
-        taskLog("Classification is about to start")
+        taskLog("Starting Classification")
         //list of layers
         List<String> layers = getInput('layer').toString().split(',')
         def envnameslist = new String[layers.size()]
@@ -49,9 +49,10 @@ class Classification extends SlaveProcess {
         def makeShapefile = getInput('shp')
 
         new File(getTaskPath()).mkdirs()
-
+        taskLog("Cutting Grids")
         def cutDataPath = cutGrid(envnameslist, resolution as String, regionEnvelope.region, regionEnvelope.envelope, null)
 
+        taskLog("Running aloc process")
         String[] cmd = ["java", "-Xmx" + String.valueOf(spatialConfig.aloc.xmx),
                         "-jar", spatialConfig.data.dir + '/modelling/aloc/aloc.jar',
                         cutDataPath, String.valueOf(groups), String.valueOf(spatialConfig.aloc.threads), getTaskPath()]

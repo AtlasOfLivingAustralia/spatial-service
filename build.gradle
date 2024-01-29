@@ -28,7 +28,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "2.1.1-SNAPSHOT"
+version "2.1.2-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin: "eclipse"
@@ -107,6 +107,7 @@ dependencies {
     implementation "org.hibernate:hibernate-spatial"
     implementation "org.grails.plugins:gsp"
     implementation "io.micronaut:micronaut-inject-groovy"
+
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
     runtimeOnly "com.h2database:h2"

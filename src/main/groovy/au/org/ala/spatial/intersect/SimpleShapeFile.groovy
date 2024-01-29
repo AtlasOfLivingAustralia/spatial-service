@@ -29,6 +29,9 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.stream.Collectors
 
+import com.vividsolutions.jts.geom.*;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 /**
  * SimpleShapeFile is a representation of a Shape File for
  * intersections with points
@@ -215,7 +218,7 @@ class SimpleShapeFile implements Serializable {
         } else if (pointsString.startsWith("MULTIPOLYGON")) {
             regions.addAll(parseMultipolygon(pointsString.substring(bracket3rd + 1, pointsString.length() - 3)))
         } else if (pointsString.startsWith("POLYGON")) {
-            regions.add(parsePolygon(pointsString.substring(bracket2nd + 1, pointsString.length() - 2)))
+           regions.add(parsePolygon(pointsString.substring(bracket2nd + 1, pointsString.length() - 2)))
         }
 
         if (regions.size() == 0) {
