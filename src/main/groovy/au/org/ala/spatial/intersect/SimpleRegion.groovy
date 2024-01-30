@@ -1018,7 +1018,8 @@ class SimpleRegion implements Serializable {
                 }
             } else { //sloped line
                 endlat = dy2
-                for (double k = (y + 1) * divy + latitude1; k < endlat; k += (int)(divy)) {
+                int kStep = Math.max(divy, 1)
+                for (double k = (y + 1) * divy + latitude1; k < endlat; k += kStep) {
                     //move in yDirection to get x
                     xcross = (k - intercept) / slope
                     icross = (int) ((xcross - longitude1) / divx)
@@ -1140,7 +1141,8 @@ class SimpleRegion implements Serializable {
                 }
             } else { //sloped line
                 endlat = dy2
-                for (double k = (y + 1) * divy + latitude1; k < endlat; k +=  (int)(divy)) {
+                int kStep = Math.max(divy, 1)
+                for (double k = (y + 1) * divy + latitude1; k < endlat; k +=  kStep) {
                     //move in yDirection to get x
                     xcross = (k - intercept) / slope
                     icross = (int) ((xcross - longitude1) / divx)
