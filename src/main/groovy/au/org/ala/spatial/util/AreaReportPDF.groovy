@@ -49,6 +49,7 @@ class AreaReportPDF {
     String biocacheServiceUrl
     String biocacheHubUrl
     String listsUrl
+    Boolean useListWs
     String bieUrl
 
     Map<String, String> distributions = new HashMap()
@@ -79,7 +80,7 @@ class AreaReportPDF {
     AreaReportPDF(DistributionsService distributionsService, JournalMapService journalMapService,
             TabulationService tabulationService, SpatialObjectsService spatialObjectsService,
                   String geoserverUrl, String openstreetmapUrl, String biocacheServiceUrl, String biocacheHubUrl,
-                  String bieUrl, String listsUrl,
+                  String bieUrl, String listsUrl, Boolean useListWs,
                   String q, String pid,
                   String areaName,
                   String area_km,
@@ -101,6 +102,7 @@ class AreaReportPDF {
         this.biocacheHubUrl = biocacheHubUrl
         this.bieUrl = bieUrl
         this.listsUrl = listsUrl
+        this.useListWs = useListWs
         this.pid = pid
         this.query = q
         this.area_km = area_km
@@ -665,11 +667,11 @@ class AreaReportPDF {
 
     private String getSpeciesListName(String dr) {
         try {
-            String txt = (String) Util.urlResponse("GET", listsUrl + "/ws/speciesList/" + dr).get("text")
+            String txt = (String) Util.urlResponse("GET", listsUrl + "/speciesList/" + dr).get("text")
 
             JSONObject jo = (JSONObject) JSON.parse(txt)
 
-            return (String) jo.get("listName")
+            return (String) jo.get("listName", jo.get("title", null))
         } catch (Exception e) {
             e.printStackTrace()
         }
@@ -686,9 +688,16 @@ class AreaReportPDF {
                 boolean hasAnotherPage = true
                 int max = 400
                 int offset = 0
+                int page = 1
 
                 while (hasAnotherPage) {
-                    String txt = (String) Util.urlResponse("GET", listsUrl + "/speciesListItems/" + dr + "?includeKVP=true&max=" + max + "&offset=" + offset).get("text")
+                    String txt
+                    if (useListWs) {
+                        txt = (String) Util.urlResponse("GET", listsUrl + "/speciesListItems/" + dr + "?pageSize=" + max + "&page=" + page).get("text")
+                        page++
+                    } else {
+                        txt = (String) Util.urlResponse("GET", listsUrl + "/speciesListItems/" + dr + "?includeKVP=true&max=" + max + "&offset=" + offset).get("text")
+                    }
 
                     JSONArray newValues = (JSONArray) JSON.parse(txt)
                     values.addAll(newValues)
@@ -705,15 +714,18 @@ class AreaReportPDF {
 
         for (Object o : values) {
             JSONObject jo = (JSONObject) o
-            if (lsid.equalsIgnoreCase((String) jo.getOrDefault("lsid", null))) {
-                JSONArray kvp = (JSONArray) jo.get("kvpValues")
-                for (Object o2 : kvp) {
-                    JSONObject jo2 = (JSONObject) o2
-                    if (key == jo2.getOrDefault("key", null)) {
-                        String s = (String) jo2.getOrDefault("value", null)
+            String newId = ((JSONObject) jo.getOrDefault("classification", null))?.getOrDefault("taxonConceptID", null)
+            if (lsid.equalsIgnoreCase((String) jo.getOrDefault("lsid", newId))) {
+                JSONArray kvp = (JSONArray) jo.getOrDefault("kvpValues", jo.getOrDefault("properties", null))
+                if (kvp) {
+                    for (Object o2 : kvp) {
+                        JSONObject jo2 = (JSONObject) o2
+                        if (key == jo2.getOrDefault("key", null)) {
+                            String s = (String) jo2.getOrDefault("value", null)
 
-                        // keep initials only
-                        return s.replaceAll("[a-z]", "")
+                            // keep initials only
+                            return s.replaceAll("[a-z]", "")
+                        }
                     }
                 }
             }

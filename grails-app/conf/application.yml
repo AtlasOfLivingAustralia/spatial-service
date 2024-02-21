@@ -266,6 +266,9 @@ records.url: 'https://archives.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
 api_key: ''
 lists.url: 'https://lists.ala.org.au'
+lists.useListWs: false
+#lists.url: 'http://localhost:8080'
+#lists.useListWs: true
 collections.url: 'https://collections.ala.org.au'
 sandboxHubUrl: 'https://sandbox.ala.org.au/ala-hub'
 sandboxBiocacheServiceUrl: 'https://sandbox.ala.org.au/biocache-service'

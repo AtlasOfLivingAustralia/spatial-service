@@ -113,6 +113,7 @@ class AreaReport extends SlaveProcess {
                 spatialConfig.biocacheUrl.toString(),
                 spatialConfig.bie.baseURL.toString(),
                 spatialConfig.lists.url.toString(),
+                spatialConfig.lists.useListWs,
                 q,
                 area[0].pid.toString(),
                 area[0].name.toString(),

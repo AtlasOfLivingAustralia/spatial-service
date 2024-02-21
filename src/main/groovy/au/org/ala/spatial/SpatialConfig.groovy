@@ -60,7 +60,7 @@ class SpatialConfig {
     DotUrl namematching
     DotUrl records
     String api_key
-    DotUrl lists
+    DotList lists
     DotUrl collections
     DotGeoserver geoserver
 
@@ -94,6 +94,12 @@ class SpatialConfig {
     static
     class DotUrl {
         String url
+    }
+
+    static
+    class DotList {
+        String url
+        Boolean useListWs
     }
 
     static
