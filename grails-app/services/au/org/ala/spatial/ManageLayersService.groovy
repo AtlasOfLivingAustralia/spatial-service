@@ -23,6 +23,7 @@ import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang.StringUtils
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue
@@ -966,7 +967,13 @@ class ManageLayersService {
                     if (layer.requestedId) {
                         layer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
                     } else {
-                        layer.setId(0)
+                        Long nextId = null
+                        groovySql.query("SELECT nextval('layers_id_seq'::regclass)", { result ->
+                            if (result.next()) {
+                                nextId = result.getLong(1)
+                            }
+                        })
+                        layer.setId(nextId)
                     }
 
                     //create default layers table entry, this updates layer.id
