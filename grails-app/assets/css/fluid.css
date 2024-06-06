@@ -1,2 +1,10 @@
 body.fluid { max-width: none; width:auto; }
 body.fluid .container.container-navbar, body.fluid #breadcrumb .container, body.fluid footer .container { max-width: none; width:auto; }
+
+a.disabled {
+    color: #999999; /* or any other styles for a disabled link */
+}
+
+td.disabled {
+    color: #999999; /* or any other styles for a disabled link */
+}

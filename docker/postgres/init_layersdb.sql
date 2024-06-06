@@ -10,13 +10,17 @@ SET search_path = public, pg_catalog;
 
 SET default_with_oids = false;
 
---drop database layersdb;
 
-create database layersdb;
-CREATE USER layers WITH PASSWORD 'layers';
-GRANT ALL PRIVILEGES ON DATABASE layersdb TO layers;
+-- DROP/CREATE DB and User/Password have been completed in docker-compose env
 
-\connect layersdb;
+-- Drop the database if it exists
+-- DROP DATABASE IF EXISTS ${POSTGRES_DB};
+-- CREATE DATABASE ${POSTGRES_DB};
+
+-- CREATE USER ${POSTGRES_USER} WITH PASSWORD '${POSTGRES_PASSWORD}';
+-- GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${POSTGRES_USER};
+
+-- \connect ${POSTGRES_DB} ;
 
 -- Enable PostGIS (includes raster)
 CREATE EXTENSION postgis;

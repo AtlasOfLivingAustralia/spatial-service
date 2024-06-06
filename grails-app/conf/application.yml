@@ -1,10 +1,10 @@
 ---
 grails:
-  serverURL: "http://localhost:8081"
-  server:
-    port: 8081
-    servlet:
-      contextPath: '/ws'
+#  serverURL: "http://localhost:8081/ws"
+#  server:
+#    port: 8081
+#    servlet:
+#      contextPath: '/ws'
   cors:
     # using ala-cors-plugin instead of grailsCorsFilter
     enabled: true
@@ -120,8 +120,8 @@ gdal:
   dir: "/usr/local/bin/"
 # To use a remote geoserver instance, set geoserver.remote.geoserver_data_dir to the geoserver_data_dir path on the
 # remote server. This will cause layer files to be copied to geoserver_data_dir/data/
-#  remote:
-geoserver_data_dir: '/data/geoserver_data_dir'
+remote:
+  geoserver_data_dir: '/data/geoserver_data_dir'
 
 shpResolutions:
   - 0.5
@@ -277,7 +277,7 @@ gazField: 'cl915'
 userObjectsField: 'cl1083'
 
 apiKeyCheckUrlTemplate: 'https://auth.ala.org.au/apikey/ws/check?apikey={0}'
-spatialService.remote: "https://spatial.ala.org.au/ws"
+#spatialService.remote: "https://spatial.ala.org.au/ws"
 
 journalmap.api_key: ''
 journalmap.url: 'https://www.journalmap.org/'
@@ -380,8 +380,13 @@ spring:
 
 geoserver:
   canDeploy: true
+
   spatialservice:
+    #if colocated, geoserver will load data from spatial service data folder, /data/spatial-data by default
     colocated: true
+  remote:
+    #In some cases, geoserver need to know its data folder.
+    geoserver_data_dir: "/data/geoserver_data_dir"
 
 environments:
   development:
@@ -392,7 +397,7 @@ environments:
     server:
       port: 8081
       servlet:
-        contextPath: '/ws'
+        context-path: '/ws'
     gdal:
       dir: "/Library/Frameworks/GDAL.framework/Programs"
 
@@ -400,12 +405,14 @@ environments:
     # Slave config
     spatialService:
       url: "http://devt.ala.org.au:8081/ws"
+      remote: "https://spatial-test.ala.org.au/ws"
     geoserver:
       # use localhost to play nice with locally running geoserver docker instance.
-      #url: 'http://localhost:8079/geoserver'
-      url: 'https://spatial-test.ala.org.au/geoserver'
+      url: 'http://localhost:8079/geoserver'
+      #url: 'https://spatial-test.ala.org.au/geoserver'
       username: 'admin'
       password: 'geoserver'
+
     dataSource:
       pooled: true
       jmxExport: true
@@ -413,8 +420,8 @@ environments:
       dialect: org.hibernate.spatial.dialect.postgis.PostgisPG9Dialect
       url: 'jdbc:postgresql://localhost:5432/layersdb'
       dbCreate: update
-      username: postgres
-      password: 'postgres'
+      username: layers
+      password: layers
       # logSql: true
 
   test:
@@ -450,7 +457,7 @@ environments:
 openapi:
   title: SpatialService REST services
   description: REST services for interacting with the spatial-service webapp
-  terms: https://www.ala.org.au/terms
+  terms: https://www.ala.org.au/terms-of-use
   contact:
     name: Support
     email: support@ala.org.au

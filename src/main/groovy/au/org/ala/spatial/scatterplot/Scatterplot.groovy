@@ -454,6 +454,11 @@ class Scatterplot {
     }
 
     void createBlockPlot(float min1, float max1, float min2, float max2) {
+        if (scatterplotDataDTO.getGridCutoffs() != null) {
+            // already built, do not build again
+            return
+        }
+
         int divisions = scatterplotDTO.getGridDivisions()
 
         //get linear cutoffs
@@ -482,6 +487,8 @@ class Scatterplot {
         float[][] data = new float[2][]
         String[] layers = scatterplotDTO.getLayers()
 
+        // TODO: can we do this without cutting grids?
+
         if (cutDataPath == null) {  //only need to cut once if rebuilding
             String[] types = new String[layers.length]
             for (int i = 0; i < layers.length; i++) {
@@ -509,6 +516,7 @@ class Scatterplot {
 
             if (x >= 0 && x < area.length
                     && y >= 0 && y < area[x].length) {
+                // TODO: this is too slow
                 area[x][y] += SpatialUtils.cellArea(Double.parseDouble(resolution), g.ymin + (i / g.ncols) * g.yres)
             }
         }

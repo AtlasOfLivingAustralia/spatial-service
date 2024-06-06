@@ -93,13 +93,12 @@ class LayerController {
     )
     @Path("layer/img/{name}")
     @Produces("image/jpg")
-    def img() {
-        String name = params.name
-        if (layerService.getLayerByName(name)) {
-            File f = new File(spatialConfig.data.dir + '/public/thumbnail/' + name + '.jpg')
-            render(file: f, fileName: "${name}.jpg")
+    def img(String id) {
+        if (layerService.getLayerByName(id)) {
+            File f = new File(spatialConfig.data.dir + '/public/thumbnail/' + id + '.jpg')
+            render(file: f, fileName: "${id}.jpg")
         } else {
-            response.sendError(404, "$name not found")
+            response.sendError(404, "$id not found")
         }
     }
 

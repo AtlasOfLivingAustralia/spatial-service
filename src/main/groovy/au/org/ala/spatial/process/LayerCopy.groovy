@@ -36,7 +36,6 @@ class LayerCopy extends SlaveProcess {
 
         Fields field = getField(fieldId)
         Layers layer = getLayer(layerId)
-
         //get style
         if (fieldId.toString().startsWith("cl")) {
             //getFile("/layer/${fieldId}.sld", sourceUrl)

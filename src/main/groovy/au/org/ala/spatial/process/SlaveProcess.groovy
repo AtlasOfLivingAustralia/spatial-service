@@ -572,6 +572,7 @@ class SlaveProcess {
 
             h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
             w = (int) Math.ceil((extents[1][0] - extents[0][0]) / res)
+            log.debug("Calculating mask")
             mask = getRegionMask(extents, w, h, region)
         } else if (envelopes != null) {
             h = (int) Math.ceil((extents[1][1] - extents[0][1]) / res)
@@ -646,7 +647,7 @@ class SlaveProcess {
         String standardLayersDir = spatialConfig.data.dir + '/standard_layer/'
 
         File file = new File(standardLayersDir + resolution + '/' + layer + '.grd')
-        log.debug("Get grid from: " + file.path)
+        log.debug("loading grid from: " + file.path)
         //move up a resolution when the file does not exist at the target resolution
         try {
             while (!file.exists()) {
@@ -677,12 +678,13 @@ class SlaveProcess {
         }
 
         String layerPath = standardLayersDir + File.separator + resolution + File.separator + layer
+        taskLog("Loading " + layer)
 
         if (new File(layerPath + ".grd").exists()) {
             return layerPath
         } else {
-            taskLog("Fatal error: Cannot calcuate grid due to missing the layer file: " + layerPath)
-            log.error("Fatal error: Cannot calcuate grid due to missing the layer file: " + layerPath)
+            taskLog("Fatal error: Cannot calculate grid due to missing the layer: " + layer)
+            log.error("Fatal error: Cannot calculate grid due to missing the layer file: " + layerPath)
             return null
         }
     }
@@ -938,7 +940,7 @@ class SlaveProcess {
                 }
             }
         }
-
+        log.debug("Writing grids to " + dir + layer)
         grid.writeGrid(dir + layer, dfiltered,
                 extents[0][0],
                 extents[0][1],
@@ -1114,6 +1116,7 @@ class SlaveProcess {
     }
 
     RegionEnvelope processArea(AreaInput area) {
+        log.info("Parsing WKT ")
         def wkt = getAreaWkt(area)
 
         def region = null
@@ -1123,7 +1126,7 @@ class SlaveProcess {
         } else {
             region = SimpleShapeFile.parseWKT(wkt)
         }
-
+        log.info("Check BBox: " + region?.bounding_box)
         new RegionEnvelope(region, envelope)
     }
 

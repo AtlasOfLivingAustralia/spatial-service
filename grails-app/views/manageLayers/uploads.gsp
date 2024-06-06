@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Uploads</title>
-    <meta name="breadcrumbs" content="${g.createLink(controller: 'main', action: 'index')}, Spatial Service"/>
+    <g:set var="baseUrl" value="${request.scheme}://${request.serverName}:${request.serverPort}${request.contextPath}" />
+    <meta name="breadcrumbs" content="${g.createLink(uri: baseUrl)}, Spatial Service"/>
     <meta name="layout" content="ala-main"/>
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
     <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>

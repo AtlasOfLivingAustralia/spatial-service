@@ -198,6 +198,7 @@ class SimpleRegion implements Serializable {
         for (int i = 0; i < points.size(); i++) {
             pointsArray[i] = points.get(i)
         }
+        log.debug("Calculating BBox of a polygon")
         simpleregion.setPolygon(pointsArray)
         return simpleregion
     }
@@ -327,7 +328,6 @@ class SimpleRegion implements Serializable {
                     points[i] = points_[i]
                 }
             }
-
             /* bounding box setup */
             bounding_box = new double[2][2]
             bounding_box[0][0] = points[0]
@@ -963,7 +963,7 @@ class SimpleRegion implements Serializable {
         if (three_state_map == null) {
             three_state_map = new byte[height][width]
         }
-
+        log.debug("Calculating overlapped grids over polygons")
         double divx = (longitude2 - longitude1) / width
         double divy = (latitude2 - latitude1) / height
 

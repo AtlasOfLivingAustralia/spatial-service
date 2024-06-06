@@ -113,7 +113,7 @@ class ShapesController {
     @Path("/shapes/wkt/{pid}")
     @Produces("plain/text")
     def wkt() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
@@ -169,7 +169,7 @@ class ShapesController {
     @Path("/shapes/kml/{pid}")
     @Produces("plain/text")
     def kml() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
@@ -240,7 +240,7 @@ class ShapesController {
     @Path("/shapes/geojson/{pid}")
     @Produces("plain/text")
     def geojson() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
@@ -306,7 +306,7 @@ class ShapesController {
     @Path("/shapes/shp/{pid}")
     @Produces("application/zip")
     def shp() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
