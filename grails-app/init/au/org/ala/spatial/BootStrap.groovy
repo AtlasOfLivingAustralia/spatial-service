@@ -49,6 +49,9 @@ class BootStrap {
                 if (id) {
                     result += [id: id]
                 }
+                if (it instanceof Layers && result.containsKey("dt_added")) {
+                    result += [dt_added: ((Layers) it).dt_added.time]
+                }
                 result
             }
         }
