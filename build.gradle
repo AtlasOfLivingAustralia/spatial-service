@@ -28,7 +28,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "2.1.3-SNAPSHOT"
+version "2.1.4-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin: "eclipse"
