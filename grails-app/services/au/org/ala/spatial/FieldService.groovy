@@ -190,7 +190,7 @@ class FieldService {
         sql += "or f.name ilike :keywords "
         sql += ") order by f.name "
 
-        keywords = "%" + keywords.toLowerCase() + "%"
+        keywords = keywords == null ? "%" : ("%" + keywords.toLowerCase() + "%")
 
         List<Fields> fields = new ArrayList()
 
