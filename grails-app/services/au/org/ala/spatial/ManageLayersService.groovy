@@ -56,7 +56,7 @@ class ManageLayersService {
         if (path.exists()) {
             for (File f : path.listFiles()) {
                 if (f.isDirectory()) {
-                    log.error 'getting ' + f.getName()
+                    log.debug 'getting ' + f.getName()
                     def upload = getUpload(f.getName())
                     if (upload.size() > 0) {
                         list.add(upload)
@@ -271,7 +271,9 @@ class ManageLayersService {
                 log.error("No SHP or TIF available....")
                 map.put("error", "no layer files")
             } else {
-                def errors = publishService.layerToGeoserver([files: [shp.exists() ? shp.getPath() : bil.getPath()]], null)
+                def errors = publishService.layerToGeoserver(new OutputParameter([
+                        file: ([shp.exists() ? shp.getPath() : bil.getPath()] as JSON).toString()
+                ]), null)
 
                 if (errors) {
                     log.error("Errors uploading to geoserver...." + errors.inspect())
@@ -464,7 +466,7 @@ class ManageLayersService {
                                     "=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
                 }
             } catch (Exception e2) {
-                log.error("failed to find layer for rawId: " + layerId, e2)
+                log.error("failed to find layer for rawId: " + layerId)
             }
 
         }
@@ -872,7 +874,9 @@ class ManageLayersService {
             }
         }
         if (map.containsKey('id')) {
-            layer.id = map.get('id') as Long
+            try {
+                layer.id = map.get('id') as Long
+            } catch (Exception ignored) {}
         }
 
         createOrUpdateLayer(layer, id, createTask)
@@ -901,7 +905,7 @@ class ManageLayersService {
             } catch (ignored) {
                 log.debug 'unable to read uploads layer.id for ' + id
             }
-            if (Layers.countById(id)) {
+            if (id != null && id.isInteger() && Layers.countById(id)) {
                 //update select values
                 try {
                     //flag background processes that need running
