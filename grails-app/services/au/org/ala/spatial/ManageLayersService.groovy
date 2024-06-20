@@ -19,6 +19,7 @@ import au.org.ala.spatial.grid.Diva2bil
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import groovy.sql.Sql
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
@@ -37,7 +38,7 @@ import java.nio.file.attribute.BasicFileAttributes
 @Slf4j
 class ManageLayersService {
 
-    def groovySql
+    def dataSource
 
     FieldService fieldService
     LayerService layerService
@@ -972,7 +973,7 @@ class ManageLayersService {
                         layer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
                     } else {
                         Long nextId = null
-                        groovySql.query("SELECT nextval('layers_id_seq'::regclass)", { result ->
+                        Sql.newInstance(dataSource).query("SELECT nextval('layers_id_seq'::regclass)", { result ->
                             if (result.next()) {
                                 nextId = result.getLong(1)
                             }
@@ -1367,7 +1368,7 @@ class ManageLayersService {
 
         try {
             if (m.containsKey('data_resource_uid')) {
-                groovySql.execute(
+                Sql.newInstance(dataSource).execute(
                         'DELETE FROM distributions WHERE data_resource_uid = \'' + m.data_resource_uid + '\';')
             }
         } catch (err) {
@@ -1390,7 +1391,7 @@ class ManageLayersService {
 
         try {
             if (m.containsKey('checklist')) {
-                groovySql.execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\'')
+                Sql.newInstance(dataSource).execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\'')
             }
         } catch (err) {
             log.error 'failed to delete data resource uid records for uploadId: ' + id, err

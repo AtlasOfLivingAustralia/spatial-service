@@ -57,7 +57,7 @@ class ShapesController {
     SpatialObjectsService spatialObjectsService
 
     SpatialConfig spatialConfig
-    Sql groovySql
+    def dataSource
 
     static final String KML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
             "<kml xmlns=\"http://earth.google.com/kml/2.2\">" +
@@ -186,7 +186,7 @@ class ShapesController {
                         .replace("<description></description>", "<description><![CDATA[" + ids.join(',') + "]]></description>").bytes)
 
                 String query = "select st_askml(st_collect(geom)) as kml from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
-                groovySql.eachRow(query, { GroovyResultSet row ->
+                Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject('kml').toString().bytes)
                 })
 
@@ -253,7 +253,7 @@ class ShapesController {
                 List ids = pid.split('~').collect { cleanObjectId(it) }
 
                 String query = "select st_asgeojson(st_collect(geom)) as geojson from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
-                groovySql.eachRow(query, { GroovyResultSet row ->
+                Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject('geojson').toString().bytes)
                 })
             } else {
@@ -320,7 +320,7 @@ class ShapesController {
 
                 String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 String wkt = ""
-                groovySql.eachRow(query, { GroovyResultSet row ->
+                Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
                     wkt = row.getObject('wkt')
                 })
 

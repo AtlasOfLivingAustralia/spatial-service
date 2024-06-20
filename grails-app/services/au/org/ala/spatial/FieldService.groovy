@@ -27,7 +27,7 @@ class FieldService {
 
     LayerService layerService
     SpatialObjectsService spatialObjectsService
-    Sql groovySql
+    def dataSource
     SpatialConfig spatialConfig
 
     Fields getFieldById(String id, boolean enabledFieldsOnly = true) {
@@ -39,7 +39,7 @@ class FieldService {
 
         Fields field = null
 
-        groovySql.query(sql, [id: id], { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, [id: id], { ResultSet rs ->
             if (rs.next()) {
                 field = new Fields()
                 rs.fields.each { Field f ->
@@ -153,8 +153,8 @@ class FieldService {
         Fields f = getFieldById(fieldId, false)
 
         if (f != null) {
-            groovySql.execute("delete from objects where fid=?", [f.getId()] as List<Object>)
-            groovySql.execute("delete from fields where id=?", [f.getId()] as List<Object>)
+            Sql.newInstance(dataSource).execute("delete from objects where fid=?", [f.getId()] as List<Object>)
+            Sql.newInstance(dataSource).execute("delete from fields where id=?", [f.getId()] as List<Object>)
         }
     }
 
@@ -194,7 +194,7 @@ class FieldService {
 
         List<Fields> fields = new ArrayList()
 
-        groovySql.query(sql, [keywords: keywords], {
+        Sql.newInstance(dataSource).query(sql, [keywords: keywords], {
             while (it.next()) {
                 Fields field = new Fields()
                 Layers layer = new Layers()
