@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Slf4j
 class LayerService {
 
-    Sql groovySql
+    def dataSource
 
     SpatialConfig spatialConfig
     FieldService fieldService
@@ -45,7 +45,7 @@ class LayerService {
     }
 
     void delete(String layerId) {
-        groovySql.execute("delete from layers where id=" + Integer.parseInt(layerId))
+        Sql.newInstance(dataSource).execute("delete from layers where id=" + Integer.parseInt(layerId))
     }
 
     Layers getLayerById(Long id, boolean enabledLayersOnly = true) {
@@ -127,7 +127,7 @@ class LayerService {
 
         List<Layers> layers = new ArrayList()
 
-        groovySql.query(sql, [keywords: term], {
+        Sql.newInstance(dataSource).query(sql, [keywords: term], {
             Layers layer = it as Layers
             fieldService.updateDisplayPaths([layer])
             layers.add(layer)

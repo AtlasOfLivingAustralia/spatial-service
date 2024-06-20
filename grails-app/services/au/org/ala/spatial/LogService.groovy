@@ -15,6 +15,8 @@
 
 package au.org.ala.spatial
 
+import groovy.sql.Sql
+
 import java.sql.ResultSet
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -24,7 +26,7 @@ class LogService {
 
     def authService
     SpatialConfig spatialConfig
-    def groovySql
+    def dataSource
 
     def category1
     def category2
@@ -77,7 +79,7 @@ class LogService {
     def searchCount(params, userId, userIsAdmin) {
         def sql = buildCountSql(params, userId, userIsAdmin)
         def response
-        groovySql.query(sql.toString(), { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql.toString(), { ResultSet rs ->
             if (rs.next()) {
                 response = rs.getInt(1)
             }
