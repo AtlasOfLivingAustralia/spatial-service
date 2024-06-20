@@ -19,6 +19,7 @@ import au.org.ala.spatial.grid.Diva2bil
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import groovy.sql.Sql
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
@@ -37,7 +38,7 @@ import java.nio.file.attribute.BasicFileAttributes
 @Slf4j
 class ManageLayersService {
 
-    def groovySql
+    def dataSource
 
     FieldService fieldService
     LayerService layerService
@@ -56,7 +57,7 @@ class ManageLayersService {
         if (path.exists()) {
             for (File f : path.listFiles()) {
                 if (f.isDirectory()) {
-                    log.error 'getting ' + f.getName()
+                    log.debug 'getting ' + f.getName()
                     def upload = getUpload(f.getName())
                     if (upload.size() > 0) {
                         list.add(upload)
@@ -271,7 +272,9 @@ class ManageLayersService {
                 log.error("No SHP or TIF available....")
                 map.put("error", "no layer files")
             } else {
-                def errors = publishService.layerToGeoserver([files: [shp.exists() ? shp.getPath() : bil.getPath()]], null)
+                def errors = publishService.layerToGeoserver(new OutputParameter([
+                        file: ([shp.exists() ? shp.getPath() : bil.getPath()] as JSON).toString()
+                ]), null)
 
                 if (errors) {
                     log.error("Errors uploading to geoserver...." + errors.inspect())
@@ -464,7 +467,7 @@ class ManageLayersService {
                                     "=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
                 }
             } catch (Exception e2) {
-                log.error("failed to find layer for rawId: " + layerId, e2)
+                log.error("failed to find layer for rawId: " + layerId)
             }
 
         }
@@ -872,7 +875,9 @@ class ManageLayersService {
             }
         }
         if (map.containsKey('id')) {
-            layer.id = map.get('id') as Long
+            try {
+                layer.id = map.get('id') as Long
+            } catch (Exception ignored) {}
         }
 
         createOrUpdateLayer(layer, id, createTask)
@@ -901,7 +906,7 @@ class ManageLayersService {
             } catch (ignored) {
                 log.debug 'unable to read uploads layer.id for ' + id
             }
-            if (Layers.countById(id)) {
+            if (id != null && id.isInteger() && Layers.countById(id)) {
                 //update select values
                 try {
                     //flag background processes that need running
@@ -968,7 +973,7 @@ class ManageLayersService {
                         layer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
                     } else {
                         Long nextId = null
-                        groovySql.query("SELECT nextval('layers_id_seq'::regclass)", { result ->
+                        Sql.newInstance(dataSource).query("SELECT nextval('layers_id_seq'::regclass)", { result ->
                             if (result.next()) {
                                 nextId = result.getLong(1)
                             }
@@ -1363,7 +1368,7 @@ class ManageLayersService {
 
         try {
             if (m.containsKey('data_resource_uid')) {
-                groovySql.execute(
+                Sql.newInstance(dataSource).execute(
                         'DELETE FROM distributions WHERE data_resource_uid = \'' + m.data_resource_uid + '\';')
             }
         } catch (err) {
@@ -1386,7 +1391,7 @@ class ManageLayersService {
 
         try {
             if (m.containsKey('checklist')) {
-                groovySql.execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\'')
+                Sql.newInstance(dataSource).execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\'')
             }
         } catch (err) {
             log.error 'failed to delete data resource uid records for uploadId: ' + id, err

@@ -18,7 +18,7 @@ import org.locationtech.jts.geom.GeometryCollection
 //@CompileStatic
 class BootStrap {
 
-    Sql groovySql
+    def dataSource
     def messageSource
     SpatialConfig spatialConfig
 
@@ -106,6 +106,8 @@ class BootStrap {
 //        } catch (Exception e) {
 //            log.error("Error creating missing azimuth function frmo st_azimuth", e)
 //        }
+
+        def groovySql = Sql.newInstance(dataSource)
 
         // manual db modification
         String [] dbModificationSql = [

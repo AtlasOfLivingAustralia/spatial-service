@@ -178,8 +178,8 @@ dependencies {
 
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
-    implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.27'
-    implementation group: 'net.postgis', name: 'postgis-jdbc', version: '2021.1.0'
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.3'
+    implementation group: 'net.postgis', name: 'postgis-jdbc', version: '2023.1.0'
 
     implementation 'jfree:jfreechart:1.0.13'
     implementation 'com.thoughtworks.xstream:xstream:1.4.20' // TODO Upgrade to latest version due to CVEs

@@ -258,6 +258,10 @@ class FieldCreation extends SlaveProcess {
     }
 
     static String convertToUtf8(String rawDbfString) {
+        if (rawDbfString == null) {
+            return null
+        }
+
         try {
             return new String(rawDbfString.bytes, StandardCharsets.UTF_8)
         } catch (Exception ignored) {

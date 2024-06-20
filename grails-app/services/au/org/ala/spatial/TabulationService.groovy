@@ -20,8 +20,8 @@ import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.dto.Tabulation
 import au.org.ala.spatial.tabulation.TabulationUtil
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.sql.Sql
 
-//@CompileStatic
 class TabulationService {
     LayerService layerService
     SpatialObjectsService spatialObjectsService
@@ -29,7 +29,7 @@ class TabulationService {
     TabulationGeneratorService tabulationGeneratorService
 
     def sessionFactory
-    def groovySql
+    def dataSource
 
     String[][] tabulationGridGenerator(List<Tabulation> tabulations, String func) throws IOException {
         //determine x & y field names
@@ -381,7 +381,7 @@ class TabulationService {
 
             tabulations = []
 
-            groovySql.query(sql, [min, max, min, max], { it ->
+            Sql.newInstance(dataSource).query(sql, [min, max, min, max], { it ->
                 while (it.next()) {
                     Tabulation t = new Tabulation()
                     t.pid1 = it.getString(1)
@@ -403,7 +403,7 @@ class TabulationService {
 
             tabulations = []
 
-            groovySql.query(sql, [wkt, min, max, min, max], { it ->
+            Sql.newInstance(dataSource).query(sql, [wkt, min, max, min, max], { it ->
                 while (it.next()) {
                     Tabulation t = new Tabulation()
                     t.fid1 = it.getString(1)
@@ -456,7 +456,7 @@ class TabulationService {
         List<Tabulation> result = []
 
         List<String> fields = Fields.findAll().collect { if (it.enabled) it.id }
-        groovySql.query(sql, { it ->
+        Sql.newInstance(dataSource).query(sql, { it ->
             while (it.next()) {
                 Tabulation t = new Tabulation()
                 t.fid1 = it.getString(1)
@@ -487,7 +487,7 @@ class TabulationService {
                 if (isPid) {
                     sql = "SELECT fid1, pid1, name1," + " fid2, pid2, name2, " + " ST_AsText(newgeom) as geometry FROM " + "(" + "SELECT a.fid as fid1, a.pid as pid1, a.name as name1, b.fid as fid2, b.pid as pid2, b.name as name2 " + ", (ST_INTERSECTION(b.the_geom, a.the_geom)) as newgeom FROM " + "(SELECT * FROM objects WHERE fid = ? ) a, (SELECT * FROM objects WHERE pid = ? ) b " + "WHERE ST_INTERSECTS(ST_GEOMFROMTEXT(a.bbox, 4326), ST_GEOMFROMTEXT(b.bbox ,4326))" + ") o " + "WHERE newgeom is not null AND ST_Area(newgeom) > 0"
 
-                    groovySql.query(sql, [fid, wkt], { it ->
+                    Sql.newInstance(dataSource).query(sql, [fid, wkt], { it ->
                         while (it.next()) {
                             Tabulation t = new Tabulation()
                             t.fid1 = it.getString(1)
@@ -502,7 +502,7 @@ class TabulationService {
                     })
                 } else {
                     sql = "SELECT fid as fid1, pid as pid1, name as name1," + " 'user area' as fid2, 'user area' as pid2, 'user area' as name2, " + " ST_AsText(newgeom) as geometry FROM " + "(SELECT fid, pid, name, (ST_INTERSECTION(ST_GEOMFROMTEXT( ? ,4326), the_geom)) as newgeom FROM " + "objects WHERE fid= ? and ST_INTERSECTS(ST_GEOMFROMTEXT(bbox, 4326), ST_ENVELOPE(ST_GEOMFROMTEXT( ? ,4326)))" + ") o " + "WHERE newgeom is not null AND ST_Area(newgeom) > 0"
-                    groovySql.query(sql, [wkt, fid, wkt], { it ->
+                    Sql.newInstance(dataSource).query(sql, [wkt, fid, wkt], { it ->
                         while (it.next()) {
                             Tabulation t = new Tabulation()
                             t.fid1 = it.getString(1)
@@ -530,7 +530,7 @@ class TabulationService {
                 String sql = "SELECT fid1, pid1, name as name1," + " 'world' as fid2, 'world' as pid2, 'world' as name2, " + " area_km as area FROM " + "(SELECT name, fid as fid1, pid as pid1, the_geom as newgeom, area_km FROM " + "objects WHERE fid= ? ) t " + "WHERE newgeom is not null AND ST_Area(newgeom) > 0"
 
                 List<Tabulation> tabulations = []
-                groovySql.query(sql, [fid], { it ->
+                Sql.newInstance(dataSource).query(sql, [fid], { it ->
                     while (it.next()) {
                         Tabulation t = new Tabulation()
                         t.fid1 = it.getString(1)
