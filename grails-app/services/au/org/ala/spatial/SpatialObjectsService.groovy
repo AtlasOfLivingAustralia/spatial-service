@@ -291,7 +291,7 @@ class SpatialObjectsService {
             } else if ("wkt" == geomtype) {
                 os.write(l.get(0).geometry.toText().bytes)
             } else if ("geojson" == geomtype) {
-                FeatureJSON fjson = new FeatureJSON()
+                FeatureJSON fjson = new FeatureJSON(new GeometryJSON(16))
                 StringWriter writer = new StringWriter()
 
                 String wktString = l.get(0).geometry.toText()
