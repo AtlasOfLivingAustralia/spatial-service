@@ -799,20 +799,23 @@ class SpatialObjectsService {
         }
 
         String sql = "DELETE FROM uploaded_objects_metadata WHERE pid = ?; DELETE FROM objects where pid = ?"
-        boolean rowsAffected = Sql.newInstance(dataSource).execute(sql, Integer.toString(pid), Integer.toString(pid))
-        return (rowsAffected)
+        Sql.newInstance(dataSource).execute(sql, [Integer.toString(pid), Integer.toString(pid)])
+
+        // return true if the object no longer exists
+        return !shapePidIsForUploadedShape(pid)
     }
 
     private boolean shapePidIsForUploadedShape(int pid) {
-        String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = '" + pid + "'"
-        Sql.newInstance(dataSource).query(sql, {
+        boolean found = false
+        String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = ?"
+        Sql.newInstance(dataSource).query(sql, [Integer.toString(pid)], {
             while (it.next()) {
                 if (it.getObject(1) > 0) {
-                    return true
+                    found = true
                 }
             }
         })
-        return false
+        return found
     }
 
     List<SpatialObjects> getObjectsWithinRadius(String fid, double latitude, double longitude, double radiusKm) {
