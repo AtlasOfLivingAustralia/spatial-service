@@ -271,11 +271,16 @@ class SpatialObjectsService {
             } else if ("kml" == geomtype) {
                 String wktString = l.get(0).geometry.toText()
                 String wkttype = "POLYGON"
-                if (wktString.contains("MULTIPOLYGON")) {
+                if (wktString.startsWith("MULTIPOLYGON")) {
                     wkttype = "MULTIPOLYGON"
-                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
+                } else if (wktString.startsWith("GEOMETRYCOLLECTION")) {
                     wkttype = "GEOMETRYCOLLECTION"
+                } else if (wktString.startsWith("MULTIPOINT")) {
+                    wkttype = "MULTIPOINT"
+                } else if (wktString.startsWith("POINT")) {
+                    wkttype = "POINT"
                 }
+
                 final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
@@ -296,10 +301,14 @@ class SpatialObjectsService {
 
                 String wktString = l.get(0).geometry.toText()
                 String wkttype = "POLYGON"
-                if (wktString.contains("MULTIPOLYGON")) {
+                if (wktString.startsWith("MULTIPOLYGON")) {
                     wkttype = "MULTIPOLYGON"
-                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
+                } else if (wktString.startsWith("GEOMETRYCOLLECTION")) {
                     wkttype = "GEOMETRYCOLLECTION"
+                } else if (wktString.startsWith("MULTIPOINT")) {
+                    wkttype = "MULTIPOINT"
+                } else if (wktString.startsWith("POINT")) {
+                    wkttype = "POINT"
                 }
                 final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
