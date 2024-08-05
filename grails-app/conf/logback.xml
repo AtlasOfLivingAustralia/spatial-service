@@ -7,8 +7,7 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>[Spatial-service] %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(%logger{39} [%file:%line]){cyan} %clr(:){faint} %m%n%wex
-            </pattern>
+            <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(%logger{39} [%file:%line]){cyan} %clr(:){faint} %m%n%wex</pattern>
         </encoder>
     </appender>
 
@@ -21,11 +20,11 @@
     <logger name="org.quartz" level="ERROR"/>
     <logger name="asset.pipeline" level="ERROR"/>
     <logger name="au.org.ala.cas" level="WARN"/>
-    <logger name="au.org.ala.spatial" level="DEBUG"/>
-    <logger name="org.liquibase" level="INFO"/>
-    <logger name="liquibase" level="INFO"/>
+    <logger name="au.org.ala.spatial" level="WARN"/>
+    <logger name="org.liquibase" level="WARN"/>
+    <logger name="liquibase" level="WARN"/>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
 

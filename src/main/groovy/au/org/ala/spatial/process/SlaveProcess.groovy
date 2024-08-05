@@ -1223,7 +1223,7 @@ class SlaveProcess {
     }
 
     def runCmd(String[] cmd, Boolean logToTask, Long timeout) {
-        Util.runCmd(cmd, logToTask, taskWrapper, timeout)
+        Util.runCmd(cmd, logToTask, taskWrapper, timeout, null)
     }
 
     def setMessage(String msg) {

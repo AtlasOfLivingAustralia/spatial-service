@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial
 
+import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.grid.Diva2bil
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.UploadSpatialResource
@@ -273,7 +274,7 @@ class ManageLayersService {
                 map.put("error", "no layer files")
             } else {
                 def errors = publishService.layerToGeoserver(new OutputParameter([
-                        file: ([shp.exists() ? shp.getPath() : bil.getPath()] as JSON).toString()
+                        file: ([shp.exists() ? shp.getPath() : tif.getPath()] as JSON).toString()
                 ]), null)
 
                 if (errors) {
@@ -503,7 +504,7 @@ class ManageLayersService {
                 map.put("columns", columns)
                 map.put("type", "Contextual")
             } else if (bil.exists()) {
-                double[] minmax = getMinMax(bil)
+                double[] minmax = Bil2diva.getMinMax(bil, spatialConfig.gdal.dir, spatialConfig.admin.timeout)
                 map.put("environmentalvaluemin", minmax[0])
                 map.put("environmentalvaluemax", minmax[1])
 
@@ -1225,34 +1226,6 @@ class ManageLayersService {
 //        taskDao.addTask(UPDATE_LAYER_DISTANCES, "", 3);
 //        taskDao.addTask(UPDATE_GRID_CACHE, "", 3);
 //    }
-
-    def getMinMax(File bil) {
-        double[] minmax = new double[2]
-
-        //does .grd exist?
-        File grd = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".grd")
-        File hdr = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".hdr")
-
-        if (!grd.exists() && hdr.exists()) {
-            String n = bil.getPath().substring(0, bil.getPath().length() - 4)
-            Bil2diva.bil2diva(n, n, '')
-        }
-
-        try {
-            String info = grd.text
-            for (String line : info.split("\n")) {
-                if (line.startsWith("MinValue")) {
-                    minmax[0] = Double.parseDouble(line.substring("MinValue=".length()).trim())
-                }
-                if (line.startsWith("MaxValue")) {
-                    minmax[1] = Double.parseDouble(line.substring("MaxValue=".length()).trim())
-                }
-            }
-        } catch (IOException e) {
-            log.error("failed to get min max values in bil file: " + bil.getPath(), e)
-        }
-        return minmax
-    }
 
     def distributionMap(String uploadId) {
         String dir = spatialConfig.data.dir

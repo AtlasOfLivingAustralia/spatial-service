@@ -204,7 +204,7 @@ class StandardizeLayers extends SlaveProcess {
                 return false
             }
 
-            if (!Bil2diva.bil2diva(tmpBil.getPath(), dstFilepath, "")) {
+            if (!Bil2diva.bil2diva(tmpBil.getPath(), dstFilepath, "", gdalPath, 36000000)) {
                 return false
             }
 

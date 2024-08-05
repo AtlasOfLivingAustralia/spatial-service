@@ -408,7 +408,7 @@ environments:
       remote: "https://spatial-test.ala.org.au/ws"
     geoserver:
       # use localhost to play nice with locally running geoserver docker instance.
-      url: 'http://localhost:8079/geoserver'
+      url: 'http://localhost:8080/geoserver'
       #url: 'https://spatial-test.ala.org.au/geoserver'
       username: 'admin'
       password: 'geoserver'

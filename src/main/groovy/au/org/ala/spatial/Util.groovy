@@ -306,10 +306,10 @@ class Util {
     }
 
     static int runCmd(String[] cmd, Long timeout) {
-        return runCmd(cmd, false, null, timeout)
+        return runCmd(cmd, false, null, timeout, null)
     }
 
-    static int runCmd(String[] cmd, Boolean logToTask, TaskWrapper task, Long timeout) {
+    static int runCmd(String[] cmd, Boolean logToTask, TaskWrapper task, Long timeout, StringBuffer stringBuffer) {
         int exitValue = 1
 
         ProcessBuilder builder = new ProcessBuilder(cmd)
@@ -321,10 +321,10 @@ class Util {
             proc = builder.start()
 
             // any error message?
-            StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "", logToTask ? task : null)
+            StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "", logToTask ? task : null, null)
 
             // any output?
-            StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "", logToTask ? task : null)
+            StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "", logToTask ? task : null, stringBuffer)
 
             // kick them off
             errorGobbler.start()

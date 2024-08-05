@@ -69,7 +69,7 @@ class AnalysisLayerUtil {
                     }
 
                     //bil 2 diva
-                    if (!Bil2diva.bil2diva(tmpxBil.getPath(), dstFilepath, "")) {
+                    if (!Bil2diva.bil2diva(tmpxBil.getPath(), dstFilepath, "", gdalPath, 36000000)) {
                         return false
                     }
 
