@@ -615,15 +615,6 @@ class ManageLayersService {
             }
         }
 
-        //layer id in raw upload
-        def allUploads = listUploadedFiles()
-        allUploads.each {
-            log.debug("checking upload: {}", it)
-            if (it.containsKey('layer_id') && it.layer_id == id) {
-                FileUtils.deleteDirectory(new File(spatialConfig.data.dir.toString() + "/uploads/" + it.raw_id));
-            }
-        }
-
         //raw upload
         //TODO: tidy messages for id == name (layer already deleted)
         def result = httpCall("DELETE",
@@ -638,6 +629,16 @@ class ManageLayersService {
                 null,null,
                 "text/plain");
         log.debug("deleteResult: {}", result);
+
+        //layer id in raw upload
+        def allUploads = listUploadedFiles()
+        allUploads.each {
+            log.debug("checking upload: {}", it)
+            if (it.containsKey('layer_id') && it.layer_id == id) {
+                log.debug("Deleting upload folder: {}", it)
+                FileUtils.deleteDirectory(new File(spatialConfig.data.dir.toString() + "/uploads/" + it.raw_id));
+            }
+        }
     }
 
     def deleteField(String fieldId) {
