@@ -616,8 +616,9 @@ class ManageLayersService {
         //layer id in raw upload
         def allUploads = listUploadedFiles()
         allUploads.each {
+            log.debug("checking upload: {}", it)
             if (it.containsKey('layer_id') && it.layer_id == id) {
-                new File(spatialConfig.data.dir.toString() + "/uploads/" + it.raw_id + "/layer.id").delete()
+                FileUtils.deleteDirectory(new File(spatialConfig.data.dir.toString() + "/uploads/" + it.raw_id));
             }
         }
 
