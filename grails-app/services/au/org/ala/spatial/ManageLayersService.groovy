@@ -585,16 +585,18 @@ class ManageLayersService {
             String layerId = (String) map.get("layer_id")
             String name = (String) map.get("name")
 
-            httpCall("DELETE",
+            def deleteResult = httpCall("DELETE",
                     geoserverUrl + "/rest/workspaces/ALA/datastores/" + name + "?recurse=true", ///external.shp",
                     geoserverUsername, geoserverPassword,
                     null, null,
                     "text/plain")
-            httpCall("DELETE",
+            log.debug("deleteResult: {}", deleteResult);
+            deleteResult = httpCall("DELETE",
                     geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + name + "?recurse=true", //"/external.geotiff",
                     geoserverUsername, geoserverPassword,
                     null, null,
                     "text/plain")
+            log.debug("deleteResult: {}", deleteResult);
 
             // layers table
             layerService.delete(layerId)
@@ -624,17 +626,18 @@ class ManageLayersService {
 
         //raw upload
         //TODO: tidy messages for id == name (layer already deleted)
-//        String[] result;
-//        result = httpCall("DELETE",
-//                geoserverUrl + "/rest/workspaces/ALA/datastores/" + id + "?recurse=true", ///external.shp",
-//                geoserverUsername, geoserverPassword,
-//                null,null,
-//                "text/plain");
-//        result = httpCall("DELETE",
-//                geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + id + "?recurse=true", //"/external.geotiff",
-//                geoserverUsername, geoserverPassword,
-//                null,null,
-//                "text/plain");
+        def result = httpCall("DELETE",
+                geoserverUrl + "/rest/workspaces/ALA/datastores/" + id + "?recurse=true", ///external.shp",
+                geoserverUsername, geoserverPassword,
+                null,null,
+                "text/plain");
+        log.debug("deleteResult: {}", result);
+        result = httpCall("DELETE",
+                geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + id + "?recurse=true", //"/external.geotiff",
+                geoserverUsername, geoserverPassword,
+                null,null,
+                "text/plain");
+        log.debug("deleteResult: {}", result);
     }
 
     def deleteField(String fieldId) {
