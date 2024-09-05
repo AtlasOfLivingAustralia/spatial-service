@@ -350,6 +350,7 @@ class ManageLayersService {
 
         }
 
+        log.debug("HTTP call response {}: {} ", output[0], output[1])
         return output
     }
 
@@ -585,18 +586,16 @@ class ManageLayersService {
             String layerId = (String) map.get("layer_id")
             String name = (String) map.get("name")
 
-            def deleteResult = httpCall("DELETE",
+            httpCall("DELETE",
                     geoserverUrl + "/rest/workspaces/ALA/datastores/" + name + "?recurse=true", ///external.shp",
                     geoserverUsername, geoserverPassword,
                     null, null,
                     "text/plain")
-            log.debug("deleteResult: {}", deleteResult);
-            deleteResult = httpCall("DELETE",
+            httpCall("DELETE",
                     geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + name + "?recurse=true", //"/external.geotiff",
                     geoserverUsername, geoserverPassword,
                     null, null,
                     "text/plain")
-            log.debug("deleteResult: {}", deleteResult);
 
             // layers table
             layerService.delete(layerId)
@@ -615,22 +614,19 @@ class ManageLayersService {
             }
         }
 
-        //raw upload
-        //TODO: tidy messages for id == name (layer already deleted)
-        def result = httpCall("DELETE",
+        // Delete raw upload to greoserver
+        httpCall("DELETE",
                 geoserverUrl + "/rest/workspaces/ALA/datastores/" + id + "?recurse=true", ///external.shp",
                 geoserverUsername, geoserverPassword,
                 null,null,
                 "text/plain");
-        log.debug("deleteResult: {}", result);
-        result = httpCall("DELETE",
+        httpCall("DELETE",
                 geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + id + "?recurse=true", //"/external.geotiff",
                 geoserverUsername, geoserverPassword,
                 null,null,
                 "text/plain");
-        log.debug("deleteResult: {}", result);
 
-        //layer id in raw upload
+        // Delete folder in spatial service
         def allUploads = listUploadedFiles()
         allUploads.each {
             log.debug("checking upload: {}", it)
