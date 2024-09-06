@@ -621,19 +621,22 @@ class ManageLayersService {
             }
         }
 
-        //raw upload
-        //TODO: tidy messages for id == name (layer already deleted)
-//        String[] result;
-//        result = httpCall("DELETE",
-//                geoserverUrl + "/rest/workspaces/ALA/datastores/" + id + "?recurse=true", ///external.shp",
-//                geoserverUsername, geoserverPassword,
-//                null,null,
-//                "text/plain");
-//        result = httpCall("DELETE",
-//                geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + id + "?recurse=true", //"/external.geotiff",
-//                geoserverUsername, geoserverPassword,
-//                null,null,
-//                "text/plain");
+        //Delete raw upload
+        httpCall("DELETE",
+                geoserverUrl + "/rest/workspaces/ALA/datastores/" + id + "?recurse=true", ///external.shp",
+                geoserverUsername, geoserverPassword,
+                null, null,
+                "text/plain");
+        httpCall("DELETE",
+                geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + id + "?recurse=true", //"/external.geotiff",
+                geoserverUsername, geoserverPassword,
+                null, null,
+                "text/plain");
+
+        def layerDataFolder = new File(spatialConfig.data.dir.toString() + "/uploads/" + id)
+        if (layerDataFolder.exists()) {
+            FileUtils.deleteDirectory(layerDataFolder)
+        }
     }
 
     def deleteField(String fieldId) {
