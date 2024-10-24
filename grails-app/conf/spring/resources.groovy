@@ -19,7 +19,9 @@ beans = {
         noSSOStrategy(NoSSOStrategy) {}
     }
 
-    // Use fixed English locale, prevents issues with parsing of BBox decimal values in some locales
-    // https://github.com/AtlasOfLivingAustralia/spatial-service/issues/247
-    localeResolver(FixedLocaleResolver, new Locale('en'))
+    if (grailsApplication.config.useFixedLocale) {
+        // Use fixed English locale, prevents issues with parsing of BBox decimal values in some locales
+        // https://github.com/AtlasOfLivingAustralia/spatial-service/issues/247
+        localeResolver(FixedLocaleResolver, new Locale(grailsApplication.config.useFixedLocale))
+    }
 }
