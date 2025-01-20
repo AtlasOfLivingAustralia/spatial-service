@@ -467,3 +467,5 @@ openapi:
   version: '@info.app.version@'
   cachetimeoutms: 4000
 
+# Allow setting a fixed locale to prevent number formatting issues: https://github.com/AtlasOfLivingAustralia/spatial-service/issues/247
+#useFixedLocale: en
