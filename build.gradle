@@ -40,7 +40,7 @@ apply plugin: "org.grails.grails-gsp"
 apply plugin: "com.bertramlabs.asset-pipeline"
 
 
-def alaSecurityLibsVersion='6.2.0'
+def alaSecurityLibsVersion='6.3.0'
 def geotoolsVersion='27.2'
 
 war {
@@ -212,7 +212,7 @@ dependencies {
 
 //    developmentOnly 'io.methvin:directory-watcher:0.15.0'
 
-
+    implementation 'org.gbif:dwc-api:1.47'
 }
 
 configurations {

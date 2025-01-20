@@ -217,5 +217,10 @@ class SpatialConfig {
 
     String biocacheUrl
 
-
+    Boolean sandboxEnabled
+    String sandboxSolrUrl
+    String pipelinesCmd
+    String pipelinesConfig
+    String sandboxSolrCollection
+    Integer sandboxThreadCount
 }

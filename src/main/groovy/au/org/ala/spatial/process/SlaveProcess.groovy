@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.FileService
 import au.org.ala.spatial.JournalMapService
 import au.org.ala.spatial.LayerIntersectService
+import au.org.ala.spatial.SandboxService
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.dto.SpeciesInput
@@ -76,6 +77,7 @@ class SlaveProcess {
     TabulationGeneratorService tabulationGeneratorService
     FileService fileService
     WebService webService
+    SandboxService sandboxService
 
     SpatialConfig spatialConfig
 
