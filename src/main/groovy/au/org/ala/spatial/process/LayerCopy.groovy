@@ -22,17 +22,14 @@ import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.grails.web.json.JSONObject
 
-//@CompileStatic
 @Slf4j
 class LayerCopy extends SlaveProcess {
 
     void start() {
         String layerId = getInput('layerId')
         String fieldId = getInput('fieldId')
-        String  sourceUrl = getInput('sourceUrl')
-
-        //TODO: fetch default sld from geoserver
-        String displayPath = getInput('displayPath')
+        String sourceUrl = getInput('sourceUrl')
+        String sourceJwt = getInput('jwt')
 
         Fields field = getField(fieldId)
         Layers layer = getLayer(layerId)
@@ -46,7 +43,7 @@ class LayerCopy extends SlaveProcess {
         }
 
         //get layer files
-        getFile("/layer/${layer.name}", sourceUrl)
+        getFile("/layer/${layer.name}", sourceUrl, sourceJwt)
         addOutputFiles("/layer/${layer.name}", true)
 
         //get standardized files
@@ -64,13 +61,13 @@ class LayerCopy extends SlaveProcess {
         }
 
         resolutions.each { res ->
-            getFile("/standard_layer/${res}/${field.id}", sourceUrl)
+            getFile("/standard_layer/${res}/${field.id}", sourceUrl, sourceJwt)
             addOutputFiles("/standard_layer/${res}/${field.id}")
         }
 
         //get layerdistances
         taskLog("get layer distances")
-        getFile('/public/layerDistances.properties', sourceUrl)
+        getFile('/public/layerDistances.properties', sourceUrl, sourceJwt)
         JSONObject dists = JSON.parse(Util.getUrl(sourceUrl + "/layerDistances/layerdistancesJSON.json")) as JSONObject
         def distString = ''
         for (def f : getFields()) {

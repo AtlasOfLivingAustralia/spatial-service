@@ -171,7 +171,8 @@ class FieldService {
 
         Map map = field.properties
         map.put('id', field.id)
-        Fields.executeUpdate(sql, map)
+
+        Sql.newInstance(dataSource).executeUpdate(sql, map)
     }
 
     List<Layers> getLayersByCriteria(String keywords) {

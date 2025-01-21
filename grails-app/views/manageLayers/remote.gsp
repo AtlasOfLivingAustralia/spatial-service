@@ -18,6 +18,8 @@
     <h1>Copy Layers from Remote Server</h1>
 </div>
 
+<g:set var="spatialConfig" bean="spatialConfig"/>
+
 <g:if test="${spatialServiceUrl == localUrl}">
     <div class="col-lg-8">
         <div class="warning">The local and remote server is the same so layers cannot be copied</div>
@@ -44,12 +46,27 @@
     <br/>
     <br/>
 </g:if>
-
 <div class="container-fluid">
     This will copy a layer from a remote spatial-service to the local spatial-service.
-
+    <br/>
+    <h3>Config</h3>
+    <table>
+        <tbody>
+        <tr>
+            <td>URL of the remote spatial-service</td>
+            <td><input type="text" id="spatialServiceUrl" value="${spatialServiceUrl}" style='width:500px;margin-left:20px;'/><button onclick="refreshLayerList()">Refresh layer list</button></td>
+        </tr>
+        <tr>
+            <td>JWT for the remote service. It must have the role ${spatialConfig.layerCopyRole} and not expire before the task is finished.</td>
+            <td><textarea id="jwt" style='margin-left:20px;' cols="100" rows="10"></textarea></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div class="container-fluid">
     <br/>
     <br/>
+    <h3>List of layers</h3>
     Layer filter
     <select id="listSelector">
         <option value="divLocal">local only</option>
@@ -229,7 +246,14 @@
     });
 
     function copy(id) {
-        $.post("${localUrl}/manageLayers/copy?fieldId=" + id + "&spatialServiceUrl=" + encodeURIComponent("${spatialServiceUrl}"))
+        var jwt = document.getElementById('jwt').value;
+        if (jwt == "") {
+            alert("Please provide a JWT");
+            return;
+        }
+
+        $.post("${localUrl}/manageLayers/copy?fieldId=" + id + "&spatialServiceUrl=" + encodeURIComponent("${spatialServiceUrl}") +
+            "&jwt=" + encodeURIComponent(jwt));
         $('#copy' + id)[0].remove();
         $('#txtcopy' + id)[0].innerText = 'copying';
     }
@@ -255,6 +279,13 @@
             downloadurl += "?q=" + query;
         }
         location.href = downloadurl;
+    }
+
+    function refreshLayerList() {
+        const remoteUrl = document.getElementById('spatialServiceUrl').value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('remoteUrl', remoteUrl);
+        window.location.href = url.toString();
     }
 </script>
 </div>

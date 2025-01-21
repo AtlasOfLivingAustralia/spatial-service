@@ -223,4 +223,6 @@ class SpatialConfig {
     String pipelinesConfig
     String sandboxSolrCollection
     Integer sandboxThreadCount
+
+    String layerCopyRole
 }
