@@ -178,6 +178,7 @@ class TaskQueueService {
                     operator.tabulationGeneratorService = tasksService.tabulationGeneratorService
                     operator.fileService = tasksService.fileService
                     operator.webService = tasksService.webService
+                    operator.sandboxService = tasksService.sandboxService
 
                     //start
                     operator.start()

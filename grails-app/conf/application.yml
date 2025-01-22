@@ -469,3 +469,11 @@ openapi:
 
 # Allow setting a fixed locale to prevent number formatting issues: https://github.com/AtlasOfLivingAustralia/spatial-service/issues/247
 #useFixedLocale: en
+
+# Internal sandbox service for processing uploaded CSV files
+sandboxEnabled: true
+sandboxSolrUrl: http://localhost:8983/solr
+sandboxSolrCollection: sandbox
+sandboxThreadCount: 2
+pipelinesCmd: "java -Dspark.local.dir=/data/spatial-data/sandbox/tmp -Djava.io.tmpdir=/data/spatial-data/sandbox/tmp -Dlog4j.configuration=file:/data/spatial-data/modelling/la-pipelines/log4j.properties -cp /data/spatial-data/modelling/la-pipelines/pipelines-2.19.0-SNAPSHOT-shaded.jar"
+pipelinesConfig: "--config=/data/spatial-data/modelling/la-pipelines/la-pipelines.yaml"

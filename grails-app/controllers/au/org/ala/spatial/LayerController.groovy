@@ -96,7 +96,7 @@ class LayerController {
     def img(String id) {
         if (layerService.getLayerByName(id)) {
             File f = new File(spatialConfig.data.dir + '/public/thumbnail/' + id + '.jpg')
-            render(file: f, fileName: "${id}.jpg")
+            render(file: f, fileName: "${id}.jpg", contentType: "image/jpg")
         } else {
             response.sendError(404, "$id not found")
         }
