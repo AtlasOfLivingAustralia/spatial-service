@@ -467,6 +467,9 @@ openapi:
   version: '@info.app.version@'
   cachetimeoutms: 4000
 
+# Allow setting a fixed locale to prevent number formatting issues: https://github.com/AtlasOfLivingAustralia/spatial-service/issues/247
+#useFixedLocale: en
+
 # Internal sandbox service for processing uploaded CSV files
 sandboxEnabled: true
 sandboxSolrUrl: http://localhost:8983/solr

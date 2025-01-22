@@ -35,7 +35,7 @@ class OccurrenceData {
 
         //remove sensitive records that will not be LSID matched
         try {
-            Records r = new Records(bs, q + "&fq=" + UriEncoder.encode("-sensitive:[* TO *]"), null, records_filename, null, facetName)
+            Records r = new Records(bs, q + "&fq=" + URLEncoder.encode("-sensitive:[* TO *]", "utf-8"), null, records_filename, null, facetName)
 
             StringBuilder sb = null
             if (r.getRecordsSize() > 0) {
