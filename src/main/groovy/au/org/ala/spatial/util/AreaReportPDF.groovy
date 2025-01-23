@@ -745,9 +745,9 @@ class AreaReportPDF {
 
                     sb.append(StringEscapeUtils.escapeCsv(it.name1))
                     sb.append(",")
-                    sb.append(String.format("%.2f", it.area / 1000000.0))
+                    sb.append(String.format(Locale.US, "%.2f", it.area / 1000000.0))
                     sb.append(",")
-                    sb.append(String.format("%.2f", it.area / 1000000.0 / totalArea * 100))
+                    sb.append(String.format(Locale.US, "%.2f", it.area / 1000000.0 / totalArea * 100))
                     row++
                 }
             }
