@@ -270,18 +270,7 @@ class SpatialObjectsService {
                 FileUtils.copyFile(zippedShapeFile, os)
             } else if ("kml" == geomtype) {
                 String wktString = l.get(0).geometry.toText()
-                String wkttype = "POLYGON"
-                if (wktString.startsWith("MULTIPOLYGON")) {
-                    wkttype = "MULTIPOLYGON"
-                } else if (wktString.startsWith("GEOMETRYCOLLECTION")) {
-                    wkttype = "GEOMETRYCOLLECTION"
-                } else if (wktString.startsWith("MULTIPOINT")) {
-                    wkttype = "MULTIPOINT"
-                } else if (wktString.startsWith("POINT")) {
-                    wkttype = "POINT"
-                }
-
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString)
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
@@ -300,17 +289,7 @@ class SpatialObjectsService {
                 StringWriter writer = new StringWriter()
 
                 String wktString = l.get(0).geometry.toText()
-                String wkttype = "POLYGON"
-                if (wktString.startsWith("MULTIPOLYGON")) {
-                    wkttype = "MULTIPOLYGON"
-                } else if (wktString.startsWith("GEOMETRYCOLLECTION")) {
-                    wkttype = "GEOMETRYCOLLECTION"
-                } else if (wktString.startsWith("MULTIPOINT")) {
-                    wkttype = "MULTIPOINT"
-                } else if (wktString.startsWith("POINT")) {
-                    wkttype = "POINT"
-                }
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString)
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
