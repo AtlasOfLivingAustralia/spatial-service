@@ -254,11 +254,11 @@ class Util {
             String[] lines = new String[ja.size() + 1]
             lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM"
             ja.eachWithIndex {Distributions it, int idx ->
-                String intersectArea = String.format("%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000.0)
+                String intersectArea = String.format(Locale.US, "%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000.0)
 
                 lines[idx + 1] = it.spcode + "," + wrap(it.scientific) + "," + wrap(it.authority_) + "," + wrap(it.common_nam) + "," +
                     wrap(it.family) + "," + wrap(it.genus_name) + "," + wrap(it.specific_n) + "," + (it.min_depth ?: "") + "," + (it.max_depth ?: "") +
-                        "," + wrap(it.metadata_u) + "," + wrap(it.lsid) + "," + wrap(it.area_name) + "," + String.format("%.2f", (it.area_km ?: 0) as Double) +
+                        "," + wrap(it.metadata_u) + "," + wrap(it.lsid) + "," + wrap(it.area_name) + "," + String.format(Locale.US, "%.2f", (it.area_km ?: 0) as Double) +
                         "," + wrap(it.data_resource_uid) + "," + intersectArea
             }
 
@@ -278,7 +278,7 @@ class Util {
                 String key = wrap(it.family) + "," + wrap(it.scientific) + "," + wrap(it.common_nam) + "," + wrap(it.lsid)
 
                 String areaName = it.area_name
-                String intersectArea = String.format("%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000)
+                String intersectArea = String.format(Locale.US, "%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000)
 
                 if (areaName.toLowerCase().contains("likely")) likely.put(key, intersectArea)
                 if (areaName.toLowerCase().contains("maybe")) maybe.put(key, intersectArea)
