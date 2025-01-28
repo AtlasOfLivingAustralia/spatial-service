@@ -1392,7 +1392,7 @@ class ManageLayersService {
      * @param fieldId
      * @return
      */
-    def updateFromRemote(String spatialServiceUrl, String fieldId) {
+    def updateFromRemote(String spatialServiceUrl, String fieldId, String jwt) {
         def f = JSON.parse(httpCall("GET",
                 spatialServiceUrl + "/field/${fieldId}?pageSize=0",
                 null, null,
@@ -1432,7 +1432,7 @@ class ManageLayersService {
             createOrUpdateField(field, field.id + '', false)
         }
 
-        Map input = [layerId: layer.requestedId, fieldId: field.id, sourceUrl: spatialServiceUrl, displayPath: origDisplayPath] as Map
+        Map input = [layerId: layer.requestedId, fieldId: field.id, sourceUrl: spatialServiceUrl, displayPath: origDisplayPath, jwt: jwt] as Map
         Task task = tasksService.create("LayerCopy", UUID.randomUUID(), input).task
 
         task

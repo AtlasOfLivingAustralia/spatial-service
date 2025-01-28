@@ -63,7 +63,7 @@ class Util {
         }
     }
 
-    static Map<String, Object> getStream(String url) {
+    static Map<String, Object> getStream(String url, String jwt) {
         HttpClient client = null
         HttpMethodBase call = null
         try {
@@ -75,6 +75,10 @@ class Util {
 
             try {
                 call = new GetMethod(url)
+
+                if (jwt) {
+                    call.addRequestHeader("Authorization", "Bearer " + jwt)
+                }
 
                 client.executeMethod(call)
             } catch (Exception e) {

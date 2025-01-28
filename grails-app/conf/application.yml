@@ -477,3 +477,6 @@ sandboxSolrCollection: sandbox
 sandboxThreadCount: 2
 pipelinesCmd: "java -Dspark.local.dir=/data/spatial-data/sandbox/tmp -Djava.io.tmpdir=/data/spatial-data/sandbox/tmp -Dlog4j.configuration=file:/data/spatial-data/modelling/la-pipelines/log4j.properties -cp /data/spatial-data/modelling/la-pipelines/pipelines-2.19.0-SNAPSHOT-shaded.jar"
 pipelinesConfig: "--config=/data/spatial-data/modelling/la-pipelines/la-pipelines.yaml"
+
+# For the copying of layers between spatial-service instances, a JWT with the following role must be provided in the `/manageLayers/remote` page.
+layerCopyRole: ROLE_ADMIN
