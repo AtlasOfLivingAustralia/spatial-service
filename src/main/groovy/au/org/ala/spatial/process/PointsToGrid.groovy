@@ -71,7 +71,7 @@ class PointsToGrid extends SlaveProcess {
 
         // dump the species data to a file
         taskLog("getting species data")
-        Records records = new Records(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox, null, null, "names_and_lsid", false)
+        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox)
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90
@@ -218,4 +218,8 @@ class PointsToGrid extends SlaveProcess {
         fw.close()
     }
 
+    // Isolate method for mocking
+    def getRecords(String bs, String q, double[] bbox) {
+        return new Records(bs, q, bbox, null, null, "names_and_lsid", false)
+    }
 }
