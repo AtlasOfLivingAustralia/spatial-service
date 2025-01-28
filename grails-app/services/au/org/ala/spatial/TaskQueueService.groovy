@@ -193,6 +193,13 @@ class TaskQueueService {
                 taskWrapper.task.message = 'finished'
                 taskWrapper.task.history.put(System.currentTimeMillis() as String, "finished (id:${taskWrapper.task.id})" as String)
 
+                // map output.task to task when null to prevent error when flushing task
+                taskWrapper.task.output.each {
+                    if (!it.task) {
+                        it.task = taskWrapper.task
+                    }
+                }
+
                 // flush task because it is finished
                 Task.withTransaction {
                     if (!taskWrapper.task.save(flush: true)) {

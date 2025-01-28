@@ -71,7 +71,7 @@ class PointsToGrid extends SlaveProcess {
 
         // dump the species data to a file
         taskLog("getting species data")
-        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox, null, null)
+        Records records = new Records(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox, null, null, "names_and_lsid", false)
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90
@@ -180,10 +180,6 @@ class PointsToGrid extends SlaveProcess {
             writeMetadata(getTaskPath() + "srichness_metadata.html", "Species Richness", records, bbox, false, speciesRichness, null, null, species.name.toString(), gridCellSize, movingAverageStr)
             addOutput("files", "srichness_metadata.html", true)
         }
-    }
-
-    def getRecords(String bs, String q, double[] bbox, String filename, SimpleRegion region) {
-        new Records(bs, q, bbox, filename, region)
     }
 
     void writeMetadata(String filename, String title, Records records, double[] bbox, boolean odensity, boolean sdensity, int[] counts, String addAreaSqKm, String speciesName, Double gridCellSize, String movingAverage) throws IOException {
