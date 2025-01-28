@@ -13,7 +13,6 @@ import java.util.zip.GZIPInputStream
  * @author Adam
  */
 @Slf4j
-@CompileStatic
 class Records {
 
     //private static final Logger logger = log.getLogger(Records.class);
@@ -36,8 +35,8 @@ class Records {
         init(biocache_service_url, q, bbox, filename, region, "names_and_lsid")
     }
 
-    Records(String biocache_service_url, String q, double[] bbox, String filename, SimpleRegion region, String facetField) throws IOException {
-        init(biocache_service_url, q, bbox, filename, region, facetField)
+    Records(String biocache_service_url, String q, double[] bbox, String filename, SimpleRegion region, String facetField, Boolean includeYear = true) throws IOException {
+        init(biocache_service_url, q, bbox, filename, region, facetField, includeYear)
     }
 
     Records(String filename) throws IOException {
@@ -307,10 +306,12 @@ class Records {
         }
     }
 
-    void init(String biocache_service_url, String q, double[] bbox, String filename, SimpleRegion region, String facetField) throws IOException {
+    void init(String biocache_service_url, String q, double[] bbox, String filename, SimpleRegion region, String facetField, Boolean includeYear = true) throws IOException {
         int speciesEstimate = 250000
         int recordsEstimate = 26000000
-        int pageSize = 50000
+        int pageSize = 300000000 // Use a large number as a workaround for paging not working. Paging was added
+                                 // for an introduced nginx timeout value so this could be considered a revert.
+                                 // The biocache-service endpoint is streaming now, except for old sandbox instances.
 
         String bboxTerm = null
         if (bbox != null) {
@@ -336,107 +337,104 @@ class Records {
         if (facetField == null) {
             facetFieldTerm = ''
         }
-        while (start < 300000000) {
-            String url = biocache_service_url + "/webportal/occurrences.gz?q=" + q.replace(" ", "%20") + bboxTerm + "&pageSize=" + pageSize + "&fq=year%3A*&start=" + start + "&fl=longitude,latitude" + facetFieldTerm + ",year"
 
-            int tryCount = 0
-            InputStream is = null
-            CSVReader csv = null
-            int maxTrys = 4
-            while (tryCount < maxTrys && csv == null) {
-                tryCount++
-                try {
-                    is = getUrlStream(url)
-                    csv = new CSVReader(new InputStreamReader(new GZIPInputStream(is)))
-                } catch (Exception e) {
-                    log.error("failed try " + tryCount + " of " + maxTrys + ": " + url, e)
-                }
+        String yearFq = includeYear ? '&fq=year%3A*' : ''
+
+        // no longer using paging
+        String url = biocache_service_url + "/webportal/occurrences.gz?q=" + q.replace(" ", "%20") + bboxTerm + "&pageSize=" + pageSize + yearFq + "&start=" + start + "&fl=longitude,latitude" + facetFieldTerm + (includeYear ? ",year" : "")
+
+        int tryCount = 0
+        InputStream is = null
+        CSVReader csv = null
+        int maxTrys = 4
+        while (tryCount < maxTrys && csv == null) {
+            tryCount++
+            try {
+                is = getUrlStream(url)
+                csv = new CSVReader(new InputStreamReader(new GZIPInputStream(is)))
+            } catch (Exception e) {
+                log.error("failed try " + tryCount + " of " + maxTrys + ": " + url, e)
             }
+        }
 
-            if (csv == null) {
-                throw new IOException("failed to get records from biocache.")
-            }
+        if (csv == null) {
+            throw new IOException("failed to get records from biocache.")
+        }
 
-            String[] line
-            int[] header = new int[4] //to contain [0]=lsid, [1]=longitude, [2]=latitude, [3]=year
-            int row = start
-            int currentCount = 0
-            while ((line = csv.readNext()) != null) {
-                if (raf != null) {
-                    for (int i = 0; i < line.length; i++) {
-                        if (i > 0) {
-                            raf.write(",".bytes)
-                        }
-                        raf.write(line[i].bytes)
+        String[] line
+        int[] header = new int[4] //to contain [0]=lsid, [1]=longitude, [2]=latitude, [3]=year
+        int row = start
+        int currentCount = 0
+        while ((line = csv.readNext()) != null) {
+            if (raf != null) {
+                for (int i = 0; i < line.length; i++) {
+                    if (i > 0) {
+                        raf.write(",".bytes)
                     }
-                    raf.write("\n".bytes)
+                    raf.write(line[i].bytes)
                 }
-                currentCount++
-                if (currentCount == 1) {
-                    //determine header
-                    for (int i = 0; i < line.length; i++) {
-                        if (line[i] == facetField) {
-                            header[0] = i
-                        }
-                        if (line[i] == "longitude") {
-                            header[1] = i
-                        }
-                        if (line[i] == "latitude") {
-                            header[2] = i
-                        }
-                        if (line[i] == "year") {
-                            header[3] = i
-                        }
+                raf.write("\n".bytes)
+            }
+            currentCount++
+            if (currentCount == 1) {
+                //determine header
+                for (int i = 0; i < line.length; i++) {
+                    if (line[i] == facetField) {
+                        header[0] = i
                     }
-                    log.debug("header info:" + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
-                } else {
-                    if (line.length >= 3) {
-                        try {
-                            double longitude = Double.parseDouble(line[header[1]])
-                            double latitude = Double.parseDouble(line[header[2]])
-                            if (region == null || region.isWithin_EPSG900913(longitude, latitude)) {
-                                points.add(longitude)
-                                points.add(latitude)
-                                String species = facetField == null ? 'species' : line[header[0]]
-                                Integer idx = lsidMap.get(species)
-                                if (idx == null) {
-                                    idx = lsidMap.size()
-                                    lsidMap.put(species, idx)
-                                }
-                                lsidIdx.add(idx)
+                    if (line[i] == "longitude") {
+                        header[1] = i
+                    }
+                    if (line[i] == "latitude") {
+                        header[2] = i
+                    }
+                    if (line[i] == "year") {
+                        header[3] = i
+                    }
+                }
+                log.debug("header info:" + header[0] + "," + header[1] + "," + header[2] + "," + header[3])
+            } else {
+                if (line.length >= 3) {
+                    try {
+                        double longitude = Double.parseDouble(line[header[1]])
+                        double latitude = Double.parseDouble(line[header[2]])
+                        if (region == null || region.isWithin_EPSG900913(longitude, latitude)) {
+                            points.add(longitude)
+                            points.add(latitude)
+                            String species = facetField == null ? 'species' : line[header[0]]
+                            Integer idx = lsidMap.get(species)
+                            if (idx == null) {
+                                idx = lsidMap.size()
+                                lsidMap.put(species, idx)
+                            }
+                            lsidIdx.add(idx)
+                            if (includeYear) {
                                 years.add(Short.parseShort(line[header[3]]))
                             }
-                        } catch (Exception ignored) {
+                        }
+                    } catch (Exception ignored) {
 
-                        } finally {
-                            if (lsidIdx.size() * 2 < points.size()) {
-                                points.remove(points.size() - 1)
-                                points.remove(points.size() - 1)
-                            } else if (years.size() < lsidIdx.size()) {
-                                years.add((short) 0)
-                            }
+                    } finally {
+                        if (lsidIdx.size() * 2 < points.size()) {
+                            points.remove(points.size() - 1)
+                            points.remove(points.size() - 1)
+                        } else if (years.size() < lsidIdx.size()) {
+                            years.add((short) 0)
                         }
                     }
                 }
-                row++
             }
-            if (start == 0) {
-                start = row - 1 //offset for header
-            }
+            row++
+        }
 
-            csv.close()
-            is.close()
+        csv.close()
+        is.close()
 
-            if (is != null) {
-                try {
-                    is.close()
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e)
-                }
-            }
-
-            if (currentCount == 0 || currentCount < pageSize) {
-                break
+        if (is != null) {
+            try {
+                is.close()
+            } catch (Exception e) {
+                log.error(e.getMessage(), e)
             }
         }
 
@@ -511,7 +509,7 @@ class Records {
 
             @Override
             int compare(Integer o1, Integer o2) {
-                return (h - 1 - ((int) ((points.get(o1) - mLat) / res)))-(h - 1 - ((int) ((points.get(o2) - mLat) / res)))
+                return (h - 1 - (Math.round((points.get(o1) - mLat) / res)))-(h - 1 - (Math.round((points.get(o2) - mLat) / res)))
             }
         })
 
@@ -519,7 +517,7 @@ class Records {
         int[] rowStarts = new int[height]
         int row = 0
         for (int i = 0; i < sortOrder.length; i++) {
-            int thisRow = (h - 1 - (int) ((points.get(sortOrder[i]) - mLat) / res))
+            int thisRow = (h - 1 - (int) Math.round((points.get(sortOrder[i]) - mLat) / res))
 
             //handle overflow
             if (thisRow >= height) {
@@ -578,10 +576,10 @@ class Records {
 
             @Override
             int compare(Integer o1, Integer o2) {
-                int v = ((int) ((points.get(o1) - mLat) / res))-((int) ((points.get(o2) - mLat) / res))
+                int v = (int) (Math.round((points.get(o1) - mLat) / res) - Math.round((points.get(o2) - mLat) / res))
 
                 if (v == 0) {
-                    return ((int) ((points.get(o1 - 1) - mLong) / res))-((int) ((points.get(o2 - 1) - mLong) / res))
+                    return (int) (Math.round((points.get(o1 - 1) - mLong) / res) - Math.round((points.get(o2 - 1) - mLong) / res))
                 } else {
                     return v
                 }
