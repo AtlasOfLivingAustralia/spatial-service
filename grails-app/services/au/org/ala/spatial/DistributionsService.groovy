@@ -123,6 +123,13 @@ class DistributionsService {
             sql += " WHERE " + whereClause.toString()
         }
 
+        if (queryParams.pageSize) {
+            int start = queryParams.start as Integer ?: 0
+            sql += " LIMIT :pageSize OFFSET :offset"
+            params.put("pageSize", queryParams.pageSize as Integer)
+            params.put("offset", start)
+        }
+
         List result = new ArrayList()
 
         String[] fields = SELECT_CLAUSE.split(',')

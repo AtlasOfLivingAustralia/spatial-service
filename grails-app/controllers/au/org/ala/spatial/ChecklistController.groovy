@@ -75,6 +75,20 @@ class ChecklistController {
                             schema = @Schema(implementation = String),
                             description = "Object ID to filter",
                             required = false
+                    ),
+                    @Parameter(
+                            name = "start",
+                            in = QUERY,
+                            schema = @Schema(implementation = String),
+                            description = "Starting index for pagination",
+                            required = false
+                    ),
+                    @Parameter(
+                            name = "pageSize",
+                            in = QUERY,
+                            schema = @Schema(implementation = String),
+                            description = "Page size for pagination",
+                            required = false
                     )
             ],
             responses = [
