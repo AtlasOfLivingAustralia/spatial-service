@@ -89,7 +89,7 @@ class FieldService {
                             .replaceAll("${spid}", "") }
                     .collect {it == '' ? 0 : it.toInteger()}
                     .max()
-            maxSequenceNumber + 1
+            return (maxSequenceNumber ? maxSequenceNumber + 1 : '')
         }
     }
 
