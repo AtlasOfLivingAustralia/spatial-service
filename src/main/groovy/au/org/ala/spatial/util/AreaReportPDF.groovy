@@ -811,6 +811,9 @@ class AreaReportPDF {
             List<Distributions> data = distributionsService.queryDistributions([wkt: pid, dataResourceUid: dataResourceId, familyLsid: familyLsids], true,
                     type == "expertdistributions" ? Distributions.EXPERT_DISTRIBUTION : Distributions.SPECIES_CHECKLIST)
 
+            // sort by scientific name
+            data = data.sort { it.scientific }
+
             if (dataResourceId != null) {
                 csv = Util.getDistributionsOrChecklistsRollup(data)
             } else {
