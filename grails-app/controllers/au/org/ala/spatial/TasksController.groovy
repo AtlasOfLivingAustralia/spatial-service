@@ -407,13 +407,11 @@ class TasksController {
         t.history.each { it -> it }
         t.output.each { it -> it }
         t.input.each { it -> it }
-        def task = tasksService.reRun(t)
 
-        if (task) {
-            render task as JSON
-        } else {
-            redirect(action: "index", params: params)
-        }
+        tasksService.reRun(t)
+
+        params.remove('id')
+        redirect(action: "index", params: params)
     }
 
     /**
