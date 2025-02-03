@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletResponse
 import javax.transaction.Transactional
 import java.text.SimpleDateFormat
 
-@RequirePermission
 @Transactional
 class ManageLayersController {
 
@@ -41,10 +40,11 @@ class ManageLayersController {
     AuthService authService
 
     /**
-     * admin only or api_key
+     * admin only
      *
      * @return
      */
+    @RequireAdmin
     def index() {
     }
 
@@ -53,6 +53,7 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def layers() {
         log.debug("List avaliable layers")
         Map map = [:]
@@ -121,7 +122,6 @@ class ManageLayersController {
      *
      * @return
      */
-
     @RequireAdmin
     def uploads() {
         Map map = [:]
@@ -174,7 +174,6 @@ class ManageLayersController {
      * admin only
      *
      * @param req
-     * @param apiKey
      * @return
      * @throws Exception
      */

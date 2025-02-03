@@ -15,7 +15,6 @@ import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryCollection
 
 @Slf4j
-//@CompileStatic
 class BootStrap {
 
     def dataSource
@@ -32,8 +31,6 @@ class BootStrap {
                 "WEB-INF/grails-app/i18n/messages",
                 "classpath:messages"
         )
-
-        ((AlaApiKeyAuthenticator) getAlaApiKeyClient.authenticator).setUserDetailsClient(userDetailsClient)
 
         [Geometry, GeometryCollection].each {
             JSON.registerObjectMarshaller(it) {

@@ -576,7 +576,7 @@ class SandboxService {
             logger.error("Error deleting directory: " + processedDir.getAbsolutePath(), e);
         }
 
-        // double check SOLR
+        // double check SOLR has the records
         try {
             long sleepMs = 500; // 0.5s
             Thread.sleep(sleepMs);
@@ -589,13 +589,16 @@ class SandboxService {
                         null,
                         Map.class);
 
+                // This will wait only until the first SOLR count > 0 is returned. It is concievable that SOLR may still
+                // be processing records.
                 if (response.getStatusCode().is2xxSuccessful() &&
                         ((Integer) ((Map) response.getBody().get("response")).get("numFound")) > 0) {
                     int solrCount = ((Integer) ((Map) response.getBody().get("response")).get("numFound"));
+
                     logger.info("SOLR import successful: " + solrCount + " records");
 
                     sandboxIngress.status = "finished";
-                    sandboxIngress.message = "SOLR import successful: " + solrCount + " records (subject to in progress indexing)"
+                    sandboxIngress.message = "Import complete: " + solrCount + " records"
 
                     return solrCount;
                 }

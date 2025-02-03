@@ -647,12 +647,9 @@ class ShapesController {
             JSONRequestBodyParser reqBodyParser = new JSONRequestBodyParser()
             reqBodyParser.addParameter("user_id", String.class, false)
             reqBodyParser.addParameter("shp_file_url", String.class, false)
-            reqBodyParser.addParameter("api_key", String.class, false)
 
             if (reqBodyParser.parseJSON(jsonRequestBody)) {
-
                 String shpFileUrl = (String) reqBodyParser.getParsedValue("shp_file_url")
-                String apiKey = (String) reqBodyParser.getParsedValue("api_key")
 
                 // Use shape file url from json body
                 FileUtils.copyURLToFile(new URL(shpFileUrl), tmpZipFile)
