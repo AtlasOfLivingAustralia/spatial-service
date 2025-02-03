@@ -40,8 +40,6 @@ class FieldCreation extends SlaveProcess {
     void start() {
         String fieldId = getInput('fieldId')
         Boolean ignoreNullObjects = getInput('ignoreNullObjects') as Boolean
-        //TODO: check if we need to skip SLD creation from input params
-        // Query geoserver to check - SlaveService.peekFile to check
 
         // get layer info
         Fields field = getField(fieldId)

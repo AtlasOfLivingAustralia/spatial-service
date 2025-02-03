@@ -201,10 +201,20 @@ class TaskQueueService {
                 }
 
                 // flush task because it is finished
-                Task.withTransaction {
+                try {
                     if (!taskWrapper.task.save(flush: true)) {
                         taskWrapper.task.errors.each {
                             log.error it
+
+                        }
+                    }
+                } catch (Exception e) {
+                    // some workflows require a separate transaction wrapper
+                    Task.withTransaction {
+                        if (!taskWrapper.task.save(flush: true)) {
+                            taskWrapper.task.errors.each {
+                                log.error it
+                            }
                         }
                     }
                 }

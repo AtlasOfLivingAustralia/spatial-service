@@ -139,21 +139,14 @@ biocacheUrl: 'https://biocache.ala.org.au'
 openstreetmap:
   url: 'https://tile.openstreetmap.org'
 
-slave.enable: true
-service.enable: true
-
 spatialService:
   url: "https://spatial.ala.org.au/ws"
 
-serviceKey: ""
 batch_sampling_passwords: ''
 batch_sampling_points_limit: 1000000
 batch_sampling_fields_limit: 1000
 
 ---
-#
-# au.org.ala.spatial.slave config
-#
 spatialService.url: "http://localhost:8080/ws"
 data.dir: "/data/spatial-data"
 shp2pgsql.path: "/usr/bin/shp2pgsql"
@@ -177,9 +170,6 @@ maxent.mx: "1G"
 maxent.threads: 4
 
 sampling.threads: 4
-
-slaveKey: ""
-serviceKey: ""
 
 # time between pushing status updates to the master for a task
 statusTime: 5000
@@ -230,8 +220,6 @@ security:
     enabled: true
     auth:
       serviceUrl: https://auth.ala.org.au/apikey/ws/check/
-    check:
-      serviceUrl: https://auth.ala.org.au/apikey/ws/check?apikey=
     userdetails:
       serviceUrl: https://auth.ala.org.au/userdetails/userDetails/
 
@@ -254,7 +242,6 @@ namematching.url: 'https://namematching-ws.ala.org.au'
 
 records.url: 'https://archives.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
-api_key: ''
 lists.url: 'https://lists.ala.org.au'
 collections.url: 'https://collections.ala.org.au'
 sandboxHubUrl: 'https://sandbox.ala.org.au/ala-hub'
@@ -266,7 +253,6 @@ spatialHubUrl: 'https://spatial.ala.org.au'
 gazField: 'cl915'
 userObjectsField: 'cl1083'
 
-apiKeyCheckUrlTemplate: 'https://auth.ala.org.au/apikey/ws/check?apikey={0}'
 spatialService.remote: "https://spatial.ala.org.au/ws"
 
 journalmap.api_key: ''
@@ -390,7 +376,7 @@ environments:
       dir: "/Library/Frameworks/GDAL.framework/Programs"
 
     spatialHubUrl: "http://devt.ala.org.au:8079/"
-    # Slave config
+
     spatialService:
       url: "http://devt.ala.org.au:8081/ws"
     geoserver:
