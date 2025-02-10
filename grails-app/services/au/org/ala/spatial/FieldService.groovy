@@ -20,6 +20,7 @@ import groovy.sql.Sql
 import org.codehaus.jackson.map.DeserializationConfig
 import org.codehaus.jackson.map.ObjectMapper
 import org.postgresql.core.Field
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.sql.ResultSet
 
@@ -27,7 +28,7 @@ class FieldService {
 
     LayerService layerService
     SpatialObjectsService spatialObjectsService
-    Sql groovySql
+    def dataSource
     SpatialConfig spatialConfig
 
     Fields getFieldById(String id, boolean enabledFieldsOnly = true) {
@@ -39,7 +40,7 @@ class FieldService {
 
         Fields field = null
 
-        groovySql.query(sql, [id: id], { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, [id: id], { ResultSet rs ->
             if (rs.next()) {
                 field = new Fields()
                 rs.fields.each { Field f ->
@@ -89,7 +90,7 @@ class FieldService {
                             .replaceAll("${spid}", "") }
                     .collect {it == '' ? 0 : it.toInteger()}
                     .max()
-            maxSequenceNumber + 1
+            return (maxSequenceNumber ? maxSequenceNumber + 1 : '')
         }
     }
 
@@ -153,8 +154,8 @@ class FieldService {
         Fields f = getFieldById(fieldId, false)
 
         if (f != null) {
-            groovySql.execute("delete from objects where fid=?", [f.getId()] as List<Object>)
-            groovySql.execute("delete from fields where id=?", [f.getId()] as List<Object>)
+            Sql.newInstance(dataSource).execute("delete from objects where fid=?", [f.getId()] as List<Object>)
+            Sql.newInstance(dataSource).execute("delete from fields where id=?", [f.getId()] as List<Object>)
         }
     }
 
@@ -171,7 +172,8 @@ class FieldService {
 
         Map map = field.properties
         map.put('id', field.id)
-        Fields.executeUpdate(sql, map)
+
+        Sql.newInstance(dataSource).executeUpdate(sql, map)
     }
 
     List<Layers> getLayersByCriteria(String keywords) {
@@ -190,11 +192,11 @@ class FieldService {
         sql += "or f.name ilike :keywords "
         sql += ") order by f.name "
 
-        keywords = "%" + keywords.toLowerCase() + "%"
+        keywords = keywords == null ? "%" : ("%" + keywords.toLowerCase() + "%")
 
         List<Fields> fields = new ArrayList()
 
-        groovySql.query(sql, [keywords: keywords], {
+        Sql.newInstance(dataSource).query(sql, [keywords: keywords], {
             while (it.next()) {
                 Fields field = new Fields()
                 Layers layer = new Layers()
@@ -268,10 +270,21 @@ class FieldService {
     }
 
     List<Fields> getFields(boolean includeAdmin = false) {
-        if (includeAdmin) {
-            Fields.findAll()
+        // wrap in a transaction if it is not already, unsure why this is necessary for some instances
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            if (includeAdmin) {
+                Fields.findAll()
+            } else {
+                Fields.findAllByEnabled(true)
+            }
         } else {
-            Fields.findAllByEnabled(true)
+            Fields.withTransaction {
+                if (includeAdmin) {
+                    Fields.findAll()
+                } else {
+                    Fields.findAllByEnabled(true)
+                }
+            }
         }
     }
 

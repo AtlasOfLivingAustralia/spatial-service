@@ -139,7 +139,7 @@ class ObjectController {
     @Path('objects/{fid}/{lat}/{lng}')
     @Produces("application/json")
     def listByLocation() {
-        String fid = params.fid
+        String fid = params.fid ?: params.id
         Double lat = Double.parseDouble(params.lat)
         Double lng = Double.parseDouble(params.lng)
 
@@ -390,7 +390,7 @@ class ObjectController {
     @Path('objects/inarea/{fid}')
     @Produces("application/json")
     def objectsInArea() {
-        String fid = params.fid
+        String fid = params.fid ?: params.id
         Integer limit = params.containsKey('limit') ? params.limit as Integer : 40
 
         String wkt = params.wkt ?: "OBJECT(${params.pid})"

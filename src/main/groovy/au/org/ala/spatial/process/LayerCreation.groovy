@@ -92,7 +92,7 @@ class LayerCreation extends SlaveProcess {
             new File(outPath + "_tmp.bil").delete()
 
             taskWrapper.task.message = 'bil > diva'
-            Bil2diva.bil2diva(outPath, outPath, layer.environmentalvalueunits.toString())
+            Bil2diva.bil2diva(outPath, outPath, layer.environmentalvalueunits.toString(), spatialConfig.gdal.dir.toString(), 36000000)
 
             if ("Contextual".equalsIgnoreCase(layer.type.toString())) {
                 taskWrapper.task.message = "process grid file to shapes"

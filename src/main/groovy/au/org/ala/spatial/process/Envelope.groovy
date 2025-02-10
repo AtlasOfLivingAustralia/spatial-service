@@ -28,7 +28,7 @@ class Envelope extends SlaveProcess {
     void start() {
         List<String> envelope = getInput('envelope').toString().split(',') as List<String>
         String resolution = getInput('resolution')
-        //String makeShapefile = Boolean.parseBoolean(getInput('shp') as String)
+        String makeShapefile = Boolean.parseBoolean(getInput('shp') as String)
         String geoserverUrl = getInput('geoserverUrl')
 
         LayerFilter[] filter = new LayerFilter[envelope.size()]
@@ -97,13 +97,15 @@ class Envelope extends SlaveProcess {
                 new File(dir.getPath() + File.separator + "envelope.html").write(metadata)
                 addOutput("metadata", "envelope.html", true)
 
-                SpatialUtils.grid2shp(grid.getPath(), [1])
+                if ("true".equalsIgnoreCase(makeShapefile)) {
+                    SpatialUtils.grid2shp(grid.getPath(), [1])
 
-                for (String ext : [".shp", ".shx", ".fix", ".dbf"]) {
-                    File newFile = new File(dir.getPath() + File.separator + "envelope" + ext)
-                    if (newFile.exists()) newFile.delete()
-                    FileUtils.moveFile(new File(grid.getPath() + ext), newFile)
-                    addOutput("files", "envelope" + ext, true)
+                    for (String ext : [".shp", ".shx", ".fix", ".dbf"]) {
+                        File newFile = new File(dir.getPath() + File.separator + "envelope" + ext)
+                        if (newFile.exists()) newFile.delete()
+                        FileUtils.moveFile(new File(grid.getPath() + ext), newFile)
+                        addOutput("files", "envelope" + ext, true)
+                    }
                 }
             } else {
                 taskLog("ERROR: Area of the envelope is 0 sq km.")

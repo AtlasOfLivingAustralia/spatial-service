@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.plugins.openapi.Path
 import au.org.ala.web.AuthService
 import com.opencsv.CSVWriter
@@ -64,7 +64,9 @@ class LogController {
     )
     @Path("/log")
     @Transactional
+    @RequireApiKey
     def index() {
+        Map emptyMap = [:]
         try {
             def lg = new Log(request.JSON as Map)
             if (!lg.save()) {
@@ -72,10 +74,12 @@ class LogController {
                     log.error(it)
                 }
             }
-            render status: 200
+            response.status = 200
+            render emptyMap as JSON
         } catch (Exception e) {
             log.warn("log info is broken, ignored! " + e.getMessage())
-            render status: 400
+            response.status = 400
+            render emptyMap as JSON
         }
     }
 
@@ -129,7 +133,7 @@ class LogController {
                     @Parameter(
                             name = "admin",
                             in = QUERY,
-                            description = "When true, return results for all users if request has a valid api_key or admin role.",
+                            description = "When true, return results for all users if request has an admin role.",
                             required = false,
                             example = "true"
                     ),
@@ -188,6 +192,7 @@ class LogController {
     )
     @Path("/log/search")
     @Produces("application/json")
+    @RequireApiKey
     def search() {
         def searchResult = logService.search(params, authService.getUserId(), spatialAuthService.userInRole(spatialConfig.auth.admin_role))
         def totalCount = logService.searchCount(params, authService.getUserId(), spatialAuthService.userInRole(spatialConfig.auth.admin_role))

@@ -1,33 +1,42 @@
 ---
+version: "3"
 networks:
   geoserver_postgis: ~
 services:
   geoserver:
-    image: bioatlas/ala-geoserver:v0.4
+    build:
+      context: ./geoserver
     container_name: geoserver
     environment:
       - JAVA_OPTS=-Xmx2g -Xms128m -Xss512k -Djava.awt.headless=true
-    env_file: ./env/geoserver/.envgeoserver
+    env_file: ./.env
     volumes:
+      #geoserver data folder
       - /data/geoserver_data_dir:/data/geoserver_data_dir
+      #Spatials service data folder. If they are both in the same machine, some layers are not needed to be uploaded.
       - /data/spatial-data:/data/spatial-data
     networks:
       - geoserver_postgis
     ports:
       - "8079:8080"
+
   postgis:
-    image: kartoza/postgis:12.4
+    image: kartoza/postgis:16
     container_name: postgis
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASS=postgres
+    env_file: ./.env
     networks:
       - geoserver_postgis
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      #- PGDATA
+
     volumes:
-      #      - /data/spatial-db:/data/spatial-db
       - /data/spatial-db:/var/lib/postgresql
-      #      - ./env/postgis/pg_hba.conf:/etc/postgresql/12/main/pg_hba.conf
-      - ./env/postgis/layersdb.sql:/docker-entrypoint-initdb.d/layersdb.sql
-version: "2"
+      - ./postgres/init_layersdb.sql:/docker-entrypoint-initdb.d/init_layersdb.sql
+      #- ./postgres/pg_hba.conf:/etc/postgresql/16/main/pg_hba.conf
+

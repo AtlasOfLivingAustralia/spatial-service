@@ -387,9 +387,12 @@ import java.util.zip.ZipOutputStream
             copyHeaderAsInt(filePath + ".grd", filePath + File.separator + "polygons.grd")
         } else {
             //build classes without generating polygons
-            Map<Float, float[]> info = new HashMap<Float, float[]>()
+            List<float[]> info = new ArrayList<>(keys.size())
             for (int j = 0; j < keys.size(); j++) {
-                info.put(keys.get(j).floatValue(), new float[]{0, Float.NaN, Float.NaN, Float.NaN, Float.NaN})
+                while (info.size() <= keys.get(j)) {
+                    info.add(null);
+                }
+                info.set(keys.get(j), new float[]{0, Float.NaN, Float.NaN, Float.NaN, Float.NaN})
             }
 
             g.getClassInfo(info)
@@ -410,7 +413,7 @@ import java.util.zip.ZipOutputStream
                 gc.setMinShapeIdx(Integer.valueOf(key))
                 gc.setMaxShapeIdx(Integer.valueOf(key))
 
-                float[] stats = info.get(keys.get(j).floatValue())
+                float[] stats = info[keys.get(j)]
 
                 //only include if area > 0
                 if (stats[0] > 0) {

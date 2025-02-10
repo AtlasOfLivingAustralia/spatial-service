@@ -19,7 +19,7 @@ class OutputParameter {
     String file
     String name
 
-    static hasOne = [task: Task]
+    static belongsTo = [task: Task]
 
     static mapping = {
         file type: 'text'

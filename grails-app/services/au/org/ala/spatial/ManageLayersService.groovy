@@ -15,14 +15,17 @@
 
 package au.org.ala.spatial
 
+import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.grid.Diva2bil
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import groovy.sql.Sql
 import groovy.util.logging.Slf4j
 import org.apache.commons.httpclient.methods.FileRequestEntity
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang.StringUtils
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue
@@ -36,7 +39,7 @@ import java.nio.file.attribute.BasicFileAttributes
 @Slf4j
 class ManageLayersService {
 
-    def groovySql
+    def dataSource
 
     FieldService fieldService
     LayerService layerService
@@ -55,7 +58,7 @@ class ManageLayersService {
         if (path.exists()) {
             for (File f : path.listFiles()) {
                 if (f.isDirectory()) {
-                    log.error 'getting ' + f.getName()
+                    log.debug 'getting ' + f.getName()
                     def upload = getUpload(f.getName())
                     if (upload.size() > 0) {
                         list.add(upload)
@@ -270,7 +273,9 @@ class ManageLayersService {
                 log.error("No SHP or TIF available....")
                 map.put("error", "no layer files")
             } else {
-                def errors = publishService.layerToGeoserver([files: [shp.exists() ? shp.getPath() : bil.getPath()]], null)
+                def errors = publishService.layerToGeoserver(new OutputParameter([
+                        file: ([shp.exists() ? shp.getPath() : tif.getPath()] as JSON).toString()
+                ]), null)
 
                 if (errors) {
                     log.error("Errors uploading to geoserver...." + errors.inspect())
@@ -463,7 +468,7 @@ class ManageLayersService {
                                     "=-180,-90,180,90&width=512&height=507&srs=EPSG:4326&format=application/openlayers")
                 }
             } catch (Exception e2) {
-                log.error("failed to find layer for rawId: " + layerId, e2)
+                log.error("failed to find layer for rawId: " + layerId)
             }
 
         }
@@ -499,7 +504,7 @@ class ManageLayersService {
                 map.put("columns", columns)
                 map.put("type", "Contextual")
             } else if (bil.exists()) {
-                double[] minmax = getMinMax(bil)
+                double[] minmax = Bil2diva.getMinMax(bil, spatialConfig.gdal.dir, spatialConfig.admin.timeout)
                 map.put("environmentalvaluemin", minmax[0])
                 map.put("environmentalvaluemax", minmax[1])
 
@@ -616,19 +621,22 @@ class ManageLayersService {
             }
         }
 
-        //raw upload
-        //TODO: tidy messages for id == name (layer already deleted)
-//        String[] result;
-//        result = httpCall("DELETE",
-//                geoserverUrl + "/rest/workspaces/ALA/datastores/" + id + "?recurse=true", ///external.shp",
-//                geoserverUsername, geoserverPassword,
-//                null,null,
-//                "text/plain");
-//        result = httpCall("DELETE",
-//                geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + id + "?recurse=true", //"/external.geotiff",
-//                geoserverUsername, geoserverPassword,
-//                null,null,
-//                "text/plain");
+        //Delete raw upload
+        httpCall("DELETE",
+                geoserverUrl + "/rest/workspaces/ALA/datastores/" + id + "?recurse=true", ///external.shp",
+                geoserverUsername, geoserverPassword,
+                null, null,
+                "text/plain");
+        httpCall("DELETE",
+                geoserverUrl + "/rest/workspaces/ALA/coveragestores/" + id + "?recurse=true", //"/external.geotiff",
+                geoserverUsername, geoserverPassword,
+                null, null,
+                "text/plain");
+
+        def layerDataFolder = new File(spatialConfig.data.dir.toString() + "/uploads/" + id)
+        if (layerDataFolder.exists()) {
+            FileUtils.deleteDirectory(layerDataFolder)
+        }
     }
 
     def deleteField(String fieldId) {
@@ -871,7 +879,9 @@ class ManageLayersService {
             }
         }
         if (map.containsKey('id')) {
-            layer.id = map.get('id') as Long
+            try {
+                layer.id = map.get('id') as Long
+            } catch (Exception ignored) {}
         }
 
         createOrUpdateLayer(layer, id, createTask)
@@ -900,7 +910,7 @@ class ManageLayersService {
             } catch (ignored) {
                 log.debug 'unable to read uploads layer.id for ' + id
             }
-            if (Layers.countById(id)) {
+            if (id != null && id.isInteger() && Layers.countById(id)) {
                 //update select values
                 try {
                     //flag background processes that need running
@@ -966,7 +976,13 @@ class ManageLayersService {
                     if (layer.requestedId) {
                         layer.setId(Long.parseLong(String.valueOf(layer.requestedId)))
                     } else {
-                        layer.setId(0)
+                        Long nextId = null
+                        Sql.newInstance(dataSource).query("SELECT nextval('layers_id_seq'::regclass)", { result ->
+                            if (result.next()) {
+                                nextId = result.getLong(1)
+                            }
+                        })
+                        layer.setId(nextId)
                     }
 
                     //create default layers table entry, this updates layer.id
@@ -1214,34 +1230,6 @@ class ManageLayersService {
 //        taskDao.addTask(UPDATE_GRID_CACHE, "", 3);
 //    }
 
-    def getMinMax(File bil) {
-        double[] minmax = new double[2]
-
-        //does .grd exist?
-        File grd = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".grd")
-        File hdr = new File(bil.getPath().substring(0, bil.getPath().length() - 4) + ".hdr")
-
-        if (!grd.exists() && hdr.exists()) {
-            String n = bil.getPath().substring(0, bil.getPath().length() - 4)
-            Bil2diva.bil2diva(n, n, '')
-        }
-
-        try {
-            String info = grd.text
-            for (String line : info.split("\n")) {
-                if (line.startsWith("MinValue")) {
-                    minmax[0] = Double.parseDouble(line.substring("MinValue=".length()).trim())
-                }
-                if (line.startsWith("MaxValue")) {
-                    minmax[1] = Double.parseDouble(line.substring("MaxValue=".length()).trim())
-                }
-            }
-        } catch (IOException e) {
-            log.error("failed to get min max values in bil file: " + bil.getPath(), e)
-        }
-        return minmax
-    }
-
     def distributionMap(String uploadId) {
         String dir = spatialConfig.data.dir
 
@@ -1356,7 +1344,7 @@ class ManageLayersService {
 
         try {
             if (m.containsKey('data_resource_uid')) {
-                groovySql.execute(
+                Sql.newInstance(dataSource).execute(
                         'DELETE FROM distributions WHERE data_resource_uid = \'' + m.data_resource_uid + '\';')
             }
         } catch (err) {
@@ -1379,7 +1367,7 @@ class ManageLayersService {
 
         try {
             if (m.containsKey('checklist')) {
-                groovySql.execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\'')
+                Sql.newInstance(dataSource).execute('DELETE FROM distributions WHERE data_resource_uid = \'' + m.checklist + '\'')
             }
         } catch (err) {
             log.error 'failed to delete data resource uid records for uploadId: ' + id, err
@@ -1404,7 +1392,7 @@ class ManageLayersService {
      * @param fieldId
      * @return
      */
-    def updateFromRemote(String spatialServiceUrl, String fieldId) {
+    def updateFromRemote(String spatialServiceUrl, String fieldId, String jwt) {
         def f = JSON.parse(httpCall("GET",
                 spatialServiceUrl + "/field/${fieldId}?pageSize=0",
                 null, null,
@@ -1444,7 +1432,7 @@ class ManageLayersService {
             createOrUpdateField(field, field.id + '', false)
         }
 
-        Map input = [layerId: layer.requestedId, fieldId: field.id, sourceUrl: spatialServiceUrl, displayPath: origDisplayPath] as Map
+        Map input = [layerId: layer.requestedId, fieldId: field.id, sourceUrl: spatialServiceUrl, displayPath: origDisplayPath, jwt: jwt] as Map
         Task task = tasksService.create("LayerCopy", UUID.randomUUID(), input).task
 
         task

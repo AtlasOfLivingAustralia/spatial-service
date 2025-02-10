@@ -16,8 +16,6 @@ class SpatialConfig {
         String serverURL
     }
 
-    String serviceKey   // used to authenticate copying layers from one spatial service to another
-
     DotTask task
 
     Double [] shpResolutions
@@ -59,7 +57,6 @@ class SpatialConfig {
 
     DotUrl namematching
     DotUrl records
-    String api_key
     DotUrl lists
     DotUrl collections
     DotGeoserver geoserver
@@ -217,5 +214,12 @@ class SpatialConfig {
 
     String biocacheUrl
 
+    Boolean sandboxEnabled
+    String sandboxSolrUrl
+    String pipelinesCmd
+    String pipelinesConfig
+    String sandboxSolrCollection
+    Integer sandboxThreadCount
 
+    String layerCopyRole
 }

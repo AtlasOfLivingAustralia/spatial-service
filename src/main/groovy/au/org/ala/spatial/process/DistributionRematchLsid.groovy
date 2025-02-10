@@ -92,20 +92,20 @@ class DistributionRematchLsid extends SlaveProcess {
         def genusID = ''
         def ignoreTaxonMatch = false
 
-        def value = output.get('taxonConceptID')
+        def value = output.get('taxonConceptID', null)
         if (value) {
             taxonConceptID = value
         }
-        value = output.get('familyID')
+        value = output.get('familyID', null)
         if (value) {
             familyID = value
         }
-        value = output.get('genusID')
+        value = output.get('genusID', null)
         if (value) {
             genusID = value
         }
 
-        value = output.get('issues')
+        value = output.get('issues', null)
         ignoreTaxonMatch = ('' + value).indexOf('excluded') >= 0
 
         if (ignoreTaxonMatch) {

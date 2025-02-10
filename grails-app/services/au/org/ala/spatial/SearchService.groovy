@@ -28,7 +28,7 @@ class SearchService {
 
     LayerService layerService
     FieldService fieldService
-    Sql groovySql
+    def dataSource
 
     List<SearchObject> findByCriteria(String criteria, int offset, int limit) {
         return findByCriteria(criteria, offset, limit, new ArrayList<String>(), new ArrayList<String>())
@@ -67,7 +67,7 @@ class SearchService {
         parameters.put("limit", limit)
         parameters.put("offset", offset)
 
-        groovySql.query(sql, parameters, { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, parameters, { ResultSet rs ->
             while (rs.next()) {
                 SearchObject so = new SearchObject()
                 so.pid = rs.getObject(1)
@@ -86,7 +86,7 @@ class SearchService {
         String fieldMatches = null
         if (searchObjects.size() == 0 && offset > 0) {
             sql = "select distinct (f.id || ' | ' || f.name) as fields from objects o inner join fields f on o.fid = f.id where o.name ilike :criteria and o.namesearch=true " + fieldFilter
-            groovySql.execute(sql, parameters, { ResultSet rs ->
+            Sql.newInstance(dataSource).execute(sql, parameters, { ResultSet rs ->
                 if (rs.next()) {
                     SearchObject so = new SearchObject()
                     so.fields = rs.getObject(1)

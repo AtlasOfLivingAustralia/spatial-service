@@ -15,10 +15,9 @@ import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryCollection
 
 @Slf4j
-//@CompileStatic
 class BootStrap {
 
-    Sql groovySql
+    def dataSource
     def messageSource
     SpatialConfig spatialConfig
 
@@ -33,8 +32,6 @@ class BootStrap {
                 "classpath:messages"
         )
 
-        ((AlaApiKeyAuthenticator) getAlaApiKeyClient.authenticator).setUserDetailsClient(userDetailsClient)
-
         [Geometry, GeometryCollection].each {
             JSON.registerObjectMarshaller(it) {
                 it?.toString()
@@ -48,6 +45,9 @@ class BootStrap {
                 def result = it.properties.findAll { it.key != 'class' && it.key != 'version' && it.value != null }
                 if (id) {
                     result += [id: id]
+                }
+                if (it instanceof Layers && result.containsKey("dt_added")) {
+                    result += [dt_added: ((Layers) it).dt_added.time]
                 }
                 result
             }
@@ -104,6 +104,8 @@ class BootStrap {
 //            log.error("Error creating missing azimuth function frmo st_azimuth", e)
 //        }
 
+        def groovySql = Sql.newInstance(dataSource)
+
         // manual db modification
         String [] dbModificationSql = [
                 // tables only accessed with SQL
@@ -126,7 +128,7 @@ class BootStrap {
                 "CREATE INDEX distributions_geom ON distributions USING GIST (the_geom);",
                 "CREATE INDEX tabulation_geom ON tabulation USING GIST (the_geom);",
 
-                // objects.id sequence used in manual sql that creates objects
+                // objects.spid sequence used in manual sql that creates objects
                 "CREATE SEQUENCE objects_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1;",
 
                 // compound constraint

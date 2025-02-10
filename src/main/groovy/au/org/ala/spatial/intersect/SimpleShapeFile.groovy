@@ -215,7 +215,7 @@ class SimpleShapeFile implements Serializable {
         } else if (pointsString.startsWith("MULTIPOLYGON")) {
             regions.addAll(parseMultipolygon(pointsString.substring(bracket3rd + 1, pointsString.length() - 3)))
         } else if (pointsString.startsWith("POLYGON")) {
-            regions.add(parsePolygon(pointsString.substring(bracket2nd + 1, pointsString.length() - 2)))
+           regions.add(parsePolygon(pointsString.substring(bracket2nd + 1, pointsString.length() - 2)))
         }
 
         if (regions.size() == 0) {
@@ -274,8 +274,14 @@ class SimpleShapeFile implements Serializable {
     static ArrayList<SimpleRegion> parsePolygon(String polygon) {
         ArrayList<SimpleRegion> regions = new ArrayList<SimpleRegion>()
         for (String p : polygon.split("\\),( )*\\(")) {
+            //remove return/space that immediately occur after ','
+            p = p.replaceAll('[\\n]+', '')
+            //remove space that immediately occur after ','
+            p = p.replaceAll(',[\\s]+', ',').trim()
+
             regions.add(SimpleRegion.parseSimpleRegion(p))
         }
+
         return regions
     }
 

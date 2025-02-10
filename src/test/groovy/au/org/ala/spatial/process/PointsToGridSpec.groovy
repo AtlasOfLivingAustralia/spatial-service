@@ -74,7 +74,7 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
         }
 
         @Override
-        def getRecords(String bs, String q, double[] bbox, String filename, SimpleRegion region) {
+        def getRecords(String bs, String q, double[] bbox) {
             new RecordsMock(tmpCsv)
         }
     }

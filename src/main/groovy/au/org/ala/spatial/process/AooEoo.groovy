@@ -153,10 +153,10 @@ class AooEoo extends SlaveProcess {
                         '<table >' +
                         '<tr><td>Number of records used for the calculations</td><td>' + occurrenceCount + "</td></tr>" +
                         '<tr><td>Species</td><td>' + species.name + '</td></tr>' +
-                        "<tr><td>Area of Occupancy (AOO: ${gridSize} degree grid)</td><td>" + String.format('%.0f', aoo) + ' sq km</td></tr>' +
-                        '<tr><td>Area of Occupancy (Points with radius: ' + String.format("%.0f", radius) + 'm)</td><td>' + String.format('%.0f', circleArea) + ' sq km</td></tr>' +
-                        '<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>' + (String.format('%.0f', eoo)) + ' sq km</td></tr>' +
-                        ((alphaHull != null) ? "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format('%.0f', alphaHull) + ' sq km</td></tr>' : "") +
+                        "<tr><td>Area of Occupancy (AOO: ${gridSize} degree grid)</td><td>" + String.format(Locale.US, '%.0f', aoo) + ' sq km</td></tr>' +
+                        '<tr><td>Area of Occupancy (Points with radius: ' + String.format(Locale.US, "%.0f", radius) + 'm)</td><td>' + String.format(Locale.US, '%.0f', circleArea) + ' sq km</td></tr>' +
+                        '<tr><td>Extent of Occurrence (EOO: Minimum convex hull)</td><td>' + (String.format(Locale.US, '%.0f', eoo)) + ' sq km</td></tr>' +
+                        ((alphaHull != null) ? "<tr><td>Alpha Hull (Alpha: ${alpha})</td><td>" + String.format(Locale.US, '%.0f', alphaHull) + ' sq km</td></tr>' : "") +
                         '</table></body></html>' +
                         '</div>'
 
@@ -216,7 +216,7 @@ class AooEoo extends SlaveProcess {
             try {
                 //point=latitude,longitude
                 String[] ll = point.replace('\"', '').split(',')
-                String s = String.format('POINT(%.6f %.6f)', Double.parseDouble(ll[1]), Double.parseDouble(ll[0]))
+                String s = String.format(Locale.US, 'POINT(%.6f %.6f)', Double.parseDouble(ll[1]), Double.parseDouble(ll[0]))
                 if (pointCount > 0) {
                     sb.append(',')
                 }
@@ -277,7 +277,7 @@ class AooEoo extends SlaveProcess {
             float x = (float) point.x
             float y = (float) point.y
 
-            String s = String.format('((%.6f %.6f,%.6f %.6f,%.6f %.6f,%.6f %.6f,%.6f %.6f))',
+            String s = String.format(Locale.US, '((%.6f %.6f,%.6f %.6f,%.6f %.6f,%.6f %.6f,%.6f %.6f))',
                     x, y,
                     x, y + gridsize,
                     x + gridsize, y + gridsize,

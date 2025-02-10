@@ -21,7 +21,7 @@
       "constraints": {
         "min": 0.01,
         "max": 1.0,
-        "defaultValue": 0.5
+        "defaultValue": 0.01
       }
     },
     "shp": {

@@ -75,11 +75,11 @@ class TasksController {
     }
 
     /**
-     * admin only or api_key
+     * admin only
      *
      * @return
      */
-//    @RequireAdmin
+    @RequireAdmin
     def index() {
         if (!params?.max) params.max = 10
         if (!params?.sort) params.sort = "created"
@@ -116,7 +116,7 @@ class TasksController {
         [taskInstanceList: list, taskInstanceCount: tasksService.transientTasks.size()]
     }
 
-//    @RequireAdmin
+    @RequireAdmin
     def all() {
         if (!params?.max) params.max = 10
         if (!params?.sort) params.sort = "created"
@@ -238,7 +238,7 @@ class TasksController {
      * @param task
      * @return
      */
-    @RequirePermission
+    @RequireLogin
     def show(Long id) {
         def task = tasksService.getStatus(id)
         if (task) {
@@ -258,7 +258,7 @@ class TasksController {
             method = "POST",
             tags = "tasks",
             operationId = "create",
-            summary = "Create a task",
+            summary = "Create a task with JSON body or query parameters",
             parameters = [
                     @Parameter(
                             name = "name",
@@ -294,27 +294,33 @@ class TasksController {
     @Transactional(readOnly = false)
     @RequireApiKey
     create() {
+        String name = params.containsKey('name') ? params.name : request.JSON.name
+        String sessionId = params.containsKey('sessionId') ? params.sessionId : request.JSON.sessionId
+        String identifier = params.containsKey('identifier') ? params.identifier : request.JSON.identifier
+        String email = params.containsKey('email') ? params.email : request.JSON.email
+
         Map input = null
         if (params.containsKey('input')) {
             input = ((JSONObject) JSON.parse(params.input.toString())).findAll { k, v -> v != null }
+        } else {
+            input = request.JSON.input
         }
 
         //Validate input. It may update input
         def errors
-        def userId
+        def userId = params.containsKey('userId') ? params.userId : request.JSON.userId
         if (spatialConfig.security.oidc.enabled || spatialConfig.security.cas.enabled) {
-            errors = tasksService.validateInput(params.name, input, spatialAuthService.userInRole(spatialConfig.auth.admin_role))
-            userId = authService.getUserId() ?: params.userId
+            errors = tasksService.validateInput(name, input, spatialAuthService.userInRole(spatialConfig.auth.admin_role))
+            userId = authService.getUserId() ?: userId
         } else {
-            errors = tasksService.validateInput(params.name, input, true)
-            userId = params.userId
+            errors = tasksService.validateInput(name, input, true)
         }
 
         if (errors) {
             response.status = 400
             render errors as JSON
         } else {
-            Task task = tasksService.create(params.name, params.identifier, input, params.sessionId, userId, params.email).task
+            Task task = tasksService.create(name, identifier, input, sessionId, userId, email).task
             render task as JSON
         }
     }
@@ -386,7 +392,7 @@ class TasksController {
      * @param task
      * @return
      */
-    @RequirePermission
+    @RequireLogin
     def download(Task task) {
         String file = spatialConfig.publish.dir + task.id + ".zip"
 
@@ -395,25 +401,23 @@ class TasksController {
 
     /**
      *
-     * admin only or api_key
+     * admin only
      *
      * @param task
      * @return
      */
-    @Transactional(readOnly = false)
-//    @RequireAdmin
+    @Transactional(readOnly = true)
+    @RequireAdmin
     reRun(Long id) {
         def t = Task.get(id)
         t.history.each { it -> it }
         t.output.each { it -> it }
         t.input.each { it -> it }
-        def task = tasksService.reRun(t)
 
-        if (task) {
-            render task as JSON
-        } else {
-            redirect(action: "index", params: params)
-        }
+        tasksService.reRun(t)
+
+        params.remove('id')
+        redirect(action: "index", params: params)
     }
 
     /**

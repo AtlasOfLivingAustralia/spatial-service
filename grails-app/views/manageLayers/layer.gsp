@@ -293,24 +293,24 @@
                         </input>
                         </td></tr><tr><td>
 
-                            <label for="minlongitude">Minimum Longitude [readonly]</label></td><td>
-                            <input class="form-control" type="readonly" id="minlongitude" name="minlongitude"
-                                   value="${minlongitude}" maxlength="256" readonly/>
+                            <label for="minlongitude">Minimum Longitude</label></td><td>
+                            <input class="form-control" id="minlongitude" name="minlongitude"
+                                   value="${minlongitude}" maxlength="256"/>
                         </td></tr><tr><td>
 
-                            <label for="maxlongitude">Maximum Longitude [readonly]</label></td><td>
-                            <input class="form-control" type="readonly" id="maxlongitude" name="maxlongitude"
-                                   value="${maxlongitude}" maxlength="256" readonly/>
+                            <label for="maxlongitude">Maximum Longitude</label></td><td>
+                            <input class="form-control" id="maxlongitude" name="maxlongitude"
+                                   value="${maxlongitude}" maxlength="256"/>
                         </td></tr><tr><td>
 
-                            <label for="minlatitude">Minimum Latitude [readonly]</label></td><td>
-                            <input class="form-control" type="readonly" id="minlatitude" name="minlatitude"
-                                   value="${minlatitude}" maxlength="256" readonly/>
+                            <label for="minlatitude">Minimum Latitude</label></td><td>
+                            <input class="form-control" id="minlatitude" name="minlatitude"
+                                   value="${minlatitude}" maxlength="256" />
                         </td></tr><tr><td>
 
-                            <label for="maxlatitude">Maximum Latitude [readonly]</label></td><td>
-                            <input class="form-control" type="readonly" id="maxlatitude" name="maxlatitude"
-                                   value="${maxlatitude}" maxlength="256" readonly/>
+                            <label for="maxlatitude">Maximum Latitude </label></td><td>
+                            <input class="form-control" id="maxlatitude" name="maxlatitude"
+                                   value="${maxlatitude}" maxlength="256" />
                         </td></tr><tr><td>
 
                             <label for="metadatapath">Metadata path (e.g. URL to original metadata, if available)</label>

@@ -57,7 +57,7 @@ class ShapesController {
     SpatialObjectsService spatialObjectsService
 
     SpatialConfig spatialConfig
-    Sql groovySql
+    def dataSource
 
     static final String KML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
             "<kml xmlns=\"http://earth.google.com/kml/2.2\">" +
@@ -113,7 +113,7 @@ class ShapesController {
     @Path("/shapes/wkt/{pid}")
     @Produces("plain/text")
     def wkt() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
@@ -169,7 +169,7 @@ class ShapesController {
     @Path("/shapes/kml/{pid}")
     @Produces("plain/text")
     def kml() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
@@ -186,7 +186,7 @@ class ShapesController {
                         .replace("<description></description>", "<description><![CDATA[" + ids.join(',') + "]]></description>").bytes)
 
                 String query = "select st_askml(st_collect(geom)) as kml from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
-                groovySql.eachRow(query, { GroovyResultSet row ->
+                Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject('kml').toString().bytes)
                 })
 
@@ -240,7 +240,7 @@ class ShapesController {
     @Path("/shapes/geojson/{pid}")
     @Produces("plain/text")
     def geojson() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
@@ -253,7 +253,7 @@ class ShapesController {
                 List ids = pid.split('~').collect { cleanObjectId(it) }
 
                 String query = "select st_asgeojson(st_collect(geom)) as geojson from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
-                groovySql.eachRow(query, { GroovyResultSet row ->
+                Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject('geojson').toString().bytes)
                 })
             } else {
@@ -306,7 +306,7 @@ class ShapesController {
     @Path("/shapes/shp/{pid}")
     @Produces("application/zip")
     def shp() {
-        String pid = params.pid
+        String pid = params.pid ?: params.id
         String filename = params?.filename ?: pid
         filename = makeValidFilename(filename)
         OutputStream os = response.getOutputStream()
@@ -320,7 +320,7 @@ class ShapesController {
 
                 String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 String wkt = ""
-                groovySql.eachRow(query, { GroovyResultSet row ->
+                Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
                     wkt = row.getObject('wkt')
                 })
 
@@ -647,12 +647,9 @@ class ShapesController {
             JSONRequestBodyParser reqBodyParser = new JSONRequestBodyParser()
             reqBodyParser.addParameter("user_id", String.class, false)
             reqBodyParser.addParameter("shp_file_url", String.class, false)
-            reqBodyParser.addParameter("api_key", String.class, false)
 
             if (reqBodyParser.parseJSON(jsonRequestBody)) {
-
                 String shpFileUrl = (String) reqBodyParser.getParsedValue("shp_file_url")
-                String apiKey = (String) reqBodyParser.getParsedValue("api_key")
 
                 // Use shape file url from json body
                 FileUtils.copyURLToFile(new URL(shpFileUrl), tmpZipFile)

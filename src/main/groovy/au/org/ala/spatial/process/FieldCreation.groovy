@@ -40,8 +40,6 @@ class FieldCreation extends SlaveProcess {
     void start() {
         String fieldId = getInput('fieldId')
         Boolean ignoreNullObjects = getInput('ignoreNullObjects') as Boolean
-        //TODO: check if we need to skip SLD creation from input params
-        // Query geoserver to check - SlaveService.peekFile to check
 
         // get layer info
         Fields field = getField(fieldId)
@@ -258,6 +256,10 @@ class FieldCreation extends SlaveProcess {
     }
 
     static String convertToUtf8(String rawDbfString) {
+        if (rawDbfString == null) {
+            return null
+        }
+
         try {
             return new String(rawDbfString.bytes, StandardCharsets.UTF_8)
         } catch (Exception ignored) {
@@ -306,7 +308,12 @@ class FieldCreation extends SlaveProcess {
                 String name = String.valueOf(f.getAttribute(confirmedSname))
                 String desc = null
                 if ("null" != String.valueOf(sdesc) && !sdesc.contains(',') && confirmedSdesc != null) {
-                    desc = String.valueOf(f.getAttribute(confirmedSdesc))
+                    if (confirmedSdesc.getClass().isArray()){
+                        desc = String.valueOf(f.getAttribute(confirmedSdesc.join()))
+                    } else if (confirmedSdesc instanceof String) {
+                        desc = String.valueOf(f.getAttribute(confirmedSdesc))
+                    }
+
                 } else if (sdesc?.contains(',')) {
                     sdesc.split(',').each { str ->
                         if (desc == null) {

@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Slf4j
 class LayerService {
 
-    Sql groovySql
+    def dataSource
 
     SpatialConfig spatialConfig
     FieldService fieldService
@@ -45,7 +45,7 @@ class LayerService {
     }
 
     void delete(String layerId) {
-        groovySql.execute("delete from layers where id=" + Integer.parseInt(layerId))
+        Sql.newInstance(dataSource).execute("delete from layers where id=" + Integer.parseInt(layerId))
     }
 
     Layers getLayerById(Long id, boolean enabledLayersOnly = true) {
@@ -65,7 +65,8 @@ class LayerService {
     void updateLayer(Layers layer) {
         log.debug("Updating layer metadata for " + layer.getName())
         String sql = "update layers set citation_date=:citation_date, classification1=:classification1, classification2=:classification2, datalang=:datalang, description=:description, displayname=:displayname, displaypath=:displaypath, enabled=:enabled, domain=:domain, environmentalvaluemax=:environmentalvaluemax, environmentalvaluemin=:environmentalvaluemin, environmentalvalueunits=:environmentalvalueunits, extents=:extents, keywords=:keywords, licence_link=:licence_link, licence_notes=:licence_notes, licence_level=:licence_level, lookuptablepath=:lookuptablepath, maxlatitude=:maxlatitude, maxlongitude=:maxlongitude, mddatest=:mddatest, mdhrlv=:mdhrlv, metadatapath=:metadatapath, minlatitude=:minlatitude, minlongitude=:minlongitude, name=:name, notes=:notes, path=:path, path_1km=:path_1km, path_250m=:path_250m, path_orig=:path_orig, pid=:pid, respparty_role=:respparty_role, scale=:scale, source=:source, source_link=:source_link, type=:type, uid=:uid where id=:id"
-        Layers.executeUpdate(sql, layer)
+
+        Sql.newInstance(dataSource).executeUpdate(sql, layer)
     }
 
 
@@ -127,7 +128,7 @@ class LayerService {
 
         List<Layers> layers = new ArrayList()
 
-        groovySql.query(sql, [keywords: term], {
+        Sql.newInstance(dataSource).query(sql, [keywords: term], {
             Layers layer = it as Layers
             fieldService.updateDisplayPaths([layer])
             layers.add(layer)

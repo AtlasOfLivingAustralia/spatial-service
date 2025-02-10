@@ -49,6 +49,7 @@ class TasksService {
     TabulationGeneratorService tabulationGeneratorService
     FileService fileService
     WebService webService
+    SandboxService sandboxService
 
     PublishService publishService
     TaskQueueService taskQueueService

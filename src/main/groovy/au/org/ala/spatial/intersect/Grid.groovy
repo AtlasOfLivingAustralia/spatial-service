@@ -540,7 +540,7 @@ class Grid { //  implements Serializable
     }
 
 
-    void getClassInfo(Map<Float, float[]> info) {
+    void getClassInfo(List<float[]> info) {
 
         long length = ((long) nrows) * ((long) ncols)
 
@@ -554,7 +554,7 @@ class Grid { //  implements Serializable
                 afile = new RandomAccessFile(filename + ".GRI", "r")
             }
 
-            byte[] b = new byte[65536]
+            byte[] b = new byte[1024*1024*50]
 
             long i = 0
             long max = 0
@@ -575,49 +575,49 @@ class Grid { //  implements Serializable
                     for (; i < max; i++) {
                         v = bb.get()
                         if (v < 0) v += 256
-                        if (v != ndv) updatesStats(info, i, v * rescale as float)
+                        if (v != ndv) updatesStats(info, i, v as int)
                     }
                 } else if (datatype.equalsIgnoreCase("BYTE")) {
                     max += len
                     max = Math.min(max, length)
                     for (; i < max; i++) {
                         v = bb.get()
-                        if (v != ndv) updatesStats(info, i, v * rescale as float)
+                        if (v != ndv) updatesStats(info, i, v as int)
                     }
                 } else if (datatype.equalsIgnoreCase("SHORT")) {
                     max += (int)(len / 2)
                     max = Math.min(max, length)
                     for (; i < max; i++) {
                         v = bb.getShort()
-                        if (v != ndv) updatesStats(info, i, v * rescale as float)
+                        if (v != ndv) updatesStats(info, i, v as int)
                     }
                 } else if (datatype.equalsIgnoreCase("INT")) {
                     max += (int)(len / 4)
                     max = Math.min(max, length)
                     for (; i < max; i++) {
                         v = bb.getInt()
-                        if (v != ndv) updatesStats(info, i, v * rescale as float)
+                        if (v != ndv) updatesStats(info, i, v as int)
                     }
                 } else if (datatype.equalsIgnoreCase("LONG")) {
                     max += (int)(len / 8)
                     max = Math.min(max, length)
                     for (; i < max; i++) {
                         v = bb.getLong()
-                        if (v != ndv) updatesStats(info, i, v * rescale as float)
+                        if (v != ndv) updatesStats(info, i, v as int)
                     }
                 } else if (datatype.equalsIgnoreCase("FLOAT")) {
                     max += (int)(len / 4)
                     max = Math.min(max, length)
                     for (; i < max; i++) {
                         v = bb.getFloat()
-                        if (v != ndv) updatesStats(info, i, v * rescale as float)
+                        if (v != ndv) updatesStats(info, i, v as int)
                     }
                 } else if (datatype.equalsIgnoreCase("DOUBLE")) {
                     max += (int)(len / 8)
                     max = Math.min(max, length)
                     for (; i < max; i++) {
                         v = (float) bb.getDouble()
-                        if (v != ndv) updatesStats(info, i, v * rescale as float)
+                        if (v != ndv) updatesStats(info, i, v as int)
                     }
                 } else {
                     max += (int)(len / 4)
@@ -764,9 +764,9 @@ class Grid { //  implements Serializable
         }
     }
 
-    private void updatesStats(Map<Float, float[]> info, long i, float v) {
+    private void updatesStats(List<float[]> info, long i, int v) {
         float[] stats
-        if ((stats = info.get(v)) != null) {
+        if ((stats = info[v]) != null) {
             int row = (int) (i / ncols)
             float lng = (float) (xmin + xres * (i % ncols))
             float lat = (float) (ymax - yres * row)
@@ -1087,10 +1087,10 @@ class Grid { //  implements Serializable
             fw.append("\r\n").append("Mapunits=DEGREES")
             fw.append("\r\n").append("Columns=").append(String.valueOf(ncols))
             fw.append("\r\n").append("Rows=").append(String.valueOf(nrows))
-            fw.append("\r\n").append("MinX=").append(String.format("%.2f", xmin))
-            fw.append("\r\n").append("MaxX=").append(String.format("%.2f", xmax))
-            fw.append("\r\n").append("MinY=").append(String.format("%.2f", ymin))
-            fw.append("\r\n").append("MaxY=").append(String.format("%.2f", ymax))
+            fw.append("\r\n").append("MinX=").append(String.format(Locale.US, "%.2f", xmin))
+            fw.append("\r\n").append("MaxX=").append(String.format(Locale.US, "%.2f", xmax))
+            fw.append("\r\n").append("MinY=").append(String.format(Locale.US, "%.2f", ymin))
+            fw.append("\r\n").append("MaxY=").append(String.format(Locale.US, "%.2f", ymax))
             fw.append("\r\n").append("ResolutionX=").append(String.valueOf(xres))
             fw.append("\r\n").append("ResolutionY=").append(String.valueOf(yres))
             fw.append("\r\n").append("[Data]")

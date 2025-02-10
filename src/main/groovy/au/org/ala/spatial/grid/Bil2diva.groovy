@@ -14,6 +14,7 @@
  ***************************************************************************/
 package au.org.ala.spatial.grid
 
+import au.org.ala.spatial.Util
 import groovy.util.logging.Slf4j
 
 import java.nio.ByteBuffer
@@ -22,11 +23,10 @@ import java.nio.channels.FileChannel
 import java.text.SimpleDateFormat
 
 import groovy.transform.CompileStatic
-//@CompileStatic
 @Slf4j
 class Bil2diva {
 
-    static boolean bil2diva(String bilFilename, String divaFilename, String unitsString) {
+    static boolean bil2diva(String bilFilename, String divaFilename, String unitsString, String gdalDir, Integer timeout) {
         //if input is directory, bil2div on all .bil files in the dir
         File dir = new File(bilFilename)
         if (dir.isDirectory()) {
@@ -38,7 +38,7 @@ class Bil2diva {
                     String name = f.getName().substring(0, f.getName().length() - 4)
                     boolean ret = bil2diva(bilFilename + File.separator + name,
                             divaFilename + File.separator + name,
-                            unitsString)
+                            unitsString, gdalDir, timeout)
                     //successful if there is at least 1 conversion
                     if (ret) success = true
                 }
@@ -152,7 +152,7 @@ class Bil2diva {
             }
 
             log.debug("Reading .bil min and max values")
-            double[] minmax = getMinMax(nbits, pixelType, nrows, ncols, byteOrder, missingValue, bilFile)
+            double[] minmax = getMinMax(bilFile, gdalDir, timeout)
 
             //If no nodata value was supplied, use the minimum value - 1.
             if (noDataValueString == null) {
@@ -220,108 +220,6 @@ class Bil2diva {
         return ret
     }
 
-    static double[] getMinMax(int nbits, String datatype, int nrows, int ncols, String strByteOrder, double missingValue, File bilFile) {
-        double[] minmax = new double[2]
-        minmax[0] = Double.NaN
-        minmax[1] = Double.NaN
-        try {
-            RandomAccessFile raf = new RandomAccessFile(bilFile, "r")
-            FileChannel channel = raf.getChannel()
-
-            ByteOrder byteOrder = ByteOrder.BIG_ENDIAN
-
-            if (strByteOrder == null || strByteOrder == "m") {
-                byteOrder = ByteOrder.BIG_ENDIAN
-            } else {
-                byteOrder = ByteOrder.LITTLE_ENDIAN
-            }
-
-            ByteBuffer byteBuffer
-
-
-            while (channel.position() < channel.size()) {
-                long bytesLeft = channel.size() - channel.position()
-                if (bytesLeft < 1024) {
-                    byteBuffer = ByteBuffer.allocate((int) bytesLeft)
-                } else {
-                    byteBuffer = ByteBuffer.allocate(1024)
-                }
-
-                channel.read(byteBuffer)
-
-                byteBuffer.order(byteOrder)
-                byteBuffer.position(0)
-
-                while (byteBuffer.hasRemaining()) {
-                    if (datatype.equalsIgnoreCase("UBYTE")
-                            || datatype.equalsIgnoreCase("INT1U")) {
-
-                        double ret = byteBuffer.get()
-                        if (ret < 0) {
-                            ret += 256
-                        }
-                        updateMinMax(minmax, ret, missingValue)
-
-                    } else if (datatype.equalsIgnoreCase("BYTE")
-                            || datatype.equalsIgnoreCase("INT1BYTE")
-                            || datatype.equalsIgnoreCase("INT1B")) {
-
-
-                        updateMinMax(minmax, byteBuffer.get(), missingValue)
-                    } else if (nbits == 16 /*datatype.equalsIgnoreCase("SHORT")
-                    || datatype.equalsIgnoreCase("INT2BYTES")
-                    || datatype.equalsIgnoreCase("INT2B")
-                    || datatype.equalsIgnoreCase("INT16")
-                    || datatype.equalsIgnoreCase("INT2S")*/) {
-
-                        updateMinMax(minmax, byteBuffer.getShort(), missingValue)
-
-                    } else if (datatype.equalsIgnoreCase("INT")
-                            || datatype.equalsIgnoreCase("INTEGER")
-                            || datatype.equalsIgnoreCase("INT4BYTES")
-                            || datatype.equalsIgnoreCase("INT4B")
-                            || datatype.equalsIgnoreCase("INT32")
-                            || datatype.equalsIgnoreCase("SMALLINT")) {
-
-                        updateMinMax(minmax, byteBuffer.getInt(), missingValue)
-
-                    } else if (datatype.equalsIgnoreCase("LONG")
-                            || datatype.equalsIgnoreCase("INT8BYTES")
-                            || datatype.equalsIgnoreCase("INT8B")
-                            || datatype.equalsIgnoreCase("INT64")) {
-
-                        updateMinMax(minmax, (double) byteBuffer.getLong(), missingValue)
-
-                    } else if (datatype.equalsIgnoreCase("FLOAT")
-                            || datatype.equalsIgnoreCase("FLT4BYTES")
-                            || datatype.equalsIgnoreCase("FLT4B")
-                            || datatype.equalsIgnoreCase("FLOAT32")
-                            || datatype.equalsIgnoreCase("FLT4S")
-                            || datatype.equalsIgnoreCase("REAL")
-                            || datatype.equalsIgnoreCase("SINGLE")) {
-
-                        updateMinMax(minmax, byteBuffer.getFloat(), missingValue)
-
-                    } else if (datatype.equalsIgnoreCase("DOUBLE")
-                            || datatype.equalsIgnoreCase("FLT8BYTES")
-                            || datatype.equalsIgnoreCase("FLT8B")
-                            || datatype.equalsIgnoreCase("FLOAT64")
-                            || datatype.equalsIgnoreCase("FLT8S")) {
-
-                        updateMinMax(minmax, byteBuffer.getDouble(), missingValue)
-
-                    } else {
-                        log.debug("UNKNOWN TYPE: " + datatype)
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e)
-        }
-
-        return minmax
-    }
-
     static void updateMinMax(double[] minmax, double d, double missingValue) {
         if ((float) d != (float) missingValue) {
             if (Double.isNaN(minmax[0])) {
@@ -336,6 +234,36 @@ class Bil2diva {
                 }
             }
         }
+    }
+
+    static def getMinMax(File bil, gdalDir, timeout) {
+        double[] minmax = new double[2]
+
+        try {
+            String[] cmd = [
+                    gdalDir + "/gdalinfo",
+                    "-mm",
+                    bil.getPath()]
+
+            StringBuffer sb = new StringBuffer();
+            Util.runCmd(cmd, false, null, timeout, sb)
+
+            String prefix = "Computed Min/Max="
+            String end = "\n"
+            String info = sb.toString()
+            int start = info.indexOf(prefix)
+            if (start > 0) {
+                int endIdx = info.indexOf(end, start)
+                String[] minMaxStr = info.substring(start + prefix.length(), endIdx).split(",")
+                if (minMaxStr.length == 2) {
+                    minmax[0] = Double.parseDouble(minMaxStr[0])
+                    minmax[1] = Double.parseDouble(minMaxStr[1])
+                }
+            }
+        } catch (IOException e) {
+            log.error("failed to get min max values in bil file: " + bil.getPath(), e)
+        }
+        return minmax
     }
 }
 

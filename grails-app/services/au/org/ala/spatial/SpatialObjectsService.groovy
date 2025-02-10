@@ -108,7 +108,7 @@ class SpatialObjectsService {
                 "GeometryType(o.the_geom) as featureType from objects o inner join fields f on o.fid = f.id " +
                 "where o.fid = ? and (o.name ilike ? or o.desc ilike ? ) order by o.pid " + limit_offset
         List<SpatialObjects> objects = []
-        groovySql.query(sql, [id, filter, filter], { ResultSet it ->
+        Sql.newInstance(dataSource).query(sql, [id, filter, filter], { ResultSet it ->
             while (it.next()) {
                 SpatialObjects so = new SpatialObjects()
                 so.pid = it.getObject(1)
@@ -270,13 +270,7 @@ class SpatialObjectsService {
                 FileUtils.copyFile(zippedShapeFile, os)
             } else if ("kml" == geomtype) {
                 String wktString = l.get(0).geometry.toText()
-                String wkttype = "POLYGON"
-                if (wktString.contains("MULTIPOLYGON")) {
-                    wkttype = "MULTIPOLYGON"
-                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
-                    wkttype = "GEOMETRYCOLLECTION"
-                }
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString)
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
@@ -291,17 +285,11 @@ class SpatialObjectsService {
             } else if ("wkt" == geomtype) {
                 os.write(l.get(0).geometry.toText().bytes)
             } else if ("geojson" == geomtype) {
-                FeatureJSON fjson = new FeatureJSON()
+                FeatureJSON fjson = new FeatureJSON(new GeometryJSON(16))
                 StringWriter writer = new StringWriter()
 
                 String wktString = l.get(0).geometry.toText()
-                String wkttype = "POLYGON"
-                if (wktString.contains("MULTIPOLYGON")) {
-                    wkttype = "MULTIPOLYGON"
-                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
-                    wkttype = "GEOMETRYCOLLECTION"
-                }
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString)
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
@@ -444,7 +432,7 @@ class SpatialObjectsService {
         String sql = "select o.pid, o.name, o.desc as description, o.fid as fid, f.name as fieldname, " +
                 "o.bbox, o.area_km from objects o inner join fields f on o.fid = f.id where o.pid = ?"
         List<SpatialObjects> l = []
-        groovySql.query(sql, [pid], { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, [pid], { ResultSet rs ->
             while(rs.next()) {
                 l.add(spatialObjectsFromResult(rs))
             }
@@ -509,7 +497,7 @@ class SpatialObjectsService {
                 "ST_GeomFromText('POINT(" + lng + " " + lat + ")', 4326)) o, fields f WHERE o.fid = f.id"
         List<SpatialObjects> l = new ArrayList()
 
-        groovySql.query(sql, [fid], {
+        Sql.newInstance(dataSource).query(sql, [fid], {
             while (it.next()) {
                 l.add(spatialObjectsFromResult(it))
             }
@@ -568,7 +556,7 @@ class SpatialObjectsService {
         WKTReader reader = new WKTReader()
 
         List<SpatialObjects> objects = []
-        groovySql.query(sql, [lng, lat, lng, lat, fid, lng, lat, limit], { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, [lng, lat, lng, lat, fid, lng, lat, limit], { ResultSet rs ->
             while (rs.next()) {
                 SpatialObjects so = new SpatialObjects()
                 so.fid = rs.getObject(1)
@@ -610,8 +598,6 @@ class SpatialObjectsService {
             o.setWmsurl(spatialConfig.geoserver.url + wmsurl)
         }
     }
-
-    Sql groovySql
 
     private static HashMap<String, Object> getGridIndexEntry(String path, String objectId) {
         HashMap<String, Object> map = new HashMap<String, Object>()
@@ -655,7 +641,7 @@ class SpatialObjectsService {
                 "ST_Within(the_geom, ST_GeomFromText( ? , 4326)) limit ? "
 
         List<SpatialObjects> objects = []
-        groovySql.query(sql, [id, wkt, limit], { result ->
+        Sql.newInstance(dataSource).query(sql, [id, wkt, limit], { result ->
             while (result.next()) {
                 objects.add(spatialObjectsFromResult(result))
             }
@@ -719,7 +705,7 @@ class SpatialObjectsService {
                 "WHERE o.fid = ? AND and ST_Within(the_geom, g) limit ? "
 
         List<SpatialObjects> objects = []
-        groovySql.query(sql, [intersectingPid, id, limit], { result ->
+        Sql.newInstance(dataSource).query(sql, [intersectingPid, id, limit], { result ->
             while (result.next()) {
                 objects.add(spatialObjectsFromResult(result))
             }
@@ -741,13 +727,13 @@ class SpatialObjectsService {
 
         try {
             int object_id = 0
-            groovySql.query("SELECT nextval('objects_id_seq'::regclass)", { result ->
+            Sql.newInstance(dataSource).query("SELECT nextval('objects_id_seq'::regclass)", { result ->
                 if (result.next()) {
                     object_id = result.getInt(1)
                 }
             })
             int metadata_id = 0
-            groovySql.query("SELECT nextval('uploaded_objects_metadata_id_seq'::regclass)", { result ->
+            Sql.newInstance(dataSource).query("SELECT nextval('uploaded_objects_metadata_id_seq'::regclass)", { result ->
                 if (result.next()) {
                     metadata_id = result.getInt(1)
                 }
@@ -756,11 +742,11 @@ class SpatialObjectsService {
             // Insert shape into geometry table
             String sql = "INSERT INTO objects (pid,  name, \"desc\", fid, the_geom, namesearch, bbox, area_km) " +
                     "values (?, ?, ?, ?, ST_GeomFromText(?, 4326), ?, ST_AsText(Box2D(ST_GeomFromText(?, 4326))), ?)"
-            groovySql.execute(sql, [object_id, name, description, spatialConfig.userObjectsField, wkt, namesearch, wkt, area_km])
+            Sql.newInstance(dataSource).execute(sql, [object_id, name, description, spatialConfig.userObjectsField, wkt, namesearch, wkt, area_km])
 
             // Now write to metadata table
             String sql2 = "INSERT INTO uploaded_objects_metadata (pid, id, user_id, time_last_updated) values (?, ?, ?, now())"
-            groovySql.execute(sql2, object_id, metadata_id, userid)
+            Sql.newInstance(dataSource).execute(sql2, object_id, metadata_id, userid)
 
             return Integer.toString(object_id)
         } catch (DataAccessException ex) {
@@ -781,12 +767,12 @@ class SpatialObjectsService {
 
             // First update metadata table
             String sql = "UPDATE uploaded_objects_metadata SET user_id = ?, time_last_updated = now() WHERE pid = ?"
-            groovySql.execute(sql, [userid, Integer.toString(pid)])
+            Sql.newInstance(dataSource).execute(sql, [userid, Integer.toString(pid)])
 
             // Then update objects table
             String sql2 = "UPDATE objects SET the_geom = ST_GeomFromText(?, 4326), " +
                     "bbox = ST_AsText(Box2D(ST_GeomFromText(?, 4326))), name = ?, \"desc\" = ?, area_km = ? where pid = ?"
-            boolean rowsUpdated = groovySql.execute(sql2, [wkt, wkt, name, description, area_km, Integer.toString(pid)])
+            boolean rowsUpdated = Sql.newInstance(dataSource).execute(sql2, [wkt, wkt, name, description, area_km, Integer.toString(pid)])
             return (rowsUpdated)
         } catch (DataAccessException ex) {
             throw new IllegalArgumentException("Error writing to database. Check validity of wkt.", ex)
@@ -801,20 +787,23 @@ class SpatialObjectsService {
         }
 
         String sql = "DELETE FROM uploaded_objects_metadata WHERE pid = ?; DELETE FROM objects where pid = ?"
-        boolean rowsAffected = groovySql.execute(sql, Integer.toString(pid), Integer.toString(pid))
-        return (rowsAffected)
+        Sql.newInstance(dataSource).execute(sql, [Integer.toString(pid), Integer.toString(pid)])
+
+        // return true if the object no longer exists
+        return !shapePidIsForUploadedShape(pid)
     }
 
     private boolean shapePidIsForUploadedShape(int pid) {
-        String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = '" + pid + "'"
-        groovySql.query(sql, {
+        boolean found = false
+        String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = ?"
+        Sql.newInstance(dataSource).query(sql, [Integer.toString(pid)], {
             while (it.next()) {
                 if (it.getObject(1) > 0) {
-                    return true
+                    found = true
                 }
             }
         })
-        return false
+        return found
     }
 
     List<SpatialObjects> getObjectsWithinRadius(String fid, double latitude, double longitude, double radiusKm) {
@@ -822,7 +811,7 @@ class SpatialObjectsService {
                 "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o inner join fields f on o.fid = f.id  WHERE o.fid = ? AND " +
                 "ST_DWithin(ST_GeographyFromText('POINT(" + longitude + " " + latitude + ")'), geography(the_geom), ?, true)"
         List<SpatialObjects> l = []
-        groovySql.query(sql, [fid, radiusKm * 1000], {
+        Sql.newInstance(dataSource).query(sql, [fid, radiusKm * 1000], {
             while (it.next()) {
                 l.add(spatialObjectsFromResult(it))
             }
@@ -836,7 +825,7 @@ class SpatialObjectsService {
         String sql = "SELECT o.pid, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, " +
                 "o.bbox, o.area_km from search_objects_by_geometry_intersect(?, ST_GeomFromText(?, 4326)) o inner join fields f on o.fid = f.id"
         List<SpatialObjects> l = []
-        groovySql.query(sql, [fid, wkt], {
+        Sql.newInstance(dataSource).query(sql, [fid, wkt], {
             while (it.next()) {
                 l.add(spatialObjectsFromResult(it))
             }
@@ -850,7 +839,7 @@ class SpatialObjectsService {
         String sql = "SELECT o.pid, o.name, o.desc AS description, o.fid AS fid, f.name AS fieldname, " +
                 "o.bbox, o.area_km FROM search_objects_by_geometry_intersect(?, (SELECT the_geom FROM objects WHERE pid = ?)) o inner join fields f on o.fid = f.id"
         List<SpatialObjects> l = []
-        groovySql.query(sql, [fid, objectPid], {
+        Sql.newInstance(dataSource).query(sql, [fid, objectPid], {
             while (it.next()) {
                 l.add(spatialObjectsFromResult(it))
             }
@@ -879,7 +868,7 @@ class SpatialObjectsService {
                 "o.area_km, GeometryType(o.the_geom) as featureType FROM objects o inner join fields f on o.fid = f.id WHERE o.pid = ? AND " +
                 "ST_Intersects(the_geom, ST_GeomFromText('POINT(" + longitude + " " + latitude + ")', 4326))"
         List<SpatialObjects> l = []
-        groovySql.query(sql, [pid], { ResultSet it ->
+        Sql.newInstance(dataSource).query(sql, [pid], { ResultSet it ->
             while (it.next()) {
                 l.add(spatialObjectsFromResult(it))
             }
@@ -899,7 +888,7 @@ class SpatialObjectsService {
                 List ids = id.split('~').collect { cleanObjectId(it).toString() }
 
                 String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
-                groovySql.eachRow(query, { GroovyResultSet row ->
+                Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
                     os.write(row.getObject(0).toString().bytes)
                 })
             } else {

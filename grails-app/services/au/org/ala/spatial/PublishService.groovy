@@ -332,8 +332,15 @@ class PublishService {
 
                             //attempt to delete
                             callGeoserverDelete("/rest/workspaces/ALA/coveragestores/" + name)
-
-                            if (!spatialConfig.geoserver.spatialservice.colocated) {
+                            //when the geoserver and spatial service are in the server, We can let Geoserver load the data via absolut path
+                            if (spatialConfig.geoserver.spatialservice.colocated) {
+                                // Geoserver will use the tif file starting with 'file://', and no need to upload it
+                                String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
+                                        null, "file://" + geotiff.getPath())
+                                if (result[0] != "200" && result[0] != "201") {
+                                    errors.put(String.valueOf(System.currentTimeMillis()), result[0] + ": " + result[1])
+                                }
+                            } else {
                                 // delete the tif file if it exists
                                 callGeoserverDelete("/rest/resource/data/" + name + ".tif")
 
@@ -344,18 +351,13 @@ class PublishService {
                                 callGeoserver("PUT", "/rest/resource/data/" + name + ".tif", geotiff.getPath(), null)
 
                                 // create the layer
+                                // NOTE: The lines above upload files to Geoserver already.
                                 callGeoserver("PUT", "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
                                         null, "file://" + spatialConfig.geoserver.remote.geoserver_data_dir + "/data/" + name + ".tif")
 
                                 // upload the prj file
                                 if (tmpPrj.exists()) {
                                     callGeoserver("PUT", "/rest/resource/data/" + name + ".prj", tmpPrj.getPath(), null)
-                                }
-                            } else {
-                                String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/coveragestores/" + name + "/external.geotiff?configure=first",
-                                        null, "file://" + geotiff.getPath())
-                                if (result[0] != "200" && result[0] != "201") {
-                                    errors.put(String.valueOf(System.currentTimeMillis()), result[0] + ": " + result[1])
                                 }
                             }
 
@@ -387,7 +389,6 @@ class PublishService {
                                     errors.put(String.valueOf(System.currentTimeMillis()), out)
                                 }
                             }
-
                         } catch (err) {
                             log.error 'failed to upload geotiff to geoserver: ' + geotiff.getPath(), err
                         }
@@ -397,50 +398,32 @@ class PublishService {
                     def name = shp.getName().replace('.shp', '')
                     def sld = new File(name + ".sld")
 
-
                     callGeoserverDelete("/rest/workspaces/ALA/datastores/" + name)
 
-                    if (spatialConfig.geoserver.remote.geoserver_data_dir) {
+                    if (spatialConfig.geoserver.spatialservice.colocated) {
+                        // Geoserver refers the extern data path (starting with 'file://') if it is colocated
+                        String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
+                                null, "file://" + shp.getPath())
+                        if ("201" != result[0]) {
+                            errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
+                            log.error 'Failed to upload shp to geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
+                        }
+                    } else {
                         for (String filetype : ["shp", "prj", "shx", "dbf", "fix", "sbn", "sbx", "fbn", "fbx", "qix", "cpg", "shp.xml", "atx", "mxs", "ixs", "ain", "aih"]) {
                             // delete file if it exists
                             callGeoserverDelete("/rest/resource/data/" + name + "." + filetype)
-
                             // upload the file
                             File uploadFile = new File(shp.getPath().replace(".shp", "." + filetype))
                             if (uploadFile.exists()) {
-                                callGeoserver("PUT", "/rest/resource/data/" + name + "." + filetype, uploadFile.getPath(), null)
-                            }
-                        }
-
-                        // create the layer
-                        callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
-                                null, "file://" + shp.getPath())
-                    } else {
-
-                        if (spatialConfig.geoserver.spatialservice.colocated) {
-
-                            String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/external.shp",
-                                    null, "file://" + shp.getPath())
-                            if ("201" != result[0]) {
-                                errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload shp to geoserver: ' + shp.getPath())
-                                log.error 'Failed to upload shp to geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
-                            }
-
-                        } else {
-                            for (String filetype : ["shp", "prj", "shx", "dbf", "fix", "sbn", "sbx", "fbn", "fbx", "qix", "cpg", "shp.xml", "atx", "mxs", "ixs", "ain", "aih"]) {
-                                // upload the file
-                                File uploadFile = new File(shp.getPath().replace(".shp", "." + filetype))
-                                if (uploadFile.exists()) {
-                                    String[] result = callGeoserver("PUT", "/rest/workspaces/ALA/datastores/" + name + "/file.shp",
-                                            uploadFile.getPath(), null, "application/octet-stream")
-                                    if ("201" != result[0]) {
-                                        errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload file to geoserver: ' + uploadFile.getPath())
-                                        log.error 'Failed to load shp into co-located geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
-                                    }
+                                String[] result =  callGeoserver("PUT", "/rest/resource/data/" + name + "." + filetype, uploadFile.getPath(), null)
+                                if ("201" != result[0]) {
+                                    errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload file to geoserver: ' + uploadFile.getPath())
+                                    log.error 'Failed to load shp into co-located geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
                                 }
                             }
                         }
                     }
+
 
                     if (sld.exists()) {
                         //Create style

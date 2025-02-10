@@ -568,7 +568,7 @@ class IntersectController {
     @SkipSecurityCheck
     // Required to because request.reader.text conflicts with serviceAuthService.hasValidApiKey()
     def geojsonGeometryIntersect() {
-        String fid = params.fid
+        String fid = params.fid ?: params.id
         String wkt = geoJsonToWkt(request.reader.text)
         render spatialObjectsService.getObjectsIntersectingWithGeometry(fid, wkt) as JSON
     }

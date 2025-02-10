@@ -26,7 +26,7 @@ import java.sql.ResultSet
 class DistributionsService {
 
     SpatialConfig spatialConfig
-    Sql groovySql
+    def dataSource
 
     private final String SELECT_CLAUSE = "select gid,spcode,scientific,authority_,common_nam,family,genus_name,specific_n,min_depth," +
             "max_depth,pelagic_fl,coastal_fl,desmersal_fl,estuarine_fl,family_lsid,genus_lsid,caab_species_number," +
@@ -123,10 +123,17 @@ class DistributionsService {
             sql += " WHERE " + whereClause.toString()
         }
 
+        if (queryParams.pageSize) {
+            int start = queryParams.start as Integer ?: 0
+            sql += " LIMIT :pageSize OFFSET :offset"
+            params.put("pageSize", queryParams.pageSize as Integer)
+            params.put("offset", start)
+        }
+
         List result = new ArrayList()
 
         String[] fields = SELECT_CLAUSE.split(',')
-        groovySql.query(sql, params, { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, params, { ResultSet rs ->
             while (rs.next()) {
                 Map map = [:]
                 fields.eachWithIndex { String entry, int i ->
@@ -293,7 +300,7 @@ class DistributionsService {
         List result = new ArrayList()
 
         String[] fields = SELECT_CLAUSE.split(',')
-        groovySql.query(sql, params) { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, params) { ResultSet rs ->
             while (rs.next()) {
                 Map map = [:]
 
