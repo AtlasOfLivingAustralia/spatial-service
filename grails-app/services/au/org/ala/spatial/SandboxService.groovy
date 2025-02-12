@@ -570,7 +570,7 @@ class SandboxService {
         File processedDir = new File(spatialConfig.data.dir + "/sandbox/processed/" + datasetID);
         try {
             if (processedDir.exists()) {
-                FileUtils.deleteDirectory(processedDir);
+//                FileUtils.deleteDirectory(processedDir);
             }
         } catch (IOException e) {
             logger.error("Error deleting directory: " + processedDir.getAbsolutePath(), e);
