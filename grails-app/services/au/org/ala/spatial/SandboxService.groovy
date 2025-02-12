@@ -560,20 +560,21 @@ class SandboxService {
         sandboxIngress.message = "started"
         int result = pipelinesExecute(dwcaToSandboxOpts, new File(spatialConfig.data.dir + "/sandbox/processed/" + datasetID + "/logs/DwcaToSolrPipeline.log"), sandboxIngress)
 
-        if (result != 0) {
-            sandboxIngress.status = "error"
-            sandboxIngress.message = "DwcaToSolrPipeline failed"
-            return
-        }
-
-        // delete processing files
+        // always delete processing files
         File processedDir = new File(spatialConfig.data.dir + "/sandbox/processed/" + datasetID);
         try {
+            logger.error("processedDir " + processedDir.path + ", exists=" + processedDir.exists())
             if (processedDir.exists()) {
                 FileUtils.deleteDirectory(processedDir);
             }
         } catch (IOException e) {
             logger.error("Error deleting directory: " + processedDir.getAbsolutePath(), e);
+        }
+
+        if (result != 0) {
+            sandboxIngress.status = "error"
+            sandboxIngress.message = "DwcaToSolrPipeline failed"
+            return
         }
 
         // double check SOLR has the records
