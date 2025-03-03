@@ -41,7 +41,17 @@ class StreamGobbler extends Thread {
             String line
             while ((line = br.readLine()) != null) {
                 if (taskWrapper != null) {
-                    taskWrapper.task.history.put(System.currentTimeMillis() as String, logPrefix + ": " + line)
+                    // surpress some JDK logging
+                    if (!line.startsWith('INFO:') && !line.startsWith('NOTE:') && !line.contains('java.')) {
+                        String str = logPrefix + ": " + line
+
+                        // trim str to max 250 characters
+                        if (str.length() > 250) {
+                            str = str.substring(0, 250)
+                        }
+
+                        taskWrapper.task.history.put(System.currentTimeMillis() as String, str)
+                    }
                 }
                 if (stringBuffer != null) {
                     stringBuffer.append(line).append('\n');
