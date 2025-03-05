@@ -249,6 +249,8 @@ class Util {
             s.q.addAll(json.fq)
         }
         s.wkt = json.wkt
+
+        return s;
     }
 
     static String[] getDistributionsOrChecklists(List<Distributions> ja) {

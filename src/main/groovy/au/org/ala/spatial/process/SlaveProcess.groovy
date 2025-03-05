@@ -1082,7 +1082,7 @@ class SlaveProcess {
             runCmd(cmd.toArray(new String[cmd.size()]), false, spatialConfig.admin.timeout)
 
         } catch (Exception e) {
-            e.printStackTrace()
+            log.error("Failed to convert asc to grd: " + e.getMessage(), e)
         }
     }
 

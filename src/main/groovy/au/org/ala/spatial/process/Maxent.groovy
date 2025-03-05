@@ -68,6 +68,7 @@ class Maxent extends SlaveProcess {
         }
         taskLog("Run Maxent model")
         def cmd = ["java", "-mx" + String.valueOf(spatialConfig.maxent.mx),
+                   "-Djava.util.prefs.userRoot=" + getTaskPath() + "/tmp/",
                    "-jar", spatialConfig.data.dir + '/modelling/maxent/maxent.jar',
                    "-e", cutDataPath, "-s", speciesPath.get(0), "-a", "tooltips=false",
                    "nowarnings", "noprefixes", "-z",
@@ -212,6 +213,9 @@ class Maxent extends SlaveProcess {
             FileUtils.moveFile(new File(getTaskPath() + "_species.gri"), target)
             addOutput("layers", "/layer/" + taskWrapper.id + "_species.gri")
         }
+
+        File tmpDir = new File(getTaskPath() + "/tmp/")
+        FileUtils.deleteDirectory(tmpDir)
     }
 
     static def writeMaxentsld(filename) {

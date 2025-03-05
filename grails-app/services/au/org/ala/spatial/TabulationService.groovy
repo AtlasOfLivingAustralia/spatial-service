@@ -479,6 +479,10 @@ class TabulationService {
         //is it grid as contextual layer?
         IntersectionFile f = layerService.getIntersectionFile(fid)
 
+        if (f == null) {
+            return []
+        }
+
         if (f.getType().equalsIgnoreCase("c")) {
             if (wkt.length() > 0) {
                 String sql
