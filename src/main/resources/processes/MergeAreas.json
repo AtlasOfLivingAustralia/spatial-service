@@ -20,7 +20,10 @@
     },
     "name": {
       "description": "Area name",
-      "type": "string"
+      "type": "text",
+      "constraints": {
+        "optional": false
+      }
     },
     "description": {
       "description": "Area description",

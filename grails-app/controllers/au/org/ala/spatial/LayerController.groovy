@@ -293,8 +293,9 @@ class LayerController {
             try {
                 if (it) {
                     def layer = JSON.parse(it)
-                    String layerId = layer['0'][0]
-                    layers.put(layerId, layers.getOrDefault(layerId, 0) + 1)
+                    for (String layerId : layer['0']) {
+                        layers.put(layerId, layers.getOrDefault(layerId, 0) + 1)
+                    }
                 }
             } catch (Exception e) {
                 log.error("Error in calculating usage of tool: add layer")
@@ -303,12 +304,14 @@ class LayerController {
         layerUsage.put("Add to Map | Layer", layers)
 
         layers = [:]
-        Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='Tabulation'").each {
+        Log.executeQuery("SELECT data FROM Log WHERE created is not null and created >= ${c.time} and category2='tabulation'").each {
             try {
-                def layer1 = JSON.parse(it)["layer1"]
-                layers.put(layer1, layers.getOrDefault(layer1, 0) + 1)
-                def layer2 = JSON.parse(it)["layer2"]
-                layers.put(layer2, layers.getOrDefault(layer2, 0) + 1)
+                if (it) {
+                    def layer1 = JSON.parse(it)["layer1"]
+                    layers.put(layer1, layers.getOrDefault(layer1, 0) + 1)
+                    def layer2 = JSON.parse(it)["layer2"]
+                    layers.put(layer2, layers.getOrDefault(layer2, 0) + 1)
+                }
             } catch (Exception e) {
                 log.error("Error in calculating usage of tool: tabulation")
             }

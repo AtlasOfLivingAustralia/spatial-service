@@ -270,7 +270,7 @@ class SpatialObjectsService {
                 FileUtils.copyFile(zippedShapeFile, os)
             } else if ("kml" == geomtype) {
                 String wktString = l.get(0).geometry.toText()
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString.substring(0, wktString.indexOf(' ')))
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
@@ -289,7 +289,7 @@ class SpatialObjectsService {
                 StringWriter writer = new StringWriter()
 
                 String wktString = l.get(0).geometry.toText()
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString.substring(0, wktString.indexOf(' ')))
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)

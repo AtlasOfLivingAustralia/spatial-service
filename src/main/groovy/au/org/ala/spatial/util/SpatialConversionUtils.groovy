@@ -355,6 +355,14 @@ class SpatialConversionUtils {
                 wkttype = "MULTIPOLYGON"
             } else if (wktString.contains("GEOMETRYCOLLECTION")) {
                 wkttype = "GEOMETRYCOLLECTION"
+            } else if (wktString.contains("LINESTRING")) {
+                wkttype = "LINESTRING"
+            } else if (wktString.contains("MULTILINESTRING")) {
+                wkttype = "MULTILINESTRING"
+            } else if (wktString.contains("POINT")) {
+                wkttype = "POINT"
+            } else if (wktString.contains("MULTIPOINT")) {
+                wkttype = "MULTIPOINT"
             }
             final SimpleFeatureType TYPE = createFeatureType(wkttype)
 

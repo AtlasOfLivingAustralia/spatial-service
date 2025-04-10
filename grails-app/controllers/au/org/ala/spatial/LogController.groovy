@@ -33,6 +33,8 @@ import javax.ws.rs.Produces
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
+
+@RequireApiKey
 class LogController {
 
     LogService logService
@@ -64,11 +66,22 @@ class LogController {
     )
     @Path("/log")
     @Transactional
-    @RequireApiKey
     def index() {
         Map emptyMap = [:]
         try {
-            def lg = new Log(request.JSON as Map)
+            def json = request.JSON
+            def lg = new Log()
+            lg.userId = authService.getUserId()
+            lg.category1 = json.data.category1
+            lg.category2 = json.data.category2
+            lg.sessionId = json.data.sessionId
+
+            json.data.remove("category1")
+            json.data.remove("category2")
+            json.data.remove("sessionId")
+            json.data.remove("userId")
+
+            lg.data = json.data.toString()
             if (!lg.save()) {
                 lg.errors.each {
                     log.error(it)
@@ -192,7 +205,6 @@ class LogController {
     )
     @Path("/log/search")
     @Produces("application/json")
-    @RequireApiKey
     def search() {
         def searchResult = logService.search(params, authService.getUserId(), spatialAuthService.userInRole(spatialConfig.auth.admin_role))
         def totalCount = logService.searchCount(params, authService.getUserId(), spatialAuthService.userInRole(spatialConfig.auth.admin_role))
