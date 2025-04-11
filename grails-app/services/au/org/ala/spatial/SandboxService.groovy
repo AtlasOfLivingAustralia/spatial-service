@@ -516,7 +516,7 @@ class SandboxService {
 
         // check that the user owns this data resource or is admin
         String drUserId = getUserId(id);
-        if (!isAdmin || !drUserId.equals(userId)) {
+        if (!isAdmin && !drUserId.equals(userId)) {
             return false;
         }
 
