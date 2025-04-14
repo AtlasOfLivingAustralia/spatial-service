@@ -647,12 +647,9 @@ class ShapesController {
             JSONRequestBodyParser reqBodyParser = new JSONRequestBodyParser()
             reqBodyParser.addParameter("user_id", String.class, false)
             reqBodyParser.addParameter("shp_file_url", String.class, false)
-            reqBodyParser.addParameter("api_key", String.class, false)
 
             if (reqBodyParser.parseJSON(jsonRequestBody)) {
-
                 String shpFileUrl = (String) reqBodyParser.getParsedValue("shp_file_url")
-                String apiKey = (String) reqBodyParser.getParsedValue("api_key")
 
                 // Use shape file url from json body
                 FileUtils.copyURLToFile(new URL(shpFileUrl), tmpZipFile)
@@ -1037,6 +1034,9 @@ class ShapesController {
                 WKTReader wktReader = new WKTReader()
                 Geometry geom = wktReader.read(wkt.toString())
 
+                // union all the polygons in a MULTIPOLYGON, if any
+                geom = geom.union()
+
                 // Use CCW for exterior rings. Normalizing will use the JTS default (CW). Reverse makes it CCW.
                 Geometry validGeom = GeomMakeValid.makeValid(geom)
                 validGeom.normalize()
@@ -1062,27 +1062,8 @@ class ShapesController {
         return filename.replaceAll("[^a-zA-Z0-9\\(\\)\\[\\]\\-]", "_")
     }
 
-    private static cleanObjectId(String id) {
+    private static String cleanObjectId(String id) {
         String.valueOf(Long.valueOf(id))
     }
-
-    // requestBody schemas
-//    class UploadWkt {
-//        String wkt
-//        String name
-//        String description
-//        String user_id
-//    }
-//
-//    class UploadGeoJSON {
-//        String name
-//        String description
-//        String user_id
-//        Map geojson
-//    }
-//
-//    class UploadFeatures {
-//        List<String> featureIndex
-//    }
 }
 

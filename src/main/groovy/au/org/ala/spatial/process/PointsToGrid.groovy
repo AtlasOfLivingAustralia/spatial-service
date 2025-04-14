@@ -71,7 +71,7 @@ class PointsToGrid extends SlaveProcess {
 
         // dump the species data to a file
         taskLog("getting species data")
-        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox, null, null)
+        Records records = getRecords(speciesArea.bs.toString(), speciesArea.q.join('&fq='), bbox)
 
         //update bbox with spatial extent of records
         double minx = 180, miny = 90, maxx = -180, maxy = -90
@@ -182,10 +182,6 @@ class PointsToGrid extends SlaveProcess {
         }
     }
 
-    def getRecords(String bs, String q, double[] bbox, String filename, SimpleRegion region) {
-        new Records(bs, q, bbox, filename, region)
-    }
-
     void writeMetadata(String filename, String title, Records records, double[] bbox, boolean odensity, boolean sdensity, int[] counts, String addAreaSqKm, String speciesName, Double gridCellSize, String movingAverage) throws IOException {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss")
         FileWriter fw = new FileWriter(filename)
@@ -222,4 +218,8 @@ class PointsToGrid extends SlaveProcess {
         fw.close()
     }
 
+    // Isolate method for mocking
+    def getRecords(String bs, String q, double[] bbox) {
+        return new Records(bs, q, bbox, null, null, "names_and_lsid", false)
+    }
 }

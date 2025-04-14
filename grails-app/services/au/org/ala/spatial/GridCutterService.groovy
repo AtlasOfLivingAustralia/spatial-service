@@ -525,7 +525,7 @@ class GridCutterService {
             res = res * 2
         }
         if (res != Double.parseDouble(resolution)) {
-            resolution = String.format("%f", res)
+            resolution = String.format(Locale.US, "%f", res)
         }
 
         //get mask and adjust extents for filter

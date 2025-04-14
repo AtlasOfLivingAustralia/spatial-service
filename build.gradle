@@ -28,7 +28,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-version "2.1.5"
+version "2.2.0-SNAPSHOT"
 group "au.org.ala"
 
 apply plugin: "eclipse"
@@ -40,7 +40,7 @@ apply plugin: "org.grails.grails-gsp"
 apply plugin: "com.bertramlabs.asset-pipeline"
 
 
-def alaSecurityLibsVersion='6.2.0'
+def alaSecurityLibsVersion='6.3.0'
 def geotoolsVersion='27.2'
 
 war {
@@ -107,6 +107,7 @@ dependencies {
     implementation "org.hibernate:hibernate-spatial"
     implementation "org.grails.plugins:gsp"
     implementation "io.micronaut:micronaut-inject-groovy"
+
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
     runtimeOnly "com.h2database:h2"
@@ -211,7 +212,7 @@ dependencies {
 
 //    developmentOnly 'io.methvin:directory-watcher:0.15.0'
 
-
+    implementation 'org.gbif:dwc-api:1.47'
 }
 
 configurations {

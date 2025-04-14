@@ -63,7 +63,7 @@ class Util {
         }
     }
 
-    static Map<String, Object> getStream(String url) {
+    static Map<String, Object> getStream(String url, String jwt) {
         HttpClient client = null
         HttpMethodBase call = null
         try {
@@ -75,6 +75,10 @@ class Util {
 
             try {
                 call = new GetMethod(url)
+
+                if (jwt) {
+                    call.addRequestHeader("Authorization", "Bearer " + jwt)
+                }
 
                 client.executeMethod(call)
             } catch (Exception e) {
@@ -245,6 +249,8 @@ class Util {
             s.q.addAll(json.fq)
         }
         s.wkt = json.wkt
+
+        return s;
     }
 
     static String[] getDistributionsOrChecklists(List<Distributions> ja) {
@@ -254,11 +260,11 @@ class Util {
             String[] lines = new String[ja.size() + 1]
             lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM"
             ja.eachWithIndex {Distributions it, int idx ->
-                String intersectArea = String.format("%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000.0)
+                String intersectArea = String.format(Locale.US, "%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000.0)
 
                 lines[idx + 1] = it.spcode + "," + wrap(it.scientific) + "," + wrap(it.authority_) + "," + wrap(it.common_nam) + "," +
                     wrap(it.family) + "," + wrap(it.genus_name) + "," + wrap(it.specific_n) + "," + (it.min_depth ?: "") + "," + (it.max_depth ?: "") +
-                        "," + wrap(it.metadata_u) + "," + wrap(it.lsid) + "," + wrap(it.area_name) + "," + String.format("%.2f", (it.area_km ?: 0) as Double) +
+                        "," + wrap(it.metadata_u) + "," + wrap(it.lsid) + "," + wrap(it.area_name) + "," + String.format(Locale.US, "%.2f", (it.area_km ?: 0) as Double) +
                         "," + wrap(it.data_resource_uid) + "," + intersectArea
             }
 
@@ -278,7 +284,7 @@ class Util {
                 String key = wrap(it.family) + "," + wrap(it.scientific) + "," + wrap(it.common_nam) + "," + wrap(it.lsid)
 
                 String areaName = it.area_name
-                String intersectArea = String.format("%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000)
+                String intersectArea = String.format(Locale.US, "%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000)
 
                 if (areaName.toLowerCase().contains("likely")) likely.put(key, intersectArea)
                 if (areaName.toLowerCase().contains("maybe")) maybe.put(key, intersectArea)
@@ -306,10 +312,10 @@ class Util {
     }
 
     static int runCmd(String[] cmd, Long timeout) {
-        return runCmd(cmd, false, null, timeout)
+        return runCmd(cmd, false, null, timeout, null)
     }
 
-    static int runCmd(String[] cmd, Boolean logToTask, TaskWrapper task, Long timeout) {
+    static int runCmd(String[] cmd, Boolean logToTask, TaskWrapper task, Long timeout, StringBuffer stringBuffer) {
         int exitValue = 1
 
         ProcessBuilder builder = new ProcessBuilder(cmd)
@@ -321,10 +327,10 @@ class Util {
             proc = builder.start()
 
             // any error message?
-            StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "", logToTask ? task : null)
+            StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "", logToTask ? task : null, null)
 
             // any output?
-            StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "", logToTask ? task : null)
+            StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "", logToTask ? task : null, stringBuffer)
 
             // kick them off
             errorGobbler.start()

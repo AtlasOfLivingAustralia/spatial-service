@@ -15,18 +15,18 @@
 
 package au.org.ala.spatial
 
+import au.ala.org.ws.security.RequireApiKey
+import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.converters.XML
 import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import org.hibernate.criterion.CriteriaSpecification
 import org.json.simple.JSONObject
-import org.json.simple.parser.JSONParser
 
+import javax.servlet.http.HttpServletResponse
 import javax.transaction.Transactional
 import java.text.SimpleDateFormat
 
-@RequirePermission
 @Transactional
 class ManageLayersController {
 
@@ -37,12 +37,14 @@ class ManageLayersController {
 
     FieldService fieldService
     LayerService layerService
+    AuthService authService
 
     /**
-     * admin only or api_key
+     * admin only
      *
      * @return
      */
+    @RequireAdmin
     def index() {
     }
 
@@ -51,6 +53,7 @@ class ManageLayersController {
      *
      * @return
      */
+    @RequireAdmin
     def layers() {
         log.debug("List avaliable layers")
         Map map = [:]
@@ -119,7 +122,6 @@ class ManageLayersController {
      *
      * @return
      */
-
     @RequireAdmin
     def uploads() {
         Map map = [:]
@@ -172,7 +174,6 @@ class ManageLayersController {
      * admin only
      *
      * @param req
-     * @param apiKey
      * @return
      * @throws Exception
      */
@@ -614,8 +615,9 @@ class ManageLayersController {
     def copy() {
         String spatialServiceUrl = params.spatialServiceUrl
         String fieldId = params.fieldId
+        String jwt = params.jwt
 
-        manageLayersService.updateFromRemote(spatialServiceUrl, fieldId)
+        manageLayersService.updateFromRemote(spatialServiceUrl, fieldId, jwt)
         redirect(controller: "Tasks", action: "index")
 
     }
@@ -628,11 +630,11 @@ class ManageLayersController {
     @RequireAdmin
     def enable() {
         if (params.id.isNumber()) {
-            def layer = layerDao.getLayerById(params.id.toInteger(), false)
+            def layer = layerService.getLayerById(params.id.toInteger(), false)
             layer.enabled = true
             layerService.updateLayer(layer)
         } else {
-            def field = fieldDao.getFieldById(params.id, false)
+            def field = fieldService.getFieldById(params.id, false)
             field.enabled = true
             fieldService.updateField(field)
         }
@@ -645,11 +647,22 @@ class ManageLayersController {
      * a layer: 'cl..._res', 'el..._res', will provide the standardized files at the requested resolution
      *          (or next detailed) - shape files or diva grids
      *
-     * admin only or api_key, do not redirect to CAS
+     * Requires JWT with the configured layerCopyRole
+     *
      * @return
      */
-    @RequireAdmin
+    @RequireApiKey
     def resource() {
+        // do permission check
+        if (!authService.userInRole(spatialConfig.layerCopyRole)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden, required role: " + spatialConfig.layerCopyRole)
+            return
+        }
+
+        if (!isLayerCopyFile(params.resource)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden, only allowed access to layer files")
+        }
+
         OutputStream outputStream = null
         try {
             outputStream = response.outputStream as OutputStream
@@ -674,13 +687,27 @@ class ManageLayersController {
     /**
      * for slaves to peek at a resource on the master
      *
-     * admin only or api_key, do not redirect to CAS
+     * Requires JWT with the configured layerCopyRole
      *
      * @return
      */
-    @RequireAdmin
+    @RequireApiKey
     def resourcePeek() {
+        // do permission check
+        if (!authService.userInRole(spatialConfig.layerCopyRole)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden, required role: " + spatialConfig.layerCopyRole)
+            return
+        }
+
+        if (!isLayerCopyFile(params.resource)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden, only allowed access to layer files")
+        }
+
         //write resource
         render fileService.info(params.resource.toString()) as JSON
+    }
+
+    private boolean isLayerCopyFile(String resource) {
+        return resource.startsWith("/layer/") || resource.startsWith("/standard_layer/") || resource.startsWith("/public/layerDistances.properties")
     }
 }

@@ -110,7 +110,7 @@
 
         <g:sortableColumn property="history"
                           title="${message(code: 'task.history.label', default: 'History (last 4 entries)')}"/>
-        <td><i class="fa fa-user"></i></td>
+        <td>userId</td>
         <th></th>
         </thead>
         <tbody>
@@ -135,9 +135,7 @@
                     <g:formatDate date="${h.key}" format="dd/MM/yy hh:mm:ss"/>=${h.value}<br/>
                 </g:each></td>
 
-                <td><g:link action="getUserById"
-                            id="${taskInstance.userId}"><g:if
-                            test="${taskInstance?.email != "null"}">${taskInstance?.email}</g:if><g:else>${taskInstance?.userId}</g:else></g:link></td>
+                <td>${taskInstance?.userId}</td>
 
                 <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}"
                             params="${params}">re-run task</g:link>
@@ -150,7 +148,7 @@
     </table>
 
     <div class="pagination">
-        <g:paginate total="${taskInstanceCount ?: 0}" params="${params}"/>
+        <g:paginate total="${taskInstanceCount ?: 0}" params="${params}" action="all"/>
     </div>
 </div>
 </body>

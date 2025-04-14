@@ -15,7 +15,6 @@ import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryCollection
 
 @Slf4j
-//@CompileStatic
 class BootStrap {
 
     def dataSource
@@ -32,8 +31,6 @@ class BootStrap {
                 "WEB-INF/grails-app/i18n/messages",
                 "classpath:messages"
         )
-
-        ((AlaApiKeyAuthenticator) getAlaApiKeyClient.authenticator).setUserDetailsClient(userDetailsClient)
 
         [Geometry, GeometryCollection].each {
             JSON.registerObjectMarshaller(it) {
@@ -131,7 +128,7 @@ class BootStrap {
                 "CREATE INDEX distributions_geom ON distributions USING GIST (the_geom);",
                 "CREATE INDEX tabulation_geom ON tabulation USING GIST (the_geom);",
 
-                // objects.id sequence used in manual sql that creates objects
+                // objects.spid sequence used in manual sql that creates objects
                 "CREATE SEQUENCE objects_id_seq INCREMENT 1 MINVALUE 1 MAXVALUE 9223372036854775807 START 1 CACHE 1;",
 
                 // compound constraint

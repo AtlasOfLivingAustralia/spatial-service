@@ -4,7 +4,7 @@ import java.lang.annotation.*
 
 /**
  * RequireLogin()
- * Requires a valid ApiKey AND userId (Api call)
+ * Requires a valid JWT
  * Or a user login
  *
  * RequireLogin(role=ROLE_ADMIN)

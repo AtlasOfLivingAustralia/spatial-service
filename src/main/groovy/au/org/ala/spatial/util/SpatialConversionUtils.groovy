@@ -5,7 +5,6 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-import org.apache.commons.io.filefilter.IOFileFilter
 import org.apache.commons.lang3.tuple.Pair
 import org.geotools.data.DefaultTransaction
 import org.geotools.data.FileDataStore
@@ -26,7 +25,11 @@ import org.geotools.referencing.CRS
 import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryCollection
+import org.locationtech.jts.geom.LineString
+import org.locationtech.jts.geom.MultiLineString
+import org.locationtech.jts.geom.MultiPoint
 import org.locationtech.jts.geom.MultiPolygon
+import org.locationtech.jts.geom.Point
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.io.ParseException
 import org.locationtech.jts.io.WKTReader
@@ -48,13 +51,6 @@ import java.util.zip.ZipOutputStream
 @Slf4j
 @CompileStatic
 class SpatialConversionUtils {
-
-    public final static String WKT_MAP_KEY = "WKT_MAP_KEY_****"
-    //works as long as this is not uploaded as a field in the shapefile
-    /**
-     * log4j logger
-     */
-    //private static final Logger logger = log.getLogger(SpatialConversionUtils.class);
 
     static List<String> getGeometryCollectionParts(String wkt) {
         if (wkt.matches("GEOMETRYCOLLECTION\\(.+\\)")) {
@@ -207,7 +203,10 @@ class SpatialConversionUtils {
             manifestData.add(pairList)
         }
 
-//        it.close();
+        try {
+            store.dispose()
+        } catch (Exception ignored) {
+        }
 
         return manifestData
     }
@@ -242,8 +241,7 @@ class SpatialConversionUtils {
             SimpleFeatureCollection featureCollection = featureSource.getFeatures()
             it = featureCollection.features()
 
-            //transform CRS to the same as the shapefile (at least try)
-            //default to 4326
+            //transform CRS to the same as the shapefile (at least try) default to 4326
             CoordinateReferenceSystem crs = null
             try {
                 crs = store.getSchema().getCoordinateReferenceSystem()
@@ -357,6 +355,14 @@ class SpatialConversionUtils {
                 wkttype = "MULTIPOLYGON"
             } else if (wktString.contains("GEOMETRYCOLLECTION")) {
                 wkttype = "GEOMETRYCOLLECTION"
+            } else if (wktString.contains("LINESTRING")) {
+                wkttype = "LINESTRING"
+            } else if (wktString.contains("MULTILINESTRING")) {
+                wkttype = "MULTILINESTRING"
+            } else if (wktString.contains("POINT")) {
+                wkttype = "POINT"
+            } else if (wktString.contains("MULTIPOINT")) {
+                wkttype = "MULTIPOINT"
             }
             final SimpleFeatureType TYPE = createFeatureType(wkttype)
 
@@ -448,26 +454,30 @@ class SpatialConversionUtils {
         }
     }
 
-    private static SimpleFeatureType createFeatureType(String type) {
+    static SimpleFeatureType createFeatureType(String type) {
 
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder()
         builder.setName("ActiveArea")
-        builder.setCRS(DefaultGeographicCRS.WGS84) // <- Coordinate reference
-        // system
+        builder.setCRS(DefaultGeographicCRS.WGS84) // <- Coordinate reference system
 
         // add attributes in order
         if ("GEOMETRYCOLLECTION".equalsIgnoreCase(type)) {
             builder.add("the_geom", MultiPolygon.class)
         } else if ("MULTIPOLYGON".equalsIgnoreCase(type)) {
             builder.add("the_geom", MultiPolygon.class)
+        } else if ("LINESTRING".equalsIgnoreCase(type)) {
+            builder.add("the_geom", LineString.class)
+        } else if ("MULTILINESTRING".equalsIgnoreCase(type)) {
+            builder.add("the_geom", MultiLineString.class)
+        } else if ("POINT".equalsIgnoreCase(type)) {
+            builder.add("the_geom", Point.class)
+        } else if ("MULTIPOINT".equalsIgnoreCase(type)) {
+            builder.add("the_geom", MultiPoint.class)
         } else {
             builder.add("the_geom", Polygon.class)
         }
-        builder.length(50).add("name", String.class) // <- 50 chars width for
-        // name field
-        builder.length(100).add("desc", String.class) // 100 chars width
-        // for description
-        // field
+        builder.length(50).add("name", String.class) // <- 50 chars width for  name field
+        builder.length(100).add("desc", String.class) // 100 chars width for description field
 
         // build the type
         return builder.buildFeatureType()

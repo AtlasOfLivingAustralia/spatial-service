@@ -65,8 +65,8 @@ class OccurrenceDensity {
         this.resolution = resolution
         this.bbox = bbox
 
-        width = (int) ((bbox[2] - bbox[0]) / resolution)
-        height = (int) ((bbox[3] - bbox[1]) / resolution)
+        width = (int) Math.round((bbox[2] - bbox[0]) / resolution)
+        height = (int) Math.round((bbox[3] - bbox[1]) / resolution)
     }
 
     /**
@@ -81,8 +81,8 @@ class OccurrenceDensity {
      */
     void setResolution(double resolution) {
         this.resolution = resolution
-        width = (int) ((bbox[2] - bbox[0]) / resolution)
-        height = (int) ((bbox[3] - bbox[1]) / resolution)
+        width = (int) Math.round((bbox[2] - bbox[0]) / resolution)
+        height = (int) Math.round((bbox[3] - bbox[1]) / resolution)
     }
 
     /**
@@ -90,8 +90,8 @@ class OccurrenceDensity {
      */
     void setBBox(double[] bbox) {
         this.bbox = bbox
-        width = (int) ((bbox[2] - bbox[0]) / resolution)
-        height = (int) ((bbox[3] - bbox[1]) / resolution)
+        width = (int) Math.round((bbox[2] - bbox[0]) / resolution)
+        height = (int) Math.round((bbox[3] - bbox[1]) / resolution)
     }
 
     /**
@@ -143,7 +143,7 @@ class OccurrenceDensity {
         boolean worldwrap = (bbox[2] - bbox[0]) == 360
         float[] values = new float[width]
 
-        int partCount = threadCount * 5
+        int partCount = threadCount;
         int partSize = (int) Math.ceil(width / (double) partCount)
         GetValuesOccurrencesThread[] getValues = new GetValuesOccurrencesThread[threadCount]
         LinkedBlockingQueue<Integer> lbqGetValues = new LinkedBlockingQueue<Integer>()
@@ -151,7 +151,6 @@ class OccurrenceDensity {
         int[] rowStarts = records.sortedRowStarts(bbox[1], height, resolution)
 
         for (int row = 0; row < height; row++) {
-            long start = System.currentTimeMillis()
             //get rows
             int[] oldRow = cRows[0]
             if (row == 0) {
@@ -167,7 +166,6 @@ class OccurrenceDensity {
                     }
                 }
             }
-            long t1 = System.currentTimeMillis()
 
             //operate on current row
             int startRow = (row == 0) ? 0 : row + gridSize / 2 //gridSize is odd
@@ -225,7 +223,6 @@ class OccurrenceDensity {
                     bw.append("\n")
                 }
             }
-            long end = System.currentTimeMillis()
         }
 
         for (int i = 0; i < threadCount; i++) {
@@ -260,11 +257,11 @@ class OccurrenceDensity {
         }
 
         int len = (row + 1 < rowStarts.length) ? rowStarts[row + 1] : records.getRecordsSize()
-        for (int i = rowStarts[row]; i < len; i++) {
-            int y = height - 1 - (int) ((records.getSortedLatitude(i) - bbox[1]) / resolution)
+        for (int i = (row < rowStarts.length ? rowStarts[row] : len); i < len; i++) {
+            int y = height - 1 - Math.round((records.getSortedLatitude(i) - bbox[1]) / resolution)
 
             if (y == row) {
-                int x = (int) ((records.getSortedLongitude(i) - bbox[0]) / resolution)
+                int x = Math.round((records.getSortedLongitude(i) - bbox[0]) / resolution)
 
                 if (x >= 0 && x < width) {
                     counts[x]++

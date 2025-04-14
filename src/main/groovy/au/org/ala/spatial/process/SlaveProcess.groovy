@@ -18,6 +18,7 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.FileService
 import au.org.ala.spatial.JournalMapService
 import au.org.ala.spatial.LayerIntersectService
+import au.org.ala.spatial.SandboxService
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.dto.SpeciesInput
@@ -76,6 +77,7 @@ class SlaveProcess {
     TabulationGeneratorService tabulationGeneratorService
     FileService fileService
     WebService webService
+    SandboxService sandboxService
 
     SpatialConfig spatialConfig
 
@@ -86,8 +88,8 @@ class SlaveProcess {
     void stop() {}
 
 
-    def getFile(String path, String remoteSpatialServiceUrl) {
-        def remote = peekFile(path, remoteSpatialServiceUrl)
+    def getFile(String path, String remoteSpatialServiceUrl, String jwt) {
+        def remote = peekFile(path, remoteSpatialServiceUrl, jwt)
 
         //compare p list with local files
         def fetch = []
@@ -103,7 +105,7 @@ class SlaveProcess {
         if (fetch.size() < remote.size()) {
             //fetch only some
             fetch.each {
-                getFile(it, remoteSpatialServiceUrl)
+                getFile(it, remoteSpatialServiceUrl, jwt)
             }
         } else if (fetch.size() > 0) {
             //fetch all files
@@ -112,11 +114,10 @@ class SlaveProcess {
 
             try {
                 def shortpath = path.replace(spatialConfig.data.dir, '')
-                def url = remoteSpatialServiceUrl + "/master/resource?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
-                        "&api_key=" + spatialConfig.serviceKey
+                def url = remoteSpatialServiceUrl + "/master/resource?resource=" + URLEncoder.encode(shortpath, 'UTF-8')
 
                 def os = new BufferedOutputStream(new FileOutputStream(tmpFile))
-                def streamObj = Util.getStream(url)
+                def streamObj = Util.getStream(url, jwt)
                 try {
                     if (streamObj?.call) {
                         os << streamObj?.call?.getResponseBodyAsStream()
@@ -165,9 +166,21 @@ class SlaveProcess {
         }
     }
 
-    List peekFile(String path, String spatialServiceUrl = spatialConfig.spatialService.url) {
+    /**
+     * Get some info on file/s (path, exists, lastModified) from the local fs or remote spatial service.
+     *
+     * The result will include info for the file "spatialConfig.data.dir + path" if it exists, otherwise it will
+     * include info for the files "spatialConfig.data.dir + path + ".*" if they exist.
+     *
+     * @param path begins with '/' and is relative to spatialConfig.data.dir
+     * @param spatialServiceUrl specify if a remote spatial service is to be used
+     * @param jwt required if a remote spatial service is used
+     * @return
+     */
+    List peekFile(String path, String spatialServiceUrl = spatialConfig.spatialService.url, String jwt = null) {
         String shortpath = path.replace(spatialConfig.data.dir.toString(), '')
 
+        // if the spatial service is the same as the local service, use the file service
         if (spatialServiceUrl.equals(spatialConfig.grails.serverURL)) {
             return fileService.info(shortpath.toString())
         }
@@ -175,10 +188,11 @@ class SlaveProcess {
         List map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]]
 
         try {
-            String url = spatialServiceUrl + "/master/resourcePeek?resource=" + URLEncoder.encode(shortpath, 'UTF-8') +
-                    "&api_key=" + spatialConfig.serviceKey
+            String url = spatialServiceUrl + "/master/resourcePeek?resource=" + URLEncoder.encode(shortpath, 'UTF-8')
 
-            map = JSON.parse(Util.getUrl(url)) as List
+            // use the provided JWT authentication in the request header, and assign the JSON GET result to the map
+            map = JSON.parse(Util.urlResponse("GET", url, null, ['Authorization': 'Bearer ' + jwt])?.text) as List
+
         } catch (err) {
             log.error "failed to get: " + path, err
         }
@@ -1068,7 +1082,7 @@ class SlaveProcess {
             runCmd(cmd.toArray(new String[cmd.size()]), false, spatialConfig.admin.timeout)
 
         } catch (Exception e) {
-            e.printStackTrace()
+            log.error("Failed to convert asc to grd: " + e.getMessage(), e)
         }
     }
 
@@ -1223,7 +1237,7 @@ class SlaveProcess {
     }
 
     def runCmd(String[] cmd, Boolean logToTask, Long timeout) {
-        Util.runCmd(cmd, logToTask, taskWrapper, timeout)
+        Util.runCmd(cmd, logToTask, taskWrapper, timeout, null)
     }
 
     def setMessage(String msg) {

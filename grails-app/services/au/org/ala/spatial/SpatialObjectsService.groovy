@@ -270,13 +270,7 @@ class SpatialObjectsService {
                 FileUtils.copyFile(zippedShapeFile, os)
             } else if ("kml" == geomtype) {
                 String wktString = l.get(0).geometry.toText()
-                String wkttype = "POLYGON"
-                if (wktString.contains("MULTIPOLYGON")) {
-                    wkttype = "MULTIPOLYGON"
-                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
-                    wkttype = "GEOMETRYCOLLECTION"
-                }
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString.substring(0, wktString.indexOf(' ')))
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
@@ -291,17 +285,11 @@ class SpatialObjectsService {
             } else if ("wkt" == geomtype) {
                 os.write(l.get(0).geometry.toText().bytes)
             } else if ("geojson" == geomtype) {
-                FeatureJSON fjson = new FeatureJSON()
+                FeatureJSON fjson = new FeatureJSON(new GeometryJSON(16))
                 StringWriter writer = new StringWriter()
 
                 String wktString = l.get(0).geometry.toText()
-                String wkttype = "POLYGON"
-                if (wktString.contains("MULTIPOLYGON")) {
-                    wkttype = "MULTIPOLYGON"
-                } else if (wktString.contains("GEOMETRYCOLLECTION")) {
-                    wkttype = "GEOMETRYCOLLECTION"
-                }
-                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wkttype)
+                final SimpleFeatureType TYPE = SpatialConversionUtils.createFeatureType(wktString.substring(0, wktString.indexOf(' ')))
                 SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE)
                 featureBuilder.add(l.get(0).geometry)
                 SimpleFeature feature = featureBuilder.buildFeature(null)
@@ -799,20 +787,23 @@ class SpatialObjectsService {
         }
 
         String sql = "DELETE FROM uploaded_objects_metadata WHERE pid = ?; DELETE FROM objects where pid = ?"
-        boolean rowsAffected = Sql.newInstance(dataSource).execute(sql, Integer.toString(pid), Integer.toString(pid))
-        return (rowsAffected)
+        Sql.newInstance(dataSource).execute(sql, [Integer.toString(pid), Integer.toString(pid)])
+
+        // return true if the object no longer exists
+        return !shapePidIsForUploadedShape(pid)
     }
 
     private boolean shapePidIsForUploadedShape(int pid) {
-        String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = '" + pid + "'"
-        Sql.newInstance(dataSource).query(sql, {
+        boolean found = false
+        String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = ?"
+        Sql.newInstance(dataSource).query(sql, [Integer.toString(pid)], {
             while (it.next()) {
                 if (it.getObject(1) > 0) {
-                    return true
+                    found = true
                 }
             }
         })
-        return false
+        return found
     }
 
     List<SpatialObjects> getObjectsWithinRadius(String fid, double latitude, double longitude, double radiusKm) {

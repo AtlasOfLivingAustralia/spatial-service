@@ -52,8 +52,11 @@ class Classification extends SlaveProcess {
         taskLog("Cutting Grids")
         def cutDataPath = cutGrid(envnameslist, resolution as String, regionEnvelope.region, regionEnvelope.envelope, null)
 
+        File tmpDir = new File(getTaskPath() + "/tmp/")
+
         taskLog("Running aloc process")
         String[] cmd = ["java", "-Xmx" + String.valueOf(spatialConfig.aloc.xmx),
+                        "-Djava.util.prefs.userRoot=" + getTaskPath() + "/tmp/",
                         "-jar", spatialConfig.data.dir + '/modelling/aloc/aloc.jar',
                         cutDataPath, String.valueOf(groups), String.valueOf(spatialConfig.aloc.threads), getTaskPath()]
 
@@ -130,5 +133,7 @@ class Classification extends SlaveProcess {
             Util.replaceTextInFile(getTaskPath() + "classification.html", replaceMap)
             addOutput("metadata", "classification.html", true)
         }
+
+        tmpDir.delete()
     }
 }

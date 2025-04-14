@@ -15,7 +15,7 @@
 
 package au.org.ala.spatial
 
-
+import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.plugins.openapi.Path
 import au.org.ala.web.AuthService
 import com.opencsv.CSVWriter
@@ -33,6 +33,8 @@ import javax.ws.rs.Produces
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 
+
+@RequireApiKey
 class LogController {
 
     LogService logService
@@ -65,17 +67,32 @@ class LogController {
     @Path("/log")
     @Transactional
     def index() {
+        Map emptyMap = [:]
         try {
-            def lg = new Log(request.JSON as Map)
+            def json = request.JSON
+            def lg = new Log()
+            lg.userId = authService.getUserId()
+            lg.category1 = json.data.category1
+            lg.category2 = json.data.category2
+            lg.sessionId = json.data.sessionId
+
+            json.data.remove("category1")
+            json.data.remove("category2")
+            json.data.remove("sessionId")
+            json.data.remove("userId")
+
+            lg.data = json.data.toString()
             if (!lg.save()) {
                 lg.errors.each {
                     log.error(it)
                 }
             }
-            render status: 200
+            response.status = 200
+            render emptyMap as JSON
         } catch (Exception e) {
             log.warn("log info is broken, ignored! " + e.getMessage())
-            render status: 400
+            response.status = 400
+            render emptyMap as JSON
         }
     }
 
@@ -129,7 +146,7 @@ class LogController {
                     @Parameter(
                             name = "admin",
                             in = QUERY,
-                            description = "When true, return results for all users if request has a valid api_key or admin role.",
+                            description = "When true, return results for all users if request has an admin role.",
                             required = false,
                             example = "true"
                     ),

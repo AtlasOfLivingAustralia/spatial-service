@@ -157,7 +157,6 @@ class StandardizeLayers extends SlaveProcess {
 
             //copy txt for 'a' and 'b'
             if (new File('/layer/' + l.name + '.txt').exists()) {
-                getFile('/layer/' + l.name + '.txt')
                 FileUtils.copyFile(new File(spatialConfig.data.dir.toString() + '/layer/' + l.name + '.txt'),
                         new File(spatialConfig.data.dir.toString() + '/standard_layer/' + res + '/' + f.id + '.txt'))
                 addOutput('file', '/standard_layer/' + res + '/' + f.id + '.txt')
@@ -204,7 +203,7 @@ class StandardizeLayers extends SlaveProcess {
                 return false
             }
 
-            if (!Bil2diva.bil2diva(tmpBil.getPath(), dstFilepath, "")) {
+            if (!Bil2diva.bil2diva(tmpBil.getPath(), dstFilepath, "", gdalPath, 36000000)) {
                 return false
             }
 

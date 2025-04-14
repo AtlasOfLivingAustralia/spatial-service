@@ -15,6 +15,7 @@
 
 package au.org.ala.spatial
 
+import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 
@@ -41,6 +42,7 @@ class WorkflowController {
      * @param id
      * @return
      */
+    @RequireApiKey
     def save(Long id) {
         String user_id = authService.getUserId()
         def data = request.JSON
@@ -49,57 +51,25 @@ class WorkflowController {
         def description = data['description']?.toString()
         def metadata = data['metadata']?.toString()
 
-        def header
-
-        String errorMsg
-        if ("true".equalsIgnoreCase(data['doi']?.toString())) {
-            // test for minimum data for a DOI
-            errorMsg = getErrorForDoi(data)
-
-            if (!errorMsg) {
-                // analysis_id is used to hold the minted value. This makes it readonly.
-                header = userDataService.put(user_id, RECORD_TYPE, description, metadata, isPublic, null)
-                if (header?.ud_header_id) {
-                    userDataService.update(header.ud_header_id, user_id, RECORD_TYPE, description, metadata, isPublic, header.ud_header_id.toString())
-                }
-            }
-        } else {
-            header = userDataService.put(user_id, RECORD_TYPE, description, metadata, isPublic, null)
-        }
-
-        header = mapping(header)
+        def header = mapping(userDataService.put(user_id, RECORD_TYPE, description, metadata, isPublic, null))
 
         def result
-        if (errorMsg) {
-            result = false
-            def map = [successful: result, message: errorMsg]
-            render map as JSON
-        } else if (header) {
+        if (header) {
             result = true
             def map = [successful: result, data: header]
             render map as JSON
         } else {
             result = false
-            errorMsg = "Failed to save workflow"
-            def map = [successful: result, message: errorMsg]
+            def map = [successful: result, message: "Failed to save workflow"]
             render map as JSON
         }
     }
 
-    def doi(String id) {
-        List list = userDataService.searchDescAndTypeOr(null, RECORD_TYPE, null, null, id, 0, 1)
-
-        if (list.size() > 0) {
-            show(list.get(0).ud_header_id)
-        } else {
-            render status: HttpURLConnection.HTTP_NOT_FOUND
-        }
-    }
-
+    @RequireApiKey
     def show(Long id) {
         String user_id = authService.getUserId()
 
-        def item = userDataService.get(id)
+        def item = UDHeader.get(id)
 
         if (!item) {
             render status: 404
@@ -128,10 +98,11 @@ class WorkflowController {
         }
     }
 
+    @RequireApiKey
     def delete(Long id) {
         String user_id = authService.getUserId()
 
-        def metadata = userDataService.get(id)
+        def metadata = UDHeader.get(id)
 
         // check authorisation and that it is not minted (no analysis_id)
         if ((metadata.user_id == user_id ||
@@ -148,6 +119,7 @@ class WorkflowController {
         }
     }
 
+    @RequireApiKey
     def search() {
         String user_id = authService.getUserId()
 
@@ -159,10 +131,6 @@ class WorkflowController {
         list.each { item -> item.metadata = null; formattedList.push(mapping(item)) }
 
         render formattedList as JSON
-    }
-
-    private def getErrorForDoi(data) {
-        return ""
     }
 
     private def mapping(header) {

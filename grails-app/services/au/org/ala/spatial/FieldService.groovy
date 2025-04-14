@@ -20,6 +20,7 @@ import groovy.sql.Sql
 import org.codehaus.jackson.map.DeserializationConfig
 import org.codehaus.jackson.map.ObjectMapper
 import org.postgresql.core.Field
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.sql.ResultSet
 
@@ -89,7 +90,7 @@ class FieldService {
                             .replaceAll("${spid}", "") }
                     .collect {it == '' ? 0 : it.toInteger()}
                     .max()
-            maxSequenceNumber + 1
+            return (maxSequenceNumber ? maxSequenceNumber + 1 : '')
         }
     }
 
@@ -171,7 +172,8 @@ class FieldService {
 
         Map map = field.properties
         map.put('id', field.id)
-        Fields.executeUpdate(sql, map)
+
+        Sql.newInstance(dataSource).executeUpdate(sql, map)
     }
 
     List<Layers> getLayersByCriteria(String keywords) {
@@ -268,10 +270,21 @@ class FieldService {
     }
 
     List<Fields> getFields(boolean includeAdmin = false) {
-        if (includeAdmin) {
-            Fields.findAll()
+        // wrap in a transaction if it is not already, unsure why this is necessary for some instances
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            if (includeAdmin) {
+                Fields.findAll()
+            } else {
+                Fields.findAllByEnabled(true)
+            }
         } else {
-            Fields.findAllByEnabled(true)
+            Fields.withTransaction {
+                if (includeAdmin) {
+                    Fields.findAll()
+                } else {
+                    Fields.findAllByEnabled(true)
+                }
+            }
         }
     }
 

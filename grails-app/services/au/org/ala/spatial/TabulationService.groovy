@@ -79,7 +79,7 @@ class TabulationService {
             String value = null
             if (func == "area") {
                 //sq km
-                value = String.format("%.1f", t.getArea())
+                value = String.format(Locale.US, "%.1f", t.getArea())
             } else if (func == "occurrences") {
                 value = String.valueOf(t.getOccurrences())
             } else if (func == "species") {
@@ -478,6 +478,10 @@ class TabulationService {
         boolean isPid = wkt.indexOf('(') < 0
         //is it grid as contextual layer?
         IntersectionFile f = layerService.getIntersectionFile(fid)
+
+        if (f == null) {
+            return []
+        }
 
         if (f.getType().equalsIgnoreCase("c")) {
             if (wkt.length() > 0) {

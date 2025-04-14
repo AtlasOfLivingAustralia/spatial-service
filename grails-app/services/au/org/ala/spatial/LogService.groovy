@@ -51,6 +51,14 @@ class LogService {
         params.groupBy = columnFormat(params.groupBy)
         params.countBy = columnFormat(params.countBy)
 
+        if (!params.groupBy && !userIsAdmin) {
+            params.groupBy = 'id'
+        }
+
+        if (!params.countBy && !userIsAdmin) {
+            params.countBy = 'record'
+        }
+
         if (params.groupBy && params.countBy) { //search all over logs
             init()
             List columns = (params.groupBy as String)?.split(',')?.collect { logColumns.contains(it) ? it : extraColumns.containsKey(it) ? extraColumns.get(it) : null }?.findAll { it != null }
@@ -58,22 +66,48 @@ class LogService {
             def where = where(params, userId, userIsAdmin)
             def groupBy = params.groupBy ? "GROUP BY ${columns.join(',')} ORDER BY ${columns.join(',')} DESC" : "ORDER BY created DESC"
 
-            def sql = "SELECT ${(columns + counts).join(",")} FROM Log ${where} ${groupBy}"
-            def response
-            if (params.max)
-                response = Log.executeQuery(sql.toString(), [max: params.max, offset: params.offset ?: 0])
-            else
-                response = Log.executeQuery(sql.toString(), [offset: params.offset ?: 0])
-
             List headers = columns.toList()
             if (counts) headers.addAll(counts.collect { it -> (it as String).replaceAll(".* AS ", "") })
 
-            response.collect { it -> toMap(it, headers) }
+            def sql = "SELECT ${(columns + counts).join(",")} FROM Log ${where} ${groupBy} LIMIT ? OFFSET ?"
+            def response = []
+            Sql.newInstance(dataSource).query(sql.toString(), [params.max as Integer ?: 10, params.offset as Integer ?: 0], { ResultSet rs ->
+                if (rs.next()) {
+                    response.add(toMap(rs, headers))
+                }
+            })
+            return response
         } else if (params.category2) { //search a type of work log
-            def result = Log.executeQuery("SELECT user_id, category2, session_d, data, created FROM Log WHERE category2 ='" + (params.category2 as String) + "' ORDER BY created DESC", [max: params.max as Integer ?: 10, offset: params.offset as Integer ?: 0])
-            result.collect { it -> toMap(it, ["user_id", "category2", "session_id", "data", "created"]) }
-        }
+            String sql = "SELECT user_id, category2, session_id, data, created FROM Log WHERE category2 = ? ORDER BY created DESC LIMIT ? OFFSET ?"
+            def response = []
+            Sql.newInstance(dataSource).query(sql.toString(), [params.category2, params.max as Integer ?: 10, params.offset as Integer ?: 0], { ResultSet rs ->
+                if (rs.next()) {
+                    response.add(toMap(rs, ["user_id", "category2", "session_id", "data", "created"]))
+                }
+            })
+            return response
+        } else if (userIsAdmin) {
+            String sql = "SELECT user_id, category2, session_id, data, created FROM Log ORDER BY created DESC LIMIT ? OFFSET ?"
+            def response = []
+            Sql.newInstance(dataSource).query(sql.toString(), [params.max as Integer ?: 10, params.offset as Integer ?: 0], { ResultSet rs ->
+                if (rs.next()) {
+                    response.add(toMap(rs, ["user_id", "category2", "session_id", "data", "created"]))
+                }
+            })
+            return response
+        } else {
+            def where = where(params, userId, userIsAdmin)
 
+            String sql = "SELECT user_id, category2, session_id, data, created FROM Log ${where} ORDER BY created DESC LIMIT ? OFFSET ?"
+            def response = []
+            Sql.newInstance(dataSource).query(sql.toString(), [params.max as Integer ?: 10, params.offset as Integer ?: 0], { ResultSet rs ->
+                if (rs.next()) {
+                    response.add(toMap(rs, ["user_id", "category2", "session_id", "data", "created"]))
+                }
+            })
+            return response
+
+        }
     }
 
     def searchCount(params, userId, userIsAdmin) {
@@ -91,7 +125,7 @@ class LogService {
     def buildCountSql(params, userId, userIsAdmin) {
         init()
 
-        def columns = 'id'
+        def columns = ['id']
         if (params.groupBy) {
             columns = (params.groupBy as String)?.split(',')?.collect { logColumns.contains(it) ? it : extraColumns.containsKey(it) ? extraColumns.get(it) : null }?.findAll { it != null }
         }
@@ -106,12 +140,9 @@ class LogService {
         def map = [:]
 
         if (list) {
-            if (list.getClass().isArray()) {
-                for (int i = 0; i < list.size() && i < headers.size(); i++) {
-                    map.put(headers[i], list[i])
-                }
-            } else if (headers.size() > 0) {
-                map.put(headers[0], list)
+            for (int i = 0; i < headers.size(); i++) {
+                // list is a ResultSet, 1 to n
+                map.put(headers[i], list.getObject(i + 1))
             }
         }
 
