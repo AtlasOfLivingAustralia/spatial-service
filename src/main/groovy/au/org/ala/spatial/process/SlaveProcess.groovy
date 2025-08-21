@@ -53,7 +53,6 @@ import org.apache.commons.io.IOUtils
 import org.geotools.geometry.jts.WKTReader2
 import org.grails.web.json.JSONArray
 import org.locationtech.jts.geom.Geometry
-import org.yaml.snakeyaml.util.UriEncoder
 
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -426,7 +425,7 @@ class SlaveProcess {
 
     Integer facetCount(String facet, SpeciesInput species, String extraFq) {
         String fq = ''
-        if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
+        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8)
 
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + joinSpeciesQ(species.q) + fq
         try {
@@ -449,7 +448,7 @@ class SlaveProcess {
 
     Integer occurrenceCount(SpeciesInput species, String extraFq) {
         String fq = ''
-        if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
+        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8)
 
         String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + joinSpeciesQ(species.q) + fq
         String response = Util.getUrl(url)
@@ -1095,7 +1094,7 @@ class SlaveProcess {
 
         try {
             String fq = ''
-            if (extraFq) fq = '&fq=' + UriEncoder.encode(extraFq)
+            if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8)
             String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + joinSpeciesQ(species.q) + fq
             taskLog("Loading species ...")
             log.debug("Loading species from: " + url)

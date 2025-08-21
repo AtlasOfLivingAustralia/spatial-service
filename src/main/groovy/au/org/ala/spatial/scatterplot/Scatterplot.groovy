@@ -40,11 +40,11 @@ import org.jfree.data.xy.XYZDataset
 import org.jfree.ui.RectangleAnchor
 import org.jfree.ui.RectangleEdge
 import org.grails.web.json.JSONObject
-import org.yaml.snakeyaml.util.UriEncoder
 
 import java.awt.*
 import java.awt.geom.Ellipse2D
 import java.awt.image.BufferedImage
+import java.nio.charset.StandardCharsets
 
 /**
  * Created by a on 10/03/2014.
@@ -1316,7 +1316,7 @@ class Scatterplot {
             String facetToColourBy = colourmode == "occurrence_year_decade" ? "occurrence_year" : translateFieldForSolr(colourmode)
 
             try {
-                String url = scatterplotDTO.getForegroundOccurrencesBs()+ "/webportal/legend?"+ "&q=" + scatterplotDTO.getForegroundOccurrencesQs()+ "&cm=" + UriEncoder.encode(facetToColourBy)
+                String url = scatterplotDTO.getForegroundOccurrencesBs()+ "/webportal/legend?"+ "&q=" + scatterplotDTO.getForegroundOccurrencesQs()+ "&cm=" + URLEncoder.encode(facetToColourBy, StandardCharsets.UTF_8)
                 log.debug(url)
 
                 //NQ: Set the header type to JSON so that we can parse JSON instead of CSV (CSV has issue with quoted field where a quote is the escape character)

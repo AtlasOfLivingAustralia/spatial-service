@@ -21,7 +21,6 @@ import org.grails.web.json.JSONObject
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.io.WKTReader
 import org.springframework.util.StreamUtils
-import org.yaml.snakeyaml.util.UriEncoder
 
 import java.awt.*
 import java.nio.charset.StandardCharsets
@@ -332,7 +331,7 @@ class AreaReportPDF {
         if (fq == null) {
             return query
         } else {
-            return query + "&fq=" + UriEncoder.encode(fq)
+            return query + "&fq=" + URLEncoder.encode(fq, StandardCharsets.UTF_8)
         }
     }
 
@@ -1054,7 +1053,7 @@ class AreaReportPDF {
         String ml = uri + q
 
         try {
-            ml += "&ENV=" + UriEncoder.encode(envString.replace("'", "\\'"))
+            ml += "&ENV=" + URLEncoder.encode(envString.replace("'", "\\'"), StandardCharsets.UTF_8)
         } catch (Exception ignored) {
         }
 
