@@ -43,8 +43,8 @@ import org.opengis.feature.simple.SimpleFeatureType
 import org.springframework.dao.DataAccessException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.transaction.annotation.Transactional
-import org.yaml.snakeyaml.util.UriEncoder
 
+import java.nio.charset.StandardCharsets
 import java.sql.ResultSet
 import java.util.Map.Entry
 import java.util.zip.ZipInputStream
@@ -75,12 +75,12 @@ class SpatialObjectsService {
 
         String classSld = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><StyledLayerDescriptor xmlns=\"http://www.opengis.net/sld\">" + "<NamedLayer><Name>ALA:" + SUB_LAYERNAME + "</Name>" + "<UserStyle><FeatureTypeStyle><Rule><RasterSymbolizer><Geometry></Geometry>" + "<ColorMap>" + "<ColorMapEntry color=\"" + SUB_COLOUR + "\" opacity=\"0\" quantity=\"" + SUB_MIN_MINUS_ONE + "\"/>" + "<ColorMapEntry color=\"" + SUB_COLOUR + "\" opacity=\"1\" quantity=\"" + SUB_MIN + "\"/>" + "<ColorMapEntry color=\"" + SUB_COLOUR + "\" opacity=\"1\" quantity=\"" + SUB_MAX + "\"/>" + "<ColorMapEntry color=\"" + SUB_COLOUR + "\" opacity=\"0\" quantity=\"" + SUB_MAX_PLUS_ONE + "\"/>" + "</ColorMap></RasterSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>"
         try {
-            polygonSld = UriEncoder.encode(polygonSld)
+            polygonSld = URLEncoder.encode(polygonSld, StandardCharsets.UTF_8)
         } catch (UnsupportedEncodingException ignored) {
             log.error("Invalid polygon sld string defined in ObjectDAOImpl.")
         }
         try {
-            classSld = UriEncoder.encode(classSld)
+            classSld = URLEncoder.encode(classSld, StandardCharsets.UTF_8)
         } catch (UnsupportedEncodingException ignored) {
             log.error("Invalid sld string defined in ObjectDAOImpl.")
         }

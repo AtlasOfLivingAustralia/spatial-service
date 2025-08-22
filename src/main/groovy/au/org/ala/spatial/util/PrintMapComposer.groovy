@@ -3,12 +3,12 @@ package au.org.ala.spatial.util
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.yaml.snakeyaml.util.UriEncoder
 
 import javax.imageio.ImageIO
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.RescaleOp
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.List
@@ -666,7 +666,7 @@ class PrintMapComposer {
                 for (String param : params.split("&")) {
                     int eq = param.indexOf('=')
                     if (eq > 0) {
-                        u += "&" + param.substring(0, eq + 1) + UriEncoder.encode(param.substring(eq + 1))
+                        u += "&" + param.substring(0, eq + 1) + URLEncoder.encode(param.substring(eq + 1), StandardCharsets.UTF_8)
                     }
                 }
 
