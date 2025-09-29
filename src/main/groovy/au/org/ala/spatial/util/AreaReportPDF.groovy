@@ -130,7 +130,7 @@ class AreaReportPDF {
         def config = Holders.config
         String version = config.getProperty('lists.version', String, 'v1')
         if ( version.equalsIgnoreCase('v2')) {
-            return  this.listsUrl + "/speciesList/"
+            return  String.format("%s/%s/speciesList/", listsUrl, version)
         } else {
             return  this.listsUrl + "/ws/speciesList/"
         }

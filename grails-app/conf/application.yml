@@ -385,7 +385,7 @@ environments:
       dir: "/Library/Frameworks/GDAL.framework/Programs"
     lists:
       version: 'v2'
-      url: 'https://lists.test.ala.org.au/v2'
+      url: 'https://lists.test.ala.org.au'
 
     spatialHubUrl: "http://devt.ala.org.au:8079/"
 
