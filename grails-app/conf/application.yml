@@ -246,7 +246,9 @@ namematching.url: 'https://namematching-ws.ala.org.au'
 
 records.url: 'https://archives.ala.org.au/archives/exports/lat_lon_taxon.zip'
 
-lists.url: 'https://lists.ala.org.au'
+lists:
+  version: 'v2'
+  url: 'https://lists.ala.org.au'
 collections.url: 'https://collections.ala.org.au'
 sandboxHubUrl: 'https://sandbox.ala.org.au/ala-hub'
 sandboxBiocacheServiceUrl: 'https://sandbox.ala.org.au/biocache-service'
@@ -381,6 +383,9 @@ environments:
         context-path: '/ws'
     gdal:
       dir: "/Library/Frameworks/GDAL.framework/Programs"
+    lists:
+      version: 'v2'
+      url: 'https://lists.test.ala.org.au/v2'
 
     spatialHubUrl: "http://devt.ala.org.au:8079/"
 

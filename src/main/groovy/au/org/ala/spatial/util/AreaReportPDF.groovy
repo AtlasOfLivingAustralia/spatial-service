@@ -1,5 +1,6 @@
 package au.org.ala.spatial.util
 
+import grails.util.Holders
 import au.org.ala.spatial.Distributions
 import au.org.ala.spatial.DistributionsService
 import au.org.ala.spatial.JournalMapService
@@ -118,6 +119,25 @@ class AreaReportPDF {
         build()
 
         setProgress("finished")
+    }
+
+    /**
+     * todo need to test if Holders.config can be loaded in a standalone groovy class
+     * Get the lists url from the config, appending the correct path based on the version
+     * @return
+     */
+    String getSpeciesListFetchUrl() {
+        def config = Holders.config
+        String version = config.getProperty('lists.version', String, 'v1')
+        if ( version.equalsIgnoreCase('v2')) {
+            return  this.listsUrl + "/speciesList/"
+        } else {
+            return  this.listsUrl + "/ws/speciesList/"
+        }
+    }
+
+    String getSpeciesListItemsFetchUrl() {
+        return this.listsUrl + "/speciesListItems/"
     }
 
     JSONArray pages
@@ -664,7 +684,7 @@ class AreaReportPDF {
 
     private String getSpeciesListName(String dr) {
         try {
-            String txt = (String) Util.urlResponse("GET", listsUrl + "/ws/speciesList/" + dr).get("text")
+            String txt = (String) Util.urlResponse("GET", getSpeciesListFetchUrl() + dr).get("text")
 
             JSONObject jo = (JSONObject) JSON.parse(txt)
 
@@ -687,7 +707,7 @@ class AreaReportPDF {
                 int offset = 0
 
                 while (hasAnotherPage) {
-                    String txt = (String) Util.urlResponse("GET", listsUrl + "/speciesListItems/" + dr + "?includeKVP=true&max=" + max + "&offset=" + offset).get("text")
+                    String txt = (String) Util.urlResponse("GET", getSpeciesListItemsFetchUrl() + dr + "?includeKVP=true&max=" + max + "&offset=" + offset).get("text")
 
                     JSONArray newValues = (JSONArray) JSON.parse(txt)
                     values.addAll(newValues)
