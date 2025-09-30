@@ -1,6 +1,5 @@
 package au.org.ala.spatial.util
 
-import grails.util.Holders
 import au.org.ala.spatial.Distributions
 import au.org.ala.spatial.DistributionsService
 import au.org.ala.spatial.JournalMapService
@@ -99,7 +98,7 @@ class AreaReportPDF {
         this.biocacheServiceUrl = biocacheServiceUrl
         this.biocacheHubUrl = biocacheHubUrl
         this.bieUrl = bieUrl
-        this.listServiceClient = new ListServiceClient(listsUrl,Holders.config.getProperty('lists.version', String, 'v1'))
+        this.listServiceClient = new ListServiceClient()
 
         this.pid = pid
         this.query = q
