@@ -34,7 +34,6 @@ import java.util.List
 class AreaReportPDF {
 
     static final int PROGRESS_COUNT = 92
-
     static final String[] SPECIES_GROUPS = new String[]{}
 
     String area_km
@@ -48,7 +47,7 @@ class AreaReportPDF {
     String openstreetmapUrl
     String biocacheServiceUrl
     String biocacheHubUrl
-    String listsUrl
+    ListServiceClient listServiceClient = null
     String bieUrl
 
     Map<String, String> distributions = new HashMap()
@@ -100,7 +99,8 @@ class AreaReportPDF {
         this.biocacheServiceUrl = biocacheServiceUrl
         this.biocacheHubUrl = biocacheHubUrl
         this.bieUrl = bieUrl
-        this.listsUrl = listsUrl
+        this.listServiceClient = new ListServiceClient(listsUrl,Holders.config.getProperty('lists.version', String, 'v1'))
+
         this.pid = pid
         this.query = q
         this.area_km = area_km
@@ -119,25 +119,6 @@ class AreaReportPDF {
         build()
 
         setProgress("finished")
-    }
-
-    /**
-     * todo need to test if Holders.config can be loaded in a standalone groovy class
-     * Get the lists url from the config, appending the correct path based on the version
-     * @return
-     */
-    String getSpeciesListFetchUrl() {
-        def config = Holders.config
-        String version = config.getProperty('lists.version', String, 'v1')
-        if ( version.equalsIgnoreCase('v2')) {
-            return  String.format("%s/%s/speciesList/", listsUrl, version)
-        } else {
-            return  this.listsUrl + "/ws/speciesList/"
-        }
-    }
-
-    String getSpeciesListItemsFetchUrl() {
-        return this.listsUrl + "/speciesListItems/"
     }
 
     JSONArray pages
@@ -684,7 +665,7 @@ class AreaReportPDF {
 
     private String getSpeciesListName(String dr) {
         try {
-            String txt = (String) Util.urlResponse("GET", getSpeciesListFetchUrl() + dr).get("text")
+            String txt = (String) Util.urlResponse("GET", listServiceClient.getSpeciesListFetchUrl(dr)).get("text")
 
             JSONObject jo = (JSONObject) JSON.parse(txt)
 
@@ -707,7 +688,7 @@ class AreaReportPDF {
                 int offset = 0
 
                 while (hasAnotherPage) {
-                    String txt = (String) Util.urlResponse("GET", getSpeciesListItemsFetchUrl() + dr + "?includeKVP=true&max=" + max + "&offset=" + offset).get("text")
+                    String txt = (String) Util.urlResponse("GET", listServiceClient.getSpeciesListItemsFetchUrl(dr,max,offset)).get("text")
 
                     JSONArray newValues = (JSONArray) JSON.parse(txt)
                     values.addAll(newValues)
