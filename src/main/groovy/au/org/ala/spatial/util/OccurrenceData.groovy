@@ -4,7 +4,8 @@ import au.org.ala.spatial.Util
 import com.opencsv.CSVReader
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.yaml.snakeyaml.util.UriEncoder
+
+import java.nio.charset.StandardCharsets
 
 @Slf4j
 @CompileStatic
@@ -23,7 +24,7 @@ class OccurrenceData {
 
         //add to 'identified' sensitive list
         try {
-            CSVReader csv = new CSVReader(new StringReader(getSpecies(q + "&fq=" + UriEncoder.encode("-sensitive:[* TO *]"), bs)))
+            CSVReader csv = new CSVReader(new StringReader(getSpecies(q + "&fq=" + URLEncoder.encode("-sensitive:[* TO *]", StandardCharsets.UTF_8), bs)))
             List<String[]> fullSpeciesList = csv.readAll()
             csv.close()
             for (int i = 0; i < fullSpeciesList.size(); i++) {

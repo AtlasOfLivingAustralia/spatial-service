@@ -19,8 +19,8 @@ It includes:
 
 # Architecture
 
-* Grails 4 web application ran in the tomcat 9 or as standalone executable jar
-* Open JDK 8
+* Grails 6 web application ran in the tomcat 9 or as standalone executable jar
+* Java 17
 * PostGIS database (9.6 or above)
 * Geoserver
 
