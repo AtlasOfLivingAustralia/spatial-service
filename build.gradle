@@ -290,6 +290,14 @@ bootJar {
     dependsOn(compileGroovyPages)
 }
 
+tasks.withType(War) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType(org.springframework.boot.gradle.tasks.bundling.BootWar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 // Refer to FieldCapture: https://github.com/AtlasOfLivingAustralia/fieldcapture/blob/feature/grails4/gradle/publish.gradle
 publishing {
     repositories {
