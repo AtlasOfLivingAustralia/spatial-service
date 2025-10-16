@@ -425,7 +425,7 @@ class SlaveProcess {
 
     Integer facetCount(String facet, SpeciesInput species, String extraFq) {
         String fq = ''
-        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8)
+        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8).replace("+", "%20")
 
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=0&q=" + joinSpeciesQ(species.q) + fq
         try {
@@ -448,7 +448,7 @@ class SlaveProcess {
 
     Integer occurrenceCount(SpeciesInput species, String extraFq) {
         String fq = ''
-        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8)
+        if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8).replace("+", "%20")
 
         String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + joinSpeciesQ(species.q) + fq
         String response = Util.getUrl(url)
@@ -1094,7 +1094,7 @@ class SlaveProcess {
 
         try {
             String fq = ''
-            if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8)
+            if (extraFq) fq = '&fq=' + URLEncoder.encode(extraFq, StandardCharsets.UTF_8).replace("+", "%20")
             String url = species.bs + "/occurrences/facets/download?facets=names_and_lsid&lookup=" + lookup + "&count=" + count + "&q=" + joinSpeciesQ(species.q) + fq
             taskLog("Loading species ...")
             log.debug("Loading species from: " + url)

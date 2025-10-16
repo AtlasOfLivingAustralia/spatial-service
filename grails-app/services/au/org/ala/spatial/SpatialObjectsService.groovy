@@ -142,7 +142,7 @@ class SpatialObjectsService {
                         if (pageSize == -1 || (pos >= start && pos - start < pageSize)) {
                             SpatialObjects o = new SpatialObjects()
                             o.setPid(f.getLayerPid() + ':' + c.getKey())
-                            o.setId(f.getLayerPid() + ':' + c.getKey())
+                            o.setId(Long.valueOf(f.getLayerPid()))
                             o.setName(c.getValue().getName())
                             o.setFid(f.getFieldId())
                             o.setFieldname(f.getFieldName())

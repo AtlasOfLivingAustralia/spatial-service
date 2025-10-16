@@ -24,7 +24,7 @@ class OccurrenceData {
 
         //add to 'identified' sensitive list
         try {
-            CSVReader csv = new CSVReader(new StringReader(getSpecies(q + "&fq=" + URLEncoder.encode("-sensitive:[* TO *]", StandardCharsets.UTF_8), bs)))
+            CSVReader csv = new CSVReader(new StringReader(getSpecies(q + "&fq=" + URLEncoder.encode("-sensitive:[* TO *]", StandardCharsets.UTF_8).replace("+", "%20"), bs)))
             List<String[]> fullSpeciesList = csv.readAll()
             csv.close()
             for (int i = 0; i < fullSpeciesList.size(); i++) {
@@ -36,7 +36,7 @@ class OccurrenceData {
 
         //remove sensitive records that will not be LSID matched
         try {
-            Records r = new Records(bs, q + "&fq=" + URLEncoder.encode("-sensitive:[* TO *]", "utf-8"), null, records_filename, null, facetName)
+            Records r = new Records(bs, q + "&fq=" + URLEncoder.encode("-sensitive:[* TO *]", "utf-8").replace("+", "%20"), null, records_filename, null, facetName)
 
             StringBuilder sb = null
             if (r.getRecordsSize() > 0) {
