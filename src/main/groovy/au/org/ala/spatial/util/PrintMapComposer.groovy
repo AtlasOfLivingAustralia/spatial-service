@@ -666,7 +666,7 @@ class PrintMapComposer {
                 for (String param : params.split("&")) {
                     int eq = param.indexOf('=')
                     if (eq > 0) {
-                        u += "&" + param.substring(0, eq + 1) + URLEncoder.encode(param.substring(eq + 1), StandardCharsets.UTF_8)
+                        u += "&" + param.substring(0, eq + 1) + URLEncoder.encode(param.substring(eq + 1), StandardCharsets.UTF_8).replace("+", "%20")
                     }
                 }
 

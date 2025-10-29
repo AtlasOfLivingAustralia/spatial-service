@@ -331,7 +331,7 @@ class AreaReportPDF {
         if (fq == null) {
             return query
         } else {
-            return query + "&fq=" + URLEncoder.encode(fq, StandardCharsets.UTF_8)
+            return query + "&fq=" + URLEncoder.encode(fq, StandardCharsets.UTF_8).replace("+", "%20")
         }
     }
 

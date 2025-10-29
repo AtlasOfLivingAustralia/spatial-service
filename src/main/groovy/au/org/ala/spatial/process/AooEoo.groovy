@@ -102,7 +102,7 @@ class AooEoo extends SlaveProcess {
 
             //concave hull
             taskLog("calculating concave hull")
-            Geometry concaveHull = buildConcaveHull(g, alpha)
+            Geometry concaveHull = buildConcaveHull(g, alpha, this)
             Double alphaHull = null
             String concaveWkt = null
             if (concaveHull == null) {
@@ -305,34 +305,40 @@ class AooEoo extends SlaveProcess {
      * @param alpha
      * @return
      */
-    static Geometry buildConcaveHull(Geometry geometry, Double alpha) {
+    static Geometry buildConcaveHull(Geometry geometry, double alpha, AooEoo object) {
         DelaunayTriangulationBuilder triangulation = new DelaunayTriangulationBuilder()
         triangulation.setSites(geometry)
         Geometry triangles = triangulation.getTriangles(new GeometryFactory())
         Geometry edges = triangulation.getEdges(new GeometryFactory())
 
         //get mean edge length
-        int sum = 0
+        double sum = 0
         for (int i = 0; i < edges.numGeometries; i++) {
-            sum += (int) edges.getGeometryN(i).length
+            sum += new LineSegment(edges.getGeometryN(i).getCoordinates()[0], edges.getGeometryN(i).getCoordinates()[1]).length
         }
-        double meanByAlpha = sum / (edges.numGeometries * alpha)
+
+        double meanLength = sum / (double) edges.numGeometries
+        double threshold = meanLength * alpha
 
         //remove triangles with at least one edge length > meanByAlpha
         Geometry union = null
+        int included = 0
         for (int i = 0; i < triangles.numGeometries; i++) {
             Geometry triangle = triangles.getGeometryN(i)
             boolean valid = true
             for (int j = 1; j < 3 && valid; j++) {
-                if (new LineSegment(triangle.coordinates[j], triangle.coordinates[j - 1]).length > meanByAlpha) {
+                if (new LineSegment(triangle.coordinates[j], triangle.coordinates[j - 1]).length > threshold) {
                     valid = false
                 }
             }
             if (valid) {
+                included++
                 if (union == null) union = triangle
                 else union = union.union(triangle)
             }
         }
+
+        object.taskLog("Concave hull; included " + included + " triangles out of " + triangles.numGeometries)
 
         //return geometry
         return union

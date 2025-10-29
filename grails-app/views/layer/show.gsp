@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.nio.charset.StandardCharsets" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <title>${layer.displayname}</title>
@@ -129,7 +129,7 @@
             <tr>
                 <td>Download</td>
                 <td><a class="btn btn-default"
-                       href="${spatialConfig.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname)}.zip">
+                       href="${spatialConfig.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20")}.zip">
                     <i class="glyphicon glyphicon-download"></i>
                     ${layer.displayname}.zip</a>
                 </td>

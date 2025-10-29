@@ -21,7 +21,6 @@ import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.util.SpatialConversionUtils
 import au.org.ala.spatial.util.SpatialUtils
-import grails.converters.JSON
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j
@@ -41,7 +40,6 @@ import org.locationtech.jts.io.WKTReader
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.feature.simple.SimpleFeatureType
 import org.springframework.dao.DataAccessException
-import org.springframework.scheduling.annotation.Async
 import org.springframework.transaction.annotation.Transactional
 
 import java.nio.charset.StandardCharsets
@@ -90,7 +88,7 @@ class SpatialObjectsService {
 
     }
 
-    LayerIntersectService layerIntersectDao
+    LayerIntersectService layerIntersectService
     LayerService layerService
     def Holders
     def dataSource
@@ -142,7 +140,7 @@ class SpatialObjectsService {
                         if (pageSize == -1 || (pos >= start && pos - start < pageSize)) {
                             SpatialObjects o = new SpatialObjects()
                             o.setPid(f.getLayerPid() + ':' + c.getKey())
-                            o.setId(f.getLayerPid() + ':' + c.getKey())
+                            o.setId(Long.valueOf(f.getLayerPid()))
                             o.setName(c.getValue().getName())
                             o.setFid(f.getFieldId())
                             o.setFieldname(f.getFieldName())
@@ -509,7 +507,7 @@ class SpatialObjectsService {
             l = new ArrayList<SpatialObjects>()
             IntersectionFile f = layerService.getIntersectionFile(fid)
             if (f != null && f.getClasses() != null) {
-                Vector v = layerIntersectDao.samplingFull(fid, lng, lat)
+                Vector v = layerIntersectService.samplingFull(fid, lng, lat)
                 if (v != null && v.size() > 0 && v.get(0) != null) {
                     Map m = (Map) v.get(0)
                     int key = (int) Double.parseDouble(((String) m.get("pid")).split(':')[1])
@@ -669,7 +667,7 @@ class SpatialObjectsService {
         }
 
         // sampling
-        ArrayList<String> sample = layerIntersectDao.sampling(new String[]{layerFilter.getLayername()}, points)
+        ArrayList<String> sample = layerIntersectService.sampling(new String[]{layerFilter.getLayername()}, points)
 
         // filter
         List<SpatialObjects> matched = new ArrayList<SpatialObjects>()

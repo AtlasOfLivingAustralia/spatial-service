@@ -23,6 +23,7 @@
     <logger name="au.org.ala.spatial" level="WARN"/>
     <logger name="org.liquibase" level="WARN"/>
     <logger name="liquibase" level="WARN"/>
+    <logger name="org.pac4j.oidc.profile.creator.TokenValidator" level="ERROR"/>
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>
