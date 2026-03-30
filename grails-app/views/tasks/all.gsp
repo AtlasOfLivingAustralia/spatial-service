@@ -34,26 +34,31 @@
     }
 </script>
 
-<div class="col-lg-8">
-</div>
+<div class="row" style="margin-left: 15px; margin-right: 15px;">
+    <div class="col-lg-8">
+    </div>
 
-<div class="col-lg-4">
-    <div class="panel panel-default">
-        <div class="panel-heading">Navigation</div>
-
-        <div class="panel-body">
-            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="all">Show all Tasks</g:link></li>
-            <li><g:link controller="tasks" action="index">Show active Tasks</g:link></li>
-            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Navigation</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+                    <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+                    <li><g:link controller="tasks" action="all">Show all Tasks</g:link></li>
+                    <li><g:link controller="tasks" action="index">Show active Tasks</g:link></li>
+                    <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
 
 <form class="listSearchForm">
     <div class="input-append" id="searchLists">
-        <div class="form-inline">
+        <div class="d-flex align-items-center gap-2">
             <label>Search term</label>
             <input class="input-xlarge" id="appendedInputButton" name="q" type="text" value="${params.q}"
                    placeholder="Search tasks">
@@ -90,7 +95,7 @@
 
     <h1><g:message code="default.list.label" args="[entityName]"/> (${taskInstanceCount ?: 0})</h1>
     <g:if test="${flash.message}">
-        <div class="message" role="status">${flash.message}</div>
+        <div class="alert alert-info" role="status">${flash.message}</div>
     </g:if>
 
     <table class="table table-bordered table-striped" name="tasks">
@@ -137,9 +142,9 @@
 
                 <td>${taskInstance?.userId}</td>
 
-                <td><g:link action="reRun" class="btn btn-sm btn-default" id="${taskInstance.id}"
+                <td><g:link action="reRun" class="btn btn-sm btn-default btn-outline-dark" id="${taskInstance.id}"
                             params="${params}">re-run task</g:link>
-                    <g:link action="uiCancel" class="btn btn-sm btn-default" id="${taskInstance.id}"
+                    <g:link action="uiCancel" class="btn btn-sm btn-default btn-outline-dark" id="${taskInstance.id}"
                             params="${params}">cancel</g:link></td>
 
             </tr>

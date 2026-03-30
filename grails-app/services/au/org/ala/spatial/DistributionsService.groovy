@@ -128,6 +128,9 @@ class DistributionsService {
             sql += " LIMIT :pageSize OFFSET :offset"
             params.put("pageSize", queryParams.pageSize as Integer)
             params.put("offset", start)
+
+            // include sorting for consistent paging results
+            params.put("sort", " ORDER BY spcode")
         }
 
         List result = new ArrayList()

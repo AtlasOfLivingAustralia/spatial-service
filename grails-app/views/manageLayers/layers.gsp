@@ -13,21 +13,24 @@
 
 <body class="fluid">
 
-<div class="col-lg-8">
-    <h1>Layer Administration</h1>
-</div>
+<div class="row" style="margin-left: 15px; margin-right: 15px;">
+    <div class="col-lg-8">
+        <h1>Layer Administration</h1>
+    </div>
 
-<div class="col-lg-4">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            Navigation
-        </div>
-
-        <div class="panel-body">
-            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Navigation</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+                    <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+                    <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+                    <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -39,7 +42,7 @@
 </g:if>
 
 <div class="container-fluid">
-    <table class="table table-condensed" id="layersTable">
+    <table class="table table-sm" id="layersTable">
         <thead>
         <tr>
             <th>Date added</th>
@@ -77,12 +80,12 @@
                         </g:if>
                     </g:each>
                 </td>
-                <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default" id="${item.id}">
+                <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default btn-outline-dark" id="${item.id}">
                     <i class="glyphicon glyphicon-plus"></i>
                     add field
                 </g:link><br/>
                 </td>
-                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default" id="${item.id}">
+                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default btn-outline-dark" id="${item.id}">
                     <i class="glyphicon glyphicon-edit"></i>
                     edit
                 </g:link>

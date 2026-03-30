@@ -12,23 +12,24 @@
     <style>
     #layersTable {
         font-size: 11px;
+        border-collapse: collapse;
     }
     </style>
 </head>
 
 <body class="fluid">
 <g:set var="spatialConfig" bean="spatialConfig"/>
-<div class="pull-right">
-    <button onclick="downloadCSV()" class="btn btn-sm btn-default">
-        <i class="glyphicon glyphicon-download-alt"></i> Download as CSV
+<div style="float: right">
+    <button onclick="downloadCSV()" class="btn btn-sm btn-default btn-outline-dark">
+        <i class="fa fa-download"></i> Download as CSV
     </button>
-    <g:link controller="layer" action="index" class="btn btn-sm btn-default">
-        <i class="glyphicon glyphicon-"></i> JSON
+    <g:link controller="layer" action="index" class="btn btn-sm btn-default btn-outline-dark">
+        JSON
     </g:link>
 </div>
 
 <h1>Available Spatial Layers</h1>
-<table id="layersTable" name="layersTable" class="table table-bordered table-striped table-condensed">
+<table id="layersTable" name="layersTable" class="table table-bordered table-striped table-sm">
     <thead>
     <tr>
         <th>Display&nbsp;name</th>
@@ -79,7 +80,7 @@
         })
         $('#layersTable').DataTable();
         $('#layersTable_wrapper input').addClass('form-control');
-        $('#layersTable_filter').addClass('form-group');
+        $('#layersTable_filter').addClass('mb-3');
     });
 
     function downloadCSV() {

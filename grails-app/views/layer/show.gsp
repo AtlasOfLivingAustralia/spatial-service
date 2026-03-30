@@ -15,7 +15,7 @@
 <h2>${field?.name}</h2>
 
 <div>
-    <table class="table table-bordered table-condensed">
+    <table class="table table-bordered table-sm">
         <thead>
         <th>Field</th>
         <th>Value</th>
@@ -128,7 +128,7 @@
         <g:if test="${downloadAllowed}">
             <tr>
                 <td>Download</td>
-                <td><a class="btn btn-default"
+                <td><a class="btn btn-default btn-outline-dark"
                        href="${spatialConfig.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20")}.zip">
                     <i class="glyphicon glyphicon-download"></i>
                     ${layer.displayname}.zip</a>

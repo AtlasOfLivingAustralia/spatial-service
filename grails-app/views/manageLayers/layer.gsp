@@ -17,7 +17,7 @@
 <body class="fluid">
 <g:set var="spatialConfig" bean="spatialConfig"/>
 
-<div>
+<div class="row" style="margin-left: 15px; margin-right: 15px;">
     <div class="col-lg-8">
         <h1>Edit Layer</h1>
 
@@ -36,44 +36,47 @@
     </div>
 
     <div class="col-lg-4">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h4 class="panel-title">Navigation</h4>
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Navigation</h4>
             </div>
-
-            <div class="panel-body">
-                <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-                <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-                <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-                <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+                    <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+                    <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+                    <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
+<div class="row" style="margin-left: 15px; margin-right: 15px;">
     <div class="col-lg-12">
         <div role="tabpanel">
-            <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="active"><a href="#settings" aria-controls="settings" role="tab"
-                                                          data-toggle="tab">Layer</a></li>
-                <g:if test="${has_layer}"><li role="presentation" class=""><a href="#existingFields"
-                                                                              aria-controls="existingFields" role="tab"
-                                                                              data-toggle="tab">Fields</a></li></g:if>
-                <li role="presentation" class=""><a href="#geoserverPreview" aria-controls="geoserverPreview" role="tab"
-                                                    data-toggle="tab" onclick="setTimeout(function () {
-                        map.invalidateSize()
-                    }, 0)">Map</a></li>
-                <li role="presentation" class=""><a href="#backgroundProcesses" aria-controls="backgroundProcesses"
-                                                    role="tab"
-                                                    data-toggle="tab">Background Processes</a></li>
+            <ul class="nav nav-tabs" role="tablist" id="layerTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" id="settings-tab" href="#settings" data-bs-toggle="tab" aria-controls="settings">Layer</a>
+                </li>
+                <g:if test="${has_layer}">
+                    <li class="nav-item">
+                        <a class="nav-link" id="fields-tab" href="#existingFields" data-bs-toggle="tab" aria-controls="existingFields">Fields</a>
+                    </li>
+                </g:if>
+                <li class="nav-item">
+                    <a class="nav-link" id="map-tab" href="#geoserverPreview" data-bs-toggle="tab" aria-controls="geoserverPreview" onclick="setTimeout(function () { map.invalidateSize() }, 0)">Map</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="background-tab" href="#backgroundProcesses" data-bs-toggle="tab" aria-controls="backgroundProcesses">Background Processes</a>
+                </li>
             </ul>
 
             <div class="tab-content">
 
                 <g:if test="${has_layer}">
                     <div role="tabpanel" class="tab-pane" id="existingFields">
-                        <table class="table table-condensed">
+                        <table class="table table-sm">
                             <thead>
                             <th>Id</th>
                             <th>Name</th>
@@ -102,12 +105,12 @@
                                     </td>
                                     <td>
                                         <a onclick="return confirmDelete('${item.id}','${item.name}' );">
-                                            <i class="glyphicon glyphicon-remove"></i> </a>
+                                            <i class="glyphicon glyphicon-remove"></i> delete</a>
                                     </td>
                                 </tr>
                             </g:each>
                             <tr><td colspan="7"><g:link controller="manageLayers" action="field"
-                                                        class="btn btn-sm btn-default"
+                                                        class="btn btn-sm btn-default btn-outline-dark"
                                                         id="${id}"><i class="glyphicon-plus"></i> Add new Field</g:link>
                             </td></tr>
                             </tbody>
@@ -171,7 +174,7 @@
 
                     <form method="POST">
 
-                        <table class="table table-condensed">
+                        <table class="table table-sm">
 
                             <tr>
                                 <td class="col-md-4">
@@ -410,14 +413,14 @@
 
                                 <label for="enabled">Enabled (makes the layer available for use, disable to remove layers from use)</label>
                             </td><td>
-                                <input class="form-control" type="checkbox" id="enabled" name="enabled"
-                                       <g:if test="${enabled}">checked</g:if>/>
+                                <input class="form-check-input" type="checkbox" id="enabled" name="enabled"
+                                       <g:if test="${enabled}">checked</g:if> />
 
                             </td></tr>
                         </table>
 
 
-                        <input type="submit" class="btn btn-default"
+                        <input type="submit" class="btn btn-default btn-outline-dark"
                                value='${has_layer ? "Update Layer" : "Create Layer"}'/>
 
                         <input type="hidden" name="raw_id" value="${raw_id}"/>
@@ -427,7 +430,7 @@
                 </div>
 
                 <div role="tabpanel" class="tab-pane" id="backgroundProcesses">
-                    <table class="table table-condensed">
+                    <table class="table table-sm">
                         <tr>
                             <td>Task ID</td>
                             <td>Task</td>

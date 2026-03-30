@@ -18,34 +18,40 @@
 
 <body class="fluid">
 <g:set var="spatialConfig" bean="spatialConfig"/>
-<div class="col-lg-8">
-    <h1>Edit Field ${item && item.id ? ' : ' + item.id : ''}</h1>
+<div class="row" style="margin-left: 15px; margin-right: 15px;">
+    <div class="col-lg-8">
+        <h1>Edit Field ${item && item.id ? ' : ' + item.id : ''}</h1>
 
-    <div class="col-lg-12">
-        <g:if test="${error != null}">
-            <b class="alert alert-danger">${error}</b>
-        </g:if>
-        <g:if test="${message != null}">
-            <b class="alert alert-success">${message}</b>
-        </g:if>
-        <g:if test="${layer_creation != null && !has_layer}">
-            <h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
-            <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/>
-        </g:if>
+        <div class="col-lg-12">
+            <g:if test="${error != null}">
+                <b class="alert alert-danger">${error}</b>
+            </g:if>
+            <g:if test="${message != null}">
+                <b class="alert alert-success">${message}</b>
+            </g:if>
+            <g:if test="${layer_creation != null && !has_layer}">
+                <h2 style="color:red">Layer created: <b>${has_layer}</b></h2><br/>
+                <b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/>
+            </g:if>
+        </div>
     </div>
 </div>
 
-<div class=" col-lg-4">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            Navigation
-        </div>
-
-        <div class="panel-body">
-            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+<div class="row" style="margin-left: 15px; margin-right: 15px;">
+    <div class="col-lg-8"></div>
+    <div class=" col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                Navigation
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+                    <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+                    <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+                    <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -63,20 +69,21 @@
         </h3><br/><b>********* LAYER CREATION IN PROGRESS, WAIT AND REFRESH PAGE *******</b><br/></g:if>
 
         <div role="tabpanel">
-            <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="active"><a href="#settings" aria-controls="settings" role="tab"
-                                                          data-toggle="tab">Field</a></li>
-                <g:if test="${has_layer}"><li role="presentation" class=""><a href="#existingFields"
-                                                                              aria-controls="existingFields" role="tab"
-                                                                              data-toggle="tab">Other Fields</a>
-                </li></g:if>
-                <li role="presentation" class=""><a href="#geoserverPreview" aria-controls="geoserverPreview" role="tab"
-                                                    data-toggle="tab" onclick="setTimeout(function () {
-                        map.invalidateSize()
-                    }, 0)">Map</a></li>
-                <li role="presentation" class=""><a href="#backgroundProcesses" aria-controls="backgroundProcesses"
-                                                    role="tab"
-                                                    data-toggle="tab">Background Processes</a></li>
+            <ul class="nav nav-tabs" id="fieldTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" id="settings-tab" href="#settings" data-bs-toggle="tab" aria-controls="settings">Field</a>
+                </li>
+                <g:if test="${has_layer}">
+                    <li class="nav-item">
+                        <a class="nav-link" id="existingFields-tab" href="#existingFields" data-bs-toggle="tab" aria-controls="existingFields">Other Fields</a>
+                    </li>
+                </g:if>
+                <li class="nav-item">
+                    <a class="nav-link" id="map-tab" href="#geoserverPreview" data-bs-toggle="tab" aria-controls="geoserverPreview" onclick="setTimeout(function () { map.invalidateSize() }, 0)">Map</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="backgroundProcesses-tab" href="#backgroundProcesses" data-bs-toggle="tab" aria-controls="backgroundProcesses">Background Processes</a>
+                </li>
             </ul>
 
             <div class="tab-content">
@@ -85,7 +92,7 @@
 
                     <div role="tabpanel" class="tab-pane" id="existingFields">
 
-                        <table class="table table-condensed">
+                        <table class="table table-sm">
                             <thead>
                             <th>Id</th>
                             <th>name</th>
@@ -104,7 +111,7 @@
                                     <td class="${disabledField}">${item.sname}</td>
                                     <td>
                                         <g:link controller="manageLayers" action="field"
-                                                class="btn btn-sm btn-default"
+                                                class="btn btn-sm btn-default btn-outline-dark"
                                                 id="${item.id}">
                                             <i class="glyphicon glyphicon-edit"></i>
                                             edit</g:link>
@@ -117,7 +124,7 @@
                             </g:each>
                             <tr>
                                 <td colspan="7"><g:link controller="manageLayers" action="field"
-                                                        class="btn btn-sm btn-default"
+                                                        class="btn btn-sm btn-default btn-outline-dark"
                                                         id="${raw_id}">
                                     <i class="glyphicon-plus"></i>
                                     Add new Field</g:link>
@@ -170,7 +177,7 @@
                 <div role="tabpanel" class="tab-pane active" id="settings">
 
                     <form method="POST">
-                        <table class="table table-condensed">
+                        <table class="table table-sm">
                             <tr><td class="col-md-2">
                                 <label for="name"
                                        style="color:red">Name (default is layer display name) [${displayname}]:</label>
@@ -261,7 +268,7 @@
                               <label for="indb">This field is intended for inclusion in biocache (SOLR index)</label>
                             </td>
                             <td>
-                            <input class="form-control" type="checkbox" id="indb" name="indb"
+                            <input class="form-check-input" type="checkbox" id="indb" name="indb"
                                    <g:if test="${indb}">checked</g:if>/>
                             </td>
                         </tr>
@@ -273,7 +280,7 @@
                                         only)</label>
                                 </td>
                                 <td>
-                                    <input class="form-control" type="checkbox" id="namesearch" name="namesearch"  <g:if test="${namesearch}">checked</g:if>
+                                    <input class="form-check-input" type="checkbox" id="namesearch" name="namesearch"  <g:if test="${namesearch}">checked</g:if>
                                     />
                                 </td>
                             </tr>
@@ -284,7 +291,7 @@
                             intersection requests</label>
                             </td>
                             <td>
-                            <input class="form-control" type="checkbox" id="defaultlayer" name="defaultlayer"
+                            <input class="form-check-input" type="checkbox" id="defaultlayer" name="defaultlayer"
                                    <g:if test="${defaultlayer}">checked</g:if>/>
                              </td>
                         </tr>
@@ -294,7 +301,7 @@
                                     <label for="intersect">Include this Field in calculated Tabulations (Contextual only)</label>
                                 </td>
                                 <td>
-                                     <input class="form-control" type="checkbox" id="intersect" name="intersect"
+                                     <input class="form-check-input" type="checkbox" id="intersect" name="intersect"
                                           <g:if test="${intersect}">checked</g:if>/>
                                  </td>
                             </tr>
@@ -308,7 +315,7 @@
                             defaultlayer=true) [classification=${classification1} > ${classification2}]</label>
                                 </td>
                                 <td>
-                                <input class="form-control" type="checkbox" id="layerbranch" name="layerbranch"
+                                <input class="form-check-input" type="checkbox" id="layerbranch" name="layerbranch"
                                        <g:if test="${layerbranch}">checked</g:if>/>
                                 </td>
                             </tr>
@@ -318,7 +325,7 @@
                             <label for="analysis">This field is available in the Spatial Portal Tool lists</label>
                             </td>
                             <td>
-                            <input class="form-control" type="checkbox" id="analysis" name="analysis"
+                            <input class="form-check-input" type="checkbox" id="analysis" name="analysis"
                                    <g:if test="${analysis}">checked</g:if>/>
                             </td>
                         </tr>
@@ -327,7 +334,7 @@
                                 <label for="addtomap">This field is available in the Spatial Portal Add To Map list</label>
                             </td>
                             <td>
-                                <input class="form-control" type="checkbox" id="addtomap" name="addtomap"
+                                <input class="form-check-input" type="checkbox" id="addtomap" name="addtomap"
                                    <g:if test="${addtomap}">checked</g:if>/>
                             </td>
                         </tr>
@@ -336,13 +343,13 @@
                                 <label for="enabled">Enabled (makes the field available for use, disable to remove field from use)</label>
                             </td>
                             <td>
-                                <input class="form-control" type="checkbox" id="enabled" name="enabled"
+                                <input class="form-check-input" type="checkbox" id="enabled" name="enabled"
                                    <g:if test="${enabled}">checked</g:if>/>
                             </td>
                         </tr>
                     </table>
                     <g:if test="${layer_creation == null}">
-                        <input type="submit" class="btn btn-default"
+                        <input type="submit" class="btn btn-default btn-outline-dark"
                                value='${is_field ? "Update Field" : "Create Field"}'/>
                     </g:if>
 
@@ -353,7 +360,7 @@
                 </div>
 
                 <div role="tabpanel" class="tab-pane" id="backgroundProcesses">
-                    <table class="table table-condensed">
+                    <table class="table table-sm">
                         <tr>
                             <td>Task ID</td>
                             <td>Task</td>
