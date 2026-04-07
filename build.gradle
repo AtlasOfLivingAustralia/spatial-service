@@ -21,7 +21,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-def alaSecurityLibsVersion='7.1.0'
+def alaSecurityLibsVersion='7.0.1'
 def geotoolsVersion='27.2'
 
 bootWar {
