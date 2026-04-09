@@ -38,10 +38,6 @@ springBoot {
     mainClass = "au.org.ala.spatial.Application"
 }
 
-buildProperties {
-    inputs.property("info.app.build.date", new Date().format('yyyy-MM-dd HH:mm:ss'))
-}
-
 repositories {
     mavenLocal()
     maven { url "https://nexus.ala.org.au/content/groups/public/" }
@@ -130,7 +126,7 @@ dependencies {
     implementation group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
 
     // plugins needed at runtime but not for compilation
-    implementation "org.grails.plugins:ala-admin-plugin:2.3.0"
+    implementation "org.grails.plugins:ala-admin-plugin:2.4.0-SNAPSHOT"
     implementation ("org.grails.plugins:ala-bootstrap5:1.0.0-SNAPSHOT") {
         exclude module: 'ala-cas-client'
     }
