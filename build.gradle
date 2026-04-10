@@ -1,5 +1,5 @@
 buildscript {
-    version "3.1.0-SNAPSHOT"
+    version "3.2.0-SNAPSHOT"
     group "au.org.ala"
 }
 
@@ -21,7 +21,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-def alaSecurityLibsVersion='7.0.1'
+def alaSecurityLibsVersion='7.2.0-SNAPSHOT'
 def geotoolsVersion='27.2'
 
 bootWar {
