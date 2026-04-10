@@ -21,7 +21,7 @@
 <g:set var="spatialConfig" bean="spatialConfig"/>
 <div style="float: right">
     <button onclick="downloadCSV()" class="btn btn-sm btn-default btn-outline-dark">
-        <i class="fa fa-download"></i> Download as CSV
+        <i class="fas fa-download"></i> Download as CSV
     </button>
     <g:link controller="layer" action="index" class="btn btn-sm btn-default btn-outline-dark">
         JSON

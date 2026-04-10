@@ -130,7 +130,7 @@
                 <td>Download</td>
                 <td><a class="btn btn-default btn-outline-dark"
                        href="${spatialConfig.grails.serverURL}/layer/download/${URLEncoder.encode(layer.displayname, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20")}.zip">
-                    <i class="glyphicon glyphicon-download"></i>
+                    <i class="fas fa-download"></i>
                     ${layer.displayname}.zip</a>
                 </td>
             </tr>

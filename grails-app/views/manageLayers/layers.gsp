@@ -67,7 +67,7 @@
                 <td>${item.enabled}</td>
                 <td>
                     <g:each in="${item.fields}" var="field" status="i">
-                        <i class="glyphicon glyphicon-edit"></i>
+                        <i class="fas fa-edit"></i>
                         <g:set var="disabledField" value="${field.enabled ? '' :'disabled'}" />
                         <g:link controller="manageLayers" action="field"
                                 id="${field.id}"  class="${disabledField}" >${field.id}: ${field.name}</g:link>,
@@ -81,17 +81,17 @@
                     </g:each>
                 </td>
                 <td><g:link controller="manageLayers" action="field" class="btn btn-sm btn-default btn-outline-dark" id="${item.id}">
-                    <i class="glyphicon glyphicon-plus"></i>
+                    <i class="fas fa-plus"></i>
                     add field
                 </g:link><br/>
                 </td>
                 <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default btn-outline-dark" id="${item.id}">
-                    <i class="glyphicon glyphicon-edit"></i>
+                    <i class="fas fa-edit"></i>
                     edit
                 </g:link>
                 </td>
                 <td><a onclick="return confirmDelete(${item.id}, '${item.name}');" class="btn btn-sm btn-danger"><i
-                        class="glyphicon glyphicon-remove"></i> delete</a></td>
+                        class="fas fa-remove"></i> delete</a></td>
             </tr>
         </g:each>
         </tbody>

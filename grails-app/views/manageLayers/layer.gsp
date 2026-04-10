@@ -94,12 +94,12 @@
                                     <td class="${disabledField}">${item.sname}</td>
 
                                     <td><g:link controller="manageLayers" action="field" id="${item.id}">
-                                        <i class="glyphicon glyphicon-edit"></i>
+                                        <i class="fas fa-edit"></i>
                                         edit
                                       </g:link>
                                     </td>
                                     <td><g:link controller="object" action="fieldObjects" id="${item.id}">
-                                        <i class="glyphicon glyphicon-list"></i>
+                                        <i class="fas fa-list"></i>
                                         list objects
                                        </g:link>
                                     </td>
@@ -111,7 +111,7 @@
                             </g:each>
                             <tr><td colspan="7"><g:link controller="manageLayers" action="field"
                                                         class="btn btn-sm btn-default btn-outline-dark"
-                                                        id="${id}"><i class="glyphicon-plus"></i> Add new Field</g:link>
+                                                        id="${id}"><i class="fas fa-plus"></i> Add new Field</g:link>
                             </td></tr>
                             </tbody>
                         </table>

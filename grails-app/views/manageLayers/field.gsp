@@ -113,12 +113,12 @@
                                         <g:link controller="manageLayers" action="field"
                                                 class="btn btn-sm btn-default btn-outline-dark"
                                                 id="${item.id}">
-                                            <i class="glyphicon glyphicon-edit"></i>
+                                            <i class="fas fa-edit"></i>
                                             edit</g:link>
                                     </td>
                                     <td>
                                         <a onclick="return confirmDelete('${item.id}','${item.name}' );">
-                                            <i class="glyphicon glyphicon-remove"></i> </a>
+                                            <i class="fas fa-remove"></i> </a>
                                     </td>
                                 </tr>
                             </g:each>
@@ -126,7 +126,7 @@
                                 <td colspan="7"><g:link controller="manageLayers" action="field"
                                                         class="btn btn-sm btn-default btn-outline-dark"
                                                         id="${raw_id}">
-                                    <i class="glyphicon-plus"></i>
+                                    <i class="fas fa-plus"></i>
                                     Add new Field</g:link>
                                 </td>
                             </tr>
