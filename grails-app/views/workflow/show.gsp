@@ -19,10 +19,10 @@
 
 <div id="show-task" class="content scaffold-show" role="main">
     <g:if test="${flash.message}">
-        <div class="message" role="status">${flash.message}</div>
+        <div class="alert alert-info" role="status">${flash.message}</div>
     </g:if>
 
-    <table class="table table-bordered table-condensed">
+    <table class="table table-bordered table-sm">
         <thead>
         <th>Field</th>
         <th>Value</th>

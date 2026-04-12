@@ -24,7 +24,7 @@
     <br/>
 </g:if>
 <g:if test="${message != null}">
-    <b class="message">${message}</b>
+    <b class="alert alert-info">${message}</b>
     <br/>
     <br/>
 </g:if>
@@ -50,12 +50,13 @@ input {
 
 <div class="row-fluid">
     <div role="tabpanel">
-        <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active"><a href="#settings" aria-controls="settings" role="tab"
-                                                      data-toggle="tab">Layer</a></li>
-            <li role="presentation" class=""><a href="#backgroundProcesses" aria-controls="backgroundProcesses"
-                                                role="tab"
-                                                data-toggle="tab">Background Processes</a></li>
+        <ul class="nav nav-tabs" id="layerTabs">
+            <li class="nav-item">
+                <a class="nav-link active" id="settings-tab" href="#settings" data-bs-toggle="tab" aria-controls="settings">Layer</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="backgroundProcesses-tab" href="#backgroundProcesses" data-bs-toggle="tab" aria-controls="backgroundProcesses">Background Processes</a>
+            </li>
         </ul>
 
         <div class="tab-content">
@@ -76,7 +77,7 @@ input {
                         </td></tr>
 
                     </table>
-                    <input type="submit" class="btn btn-default"
+                    <input type="submit" class="btn btn-default btn-outline-dark"
                            value='${has_layer ? " " : "Import distribution"}'/>
 
                     <input type="hidden" name="raw_id" value="${raw_id}"/>

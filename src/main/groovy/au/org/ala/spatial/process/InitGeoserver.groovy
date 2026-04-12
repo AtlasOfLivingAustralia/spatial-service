@@ -47,6 +47,10 @@ class InitGeoserver extends SlaveProcess {
         setupWorkspace()
         linkToPostgresql()
         createWorldLayer()
+
+        if (spatialConfig.geoserver.spatialservice.colocated) {
+            whitelistColocatedUploads();
+        }
     }
 
     Map restCall(String description, String type, String url, RequestEntity entity) {
@@ -172,5 +176,15 @@ class InitGeoserver extends SlaveProcess {
             restCall("Assign style to layer " + layer, "PUT", "/rest/layers/ALA:" + layer, entity)
         }
 
+    }
+
+    void whitelistColocatedUploads() {
+        RequestEntity entity
+
+        String request = '<regexUrlCheck><name>colocated_uploads</name><description></description>' +
+                '<enabled>true</enabled><regex>^file://' + spatialConfig.data.dir + '/layer/(?!.*\\.\\./).*$</regex></regexUrlCheck>'
+
+        entity = new StringRequestEntity(request, "text/xml", "UTF-8")
+        restCall("Whitelist colocated uploads", "POST", "/rest/urlchecks", entity)
     }
 }

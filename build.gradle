@@ -1,5 +1,5 @@
 buildscript {
-    version "3.1.0-SNAPSHOT"
+    version "3.2.0-SNAPSHOT"
     group "au.org.ala"
 }
 
@@ -21,7 +21,7 @@ ext {
     drivers = ["firefox", "chrome", "chromeHeadless"]
 }
 
-def alaSecurityLibsVersion='7.0.1'
+def alaSecurityLibsVersion='7.2.0-SNAPSHOT'
 def geotoolsVersion='27.2'
 
 bootWar {
@@ -36,10 +36,6 @@ war {
 
 springBoot {
     mainClass = "au.org.ala.spatial.Application"
-}
-
-buildProperties {
-    inputs.property("info.app.build.date", new Date().format('yyyy-MM-dd HH:mm:ss'))
 }
 
 repositories {
@@ -130,8 +126,8 @@ dependencies {
     implementation group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
 
     // plugins needed at runtime but not for compilation
-    implementation "org.grails.plugins:ala-admin-plugin:2.3.0"
-    implementation ("org.grails.plugins:ala-bootstrap3:4.5.0") {
+    implementation "org.grails.plugins:ala-admin-plugin:2.4.0-SNAPSHOT"
+    implementation ("org.grails.plugins:ala-bootstrap5:1.0.0-SNAPSHOT") {
         exclude module: 'ala-cas-client'
     }
 

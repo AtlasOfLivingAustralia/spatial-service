@@ -27,7 +27,7 @@ body {
 
 <div class="container-fluid">
     <div><span>${info}</span></div>
-    <table id="layersTable" name="layersTable" class="table table-bordered table-striped table-condensed">
+    <table id="layersTable" name="layersTable" class="table table-bordered table-striped table-sm">
         <thead>
         <tr>
             <g:each var="row" in="${data.take(1)}">

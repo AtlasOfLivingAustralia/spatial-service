@@ -13,45 +13,48 @@
 
 <body class="fluid">
 
-<div class="col-lg-8">
-    <h1>Uploads</h1>
+<div class="row" style="margin-left: 15px; margin-right: 15px;">
+    <div class="col-lg-8">
+        <h1>Uploads</h1>
 
-    <g:if test="${error || message}">
-        <div class="col-lg-12">
-            <g:if test="${error != null}">
-                <b class="alert alert-danger">${error}</b>
-            </g:if>
-            <g:if test="${message != null}">
-                <b class="alert alert-success">${message}</b>
-            </g:if>
-        </div>
-    </g:if>
+        <g:if test="${error || message}">
+            <div class="col-lg-12">
+                <g:if test="${error != null}">
+                    <b class="alert alert-danger">${error}</b>
+                </g:if>
+                <g:if test="${message != null}">
+                    <b class="alert alert-success">${message}</b>
+                </g:if>
+            </div>
+        </g:if>
 
-    <p>Upload a new grid file (zipped bil, hdr with prj) or a new shape file (zipped shape file with prj)</p>
-    <g:form method="POST" enctype="multipart/form-data"
-            action="upload">
-        <div class="input-group">
-            <input class="form-control" type="file" name="file">
-            <span class="input-group-btn">
-                <input class="form-control btn-primary" type="submit" value="Upload">
-            </span>
-        </div>
-        <br/>
-        <br/>
-    </g:form>
-</div>
+        <p>Upload a new grid file (zipped bil, hdr with prj) or a new shape file (zipped shape file with prj)</p>
+        <g:form method="POST" enctype="multipart/form-data"
+                action="upload" class="me-5">
+            <div class="input-group">
+                <input class="form-control" type="file" name="file">
+                <span class="input-group-btn">
+                    <input class="form-control btn btn-primary" type="submit" value="Upload">
+                </span>
+            </div>
+            <br/>
+            <br/>
+        </g:form>
+    </div>
 
-<div class="col-lg-4">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            Navigation
-        </div>
-
-        <div class="panel-body">
-            <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
-            <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
-            <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
-            <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Navigation</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><g:link controller="manageLayers" action="uploads">Show all uploads</g:link></li>
+                    <li><g:link controller="manageLayers" action="layers">Show all Layers</g:link></li>
+                    <li><g:link controller="tasks" action="index">Show all Tasks</g:link></li>
+                    <li><g:link controller="manageLayers" action="remote">Copy Layers from remote server</g:link></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -82,35 +85,35 @@
                                 id="${field.id}">${field.id}</g:link>, type:${field.type}<br/>
                     </g:each>
                 </td>
-                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default"
+                <td><g:link controller="manageLayers" action="layer" class="btn btn-sm btn-default btn-outline-dark"
                             id="${item.containsKey('layer_id') ? item.layer_id : item.raw_id}">
                     <g:if test="${!item.containsKey('layer_id')}"><i
-                            class="glyphicon glyphicon-plus"></i> create layer</g:if>
+                            class="fas fa-plus"></i> create layer</g:if>
                     <g:if test="${item.containsKey('layer_id')}"><i
-                            class="glyphicon glyphicon-edit"></i> edit layer</g:if>
+                            class="fas fa-edit"></i> edit layer</g:if>
                 </g:link>
                     <g:if test="${!item.containsKey('layer_id')}">
                         <br/>
-                        <g:link controller="manageLayers" action="distribution" class="btn btn-sm btn-default"
+                        <g:link controller="manageLayers" action="distribution" class="btn btn-sm btn-default btn-outline-dark"
                                 id="${item.containsKey('data_resource_uid') ? item.data_resource_uid : item.raw_id}">
                             <g:if test="${!item.containsKey('data_resource_uid')}">import as expert distribution</g:if>
                         </g:link><g:if
                             test="${item.containsKey('data_resource_uid')}">Expert distribution exists: ${item.data_resource_uid}
                         <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-danger"
                                 id="${item.raw_id}"><i
-                                class="glyphicon glyphicon-remove"></i> delete distribution</g:link></g:if>
+                                class="fas fa-remove"></i> delete distribution</g:link></g:if>
                         <br/>
-                        <g:link controller="manageLayers" action="checklist" class="btn btn-sm btn-default"
+                        <g:link controller="manageLayers" action="checklist" class="btn btn-sm btn-default btn-outline-dark"
                                 id="${item.containsKey('checklist') ? item.checklist : item.raw_id}">
                             <g:if test="${!item.containsKey('checklist')}">import as checklist</g:if>
                         </g:link><g:if
                             test="${item.containsKey('checklist')}">Checklist exists: ${item.checklist}
                         <g:link controller="manageLayers" action="delete" class="btn btn-sm btn-default btn-danger"
                                 id="${item.raw_id}"><i
-                                class="glyphicon glyphicon-remove"></i> delete checklist</g:link></g:if>
+                                class="fas fa-remove"></i> delete checklist</g:link></g:if>
                     </g:if></td>
                 <td><a onclick="return confirmDelete('${item.raw_id}', '${item.filename}');"
-                       class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-remove"></i> delete</a></td>
+                       class="btn btn-sm btn-danger"><i class="fas fa-remove"></i> delete</a></td>
             </tr>
         </g:each>
         </tbody>
