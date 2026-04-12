@@ -105,7 +105,7 @@
                                     </td>
                                     <td>
                                         <a onclick="return confirmDelete('${item.id}','${item.name}' );">
-                                            <i class="glyphicon glyphicon-remove"></i> delete</a>
+                                            <i class="fas fa-remove"></i> delete</a>
                                     </td>
                                 </tr>
                             </g:each>
