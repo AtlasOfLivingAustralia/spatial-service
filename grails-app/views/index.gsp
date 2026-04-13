@@ -3,7 +3,6 @@
 <head>
     <meta name="layout" content="ala-main"/>
     <title>Spatial Service</title>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
 
 <body class="fluid">

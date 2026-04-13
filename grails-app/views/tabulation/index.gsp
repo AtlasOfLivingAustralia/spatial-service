@@ -5,7 +5,6 @@
     <g:set var="baseUrl" value="${request.scheme}://${request.serverName}:${request.serverPort}${request.contextPath}" />
     <meta name="breadcrumbs" content="${g.createLink(uri: baseUrl)}, Spatial Service"/>
     <meta name="layout" content="ala-main"/>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
 
 <body class="fluid">
