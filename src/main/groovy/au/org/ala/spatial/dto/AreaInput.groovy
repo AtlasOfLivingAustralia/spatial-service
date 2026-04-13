@@ -1,7 +1,9 @@
 package au.org.ala.spatial.dto
 
-import org.codehaus.jackson.annotate.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class AreaInput {
 
     String type

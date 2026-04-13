@@ -1,10 +1,12 @@
 package au.org.ala.spatial.dto
 
+import groovy.transform.CompileStatic
+
 
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class IntersectionFile {
 
     String name

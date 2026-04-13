@@ -10,6 +10,7 @@ import au.org.ala.spatial.legend.LegendBuilder
 import au.org.ala.spatial.legend.LegendObject
 import au.org.ala.spatial.legend.QueryField
 import com.opencsv.CSVReader
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.web.json.JSONArray
 import org.grails.web.json.JSONObject
@@ -23,7 +24,7 @@ import java.util.List
  * @author Adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class BiocacheLegendObject extends LegendObject {
     //[0] is colour, [1] is count
 
@@ -118,7 +119,7 @@ class BiocacheLegendObject extends LegendObject {
             } else {
                 sb.append("\n")
 
-                colour = item.get("red") + "," + item.get("green") + "," + item.get("blue")
+                colour = item.get("red").toString() + "," + item.get("green").toString() + "," + item.get("blue").toString()
                 line = "\"" + item.get("name").toString().replace("\"", "\"\"") + "\"," + colour + "," + item.get("count")
                 sb.append(line)
             }

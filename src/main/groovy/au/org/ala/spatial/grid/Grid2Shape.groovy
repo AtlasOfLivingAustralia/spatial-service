@@ -14,7 +14,7 @@
  ***************************************************************************/
 package au.org.ala.spatial.grid
 
-
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.geotools.geometry.jts.JTSFactoryFinder
 import org.locationtech.jts.geom.*
@@ -27,7 +27,7 @@ import java.util.Map.Entry
  * @author Adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
  class Grid2Shape {
 
     static final byte lEdge = 0x01
@@ -957,6 +957,7 @@ import java.util.Map.Entry
      }
 }
 
+@CompileStatic
 class Pos {
 
     int pos

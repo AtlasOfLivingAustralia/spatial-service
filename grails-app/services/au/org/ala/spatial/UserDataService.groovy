@@ -1,8 +1,13 @@
 package au.org.ala.spatial
+
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+
 /**
  * A small cache for data resource attribution.
  * This should be revisited if this cache grows or needs regular refreshing.
  */
+@CompileStatic
 class UserDataService {
 
     UDHeader put(String user_id, String record_type, String description, String metadata, String data_path, String analysis_id) {
@@ -61,6 +66,7 @@ class UserDataService {
         return true
     }
 
+    @CompileDynamic
     List<UDHeader> searchDescAndTypeOr(String desc, String record_type, String user_id, String data_path, String analysis_id, int start, int limit) {
         def criteria = UDHeader.createCriteria()
         def results = criteria.list(max: limit, offset: start) {

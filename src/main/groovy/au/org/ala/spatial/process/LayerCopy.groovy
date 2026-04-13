@@ -15,13 +15,15 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.Util
 import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
+import au.org.ala.spatial.Util
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.web.json.JSONObject
 
+@CompileStatic
 @Slf4j
 class LayerCopy extends SlaveProcess {
 

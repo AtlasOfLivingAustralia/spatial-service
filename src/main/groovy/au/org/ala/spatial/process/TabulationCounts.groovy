@@ -15,19 +15,20 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
 import au.org.ala.spatial.SpatialObjects
-import au.org.ala.spatial.util.RecordsSmall
+import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleShapeFile
+import au.org.ala.spatial.util.RecordsSmall
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
 import java.nio.ByteBuffer
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class TabulationCounts extends SlaveProcess {
 
@@ -64,7 +65,7 @@ class TabulationCounts extends SlaveProcess {
         //produce sampling files
         fields.eachWithIndex { Fields field, idx ->
             taskWrapper.task.message = 'get/make sampling for: ' + field.id
-            pidFiles.add(sample(points, field))
+            pidFiles.add(sample(points, field) as File)
         }
 
         points = null

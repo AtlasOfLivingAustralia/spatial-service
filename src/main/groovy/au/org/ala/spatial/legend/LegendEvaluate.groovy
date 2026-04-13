@@ -5,10 +5,12 @@
 
 package au.org.ala.spatial.legend
 
+import groovy.transform.CompileStatic
+
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class LegendEvaluate {
 
     static Legend buildFrom(double[] d) {

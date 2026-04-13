@@ -19,9 +19,10 @@ import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
 import au.org.ala.spatial.TabulationGeneratorService
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class LayerDistancesCreate extends SlaveProcess {
 
@@ -89,7 +90,7 @@ class LayerDistancesCreate extends SlaveProcess {
         taskWrapper.task.message = distances.size() + ' missing distances'
         taskWrapper.task.message = 'preparing LayerDistancesCreateOne tasks'
 
-        Map count = [:]
+        Map<String, Integer> count = [:]
         for (int i = 0; i < all.size(); i++) {
             for (String s : all[i].toString().split(' ')) {
                 if (count.containsKey(s)) {

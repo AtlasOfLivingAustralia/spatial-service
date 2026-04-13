@@ -15,15 +15,16 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.dto.FieldValue
 import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
-import au.org.ala.spatial.util.GeomMakeValid
+import au.org.ala.spatial.dto.FieldValue
 import au.org.ala.spatial.legend.Legend
+import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.geotools.data.FeatureReader
+import org.geotools.api.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.geometry.jts.JTSFactoryFinder
 import org.locationtech.jts.geom.Geometry
@@ -33,7 +34,7 @@ import org.locationtech.jts.geom.Polygon
 import java.nio.charset.StandardCharsets
 import java.text.MessageFormat
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class FieldCreation extends SlaveProcess {
 
@@ -285,7 +286,7 @@ class FieldCreation extends SlaveProcess {
             def defaultType = null
 
             String confirmedSname = null
-            String [] confirmedSdesc = null
+            String confirmedSdesc = null
             taskWrapper.task.message = "reading shapefile"
             int countMissing = 0
             while (reader.hasNext()) {
@@ -308,11 +309,7 @@ class FieldCreation extends SlaveProcess {
                 String name = String.valueOf(f.getAttribute(confirmedSname))
                 String desc = null
                 if ("null" != String.valueOf(sdesc) && !sdesc.contains(',') && confirmedSdesc != null) {
-                    if (confirmedSdesc.getClass().isArray()){
-                        desc = String.valueOf(f.getAttribute(confirmedSdesc.join()))
-                    } else if (confirmedSdesc instanceof String) {
-                        desc = String.valueOf(f.getAttribute(confirmedSdesc))
-                    }
+                    desc = String.valueOf(f.getAttribute((String) confirmedSdesc))
 
                 } else if (sdesc?.contains(',')) {
                     sdesc.split(',').each { str ->

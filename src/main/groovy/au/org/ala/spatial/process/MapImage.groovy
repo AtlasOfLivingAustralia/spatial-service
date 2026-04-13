@@ -17,11 +17,12 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.PrintMapComposer
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.grails.web.json.JSONArray
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class MapImage extends SlaveProcess {
 

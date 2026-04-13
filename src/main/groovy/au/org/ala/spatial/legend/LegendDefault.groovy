@@ -1,9 +1,11 @@
 package au.org.ala.spatial.legend
 
+import groovy.transform.CompileStatic
+
 /**
  * Created by a on 24/03/2014.
  */
-//@CompileStatic
+@CompileStatic
 class LegendDefault extends Legend {
 
     @Override

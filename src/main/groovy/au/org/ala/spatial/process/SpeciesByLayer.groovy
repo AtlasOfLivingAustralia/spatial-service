@@ -15,26 +15,27 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.SpatialUtils
 import com.opencsv.CSVWriter
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.grails.web.json.JSONObject
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class SpeciesByLayer extends SlaveProcess {
 
     void start() {
 
         SpeciesInput species = JSON.parse(getInput('species').toString()) as SpeciesInput
-        List<String> fields = getInput('layer').toString().split(',')
+        List<String> fields = getInput('layer').toString().split(',').toList()
 
         HashMap<String, Integer> speciesMap = new HashMap()
 
@@ -175,7 +176,7 @@ class SpeciesByLayer extends SlaveProcess {
         Grid grid = new Grid(spatialConfig.data.dir.toString() + '/layer/' + layerName)
 
         int bufferSize = 1024 * 1024
-        float areaSqKm = 0
+        double areaSqKm = 0
 
         Grid g = Grid.getLoadedGrid(grid.filename)
         if (g != null && g.grid_data != null) {
@@ -209,7 +210,7 @@ class SpeciesByLayer extends SlaveProcess {
                         max += len
 
                         for (max = Math.min(max, length); i < max; ++i) {
-                            float value = (float) bb.get()
+                            float value = (float)(int) bb.get()
                             if (value < 0.0F) {
                                 value += 256.0F
                             }
@@ -219,37 +220,37 @@ class SpeciesByLayer extends SlaveProcess {
                         max += len
 
                         for (max = Math.min(max, length); i < max; ++i) {
-                            areaSqKm += areaOf(grid, (float) bb.get(), i, minBound, maxBound)
+                            areaSqKm += areaOf(grid, (float)(int) bb.get(), i, minBound, maxBound)
                         }
                     } else if (grid.datatype.equalsIgnoreCase("SHORT")) {
-                        max += len / 2
+                        max += (int)(len / 2)
 
                         for (max = Math.min(max, length); i < max; ++i) {
-                            areaSqKm += areaOf(grid, (float) bb.getShort(), i, minBound, maxBound)
+                            areaSqKm += areaOf(grid, (float)(int) bb.getShort(), i, minBound, maxBound)
                         }
                     } else if (grid.datatype.equalsIgnoreCase("INT")) {
-                        max += len / 4
+                        max += (int)(len / 4)
 
                         for (max = Math.min(max, length); i < max; ++i) {
-                            areaSqKm += areaOf(grid, (float) bb.getInt(), i, minBound, maxBound)
+                            areaSqKm += areaOf(grid, (float)(int) bb.getInt(), i, minBound, maxBound)
                         }
                     } else if (grid.datatype.equalsIgnoreCase("LONG")) {
-                        max += len / 8
+                        max += (int)(len / 8)
 
                         for (max = Math.min(max, length); i < max; ++i) {
-                            areaSqKm += areaOf(grid, (float) bb.getLong(), i, minBound, maxBound)
+                            areaSqKm += areaOf(grid, (float)(double) bb.getLong(), i, minBound, maxBound)
                         }
                     } else if (grid.datatype.equalsIgnoreCase("FLOAT")) {
-                        max += len / 4
+                        max += (int)(len / 4)
 
                         for (max = Math.min(max, length); i < max; ++i) {
-                            areaSqKm += areaOf(grid, (float) bb.getFloat(), i, minBound, maxBound)
+                            areaSqKm += areaOf(grid, bb.getFloat(), i, minBound, maxBound)
                         }
                     } else if (grid.datatype.equalsIgnoreCase("DOUBLE")) {
-                        max += len / 8
+                        max += (int)(len / 8)
 
                         for (max = Math.min(max, length); i < max; ++i) {
-                            areaSqKm += areaOf(grid, (float) bb.getDouble(), i, minBound, maxBound )
+                            areaSqKm += areaOf(grid, (float)(double) bb.getDouble(), i, minBound, maxBound)
                         }
                     }
                 }
@@ -286,6 +287,7 @@ class SpeciesByLayer extends SlaveProcess {
     }
 }
 
+@CompileStatic
 class SpeciesByLayerCount {
     int species = 0
     int occurrences = 0

@@ -1,11 +1,12 @@
 package au.org.ala.spatial.layers
 
 import au.org.ala.spatial.intersect.SimpleShapeFile
+import groovy.transform.CompileStatic
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-//@CompileStatic
+@CompileStatic
 class EndemismLayerGenerator extends CalculatedLayerGenerator {
 
     EndemismLayerGenerator(BigDecimal resolution, File latLonFile, File shapefileMask, String field) throws IOException {
@@ -37,7 +38,7 @@ class EndemismLayerGenerator extends CalculatedLayerGenerator {
                     endemicityValue += 1.0 / speciesCellCount
                 }
             }
-            endemicityValue = endemicityValue / speciesLsids.cardinality()
+            endemicityValue = (float) (endemicityValue / (float) speciesLsids.cardinality())
 
             float newMaxValue = 0
             if (maxValue < endemicityValue) {
@@ -48,7 +49,7 @@ class EndemismLayerGenerator extends CalculatedLayerGenerator {
 
             ascPrintWriter.print(endemicityValue)
 
-            ByteBuffer bb = ByteBuffer.wrap(new byte[Float.SIZE / Byte.SIZE])
+            ByteBuffer bb = ByteBuffer.wrap(new byte[(int) (Float.SIZE / Byte.SIZE)])
             bb.order(ByteOrder.LITTLE_ENDIAN)
             bb.putFloat(endemicityValue)
             divaOutputStream.write(bb.array())
@@ -59,7 +60,7 @@ class EndemismLayerGenerator extends CalculatedLayerGenerator {
             // is zero.
             ascPrintWriter.print("0")
 
-            ByteBuffer bb = ByteBuffer.wrap(new byte[Float.SIZE / Byte.SIZE])
+            ByteBuffer bb = ByteBuffer.wrap(new byte[(int) (Float.SIZE / Byte.SIZE)])
             bb.order(ByteOrder.LITTLE_ENDIAN)
             bb.putFloat(0)
             divaOutputStream.write(bb.array())

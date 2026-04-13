@@ -15,20 +15,17 @@
 package au.org.ala.spatial.grid
 
 import au.org.ala.spatial.intersect.Grid
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
 /**
  * @author Adam
  */
 
-import groovy.util.logging.Slf4j
-import org.locationtech.jts.geom.Geometry
-import org.locationtech.jts.geom.GeometryCollection
-import org.locationtech.jts.geom.GeometryFactory
-import org.locationtech.jts.geom.MultiPolygon
-import org.locationtech.jts.geom.Polygon
+import org.locationtech.jts.geom.*
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class Envelope {
 
     //private static final Logger logger = log.getLogger(Envelope.class);

@@ -4,10 +4,6 @@ import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.dto.SearchObject
 import au.org.ala.spatial.dto.Tabulation
 import au.org.ala.userdetails.UserDetailsClient
-import au.org.ala.ws.security.ApiKeyClient
-import au.org.ala.ws.security.authenticator.AlaApiKeyAuthenticator
-import au.org.ala.ws.security.client.AlaApiKeyClient
-import au.org.ala.ws.security.client.AlaDirectClient
 import grails.converters.JSON
 import groovy.sql.Sql
 import groovy.util.logging.Slf4j

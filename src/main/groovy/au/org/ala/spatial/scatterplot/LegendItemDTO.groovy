@@ -1,10 +1,13 @@
 package au.org.ala.spatial.scatterplot
 
+import groovy.transform.CompileStatic
+
 /**
  * A dto that represents a legend item
  *
  * @author Natasha Quimby (natasha.quimby@csiro.au)
  */
+@CompileStatic
 class LegendItemDTO {
     String name = "Unknown"//a null name defaults to "Unknown"
     Integer count

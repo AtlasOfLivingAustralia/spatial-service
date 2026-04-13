@@ -19,11 +19,12 @@ import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.dto.SearchObject
 import grails.converters.JSON
 import groovy.sql.Sql
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import groovy.transform.CompileStatic
 
 import java.sql.ResultSet
 import java.util.Map.Entry
 
+@CompileStatic
 class SearchService {
 
     LayerService layerService
@@ -101,7 +102,7 @@ class SearchService {
     }
 
 
-    private List<SearchObject> addGridClassesToSearch(List<SearchObject> search, List<String> additionalFields, String criteria, int limit, List<String> includeFieldIds, List<String> excludeFieldIds) {
+    private List<SearchObject> addGridClassesToSearch(List<SearchObject> search, List<SearchObject> additionalFields, String criteria, int limit, List<String> includeFieldIds, List<String> excludeFieldIds) {
         criteria = criteria.toLowerCase()
         int vacantCount = limit - search.size()
 

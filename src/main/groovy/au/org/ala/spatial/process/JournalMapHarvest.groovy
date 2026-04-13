@@ -16,13 +16,15 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
+import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.Header
+import org.apache.http.Header
 import org.grails.web.json.JSONArray
 import org.grails.web.json.JSONObject
 import org.json.simple.JSONValue
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class JournalMapHarvest extends SlaveProcess {
 
@@ -46,9 +48,9 @@ class JournalMapHarvest extends SlaveProcess {
 
                 Map response = Util.urlResponse("GET", url)
 
-                if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
+                if (response && (response?.statusCode as Integer) >= 200 && (response?.statusCode as Integer) < 300) {
                     //update maxpage
-                    maxpage = Integer.parseInt(getHeader(response.headers as Iterable<Header>, "X-Pages")?.toString())
+                    maxpage = Integer.parseInt(getHeader(response.headers as Header[], "X-Pages")?.toString())
 
                     //cache
 
@@ -77,9 +79,9 @@ class JournalMapHarvest extends SlaveProcess {
 
                         Map response = Util.urlResponse("GET", url)
 
-                        if (response && response?.statusCode >= 200 && response?.statusCode < 300) {
+                        if (response && (response?.statusCode as Integer) >= 200 && (response?.statusCode as Integer) < 300) {
                             //update maxpage
-                            maxpage = Integer.parseInt(getHeader(response.headers as Iterable<Header>, "X-Pages")?.toString())
+                            maxpage = Integer.parseInt(getHeader(response.headers as Header[], "X-Pages")?.toString())
 
                             //cache
 
@@ -114,7 +116,7 @@ class JournalMapHarvest extends SlaveProcess {
         }
     }
 
-    String getHeader(Iterable<Header> headers, key) {
+    String getHeader(Header[] headers, String key) {
         for (Header h : headers) {
             if (h.name == key) {
                 return h.value

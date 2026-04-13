@@ -14,7 +14,10 @@
  */
 
 package au.org.ala.spatial
-//@CompileStatic
+
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class LayerDistancesService {
 
 
@@ -27,7 +30,7 @@ class LayerDistancesService {
      * Produces layer distances CSV with type= 'name' or 'displayname' layer table column labels
      */
     String makeCSV(String type) {
-        def map = loadDistances()
+        Map<String, Double> map = loadDistances()
 
         List<Fields> fields = fieldService.getFields(false)
         List<String> fieldList = []
@@ -96,8 +99,8 @@ class LayerDistancesService {
         sb.toString()
     }
 
-    def loadDistances() {
-        def map = [:]
+    Map<String, Double> loadDistances() {
+        Map<String, Double> map = [:]
 
         def br = null
         def path = spatialConfig.data.dir + "/public/layerDistances.properties"

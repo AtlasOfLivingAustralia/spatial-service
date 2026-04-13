@@ -17,15 +17,18 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.SpeciesInput
-import au.org.ala.spatial.layers.DoubleGriddingGenerator
-import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
+import au.org.ala.spatial.layers.DoubleGriddingGenerator
+import au.org.ala.spatial.util.Records
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.grails.web.json.JSONObject
 
 import java.text.SimpleDateFormat
 
+@CompileStatic
 @Slf4j
 class DoubleGridding extends SlaveProcess {
 
@@ -59,7 +62,7 @@ class DoubleGridding extends SlaveProcess {
             String[] fieldIds = new String[regionEnvelope.envelope.length]
             for (int i = 0; i < regionEnvelope.envelope.length; i++) {
                 types[i] = "e"
-                fieldIds[i] = regionEnvelope.envelope.layername
+                fieldIds[i] = regionEnvelope.envelope[i].layername
             }
             gridCutterService.makeEnvelope(envelopeFile, "0.01", regionEnvelope.envelope, Long.MAX_VALUE, types, fieldIds)
             envelopeGrid = new Grid(envelopeFile)
@@ -71,8 +74,8 @@ class DoubleGridding extends SlaveProcess {
             taskLog("Error: No occurrences in that area!")
             throw new Exception("Error: No occurrences in that area!")
         }
-        for (def result in facetOccurenceCount('year', speciesArea)[0].fieldResult) {
-            years.push(Integer.parseInt(result.label))
+        for (def result in ((JSONObject) facetOccurenceCount('year', speciesArea)[0]).get("fieldResult") as List) {
+            years.push(Integer.parseInt(((JSONObject) result).get("label").toString()))
         }
         years.sort()
         if (years.size() == 0) {
@@ -124,7 +127,7 @@ class DoubleGridding extends SlaveProcess {
 
     }
 
-    def getRecords(String bs, String q, double[] bbox, String filename, SimpleRegion region) {
+    Records getRecords(String bs, String q, double[] bbox, String filename, SimpleRegion region) {
         new Records(bs, q, bbox, filename, region)
     }
 

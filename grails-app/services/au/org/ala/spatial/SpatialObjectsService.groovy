@@ -14,19 +14,22 @@
  ***************************************************************************/
 package au.org.ala.spatial
 
-
 import au.org.ala.spatial.dto.GridClass
 import au.org.ala.spatial.dto.IntersectionFile
-import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.dto.LayerFilter
+import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.SpatialConversionUtils
 import au.org.ala.spatial.util.SpatialUtils
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
+import org.geotools.api.data.FeatureReader
+import org.geotools.api.feature.simple.SimpleFeature
+import org.geotools.api.feature.simple.SimpleFeatureType
 import org.geotools.data.DataUtilities
-import org.geotools.data.FeatureReader
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
@@ -37,8 +40,6 @@ import org.geotools.kml.KMLConfiguration
 import org.geotools.xsd.Encoder
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.io.WKTReader
-import org.opengis.feature.simple.SimpleFeature
-import org.opengis.feature.simple.SimpleFeatureType
 import org.springframework.dao.DataAccessException
 import org.springframework.transaction.annotation.Transactional
 
@@ -47,6 +48,7 @@ import java.sql.ResultSet
 import java.util.Map.Entry
 import java.util.zip.ZipInputStream
 
+@CompileStatic
 @Slf4j
 class SpatialObjectsService {
 
@@ -106,18 +108,18 @@ class SpatialObjectsService {
                 "GeometryType(o.the_geom) as featureType from objects o inner join fields f on o.fid = f.id " +
                 "where o.fid = ? and (o.name ilike ? or o.desc ilike ? ) order by o.pid " + limit_offset
         List<SpatialObjects> objects = []
-        Sql.newInstance(dataSource).query(sql, [id, filter, filter], { ResultSet it ->
+        Sql.newInstance(dataSource).query(sql, [id, filter, filter] as List<Object>, { ResultSet it ->
             while (it.next()) {
                 SpatialObjects so = new SpatialObjects()
-                so.pid = it.getObject(1)
-                so.name = it.getObject(2)
-                so.description = it.getObject(3)
-                so.fid = it.getObject(4)
-                so.fieldname = it.getObject(5)
-                so.bbox = it.getObject(6)
-                so.area_km = it.getObject(7)
-                so.centroid = it.getObject(8)
-                so.featureType = it.getObject(9)
+                so.pid = it.getString(1)
+                so.name = it.getString(2)
+                so.description = it.getString(3)
+                so.fid = it.getString(4)
+                so.fieldname = it.getString(5)
+                so.bbox = it.getString(6)
+                so.area_km = it.getDouble(7)
+                so.centroid = it.getString(8)
+                so.featureType = it.getString(9)
                 objects.add(so)
             }
         })
@@ -162,7 +164,7 @@ class SpatialObjectsService {
                             long len = (long) (raf.length() / itemSize) // group
 
                             if (pageSize != -1 && pos + len < start) {
-                                pos += len
+                                pos += (int) len
                             } else {
                                 // number,
                                 // character
@@ -194,7 +196,7 @@ class SpatialObjectsService {
                                     if (pageSize == -1 || (pos >= start && pos - start < pageSize)) {
                                         SpatialObjects o = new SpatialObjects()
                                         o.setPid(f.getLayerPid() + ':' + c.getKey() + ':' + n)
-                                        o.setId(f.getLayerPid() + ':' + c.getKey() + ':' + n)
+                                        o.pid = (f.getLayerPid() + ':' + c.getKey() + ':' + n)
                                         o.setName(c.getValue().getName())
                                         o.setFid(f.getFieldId())
                                         o.setFieldname(f.getFieldName())
@@ -255,11 +257,16 @@ class SpatialObjectsService {
     }
 
 
+    @CompileDynamic
+    private List<SpatialObjects> findAllSpatialObjectsByPid(String id) {
+        SpatialObjects.findAllByPid(id)
+    }
+
     void streamObjectsGeometryById(OutputStream os, String id, String geomtype) throws IOException {
         log.debug("Getting object info for id = " + id + " and geometry as " + geomtype)
 
 
-        List<SpatialObjects> l = SpatialObjects.findAllByPid(id)
+        List<SpatialObjects> l = findAllSpatialObjectsByPid(id)
 
         if (l.size() > 0) {
             if ("shp" == geomtype) {
@@ -554,17 +561,17 @@ class SpatialObjectsService {
         WKTReader reader = new WKTReader()
 
         List<SpatialObjects> objects = []
-        Sql.newInstance(dataSource).query(sql, [lng, lat, lng, lat, fid, lng, lat, limit], { ResultSet rs ->
+        Sql.newInstance(dataSource).query(sql, [lng, lat, lng, lat, fid, lng, lat, limit] as List<Object>, { ResultSet rs ->
             while (rs.next()) {
                 SpatialObjects so = new SpatialObjects()
                 so.fid = rs.getObject(1)
                 so.name = rs.getObject(2)
                 so.description = rs.getObject(3)
                 so.pid = rs.getObject(4)
-                so.geometry = reader.read(rs.getObject(5))
-                so.distance = rs.getObject(6)
-                so.degrees = rs.getObject(7)
-                so.area_km = rs.getObject(8)
+                so.geometry = reader.read(rs.getString(5))
+                so.distance = rs.getDouble(6)
+                so.degrees = rs.getDouble(7)
+                so.area_km = rs.getDouble(8)
                 objects.add(so)
             }
         })
@@ -794,9 +801,9 @@ class SpatialObjectsService {
     private boolean shapePidIsForUploadedShape(int pid) {
         boolean found = false
         String sql = "SELECT count(*) from uploaded_objects_metadata WHERE pid = ?"
-        Sql.newInstance(dataSource).query(sql, [Integer.toString(pid)], {
+        Sql.newInstance(dataSource).query(sql, [Integer.toString(pid)] as List<Object>, {
             while (it.next()) {
-                if (it.getObject(1) > 0) {
+                if (it.getInt(1) > 0) {
                     found = true
                 }
             }
@@ -854,9 +861,9 @@ class SpatialObjectsService {
         so.fid = rs.getObject(4)
         so.fieldname = rs.getObject(5)
         so.bbox = rs.getObject(6)
-        so.area_km = rs.getObject(7)
-        if (rs.fields.length >= 8) {
-            so.featureType = rs.getObject(8)
+        so.area_km = rs.getDouble(7)
+        if (rs.metaData.columnCount >= 8) {
+            so.featureType = rs.getString(8)
         }
         so
     }

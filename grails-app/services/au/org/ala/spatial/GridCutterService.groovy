@@ -13,13 +13,15 @@
  */
 package au.org.ala.spatial
 
-
 import au.org.ala.spatial.dto.IntersectionFile
+import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
-import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
 /**
  * Class for region cutting test data grids
@@ -27,13 +29,12 @@ import au.org.ala.spatial.util.SpatialUtils
  * @author adam
  */
 
-import groovy.util.logging.Slf4j
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.PrecisionModel
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class GridCutterService {
 
@@ -368,6 +369,7 @@ class GridCutterService {
      * @param envelopes
      * @return mask as byte[][]
      */
+    @CompileDynamic
     byte[][] getEnvelopeMaskAndUpdateExtents(String resolution, double res, double[][] extents, int h, int w, LayerFilter[] envelopes, String[] layerTypes, String[] fieldIds) {
         byte[][] mask = new byte[h][w]
 
@@ -395,7 +397,7 @@ class GridCutterService {
                 Geometry[] srs = new Geometry[ids.length]
 
                 for (int i = 0; i < ids.length; i++) {
-                    srs[i] = SpatialObjects.findByPid(ids[i]).geometry
+                    srs[i] = (SpatialObjects.findByPid(ids[i]) as SpatialObjects).geometry
 
                 }
                 for (int i = 0; i < points.length; i++) {
@@ -579,7 +581,7 @@ class GridCutterService {
 
     double[][] getLayerFilterExtents(LayerFilter[] envelopes, String[] layerTypes) {
 
-        double[][] extents = [[-180, -90], [180, 90]]
+        double[][] extents = [[-180d, -90d] as double[], [180d, 90d] as double[]] as double[][]
         for (int i = 0; i < envelopes.length; i++) {
             if ("c".equalsIgnoreCase(layerTypes[i])) {
                 String[] ids = envelopes[i].getIds()

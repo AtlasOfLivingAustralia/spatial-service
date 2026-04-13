@@ -18,13 +18,11 @@ import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.grid.Diva2bil
 import au.org.ala.spatial.intersect.Grid
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
 /**
  * @author Adam
  */
-
-import groovy.util.logging.Slf4j
-
 @Slf4j
 @CompileStatic
 class AnalysisLayerUtil {

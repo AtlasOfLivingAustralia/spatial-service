@@ -19,13 +19,17 @@ import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.SpeciesInput
 import com.opencsv.CSVWriter
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.grails.web.json.JSONArray
+import org.grails.web.json.JSONObject
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.JFreeChart
 import org.jfree.chart.StandardChartTheme
 import org.jfree.chart.axis.NumberAxis
 import org.jfree.chart.plot.PlotOrientation
 import org.jfree.chart.plot.XYPlot
+import org.jfree.chart.renderer.xy.XYBarRenderer
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
 import org.jfree.data.time.TimeSeries
 import org.jfree.data.time.TimeSeriesCollection
@@ -36,6 +40,7 @@ import java.text.DecimalFormat
 
 import static org.jfree.chart.ChartUtilities.saveChartAsJPEG
 
+@CompileStatic
 @Slf4j
 class TaxonFrequency extends SlaveProcess {
 
@@ -54,13 +59,13 @@ class TaxonFrequency extends SlaveProcess {
         def species1Name = species1.name
         def species1Area = getSpeciesArea(species1, area)
 
-        def facets1 = facetOccurenceCount('year', species1Area)
+        JSONArray facets1 = facetOccurenceCount('year', species1Area)
         if (facets1.size() == 0) {
             def error = "No 'year' values found in the selected area for the species '" + species1Name + "'."
             taskLog(error)
             return
         }
-        List years1 = facets1.find { it.fieldName == "year" }.fieldResult
+        List years1 = ((JSONObject) facets1.find { ((JSONObject)it).get("fieldName") == "year" }).get("fieldResult") as List
 
         TimeSeries cumulative1 = new TimeSeries(species1Name, "Year", "Count")
         TimeSeries count1 = new TimeSeries(species1Name, "Year", "Count")
@@ -84,12 +89,12 @@ class TaxonFrequency extends SlaveProcess {
                 taskLog(error)
                 return
             }
-            def years2 = facets2.find { it.fieldName == "year" }.fieldResult
+            def years2 = ((JSONObject) facets2.find { ((JSONObject)it).get("fieldName") == "year" }).get("fieldResult") as List
 
             TimeSeries cumulative2 = new TimeSeries(species2Name, "Year", "Count")
             TimeSeries count2 = new TimeSeries(species2Name, "Year", "Count")
 
-            buildDatasets(count2, cumulative2, years2, minYear)
+            buildDatasets(count2, cumulative2, years2 as List, minYear)
 
             TimeSeries cumulativeRatio = new TimeSeries("", "", "")
             TimeSeries ratio = new TimeSeries("", "", "")
@@ -138,8 +143,8 @@ class TaxonFrequency extends SlaveProcess {
     def createRatio(TimeSeries ds1, TimeSeries ds2, TimeSeries ratio, TimeSeries cumulativeRatio) {
 
         //The third one is ratio
-        int maxYear = Math.max(ds1.getTimePeriods().max().year, ds2.getTimePeriods().max().year)
-        int minYear = Math.min(ds1.getTimePeriods().min().year, ds2.getTimePeriods().min().year)
+        int maxYear = Math.max((ds1.getTimePeriods().max() as Year).year, (ds2.getTimePeriods().max() as Year).year)
+        int minYear = Math.min((ds1.getTimePeriods().min() as Year).year, (ds2.getTimePeriods().min() as Year).year)
         int sum1 = 0
         int sum2 = 0
         double ratioSum = 0
@@ -210,7 +215,7 @@ class TaxonFrequency extends SlaveProcess {
             plot = (XYPlot) chart.getPlot()
             plot.getRenderer()
 
-            plot.getRenderer().setShadowVisible(false)
+            ((XYBarRenderer) plot.getRenderer()).setShadowVisible(false)
 
         }
 
@@ -228,12 +233,14 @@ class TaxonFrequency extends SlaveProcess {
             def i1sum = 0
             def i2sum = 0
             for (TimeSeriesDataItem i : (ratio.getItems() as List<TimeSeriesDataItem>)) {
-                def i1 = ds1.getValue(i.period)
-                def i2 = ds2.getValue(i.period)
+                Number i1 = ds1.getValue(i.period)
+                Number i2 = ds2.getValue(i.period)
                 i1sum += i1 ?: 0
                 i2sum += i2 ?: 0
-                writer.writeNext((String[]) [i.period, i1?.value ?: '', i1sum, i2?.value ?: '', i2sum,
-                                             i2?.value > 0 ? i1?.value / i2?.value : '', i2sum > 0 ? i1sum / i2sum : ''])
+                writer.writeNext([i.period as String, i1 != null ? i1.toString() : '', i1sum as String,
+                                  i2 != null ? i2.toString() : '', i2sum as String,
+                                  (i2 != null && i2.doubleValue() > 0 && i1 != null) ? (i1.doubleValue() / i2.doubleValue()) as String : '',
+                                  i2sum > 0 ? (i1sum / i2sum) as String : ''] as String[])
             }
         } else {
             writer.writeNext(["Year", "Frequency-" + speciesName1, "Cumulative frequency-" + speciesName1,
@@ -241,9 +248,9 @@ class TaxonFrequency extends SlaveProcess {
 
             def i1sum = 0
             for (TimeSeriesDataItem i : (ds1.getItems() as List<TimeSeriesDataItem>)) {
-                def i1 = ds1.getValue(i.period)
+                Number i1 = ds1.getValue(i.period)
                 i1sum += i1 ?: 0
-                writer.writeNext((String[]) [i.period, i1?.value ?: '', i1sum])
+                writer.writeNext([i.period as String, i1 != null ? i1.toString() : '', i1sum as String] as String[])
             }
         }
 
@@ -253,20 +260,22 @@ class TaxonFrequency extends SlaveProcess {
         filename
     }
 
-    void buildDatasets(TimeSeries count,TimeSeries  cumulative, List list, Integer min) {
+    void buildDatasets(TimeSeries count, TimeSeries cumulative, List list, Integer min) {
         if (list.size() > 0) {
             int sum = 0
             for (int i = 0; i < list.size(); i++) {
-                def item = list[i]
+                JSONObject item = (JSONObject) list[i]
 
-                if (item.label?.isNumber()) {
-                    def year = Integer.parseInt(item.label)
+                String label = item.get("label")?.toString()
+                if (label?.isNumber()) {
+                    int year = Integer.parseInt(label)
 
                     if (year >= min) {
-                        sum += item.count
+                        int cnt = ((Number) item.get("count")).intValue()
+                        sum += cnt
 
-                        count.add(new Year(year), new Double(item.count))
-                        cumulative.add(new Year(year), sum)
+                        count.add(new Year(year), cnt as double)
+                        cumulative.add(new Year(year), sum as double)
                     }
                 }
             }

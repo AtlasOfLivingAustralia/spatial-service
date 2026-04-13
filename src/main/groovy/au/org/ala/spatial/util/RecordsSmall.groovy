@@ -15,14 +15,13 @@
 
 package au.org.ala.spatial.util
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.collections.map.LRUMap
 import org.apache.commons.io.FileUtils
 
 import java.nio.ByteBuffer
 
-
-import groovy.transform.CompileStatic
 @Slf4j
 @CompileStatic
 class RecordsSmall {

@@ -15,20 +15,24 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.dto.SpeciesInput
-import au.org.ala.spatial.Util
 import au.org.ala.spatial.util.AreaReportPDF
 import grails.converters.JSON
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 import org.grails.web.json.JSONArray
 import org.springframework.util.StreamUtils
 
+@CompileStatic
 @Slf4j
 class AreaReport extends SlaveProcess {
 
+    @CompileDynamic
     @Override
     void updateSpec(ProcessSpecification spec) {
         // get path to config

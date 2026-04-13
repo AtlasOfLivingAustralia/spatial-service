@@ -19,13 +19,16 @@ import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.intersect.SimpleShapeFileCache
 import grails.plugin.cache.Cacheable
 import groovy.sql.Sql
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
-import org.codehaus.jackson.map.ObjectMapper
-import org.codehaus.jackson.type.TypeReference
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 
 import java.util.concurrent.ConcurrentHashMap
 
+@CompileStatic
 @Slf4j
 class LayerService {
 
@@ -37,6 +40,7 @@ class LayerService {
     ConcurrentHashMap<String, IntersectionFile> intersectionFiles = new ConcurrentHashMap()
     ConcurrentHashMap<String, HashMap<Integer, GridClass>> classGrids = new ConcurrentHashMap<>()
 
+    @CompileDynamic
     List<Layers> getLayers() {
         log.debug("Getting a list of all enabled layers")
         List<Layers> l = Layers.findAllByEnabled(true)
@@ -48,6 +52,7 @@ class LayerService {
         Sql.newInstance(dataSource).execute("delete from layers where id=" + Integer.parseInt(layerId))
     }
 
+    @CompileDynamic
     Layers getLayerById(Long id, boolean enabledLayersOnly = true) {
         log.debug("Getting enabled layer info for id = " + id)
         Layers l
@@ -70,11 +75,13 @@ class LayerService {
     }
 
 
+    @CompileDynamic
     Layers getLayerByName(String name) {
         getLayerByName(name, true)
     }
 
 
+    @CompileDynamic
     Layers getLayerByName(String name, boolean enabledLayersOnly) {
         Layers layer = null
         if (enabledLayersOnly) {
@@ -88,6 +95,7 @@ class LayerService {
     }
 
 
+    @CompileDynamic
     Layers getLayerByDisplayName(String name) {
         Layers layer = Layers.findByDisplaynameAndEnabled(name, true)
         fieldService.updateDisplayPaths([layer])
@@ -96,6 +104,7 @@ class LayerService {
     }
 
 
+    @CompileDynamic
     List<Layers> getLayersByEnvironment() {
         List<Layers> layers = Layers.findAllByTypeAndEnabled('Environmental', true)
         fieldService.updateDisplayPaths(layers)
@@ -104,6 +113,7 @@ class LayerService {
     }
 
 
+    @CompileDynamic
     List<Layers> getLayersByContextual() {
         List<Layers> layers = Layers.findAllByTypeAndEnabled('Contextual', true)
         fieldService.updateDisplayPaths(layers)
@@ -138,6 +148,7 @@ class LayerService {
     }
 
 
+    @CompileDynamic
     Layers getLayerByIdForAdmin(int id) {
         Layers layer = Layers.findById(id)
         fieldService.updateDisplayPaths([layer])
@@ -146,6 +157,7 @@ class LayerService {
     }
 
 
+    @CompileDynamic
     Layers getLayerByNameForAdmin(String name) {
         Layers layer = Layers.findByName(name)
         fieldService.updateDisplayPaths([layer])
@@ -154,6 +166,7 @@ class LayerService {
     }
 
 
+    @CompileDynamic
     List<Layers> getLayersForAdmin() {
         List<Layers> layers = Layers.findAll()
 
@@ -217,7 +230,8 @@ class LayerService {
                     && new File(filePath + ".txt").exists()) {
                 File gridClassesFile = new File(filePath + ".classes.json");
                 if (gridClassesFile.exists()) {
-                    classes = mapper.readValue(gridClassesFile, new TypeReference<Map<Integer, GridClass>>() {})
+                    Map<Integer, GridClass> readClasses = mapper.readValue(gridClassesFile, new TypeReference<Map<Integer, GridClass>>() {})
+                    classes = new HashMap<Integer, GridClass>(readClasses)
                     log.info("found grid classes for " + gridClassesFile.getPath())
                 } else {
                     log.error("classes unavailable for " + gridClassesFile.getPath() + ", build classes offline")

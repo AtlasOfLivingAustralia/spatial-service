@@ -5,12 +5,14 @@
 
 package au.org.ala.spatial.legend
 
+import groovy.transform.CompileStatic
+
 /**
  * generates legend with even interval cutoff's.
  *
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class LegendEvenInterval extends Legend {
 
     @Override

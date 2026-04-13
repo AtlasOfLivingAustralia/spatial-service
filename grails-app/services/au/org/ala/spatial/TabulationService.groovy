@@ -21,7 +21,10 @@ import au.org.ala.spatial.dto.Tabulation
 import au.org.ala.spatial.tabulation.TabulationUtil
 import au.org.ala.spatial.util.SpatialUtils
 import groovy.sql.Sql
+import groovy.transform.CompileStatic
+import org.locationtech.jts.io.WKTReader
 
+@CompileStatic
 class TabulationService {
     LayerService layerService
     SpatialObjectsService spatialObjectsService
@@ -403,14 +406,15 @@ class TabulationService {
 
             tabulations = []
 
-            Sql.newInstance(dataSource).query(sql, [wkt, min, max, min, max], { it ->
+            Sql.newInstance(dataSource).query(sql, [wkt, min, max, min, max] as List<Object>, { it ->
                 while (it.next()) {
                     Tabulation t = new Tabulation()
                     t.fid1 = it.getString(1)
                     t.pid1 = it.getString(2)
                     t.fid2 = it.getString(3)
                     t.pid2 = it.getString(4)
-                    t.geometry = it.getString(5)
+                    String geomWkt = it.getString(5)
+                    t.geometry = new WKTReader().read(geomWkt)
                     t.name1 = it.getString(6)
                     t.name2 = it.getString(7)
                     t.occurrences = it.getInt(8)
@@ -423,9 +427,12 @@ class TabulationService {
 
             for (Tabulation t : (tabulations as List<Tabulation>)) {
                 try {
-                    t.setArea(SpatialUtils.calculateArea(t.getGeometry()))
-                    t.setOccurrences(TabulationUtil.calculateOccurrences(spatialConfig.occurrence_species_records_filename, t.getGeometry()))
-                    t.setSpecies(TabulationUtil.calculateSpecies(spatialConfig.occurrence_species_records_filename, t.getGeometry()))
+                    String wktText = t.geometry?.toText()
+                    if (wktText) {
+                        t.setArea(SpatialUtils.calculateArea(wktText))
+                        t.setOccurrences(TabulationUtil.calculateOccurrences(spatialConfig.occurrence_species_records_filename, wktText))
+                        t.setSpecies(TabulationUtil.calculateSpecies(spatialConfig.occurrence_species_records_filename, wktText))
+                    }
                 } catch (Exception e) {
                     log.error("fid1:" + fid1 + " fid2:" + fid2 + " wkt:" + wkt, e)
                 }
@@ -491,7 +498,7 @@ class TabulationService {
                 if (isPid) {
                     sql = "SELECT fid1, pid1, name1," + " fid2, pid2, name2, " + " ST_AsText(newgeom) as geometry FROM " + "(" + "SELECT a.fid as fid1, a.pid as pid1, a.name as name1, b.fid as fid2, b.pid as pid2, b.name as name2 " + ", (ST_INTERSECTION(b.the_geom, a.the_geom)) as newgeom FROM " + "(SELECT * FROM objects WHERE fid = ? ) a, (SELECT * FROM objects WHERE pid = ? ) b " + "WHERE ST_INTERSECTS(ST_GEOMFROMTEXT(a.bbox, 4326), ST_GEOMFROMTEXT(b.bbox ,4326))" + ") o " + "WHERE newgeom is not null AND ST_Area(newgeom) > 0"
 
-                    Sql.newInstance(dataSource).query(sql, [fid, wkt], { it ->
+                    Sql.newInstance(dataSource).query(sql, [fid, wkt] as List<Object>, { it ->
                         while (it.next()) {
                             Tabulation t = new Tabulation()
                             t.fid1 = it.getString(1)
@@ -500,13 +507,13 @@ class TabulationService {
                             t.fid2 = it.getString(4)
                             t.pid2 = it.getString(5)
                             t.name2 = it.getString(6)
-                            t.geometry = it.getString(7)
+                            t.geometry = new WKTReader().read(it.getString(7))
                             tabulations.add(t)
                         }
                     })
                 } else {
                     sql = "SELECT fid as fid1, pid as pid1, name as name1," + " 'user area' as fid2, 'user area' as pid2, 'user area' as name2, " + " ST_AsText(newgeom) as geometry FROM " + "(SELECT fid, pid, name, (ST_INTERSECTION(ST_GEOMFROMTEXT( ? ,4326), the_geom)) as newgeom FROM " + "objects WHERE fid= ? and ST_INTERSECTS(ST_GEOMFROMTEXT(bbox, 4326), ST_ENVELOPE(ST_GEOMFROMTEXT( ? ,4326)))" + ") o " + "WHERE newgeom is not null AND ST_Area(newgeom) > 0"
-                    Sql.newInstance(dataSource).query(sql, [wkt, fid, wkt], { it ->
+                    Sql.newInstance(dataSource).query(sql, [wkt, fid, wkt] as List<Object>, { it ->
                         while (it.next()) {
                             Tabulation t = new Tabulation()
                             t.fid1 = it.getString(1)
@@ -515,7 +522,7 @@ class TabulationService {
                             t.fid2 = it.getString(4)
                             t.pid2 = it.getString(5)
                             t.name2 = it.getString(6)
-                            t.geometry = it.getString(7)
+                            t.geometry = new WKTReader().read(it.getString(7))
                             tabulations.add(t)
                         }
                     })
@@ -523,7 +530,7 @@ class TabulationService {
 
 
                 for (Tabulation t : (tabulations as List<Tabulation>)) {
-                    t.setArea(SpatialUtils.calculateArea(t.getGeometry()))
+                    t.setArea(SpatialUtils.calculateArea(t.geometry?.toText() ?: ''))
 
                     //don't return geometry
                     t.setGeometry(null)

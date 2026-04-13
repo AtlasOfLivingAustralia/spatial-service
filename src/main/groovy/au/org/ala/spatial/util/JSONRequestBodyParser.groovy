@@ -1,7 +1,7 @@
 package au.org.ala.spatial.util
 
 import groovy.transform.CompileStatic
-import org.codehaus.jackson.map.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 
 /**
  * Utility import groovy.transform.CompileStatic

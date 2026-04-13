@@ -1,20 +1,22 @@
 package au.org.ala.spatial
 
-
 import au.org.ala.spatial.dto.AttributionDTO
 import au.org.ala.spatial.dto.MapDTO
-import org.codehaus.jackson.map.DeserializationConfig
-import org.codehaus.jackson.map.ObjectMapper
+import groovy.transform.CompileStatic
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+
+import javax.annotation.PostConstruct
 
 /**
  * A small cache for data resource attribution.
  * This should be revisited if this cache grows or needs regular refreshing.
  */
 
-import javax.annotation.PostConstruct
 import java.util.concurrent.ConcurrentHashMap
 
-//@CompileStatic
+@CompileStatic
 class AttributionService {
 
     AttributionService attributionCache
@@ -30,9 +32,10 @@ class AttributionService {
     AttributionDTO getAttributionFor(String dataResourceUid) throws Exception {
         AttributionDTO a = cache.get(dataResourceUid)
         if (a == null) {
-            ObjectMapper om = new ObjectMapper()
-            om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            a = om.readValue(new URL(collectionsUrl + "/ws/dataResource/" + dataResourceUid), AttributionDTO.class)
+            ObjectMapper om = JsonMapper.builder()
+                    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                    .build()
+            a = om.readValue(new URL(collectionsUrl + "/ws/dataResource/" + dataResourceUid).openStream(), AttributionDTO.class)
             cache.put(dataResourceUid, a)
         }
         return a

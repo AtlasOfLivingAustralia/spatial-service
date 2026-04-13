@@ -12,6 +12,7 @@ import java.util.zip.GZIPInputStream
 /**
  * @author Adam
  */
+@CompileStatic
 @Slf4j
 class Records {
 
@@ -509,7 +510,8 @@ class Records {
 
             @Override
             int compare(Integer o1, Integer o2) {
-                return (h - 1 - (Math.round((points.get(o1) - mLat) / res)))-(h - 1 - (Math.round((points.get(o2) - mLat) / res)))
+                return (int)(h - 1 - Math.round(((double)points.get(o1) - mLat) / res)) -
+                       (int)(h - 1 - Math.round(((double)points.get(o2) - mLat) / res))
             }
         })
 
@@ -517,7 +519,7 @@ class Records {
         int[] rowStarts = new int[height]
         int row = 0
         for (int i = 0; i < sortOrder.length; i++) {
-            int thisRow = (h - 1 - (int) Math.round((points.get(sortOrder[i]) - mLat) / res))
+            int thisRow = (h - 1 - (int) Math.round(((double)points.get(sortOrder[i]) - mLat) / res))
 
             //handle overflow
             if (thisRow >= height) {
@@ -576,10 +578,10 @@ class Records {
 
             @Override
             int compare(Integer o1, Integer o2) {
-                int v = (int) (Math.round((points.get(o1) - mLat) / res) - Math.round((points.get(o2) - mLat) / res))
+                int v = (int)(Math.round(((double)points.get(o1) - mLat) / res) - Math.round(((double)points.get(o2) - mLat) / res))
 
                 if (v == 0) {
-                    return (int) (Math.round((points.get(o1 - 1) - mLong) / res) - Math.round((points.get(o2 - 1) - mLong) / res))
+                    return (int)(Math.round(((double)points.get(o1 - 1) - mLong) / res) - Math.round(((double)points.get(o2 - 1) - mLong) / res))
                 } else {
                     return v
                 }

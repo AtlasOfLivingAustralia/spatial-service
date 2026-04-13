@@ -21,9 +21,10 @@ import au.org.ala.spatial.dto.SpeciesInput
 import com.opencsv.CSVReader
 import com.opencsv.CSVWriter
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class CompareAreas extends SlaveProcess {
 
@@ -56,7 +57,7 @@ class CompareAreas extends SlaveProcess {
             taskLog(area.name + ": define area")
             area.speciesArea = getSpeciesArea(species, [area])
             taskLog(area.name + ": count occurrences")
-            area.numberOfOccurrences = occurrenceCount(area.speciesArea)
+            area.numberOfOccurrences = occurrenceCount(area.speciesArea) as Integer
             taskLog(area.name + ": list species")
             area.speciesList = new CSVReader(new StringReader(getSpeciesList(area.speciesArea))).readAll()
         }

@@ -13,7 +13,8 @@
  */
 package au.org.ala.spatial.layers
 
-import org.codehaus.jackson.map.annotate.JsonSerialize
+import com.fasterxml.jackson.annotation.JsonInclude
+import groovy.transform.CompileStatic
 
 import java.text.SimpleDateFormat
 
@@ -22,9 +23,8 @@ import java.text.SimpleDateFormat
  *
  * @author Adam
  */
-@JsonSerialize(include = JsonSerialize.Inclusion.ALWAYS)
-import groovy.transform.CompileStatic
-//@CompileStatic
+@JsonInclude(JsonInclude.Include.ALWAYS)
+@CompileStatic
 class SxS {
 
     String value

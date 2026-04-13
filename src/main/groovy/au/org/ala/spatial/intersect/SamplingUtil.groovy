@@ -2,7 +2,7 @@ package au.org.ala.spatial.intersect
 
 import au.org.ala.spatial.Util
 import com.opencsv.CSVReader
-import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang3.StringUtils
 import org.grails.web.json.JSONObject
@@ -13,9 +13,7 @@ import org.springframework.web.client.RestTemplate
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
-
-import groovy.transform.CompileStatic
-
+@CompileStatic
 @Slf4j
 class SamplingUtil {
 

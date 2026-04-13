@@ -1,7 +1,8 @@
 package au.org.ala.spatial.util
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.codehaus.jackson.util.ByteArrayBuilder
+import tools.jackson.core.util.ByteArrayBuilder
 
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipEntry
@@ -10,7 +11,6 @@ import java.util.zip.ZipInputStream
 /**
  * Created by a on 10/03/2014.
  */
-import groovy.transform.CompileStatic
 @Slf4j
 @CompileStatic
 class Occurrences {

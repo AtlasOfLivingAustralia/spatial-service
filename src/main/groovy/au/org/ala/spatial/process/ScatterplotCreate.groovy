@@ -22,9 +22,10 @@ import au.org.ala.spatial.scatterplot.Scatterplot
 import au.org.ala.spatial.scatterplot.ScatterplotDTO
 import au.org.ala.spatial.scatterplot.ScatterplotStyleDTO
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class ScatterplotCreate extends SlaveProcess {
 
@@ -39,7 +40,7 @@ class ScatterplotCreate extends SlaveProcess {
 
         ScatterplotSpeciesInput species1 = JSON.parse(getInput('species1').toString()) as ScatterplotSpeciesInput
         ScatterplotSpeciesInput species2 = JSON.parse(getInput('species2').toString()) as ScatterplotSpeciesInput
-        List<String> layerList = getInput('layer').toString().split(',')
+        List<String> layerList = getInput('layer').toString().split(',').toList()
 
         SpeciesInput speciesArea1 = getSpeciesArea(species1, areas)
         SpeciesInput speciesArea2 = species2?.q ? getSpeciesArea(species2, areas) : null

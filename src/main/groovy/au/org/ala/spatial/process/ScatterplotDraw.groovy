@@ -15,21 +15,22 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.scatterplot.Scatterplot
 import au.org.ala.spatial.scatterplot.ScatterplotStyleDTO
-import au.org.ala.spatial.Util
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class ScatterplotDraw extends SlaveProcess {
 
     void start() {
         //optional area to restrict
         List<AreaInput> areas = JSON.parse(getInput('wkt') as String?: '[]').collect { it as AreaInput } as List<AreaInput>
-        def wkt = areas.size() > 0 ? getAreaWkt(areas[0]) : null
+        String wkt = areas.size() > 0 ? getAreaWkt(areas[0]) as String : null
 
         def layersServiceUrl = getInput('layersServiceUrl')
 

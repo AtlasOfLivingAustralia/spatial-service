@@ -17,20 +17,20 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.SpeciesInput
+import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.layers.OccurrenceDensity
 import au.org.ala.spatial.layers.SitesBySpecies
 import au.org.ala.spatial.layers.SpeciesDensity
 import au.org.ala.spatial.util.Records
-import au.org.ala.spatial.intersect.Grid
-import au.org.ala.spatial.intersect.SimpleRegion
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
 import java.text.SimpleDateFormat
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class PointsToGrid extends SlaveProcess {
 
     void start() {
@@ -109,7 +109,7 @@ class PointsToGrid extends SlaveProcess {
             String[] fieldIds = new String[regionEnvelope.envelope.length]
             for (int i = 0; i < regionEnvelope.envelope.length; i++) {
                 types[i] = "e"
-                fieldIds[i] = regionEnvelope.envelope.layername
+                fieldIds[i] = regionEnvelope.envelope[i].layername
             }
             gridCutterService.makeEnvelope(envelopeFile, resolution, regionEnvelope.envelope, Long.MAX_VALUE, types, fieldIds)
             envelopeGrid = new Grid(envelopeFile)
@@ -219,7 +219,7 @@ class PointsToGrid extends SlaveProcess {
     }
 
     // Isolate method for mocking
-    def getRecords(String bs, String q, double[] bbox) {
+    Records getRecords(String bs, String q, double[] bbox) {
         return new Records(bs, q, bbox, null, null, "names_and_lsid", false)
     }
 }

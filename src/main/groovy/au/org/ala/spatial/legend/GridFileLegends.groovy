@@ -5,17 +5,16 @@
 package au.org.ala.spatial.legend
 
 import au.org.ala.spatial.intersect.Grid
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
 /**
  * Produces legend cutoff values for environmental layers
  *
  * @author Adam
  */
-
-import groovy.util.logging.Slf4j
-
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class GridFileLegends {
 
     //private static final Logger logger = log.getLogger(GridFileLegends.class);

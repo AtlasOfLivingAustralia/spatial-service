@@ -17,12 +17,13 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.dto.AreaInput
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.io.WKTReader
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class MergeAreas extends SlaveProcess {
 
     void start() {

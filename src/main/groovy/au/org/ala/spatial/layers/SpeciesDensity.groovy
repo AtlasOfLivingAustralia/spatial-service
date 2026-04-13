@@ -14,6 +14,7 @@
 package au.org.ala.spatial.layers
 
 import au.org.ala.spatial.util.Records
+import groovy.transform.CompileStatic
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -31,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue
  *
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class SpeciesDensity {
 
     /**
@@ -172,8 +173,8 @@ class SpeciesDensity {
             }
 
             //calculate and write data
-            int startRow = (row == 0) ? 0 : row + gridSize / 2 //gridSize is odd
-            int endRow = (row == height - 1) ? height - 1 : row + gridSize / 2 //gridSize is odd
+            int startRow = (int) ((row == 0) ? 0 : row + gridSize / 2) //gridSize is odd
+            int endRow = (int) ((row == height - 1) ? height - 1 : row + gridSize / 2) //gridSize is odd
             for (int currentRow = startRow; currentRow <= endRow; currentRow++) {
                 if (bb != null) {
                     bb.reset()

@@ -18,11 +18,14 @@ package au.org.ala.spatial
 
 import au.org.ala.spatial.util.MapCache
 import groovy.sql.Sql
+import groovy.transform.CompileStatic
+import net.postgis.jdbc.PGgeometry
+import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.io.WKTReader
 
 import java.sql.ResultSet
 
-//@CompileStatic
+@CompileStatic
 class DistributionsService {
 
     SpatialConfig spatialConfig
@@ -147,18 +150,18 @@ class DistributionsService {
 
                 Distributions d = new Distributions(map)
                 if (intersectArea) {
-                    d.intersectArea = rs.getObject('intersectarea')
+                    d.intersectArea = rs.getObject('intersectarea') as Double
                 }
 
                 if (!noWkt) {
                     Object o = rs.getObject('the_geom')
-                    if (o instanceof net.postgis.jdbc.PGgeometry) {
+                    if (o instanceof PGgeometry) {
                         StringBuffer sb = new StringBuffer()
                         o.geometry.outerWKT(sb)
                         WKTReader wktReader = new WKTReader()
                         d.geometry = wktReader.read(sb.toString())
                     } else {
-                        d.geometry = o
+                        d.geometry = o as Geometry
                     }
                 }
 
@@ -223,12 +226,12 @@ class DistributionsService {
     public static final String GEOSERVER_URL_PLACEHOLDER = "<COMMON_GEOSERVER_URL>"
 
     @Deprecated
-    def count(params, String type) {
+    def count(Map params, String type) {
         get(params, type, COUNT)
     }
 
     @Deprecated
-    def pointRadius(params, String type) {
+    def pointRadius(Map params, String type) {
         get(params, type, POINT_RADIUS)
     }
 
@@ -237,12 +240,12 @@ class DistributionsService {
     int COUNT = 3
 
     @Deprecated
-    def pointRadiusCount(params, String type) {
+    def pointRadiusCount(Map params, String type) {
         get(params, type, POINT_RADIUS_COUNT)
     }
 
     @Deprecated
-    def get(Map queryParams, String type, requestType) {
+    def get(Map queryParams, String type, int requestType) {
         Double latitude = queryParams.latitude as Double
         Double longitude = queryParams.longitude as Double
         Double radius = queryParams.radius as Double
@@ -308,8 +311,8 @@ class DistributionsService {
                 Map map = [:]
 
                 if (groupBy) {
-                    map += [name: rs.getObject('name')]
-                    map += [count: rs.getObject('count')]
+                    map.put('name', rs.getObject('name'))
+                    map.put('count', rs.getObject('count'))
                 } else {
                     fields.eachWithIndex { String entry, int i ->
                         if (rs.getObject(i + 1) != null) {
@@ -317,7 +320,7 @@ class DistributionsService {
                         }
                     }
                     if (wktSelect) {
-                        map += [intersectArea: rs.getObject('intersectArea')]
+                        map.put('intersectArea', rs.getObject('intersectArea'))
                     }
                 }
 
@@ -329,4 +332,3 @@ class DistributionsService {
         result
     }
 }
-

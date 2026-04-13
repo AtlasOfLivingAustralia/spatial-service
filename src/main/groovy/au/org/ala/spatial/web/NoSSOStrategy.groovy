@@ -1,12 +1,12 @@
 package au.org.ala.spatial.web
 
 import au.org.ala.web.SSOStrategy
+import groovy.transform.CompileStatic
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-import groovy.transform.CompileStatic
-//@CompileStatic
+@CompileStatic
 class NoSSOStrategy implements SSOStrategy {
 
     NoSSOStrategy() {}

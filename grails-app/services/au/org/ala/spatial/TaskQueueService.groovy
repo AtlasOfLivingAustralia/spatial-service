@@ -16,14 +16,17 @@
 package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.ProcessSpecification
-import au.org.ala.spatial.process.SlaveProcess
 import au.org.ala.spatial.dto.TaskWrapper
+import au.org.ala.spatial.process.SlaveProcess
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 
 import javax.annotation.PostConstruct
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+@CompileStatic
 class TaskQueueService {
 
     ExecutorService generalEecutor
@@ -53,6 +56,7 @@ class TaskQueueService {
         taskWrapper
     }
 
+    @CompileDynamic
     def getResourcPath(inputSpec, value) {
         def dir = spatialConfig.data.dir
 
@@ -74,6 +78,7 @@ class TaskQueueService {
         }
     }
 
+    @CompileDynamic
     TaskWrapper wrapTask(Task task, ProcessSpecification spec) {
         def isPublic = spec.privateSpecification.isPublic
 
@@ -148,6 +153,7 @@ class TaskQueueService {
             this.spatialConfig = spatialConfig
         }
 
+        @CompileDynamic
         void run() {
             try {
                 Task.withTransaction {

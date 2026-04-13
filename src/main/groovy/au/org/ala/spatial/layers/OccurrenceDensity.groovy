@@ -14,6 +14,7 @@
 package au.org.ala.spatial.layers
 
 import au.org.ala.spatial.util.Records
+import groovy.transform.CompileStatic
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -31,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue
  *
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class OccurrenceDensity {
 
     /**
@@ -168,8 +169,8 @@ class OccurrenceDensity {
             }
 
             //operate on current row
-            int startRow = (row == 0) ? 0 : row + gridSize / 2 //gridSize is odd
-            int endRow = (row == height - 1) ? height - 1 : row + gridSize / 2 //gridSize is odd
+            int startRow = (int) ((row == 0) ? 0 : row + gridSize / 2) //gridSize is odd
+            int endRow = (int) ((row == height - 1) ? height - 1 : row + gridSize / 2) //gridSize is odd
 
             for (int currentRow = startRow; currentRow <= endRow; currentRow++) {
                 if (bb != null) {
@@ -258,10 +259,10 @@ class OccurrenceDensity {
 
         int len = (row + 1 < rowStarts.length) ? rowStarts[row + 1] : records.getRecordsSize()
         for (int i = (row < rowStarts.length ? rowStarts[row] : len); i < len; i++) {
-            int y = height - 1 - Math.round((records.getSortedLatitude(i) - bbox[1]) / resolution)
+            int y = (int) (height - 1 - Math.round((records.getSortedLatitude(i) - bbox[1]) / resolution))
 
             if (y == row) {
-                int x = Math.round((records.getSortedLongitude(i) - bbox[0]) / resolution)
+                int x = (int) (Math.round((records.getSortedLongitude(i) - bbox[0]) / resolution))
 
                 if (x >= 0 && x < width) {
                     counts[x]++

@@ -1,4 +1,7 @@
 package au.org.ala.spatial.dto
+
+import groovy.transform.CompileStatic
+
 /**
  * container for layer filter;
  * <p/>
@@ -7,7 +10,8 @@ package au.org.ala.spatial.dto
  *
  * @author adam
  */
-//@CompileStatic
+
+@CompileStatic
 class LayerFilter implements Serializable {
 
     static final long serialVersionUID = -2733856402542621244L

@@ -15,20 +15,21 @@
 
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.Util
 import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.dto.SpeciesInput
-import au.org.ala.spatial.Util
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class Maxent extends SlaveProcess {
 
     void start() {
         //list of layers
-        List<String> layers = getInput('layer').toString().split(',')
+        List<String> layers = getInput('layer').toString().split(',').toList()
         List<String> contextualLayers = []
         layers.each { String layer ->
             if (layer.endsWith('_aloc')) {
@@ -220,7 +221,7 @@ class Maxent extends SlaveProcess {
 
     static def writeMaxentsld(filename) {
         def resource = Maxent.class.getResource("/maxent/maxent.sld")
-        new File(filename).write(
+        new File(filename.toString()).write(
                 resource.text)
     }
 

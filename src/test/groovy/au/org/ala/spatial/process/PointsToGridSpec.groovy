@@ -1,14 +1,8 @@
 package au.org.ala.spatial.process
 
+import au.org.ala.spatial.*
 import au.org.ala.spatial.dto.SpeciesInput
-import au.org.ala.spatial.SpatialConfig
-import au.org.ala.spatial.Util
-import au.org.ala.spatial.LayersDistancesServiceSpec
-import au.org.ala.spatial.TaskQueueService
-import au.org.ala.spatial.TasksService
-import au.org.ala.spatial.TestUtil
 import au.org.ala.spatial.util.Records
-import au.org.ala.spatial.intersect.SimpleRegion
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
 import spock.lang.Ignore
@@ -74,7 +68,7 @@ class PointsToGridSpec extends Specification implements GrailsUnitTest {
         }
 
         @Override
-        def getRecords(String bs, String q, double[] bbox) {
+        RecordsMock getRecords(String bs, String q, double[] bbox) {
             new RecordsMock(tmpCsv)
         }
     }

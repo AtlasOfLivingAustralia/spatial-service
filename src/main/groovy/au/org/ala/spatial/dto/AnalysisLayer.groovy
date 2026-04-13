@@ -6,11 +6,12 @@ package au.org.ala.spatial.dto
 
 import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
+import groovy.transform.CompileStatic
 
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class AnalysisLayer {
 
     Fields field

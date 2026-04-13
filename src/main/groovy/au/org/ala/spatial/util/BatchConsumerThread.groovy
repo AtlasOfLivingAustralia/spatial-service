@@ -1,12 +1,13 @@
 package au.org.ala.spatial.util
 
+import au.org.ala.spatial.LayerIntersectService
 import au.org.ala.spatial.intersect.IntersectCallback
 import au.org.ala.spatial.intersect.IntersectUtil
-import au.org.ala.spatial.LayerIntersectService
 import groovy.transform.CompileStatic
 
 import java.text.SimpleDateFormat
 import java.util.concurrent.LinkedBlockingQueue
+
 @CompileStatic
 class BatchConsumerThread extends Thread {
     LinkedBlockingQueue<String> waitingBatchDirs

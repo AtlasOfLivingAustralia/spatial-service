@@ -13,14 +13,16 @@
  * rights and limitations under the License.
  ***************************************************************************/
 package au.org.ala.spatial.intersect
+
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+
 /**
  * @author Adam
  */
 
-import groovy.util.logging.Slf4j
-
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class SimpleShapeFileCache {
 
     /**

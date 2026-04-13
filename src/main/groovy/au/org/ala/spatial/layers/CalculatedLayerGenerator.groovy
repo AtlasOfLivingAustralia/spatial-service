@@ -2,6 +2,9 @@ package au.org.ala.spatial.layers
 
 import au.org.ala.spatial.intersect.SimpleShapeFile
 import com.opencsv.CSVReader
+import com.opencsv.CSVReaderBuilder
+import com.opencsv.RFC4180ParserBuilder
+import groovy.transform.CompileStatic
 
 import java.math.RoundingMode
 
@@ -15,7 +18,7 @@ import java.math.RoundingMode
  *
  * @author ChrisF
  */
-//@CompileStatic
+@CompileStatic
 abstract class CalculatedLayerGenerator {
 
     protected Map<Integer, Integer> _speciesCellCounts
@@ -41,8 +44,9 @@ abstract class CalculatedLayerGenerator {
         _cellSpecies = new HashMap()
         _speciesCellCounts = new HashMap()
 
-        CSVReader reader = new CSVReader(new BufferedReader(new FileReader(coordinateSpeciesFlatFile)), '\t' as char, '|' as char
-        )
+        CSVReader reader = new CSVReaderBuilder(new BufferedReader(new FileReader(coordinateSpeciesFlatFile)))
+                .withCSVParser(new RFC4180ParserBuilder().withSeparator('\t' as char).build())
+                .build()
 
         int scale = 2
         if (_resolution.doubleValue() == 1.0d) {
@@ -228,4 +232,11 @@ abstract class CalculatedLayerGenerator {
      */
     protected abstract float handleCell(Map.Entry<BigDecimal, BigDecimal> coordPair, float maxValue, PrintWriter ascPrintWriter, BufferedOutputStream divaOutputStream) throws IOException;
 
+    protected int calculateNumberOfRows() {
+        return (int) (180 / _resolution.floatValue());
+    }
+
+    protected int calculateNumberOfColumns() {
+        return (int) (360 / _resolution.floatValue());
+    }
 }

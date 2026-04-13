@@ -13,6 +13,8 @@
  */
 package au.org.ala.spatial.layers
 
+import groovy.transform.CompileStatic
+
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -22,8 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue
  *
  * @author Adam
  */
-import groovy.transform.CompileStatic
-//@CompileStatic
+@CompileStatic
 class GetValuesOccurrencesThread extends Thread {
 
     /**

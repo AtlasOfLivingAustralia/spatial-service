@@ -16,12 +16,10 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Util
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity
-import org.apache.commons.httpclient.methods.RequestEntity
-import org.apache.commons.httpclient.methods.StringRequestEntity
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class InitGeoserver extends SlaveProcess {
     String geoserverUrl
@@ -53,7 +51,7 @@ class InitGeoserver extends SlaveProcess {
         }
     }
 
-    Map restCall(String description, String type, String url, RequestEntity entity) {
+    Map restCall(String description, String type, String url, String entity) {
         taskLog(description + "...")
         Map response = Util.urlResponse(type, geoserverUrl + url, null, null, entity, true, username, password)
         taskLog("statusCode: " + response.statusCode + ", " + response.text)
@@ -65,9 +63,7 @@ class InitGeoserver extends SlaveProcess {
         String defaultUser = 'admin'
         String defaultPassword = 'geoserver'
 
-        RequestEntity entity
         Map response
-        def resource
 
         if (defaultPassword == password) {
             log.error("Geoserver is configured with the default password")
@@ -75,43 +71,41 @@ class InitGeoserver extends SlaveProcess {
         } else {
             // attempt to change the password from the default to the password in the config
             taskLog("Change the default password...")
-            entity = new StringRequestEntity("{ \"newPassword\":\"${password}\" }", "application/json", "UTF-8")
-            response = Util.urlResponse("PUT", geoserverUrl + "/rest/security/self/password", null, null, entity, true, defaultUser, defaultPassword)
+            response = Util.urlResponse("PUT", geoserverUrl + "/rest/security/self/password", null,
+                    ['Content-Type': 'application/json'],
+                    "{ \"newPassword\":\"${password}\" }",
+                    true, defaultUser, defaultPassword)
             taskLog("statusCode: " + response.statusCode + ", " + response.text)
 
             // attempt to change the master password with the supplied
-            entity = new StringRequestEntity("{ \"oldMasterPassword\":\"${defaultPassword}\", \"newMasterPassword\":\"${password}\" }", "application/json", "UTF-8")
-            restCall("Change the default password", "PUT", "/rest/security/masterpw", entity)
+            restCall("Change the default password", "PUT", "/rest/security/masterpw",
+                    "{ \"oldMasterPassword\":\"${defaultPassword}\", \"newMasterPassword\":\"${password}\" }")
         }
     }
 
     void createWorldLayer() {
-        RequestEntity entity
         Map response
-        def resource
 
         response = restCall("Search for layer 'world'", "GET", "/rest/layers/ALA:world.xml", null)
         if (response.statusCode != 200) {
-            resource = InitGeoserver.class.getResource("/geoserver/world.zip")
-            entity = new ByteArrayRequestEntity(resource.bytes, "application/zip")
-            restCall("Upload the shapefile", "PUT", "/rest/workspaces/ALA/datastores/world/file.shp", entity)
+            // encode bytes as Base64 string to pass as entity — GeoServer accepts zip uploads as raw bytes
+            // use UploadSpatialResource for binary file uploads
+            URL resource = InitGeoserver.class.getResource("/geoserver/world.zip")
+            au.org.ala.spatial.util.UploadSpatialResource.loadResource(
+                    geoserverUrl + "/rest/workspaces/ALA/datastores/world/file.shp",
+                    "", username, password,
+                    File.createTempFile("world", ".zip").tap { it.bytes = resource.bytes }.path)
         }
     }
 
     void uploadLayoutFiles() {
-        RequestEntity entity
-        Map response
-        def resource
-
-        resource = InitGeoserver.class.getResource("/geoserver/scale.xml")
-        entity = new StringRequestEntity(resource.text, "application/json", "UTF-8")
-        restCall("Create the 'scale' layout that is used by biocache-service", "PUT", "/rest/resource/layout/scale.xml", entity)
+        URL resource = InitGeoserver.class.getResource("/geoserver/scale.xml")
+        restCall("Create the 'scale' layout that is used by biocache-service", "PUT",
+                "/rest/resource/layout/scale.xml", resource.text)
     }
 
     void setupWorkspace() {
-        RequestEntity entity
         Map response
-        def resource
 
         taskLog("Delete default workspaces and create ALA workspace")
         for (String workspace : ["nurc", "cite", "it.geosolutions.html", "sde", "sf", "tiger", "topp"]) {
@@ -119,17 +113,16 @@ class InitGeoserver extends SlaveProcess {
         }
         response = restCall("Search for workspace ALA", "GET", "/rest/workspaces/ALA", null)
         if (response.statusCode != 200) {
-            restCall("Creating workspace ALA", "POST", "/rest/workspaces", new StringRequestEntity("<workspace><name>ALA</name></workspace>", "text/xml", "UTF-8"))
+            restCall("Creating workspace ALA", "POST", "/rest/workspaces",
+                    "<workspace><name>ALA</name></workspace>")
         }
     }
 
     void linkToPostgresql() {
-        RequestEntity entity
         Map response
-        def resource
 
         // create store
-        entity = new StringRequestEntity("<dataStore><name>LayersDB</name><connectionParameters>" +
+        String storeXml = "<dataStore><name>LayersDB</name><connectionParameters>" +
                 "<host>" + postgresqlPath + "</host>" +
                 "<port>5432</port>" +
                 "<database>layersdb</database>" +
@@ -137,54 +130,51 @@ class InitGeoserver extends SlaveProcess {
                 "<user>" + postgresqlUser + "</user>" +
                 "<passwd>" + postgresqlPassword + "</passwd>" +
                 "<dbtype>postgis</dbtype>" +
-                "</connectionParameters></dataStore>", "text/xml", "UTF-8")
+                "</connectionParameters></dataStore>"
         response = restCall("Search for store LayersDB", "GET", "/rest/workspaces/ALA/datastores/LayersDB", null)
         if (response.statusCode != 200) {
-            restCall("Creating layersDB store", "POST", "/rest/workspaces/ALA/datastores", entity)
+            restCall("Creating layersDB store", "POST", "/rest/workspaces/ALA/datastores", storeXml)
         }
 
-        // create styles
-        resource = InitGeoserver.class.getResource("/geoserver/marker.png")
-        entity = new ByteArrayRequestEntity(resource.bytes, "image/png")
-        restCall("Upload marker.png for the points_style", "PUT", "/rest/resource/styles/marker.png", entity)
+        // upload marker.png as binary via UploadSpatialResource
+        URL markerResource = InitGeoserver.class.getResource("/geoserver/marker.png")
+        File markerTmp = File.createTempFile("marker", ".png")
+        markerTmp.bytes = markerResource.bytes
+        au.org.ala.spatial.util.UploadSpatialResource.loadResource(
+                geoserverUrl + "/rest/resource/styles/marker.png", "", username, password, markerTmp.path)
 
         taskLog("Creating and uploading styles")
         for (String style : ["envelope_style", "distributions_style", "alastyles", "points_style"]) {
             response = restCall("Search for style " + style, "GET", "/rest/styles/" + style + ".xml", null)
             if (response.statusCode != 200) {
-                entity = new StringRequestEntity("<style><name>" + style + "</name><filename>" + style + ".sld</filename></style>", "text/xml", "UTF-8")
-                restCall("Creating style " + style, "POST", "/rest/styles", entity)
+                restCall("Creating style " + style, "POST", "/rest/styles",
+                        "<style><name>" + style + "</name><filename>" + style + ".sld</filename></style>")
             }
-            resource = InitGeoserver.class.getResource("/geoserver/" + style + ".sld")
-            entity = new StringRequestEntity(resource.text, "application/vnd.ogc.sld+xml", "UTF-8")
-            restCall("Upload style " + style, "PUT", "/rest/styles/" + style, entity)
+            URL styleResource = InitGeoserver.class.getResource("/geoserver/" + style + ".sld")
+            restCall("Upload style " + style, "PUT", "/rest/styles/" + style, styleResource.text)
         }
 
         // create layers
         taskLog("Creating layers and assigning styles")
         for (String layer : ["Objects", "Distributions", "Points"]) {
-            resource = InitGeoserver.class.getResource("/geoserver/" + layer + ".xml")
-            entity = new StringRequestEntity(resource.text, "text/xml", "UTF-8")
-            restCall("Creating layer " + layer, "POST", "/rest/workspaces/ALA/datastores/LayersDB/featuretypes", entity)
+            URL layerResource = InitGeoserver.class.getResource("/geoserver/" + layer + ".xml")
+            restCall("Creating layer " + layer, "POST",
+                    "/rest/workspaces/ALA/datastores/LayersDB/featuretypes", layerResource.text)
 
+            String styleXml
             if (layer == "Points") {
-                entity = new StringRequestEntity("<layer><defaultStyle><name>points_style</name><workspace>ALA</workspace></defaultStyle></layer>", "text/xml", "UTF-8")
+                styleXml = "<layer><defaultStyle><name>points_style</name><workspace>ALA</workspace></defaultStyle></layer>"
             } else {
-                entity = new StringRequestEntity("<layer><defaultStyle><name>distributions_style</name><workspace>ALA</workspace></defaultStyle></layer>", "text/xml", "UTF-8")
+                styleXml = "<layer><defaultStyle><name>distributions_style</name><workspace>ALA</workspace></defaultStyle></layer>"
             }
-
-            restCall("Assign style to layer " + layer, "PUT", "/rest/layers/ALA:" + layer, entity)
+            restCall("Assign style to layer " + layer, "PUT", "/rest/layers/ALA:" + layer, styleXml)
         }
-
     }
 
     void whitelistColocatedUploads() {
-        RequestEntity entity
-
         String request = '<regexUrlCheck><name>colocated_uploads</name><description></description>' +
                 '<enabled>true</enabled><regex>^file://' + spatialConfig.data.dir + '/layer/(?!.*\\.\\./).*$</regex></regexUrlCheck>'
 
-        entity = new StringRequestEntity(request, "text/xml", "UTF-8")
-        restCall("Whitelist colocated uploads", "POST", "/rest/urlchecks", entity)
+        restCall("Whitelist colocated uploads", "POST", "/rest/urlchecks", request)
     }
 }

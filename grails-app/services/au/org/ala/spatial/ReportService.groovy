@@ -1,19 +1,21 @@
 package au.org.ala.spatial
 
-
 import au.org.ala.userdetails.UserDetailsFromIdListResponse
 import au.org.ala.web.AuthService
 import au.org.ala.web.UserDetails
 import grails.gorm.transactions.Transactional
 import groovy.sql.GroovyResultSet
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 
 @Transactional
-//@CompileStatic
+@CompileStatic
 class ReportService {
     AuthService authService
     SpatialConfig spatialConfig
 
     //Generate User usage report
+    @CompileDynamic
     def report() {
         String sql = "select userId, CONCAT(category1, '->', category2) as name, count(*) as count " +
                         "FROM Log " +
@@ -82,6 +84,7 @@ class ReportService {
     }
 
     //Generate Task based on report
+    @CompileDynamic
     def taskBasedReport(includeAll) {
         def excludedUsers = spatialConfig.reporting.excludedUsers
 

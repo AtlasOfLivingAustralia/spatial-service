@@ -1,7 +1,8 @@
 package au.org.ala.spatial.dto
 
 import groovy.transform.CompileStatic
-//@CompileStatic
+
+@CompileStatic
 class MapDTO {
 
     Boolean available = false

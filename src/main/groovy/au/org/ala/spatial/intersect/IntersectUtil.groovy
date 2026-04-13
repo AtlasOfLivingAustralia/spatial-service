@@ -17,7 +17,8 @@ package au.org.ala.spatial.intersect
  * @author Adam
  */
 import groovy.transform.CompileStatic
-//@CompileStatic
+
+@CompileStatic
 class IntersectUtil {
 
     /**

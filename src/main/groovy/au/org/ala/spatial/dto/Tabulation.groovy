@@ -14,14 +14,15 @@
  ***************************************************************************/
 package au.org.ala.spatial.dto
 
+import groovy.transform.CompileStatic
 import io.swagger.v3.oas.annotations.Hidden
+import org.locationtech.jts.geom.Geometry
 
 /**
  * @author Adam
  */
-import org.locationtech.jts.geom.Geometry
-
 // Table accessed only with SQL
+@CompileStatic
 class Tabulation {
 
     String fid1

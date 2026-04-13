@@ -1,9 +1,12 @@
 package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.SandboxIngress
-import au.org.ala.ws.service.WebService
 import com.opencsv.CSVReader
+import com.opencsv.CSVReaderBuilder
 import com.opencsv.CSVWriter
+import com.opencsv.CSVWriterBuilder
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
@@ -29,11 +32,12 @@ import java.util.zip.ZipOutputStream
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
+@CompileStatic
 class SandboxService {
     private static final Logger logger = LoggerFactory.getLogger(SandboxService.class)
 
     SpatialConfig spatialConfig
-    WebService webService
+    def webService
 
     // Treating sandbox queue separate from other processes, not sure if this is the best approach.
     // However, GeneratePoints can run a sandbox import independently of this executor.
@@ -324,7 +328,7 @@ class SandboxService {
             // convert csv to tsv
             File tsvFile = new File(thisDir, "occurrence.tsv");
             reader = new CSVReader(new FileReader(csvFile));
-            writer = new CSVWriter(new FileWriter(tsvFile), '\t' as char);
+            writer = (CSVWriter) new CSVWriterBuilder(new FileWriter(tsvFile)).withSeparator('\t' as char).build()
 
             String[] nextLine;
             int occurrenceIDIndex = -1;
@@ -478,6 +482,7 @@ class SandboxService {
         return matched;
     }
 
+    @CompileDynamic
     String getUserId(String id) {
         if (!isValidUUID(id)) {
             return null;
@@ -509,6 +514,7 @@ class SandboxService {
      * @param userId user ID or null to skip user check
      * @return
      */
+    @CompileDynamic
     boolean delete(String id, String userId, boolean isAdmin) {
         if (!isValidUUID(id)) {
             return false;

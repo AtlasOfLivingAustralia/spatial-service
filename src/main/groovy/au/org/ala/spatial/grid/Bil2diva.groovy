@@ -15,14 +15,12 @@
 package au.org.ala.spatial.grid
 
 import au.org.ala.spatial.Util
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.nio.channels.FileChannel
 import java.text.SimpleDateFormat
 
-import groovy.transform.CompileStatic
+@CompileStatic
 @Slf4j
 class Bil2diva {
 
@@ -236,7 +234,7 @@ class Bil2diva {
         }
     }
 
-    static def getMinMax(File bil, gdalDir, timeout) {
+    static double[] getMinMax(File bil, String gdalDir, Long timeout) {
         double[] minmax = new double[2]
 
         try {

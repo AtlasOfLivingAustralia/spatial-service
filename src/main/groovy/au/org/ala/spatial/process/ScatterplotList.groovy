@@ -14,7 +14,10 @@
  */
 
 package au.org.ala.spatial.process
-//@CompileStatic
+
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class ScatterplotList extends ScatterplotCreate {
 
     void start() {

@@ -15,14 +15,15 @@
 
 package au.org.ala.spatial
 
-import au.org.ala.spatial.SpatialConfig
+
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import org.geotools.geometry.jts.WKTReader2
 import org.grails.web.json.JSONArray
 import org.grails.web.json.JSONObject
 import org.locationtech.jts.geom.Geometry
 
-//@CompileStatic
+@CompileStatic
 class JournalMapService {
 
     SpatialConfig spatialConfig

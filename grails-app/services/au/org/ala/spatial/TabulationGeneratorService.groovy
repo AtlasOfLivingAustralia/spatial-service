@@ -14,24 +14,23 @@
  ***************************************************************************/
 package au.org.ala.spatial
 
-
 import au.org.ala.spatial.dto.IntersectionFile
 import au.org.ala.spatial.dto.Pair
 import au.org.ala.spatial.dto.Tabulation
-import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
+import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 
 /**
  * @author Adam
  */
-
-import groovy.util.logging.Slf4j
-
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class TabulationGeneratorService {
     SpatialConfig spatialConfig
     LayerService layerService
@@ -366,6 +365,7 @@ class TabulationGeneratorService {
         return gridToGrid(fieldId1, fieldId2, records, null)
     }
 
+    @CompileDynamic
      String gridToGrid(String fieldId1, String fieldId2, Records records, String sqlFilePath) {
         FileWriter fw = null
         StringBuilder sb = new StringBuilder()

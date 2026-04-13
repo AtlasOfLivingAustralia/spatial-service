@@ -15,14 +15,14 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.Util
 import au.org.ala.spatial.Distributions
+import au.org.ala.spatial.Util
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.grails.web.json.JSONObject
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class DistributionRematchLsid extends SlaveProcess {
 
@@ -50,13 +50,13 @@ class DistributionRematchLsid extends SlaveProcess {
                 String sql = ''
                 def match = processRecord([family: d.family?:'', genus: d.genus_name?:'', scientificName: d.scientific?:''])
 
-                if (familyLsid != match.familyID) {
+                if (familyLsid != match['familyID']) {
                     sql += "UPDATE distributions SET family_lsid = '" + match.familyID + "' WHERE spcode='" + spcode + "';"
                 }
-                if (genusLsid != match.genusID) {
+                if (genusLsid != match['genusID']) {
                     sql += "UPDATE distributions SET genus_lsid = '" + match.genusID + "' WHERE spcode='" + spcode + "';"
                 }
-                if (taxonLsid != match.taxonConceptID) {
+                if (taxonLsid != match['taxonConceptID']) {
                     sql += "UPDATE distributions SET lsid = '" + match.taxonConceptID + "' WHERE spcode='" + spcode + "';"
                 }
 
@@ -77,13 +77,12 @@ class DistributionRematchLsid extends SlaveProcess {
         }
     }
 
-    def processRecord(Map<String, String> data) {
-        def input = data as JSON
-        StringRequestEntity requestEntity = new StringRequestEntity(input.toString(), 'application/json', 'UTF-8')
+    Map<String, String> processRecord(Map<String, String> data) {
+        String input = (data as JSON).toString()
 
         def url = getInput('namematchingUrl')
 
-        def response = Util.urlResponse("POST", url + "/api/searchByClassification" as String, null, null, requestEntity)
+        def response = Util.urlResponse("POST", url + "/api/searchByClassification" as String, null, ['Content-Type': 'application/json'], input)
 
         JSONObject output = JSON.parse(response.text as String) as JSONObject
 
@@ -114,6 +113,6 @@ class DistributionRematchLsid extends SlaveProcess {
             genusID = ''
         }
 
-        [taxonConceptID: taxonConceptID, familyID: familyID, genusID: genusID]
+        [taxonConceptID: taxonConceptID, familyID: familyID, genusID: genusID] as Map<String, String>
     }
 }

@@ -4,16 +4,17 @@
  */
 package au.org.ala.spatial.scatterplot
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.opencsv.CSVReader
-import org.codehaus.jackson.annotate.JsonIgnore
-import org.codehaus.jackson.annotate.JsonIgnoreProperties
+import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
  * @author Adam
  */
+@CompileStatic
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ScatterplotDTO implements Serializable {
 

@@ -3,18 +3,21 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
 import au.org.ala.spatial.SpatialObjects
+import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.AnalysisLayerUtil
-import au.org.ala.spatial.grid.Bil2diva
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
+import org.geotools.api.data.FileDataStore
+import org.geotools.api.data.FileDataStoreFinder
+import org.geotools.api.data.SimpleFeatureStore
+import org.geotools.api.feature.simple.SimpleFeature
+import org.geotools.api.feature.simple.SimpleFeatureType
 import org.geotools.data.DataUtilities
 import org.geotools.data.DefaultTransaction
-import org.geotools.data.FileDataStore
-import org.geotools.data.FileDataStoreFinder
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
-import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.data.store.ContentFeatureSource
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.FeatureCollection
@@ -23,9 +26,8 @@ import org.geotools.geometry.jts.ReferencedEnvelope
 import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.io.WKTReader
-import org.opengis.feature.simple.SimpleFeature
-import org.opengis.feature.simple.SimpleFeatureType
 
+@CompileStatic
 @Slf4j
 class StandardizeLayers extends SlaveProcess {
 
@@ -55,7 +57,8 @@ class StandardizeLayers extends SlaveProcess {
                         boolean hasTxt = false
                         File shpFile
 
-                        shpResolutions.each { String res ->
+                        shpResolutions.each { Double resD ->
+                            String res = resD.toString()
                             String path = '/standard_layer/' + res + '/' + f.id + '.grd'
                             if (!new File(spatialConfig.data.dir.toString() + path).exists()) {
                                 taskWrapper.task.message = 'running: making for field ' + f.id + ' and resolution ' + res
@@ -144,7 +147,7 @@ class StandardizeLayers extends SlaveProcess {
         }
     }
 
-    void standardizeGrid(f, l, double res, double dres) {
+    void standardizeGrid(Fields f, Layers l, double res, double dres) {
         if (AnalysisLayerUtil.diva2Analysis(
                 String.valueOf(spatialConfig.data.dir + '/layer/' + l.name),
                 String.valueOf(spatialConfig.data.dir + '/standard_layer/' + res + '/' + f.id),
@@ -232,9 +235,9 @@ class StandardizeLayers extends SlaveProcess {
         try {
             SimpleFeatureType e = DataUtilities.createType("tmpshp", "the_geom:MultiPolygon,id:int")
             ShapefileDataStoreFactory dataStoreFactory = new ShapefileDataStoreFactory()
-            Map params = [:]
-            params.put("url", (new File(path + ".shp")).toURI().toURL())
-            params.put("create spatial index", Boolean.FALSE)
+            Map<String, Serializable> params = new LinkedHashMap<String, Serializable>()
+            params.put("url", (Serializable)((new File(path + ".shp")).toURI().toURL()))
+            params.put("create spatial index", (Serializable) Boolean.FALSE)
             ShapefileDataStore newDataStore = (ShapefileDataStore) dataStoreFactory.createNewDataStore(params)
             newDataStore.createSchema(e)
             newDataStore.forceSchemaCRS(DefaultGeographicCRS.WGS84)

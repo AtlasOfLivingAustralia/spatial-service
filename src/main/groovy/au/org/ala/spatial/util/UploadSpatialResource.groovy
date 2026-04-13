@@ -14,12 +14,20 @@
 package au.org.ala.spatial.util
 
 import au.org.ala.spatial.Util
-import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.methods.FileRequestEntity
-import org.apache.commons.httpclient.methods.RequestEntity
-
 import groovy.transform.CompileStatic
-
+import groovy.util.logging.Slf4j
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.CredentialsProvider
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.methods.HttpPut
+import org.apache.http.entity.ContentType
+import org.apache.http.entity.FileEntity
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
 
 @Slf4j
 @CompileStatic
@@ -41,89 +49,108 @@ class UploadSpatialResource {
     }
 
     static String loadResource(String url, String extra, String username, String password, String resourcepath) {
-        File input = new File(resourcepath)
-
-        // Request content will be retrieved directly
-        // from the input stream
-        RequestEntity entity = new FileRequestEntity(input, "application/zip")
-
-        // Execute the request
-        return processResponse(Util.urlResponse("PUT", url, null, null, entity,
-                true, username, password))
+        return putFile(url, new File(resourcepath), "application/zip", username, password)
     }
 
     static String loadSld(String url, String extra, String username, String password, String resourcepath) {
-        File input = new File(resourcepath)
+        return putFile(url, new File(resourcepath), "application/vnd.ogc.sld+xml", username, password)
+    }
 
-        // Request content will be retrieved directly
-        // from the input stream
-        RequestEntity entity = new FileRequestEntity(input, "application/vnd.ogc.sld+xml")
+    private static String putFile(String url, File file, String contentType, String username, String password) {
+        CloseableHttpClient client = buildClient(username, password)
+        try {
+            HttpPut put = new HttpPut(url)
+            put.setEntity(new FileEntity(file, ContentType.create(contentType)))
+            CloseableHttpResponse response = client.execute(put)
+            try {
+                return response.getStatusLine().getStatusCode() + ": " + response.getEntity()?.getContent()?.text
+            } finally {
+                response.close()
+            }
+        } catch (Exception e) {
+            log.error(url, e)
+            return "0: failed"
+        } finally {
+            client.close()
+        }
+    }
 
-        // Execute the request
-        return processResponse(Util.urlResponse("PUT", url, null, null, entity,
-                true, username, password))
+    private static String postFile(String url, File file, String contentType, String username, String password) {
+        CloseableHttpClient client = buildClient(username, password)
+        try {
+            HttpPost post = new HttpPost(url)
+            post.setEntity(new FileEntity(file, ContentType.create(contentType)))
+            CloseableHttpResponse response = client.execute(post)
+            try {
+                return response.getStatusLine().getStatusCode() + ": " + response.getEntity()?.getContent()?.text
+            } finally {
+                response.close()
+            }
+        } catch (Exception e) {
+            log.error(url, e)
+            return "0: failed"
+        } finally {
+            client.close()
+        }
+    }
+
+    private static CloseableHttpClient buildClient(String username, String password) {
+        RequestConfig config = RequestConfig.custom()
+                .setSocketTimeout(300000)
+                .setConnectTimeout(300000)
+                .build()
+        HttpClientBuilder builder = HttpClientBuilder.create().setDefaultRequestConfig(config)
+        if (username && password) {
+            CredentialsProvider creds = new BasicCredentialsProvider()
+            creds.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
+            builder.setDefaultCredentialsProvider(creds)
+        }
+        return builder.build()
     }
 
     private static String processResponse(Map<String, Object> response) {
-        String output
         if (response != null) {
-            int statuscode = ((Integer) response.get("statusCode")).intValue()
-            output = response.get("statusCode") as String + ": " + response.get("text") as String
-        } else {
-            output = "0: failed"
+            return response.get("statusCode") as String + ": " + response.get("text") as String
         }
-        return output
+        return "0: failed"
     }
 
     static String loadCreateStyle(String url, String extra, String username, String password, String name) {
-        // Request content will be retrieved directly
-        // from the input stream
-        RequestEntity entity = null
         try {
             File file = File.createTempFile("sld", "xml")
             file.write("<style><name>" + name + "</name><filename>" + name + ".sld</filename></style>")
-            entity = new FileRequestEntity(file, "text/xml")
+            return postFile(url, file, "text/xml", username, password)
         } catch (Exception e) {
             log.error(name, e)
+            return "0: failed"
         }
-
-        // Execute the request
-        return processResponse(Util.urlResponse("POST", url, null, null, entity,
-                true, username, password))
     }
 
     static String assignSld(String url, String extra, String username, String password, String data) {
-        RequestEntity entity = null
         try {
-            // Request content will be retrieved directly
-            // from the input stream
             File file = File.createTempFile("sld", "xml")
             file.write(data)
-            entity = new FileRequestEntity(file, "text/xml")
+            String method = url.endsWith("/styles") ? "POST" : "PUT"
+            if (method == "POST") {
+                return postFile(url, file, "text/xml", username, password)
+            } else {
+                return putFile(url, file, "text/xml", username, password)
+            }
         } catch (Exception e) {
             log.error(data, e)
+            return "0: failed"
         }
-
-        // When adding a style to a layer use POST. When assigning a default style use PUT.
-        String method = url.endsWith("/styles") ? "POST" : "PUT"
-
-        // Execute the request
-        return processResponse(Util.urlResponse(method, url, null, null, entity,
-                true, username, password))
     }
 
     static String sld(String geoserverUrl, String geoserverUsername, String geoserverPassword, String layerName, String styleName, String pathToSldFile) {
         String extra = ""
 
-        // Create sld
         loadCreateStyle(geoserverUrl + "/rest/styles/",
                 extra, geoserverUsername, geoserverPassword, styleName)
 
-        // Upload sld
         loadSld(geoserverUrl + "/rest/styles/" + styleName,
                 extra, geoserverUsername, geoserverPassword, pathToSldFile)
 
-        // Apply style
         String data = "<layer><enabled>true</enabled><defaultStyle><name>" + styleName +
                 "</name></defaultStyle></layer>"
 
@@ -132,30 +159,21 @@ class UploadSpatialResource {
 
         addGwcStyle(geoserverUrl, layerName, styleName, geoserverUsername, geoserverPassword)
 
-
         return resp
     }
 
     static String addGwcStyle(String geoserverUrl, String layerName, String styleName, String username, String password) {
         String url = geoserverUrl + "/gwc/rest/layers/ALA:" + layerName + ".xml"
-        Map<String, Object> response = Util.urlResponse("GET", url, null,
-                null, null, true, username, password)
+        Map<String, Object> response = Util.urlResponse("GET", url, null, null, null, true, username, password)
 
-        //add Style to layer GWC styles
-        String conf = (String) response.get("text")
+        String conf = (String) response?.get("text")
         if (conf != null && !conf.contains("<string>" + styleName + "</string>")) {
             conf = conf.replace("</values>", "<string>" + styleName + "</string></values>")
 
-            RequestEntity entity = null
             try {
-                // Request content will be retrieved directly
-                // from the input stream
                 File file = File.createTempFile("tmp", "xml")
                 file.write(conf)
-                entity = new FileRequestEntity(file, "text/xml")
-
-                return processResponse(Util.urlResponse("POST", url, null, null, entity,
-                        true, username, password))
+                return postFile(url, file, "text/xml", username, password)
             } catch (Exception e) {
                 log.error(conf, e)
             }

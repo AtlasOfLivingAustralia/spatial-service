@@ -16,15 +16,16 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.GeomMakeValid
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.geotools.data.FeatureReader
+import org.geotools.api.data.FeatureReader
+import org.geotools.api.feature.Property
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.locationtech.jts.geom.Geometry
-import org.opengis.feature.Property
 
 import java.text.MessageFormat
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class ChecklistCreation extends SlaveProcess {
 

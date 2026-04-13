@@ -14,14 +14,14 @@
  ***************************************************************************/
 package au.org.ala.spatial
 
-
 import au.org.ala.spatial.dto.GridClass
 import au.org.ala.spatial.dto.IntersectionFile
-import au.org.ala.spatial.intersect.IntersectCallback
 import au.org.ala.spatial.grid.GridCacheReader
 import au.org.ala.spatial.intersect.Grid
+import au.org.ala.spatial.intersect.IntersectCallback
 import au.org.ala.spatial.intersect.SamplingThread
 import au.org.ala.spatial.intersect.SimpleShapeFile
+import groovy.transform.CompileStatic
 
 import java.util.Map.Entry
 import java.util.concurrent.CountDownLatch
@@ -32,6 +32,8 @@ import java.util.concurrent.LinkedBlockingQueue
  *
  * @author adam
  */
+
+@CompileStatic
 class LayerIntersectService {
 
     /**
@@ -132,7 +134,7 @@ class LayerIntersectService {
                 }
             }
 
-            double[][] p = [[longitude, latitude]]
+            double[][] p = [[longitude, latitude] as double[]] as double[][]
 
             if (layer != null) {
                 if ("contextual" == layer.type.toLowerCase() && (f != null && f.getClasses() == null)) {
@@ -243,7 +245,7 @@ class LayerIntersectService {
     String sampling(String fieldIds, double longitude, double latitude) {
         init()
 
-        double[][] p = [[longitude, latitude]]
+        double[][] p = [[longitude, latitude] as double[]] as double[][]
         String[] fields = fieldIds.split(",")
 
         //count el fields
@@ -408,7 +410,7 @@ class LayerIntersectService {
 
         //parse points
         String[] pointsArray = pointsString.split(",")
-        double[][] points = new double[pointsArray.length / 2][2]
+        double[][] points = new double[(int)(pointsArray.length / 2)][2]
         for (int i = 0; i < pointsArray.length; i += 2) {
             try {
                 points[(int) (i / 2)][1] = Double.parseDouble(pointsArray[i])
@@ -489,7 +491,7 @@ class LayerIntersectService {
 
         //parse points
         String[] pointsArray = pointsString.split(",")
-        double[][] points = new double[pointsArray.length / 2][2]
+        double[][] points = new double[(int)(pointsArray.length / 2)][2]
         for (int i = 0; i < pointsArray.length; i += 2) {
             try {
                 points[(int)(i / 2)][1] = Double.parseDouble(pointsArray[i])

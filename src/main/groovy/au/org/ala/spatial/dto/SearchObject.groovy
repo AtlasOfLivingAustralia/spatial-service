@@ -16,7 +16,8 @@
 package au.org.ala.spatial.dto
 
 import groovy.transform.CompileStatic
-//@CompileStatic
+
+@CompileStatic
 class SearchObject {
     String id
     String pid

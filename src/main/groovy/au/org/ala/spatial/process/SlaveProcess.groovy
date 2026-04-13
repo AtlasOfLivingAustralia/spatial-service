@@ -15,41 +15,21 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.FileService
-import au.org.ala.spatial.JournalMapService
-import au.org.ala.spatial.LayerIntersectService
-import au.org.ala.spatial.SandboxService
-import au.org.ala.spatial.dto.AreaInput
-import au.org.ala.spatial.dto.ProcessSpecification
-import au.org.ala.spatial.dto.SpeciesInput
-import au.org.ala.spatial.SpatialConfig
-import au.org.ala.spatial.Util
-import au.org.ala.spatial.Distributions
-import au.org.ala.spatial.DistributionsService
-import au.org.ala.spatial.Fields
-import au.org.ala.spatial.FieldService
-import au.org.ala.spatial.GridCutterService
-import au.org.ala.spatial.Layers
-import au.org.ala.spatial.LayerService
-import au.org.ala.spatial.OutputParameter
-import au.org.ala.spatial.SpatialObjects
-import au.org.ala.spatial.SpatialObjectsService
-import au.org.ala.spatial.TabulationGeneratorService
-import au.org.ala.spatial.TabulationService
-import au.org.ala.spatial.TasksService
-import au.org.ala.spatial.dto.TaskWrapper
-import au.org.ala.spatial.util.OccurrenceData
+import au.org.ala.spatial.*
+import au.org.ala.spatial.dto.*
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
 import au.org.ala.spatial.legend.GridLegend
 import au.org.ala.spatial.legend.Legend
 import au.org.ala.spatial.legend.LegendEqualArea
-import au.org.ala.spatial.dto.LayerFilter
-import au.org.ala.ws.service.WebService
+import au.org.ala.spatial.util.OccurrenceData
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.IOUtils
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.impl.client.CloseableHttpClient
 import org.geotools.geometry.jts.WKTReader2
 import org.grails.web.json.JSONArray
 import org.locationtech.jts.geom.Geometry
@@ -60,6 +40,7 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.util.zip.ZipInputStream
 
+@CompileStatic
 @Slf4j
 class SlaveProcess {
 
@@ -75,7 +56,7 @@ class SlaveProcess {
     LayerIntersectService layerIntersectService
     TabulationGeneratorService tabulationGeneratorService
     FileService fileService
-    WebService webService
+    def webService
     SandboxService sandboxService
 
     SpatialConfig spatialConfig
@@ -87,23 +68,23 @@ class SlaveProcess {
     void stop() {}
 
 
-    def getFile(String path, String remoteSpatialServiceUrl, String jwt) {
-        def remote = peekFile(path, remoteSpatialServiceUrl, jwt)
+    void getFile(String path, String remoteSpatialServiceUrl, String jwt) {
+        List<Map<String, Object>> remote = peekFile(path, remoteSpatialServiceUrl, jwt)
 
         //compare p list with local files
-        def fetch = []
-        remote.each { file ->
-            if (file.exists) {
-                def local = new File(spatialConfig.data.dir + file.path)
-                if (!local.exists() || local.lastModified() < file.lastModified) {
-                    fetch.add(file.path)
+        List<String> fetch = []
+        remote.each { Map<String, Object> file ->
+            if (file.exists as boolean) {
+                def local = new File(spatialConfig.data.dir + (file.path as String))
+                if (!local.exists() || local.lastModified() < (file.lastModified as Long)) {
+                    fetch.add(file.path as String)
                 }
             }
         }
 
         if (fetch.size() < remote.size()) {
             //fetch only some
-            fetch.each {
+            fetch.each { String it ->
                 getFile(it, remoteSpatialServiceUrl, jwt)
             }
         } else if (fetch.size() > 0) {
@@ -116,21 +97,24 @@ class SlaveProcess {
                 def url = remoteSpatialServiceUrl + "/master/resource?resource=" + URLEncoder.encode(shortpath, 'UTF-8')
 
                 def os = new BufferedOutputStream(new FileOutputStream(tmpFile))
-                def streamObj = Util.getStream(url, jwt)
+                Map<String, Object> streamObj = Util.getStream(url, jwt)
                 try {
-                    if (streamObj?.call) {
-                        os << streamObj?.call?.getResponseBodyAsStream()
+                    if (streamObj?.response) {
+                        InputStream responseStream = (streamObj.response as CloseableHttpResponse).getEntity().getContent()
+                        os << responseStream
                     }
                     os.flush()
                     os.close()
                 } catch (Exception e) {
                     log.error e.getMessage(), e
                 }
-                streamObj?.call?.releaseConnection()
+                if (streamObj?.client) {
+                    (streamObj.client as CloseableHttpClient).close()
+                }
 
                 def zf = new ZipInputStream(new FileInputStream(tmpFile))
                 try {
-                    def entry
+                    java.util.zip.ZipEntry entry
                     while ((entry = zf.getNextEntry()) != null) {
                         def filepath = spatialConfig.data.dir + entry.getName()
                         def f = new File(filepath)
@@ -138,15 +122,15 @@ class SlaveProcess {
 
                         //TODO: copyInputStreamToFile closes the stream even if there are more entries
                         def fout = new FileOutputStream(f)
-                        IOUtils.copy(zf, fout);
+                        IOUtils.copy(zf, fout)
                         fout.close()
 
                         zf.closeEntry()
 
                         //update lastmodified time
-                        remote.each { file ->
-                            if (entry.name.equals(file.path)) {
-                                f.setLastModified(file.lastModified)
+                        remote.each { Map<String, Object> file ->
+                            if (entry.name.equals(file.path as String)) {
+                                f.setLastModified(file.lastModified as Long)
                             }
                         }
                     }
@@ -176,21 +160,21 @@ class SlaveProcess {
      * @param jwt required if a remote spatial service is used
      * @return
      */
-    List peekFile(String path, String spatialServiceUrl = spatialConfig.spatialService.url, String jwt = null) {
+    List<Map<String, Object>> peekFile(String path, String spatialServiceUrl = spatialConfig.spatialService.url, String jwt = null) {
         String shortpath = path.replace(spatialConfig.data.dir.toString(), '')
 
         // if the spatial service is the same as the local service, use the file service
         if (spatialServiceUrl.equals(spatialConfig.grails.serverURL)) {
-            return fileService.info(shortpath.toString())
+            return fileService.info(shortpath) as List<Map<String, Object>>
         }
 
-        List map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]]
+        List<Map<String, Object>> map = [[path: '', exists: false, lastModified: System.currentTimeMillis()]] as List<Map<String, Object>>
 
         try {
             String url = spatialServiceUrl + "/master/resourcePeek?resource=" + URLEncoder.encode(shortpath, 'UTF-8')
 
             // use the provided JWT authentication in the request header, and assign the JSON GET result to the map
-            map = JSON.parse(Util.urlResponse("GET", url, null, ['Authorization': 'Bearer ' + jwt])?.text) as List
+            map = JSON.parse(Util.urlResponse("GET", url, null, ['Authorization': 'Bearer ' + jwt] as Map<String, String>)?.text as String) as List<Map<String, Object>>
 
         } catch (err) {
             log.error "failed to get: " + path, err
@@ -218,46 +202,53 @@ class SlaveProcess {
     ProcessSpecification spec(ProcessSpecification config) {
         ProcessSpecification s
         if (config == null) {
-            def json = JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text)
+            org.grails.web.json.JSONObject json = (org.grails.web.json.JSONObject) JSON.parse(this.class.getResource("/processes/" + this.class.simpleName + ".json").text)
             s = new ProcessSpecification()
-            s.name = json.name
-            s.description = json.description
-            s.isBackground = json.isBackground
-            s.version = json.version
+            s.name = json.get("name")?.toString()
+            s.description = json.get("description")?.toString()
+            s.isBackground = json.get("isBackground") as Boolean
+            s.version = json.get("version")?.toString()
 
-            s.input = new HashMap()
-            json.input.each { key, value ->
+            s.input = new HashMap<String, ProcessSpecification.InputSpecification>()
+            ((org.grails.web.json.JSONObject) json.get("input"))?.each { key, value ->
+                org.grails.web.json.JSONObject v = (org.grails.web.json.JSONObject) value
                 ProcessSpecification.InputSpecification is = new ProcessSpecification.InputSpecification()
-                is.description = value.description
-                is.type = value.type.toUpperCase()
+                is.description = v.get("description")?.toString()
+                is.type = v.get("type")?.toString()?.toUpperCase()
 
                 ProcessSpecification.ConstraintSpecification c = new ProcessSpecification.ConstraintSpecification()
-                value.constraints?.each { ckey, cvalue ->
+                org.grails.web.json.JSONObject constraints = (org.grails.web.json.JSONObject) v.get("constraints")
+                constraints?.each { ckey, cvalue ->
                     if (ckey == 'selection') {
-                        c.selection = cvalue.toUpperCase()
+                        c.selection = cvalue?.toString()?.toUpperCase()
                     } else if (ckey == 'content') {
-                        c.content = cvalue
+                        c.content = cvalue as List<String>
                     } else if (c.properties.containsKey(ckey)) {
-                        c.setProperty(ckey, cvalue)
+                        c.setProperty(ckey as String, cvalue)
                     }
                 }
                 is.constraints = c
 
-                s.input.put(key, is)
+                s.input.put(key as String, is)
             }
 
-            s.output = new HashMap()
-            json.output?.each { key, value ->
-                ProcessSpecification.OutputSpecification is = new ProcessSpecification.OutputSpecification()
-                is.description = value.description
+            s.output = new HashMap<ProcessSpecification.OutputType, ProcessSpecification.OutputSpecification>()
+            org.grails.web.json.JSONObject outputJson = (org.grails.web.json.JSONObject) json.get("output")
+            outputJson?.each { key, value ->
+                org.grails.web.json.JSONObject v = (org.grails.web.json.JSONObject) value
+                ProcessSpecification.OutputSpecification os2 = new ProcessSpecification.OutputSpecification()
+                os2.description = v.get("description")?.toString()
 
-                s.output.put(key.toUpperCase(), is)
+                try {
+                    s.output.put(ProcessSpecification.OutputType.valueOf(key?.toString()?.toUpperCase()), os2)
+                } catch (IllegalArgumentException ignored) {}
             }
 
             s.privateSpecification = new ProcessSpecification.PrivateSpecification()
-            json.private?.each { key, value ->
+            org.grails.web.json.JSONObject privateJson = (org.grails.web.json.JSONObject) json.get("private")
+            privateJson?.each { key, value ->
                 if (s.privateSpecification.properties.containsKey(key)) {
-                    s.privateSpecification.setProperty(key, value)
+                    s.privateSpecification.setProperty(key as String, value)
                 }
             }
 
@@ -282,7 +273,7 @@ class SlaveProcess {
         taskWrapper.path + '/'
     }
 
-    String getTaskPathById(taskId) {
+    String getTaskPathById(String taskId) {
         spatialConfig.data.dir + '/public/' + taskId + '/'
     }
 
@@ -302,7 +293,7 @@ class SlaveProcess {
         distributionsService.queryDistributions([:], true, Distributions.SPECIES_CHECKLIST)
     }
 
-    List getTabulations() {
+    List<au.org.ala.spatial.dto.Tabulation> getTabulations() {
         tabulationService.listTabulations()
     }
 
@@ -318,7 +309,7 @@ class SlaveProcess {
         fieldService.get(fieldId, null, 0, -1)?.objects
     }
 
-    String getWkt(objectId) {
+    String getWkt(String objectId) {
         OutputStream baos = new ByteArrayOutputStream()
         spatialObjectsService.wkt(objectId, baos)
 
@@ -400,19 +391,19 @@ class SlaveProcess {
         }
     }
 
-    static def joinSpeciesQ(List list) {
+    static String joinSpeciesQ(List<String> list) {
         if (!list) {
             return ''
         }
 
-        def str = list[0]
-        for (int i=1;i<list.size();i++) {
+        String str = list[0]
+        for (int i = 1; i < list.size(); i++) {
             str += '&fq=' + list[i]
         }
         str
     }
 
-    static def facetOccurenceCount(String facet, SpeciesInput species) {
+    static JSONArray facetOccurenceCount(String facet, SpeciesInput species) {
         String url = species.bs + "/occurrence/facets?facets=" + facet + "&flimit=-1&fsort=index&q=" + joinSpeciesQ(species.q)
         String response = Util.getUrl(url)
 
@@ -442,7 +433,7 @@ class SlaveProcess {
         return 0
     }
 
-    def occurrenceCount(SpeciesInput species) {
+    Integer occurrenceCount(SpeciesInput species) {
         return occurrenceCount(species, null)
     }
 
@@ -453,7 +444,8 @@ class SlaveProcess {
         String url = species.bs + "/occurrences/search?&facet=off&pageSize=0&q=" + joinSpeciesQ(species.q) + fq
         String response = Util.getUrl(url)
 
-        JSON.parse(response).totalRecords as Integer
+        org.grails.web.json.JSONObject parsed = (org.grails.web.json.JSONObject) JSON.parse(response)
+        parsed.get("totalRecords") as Integer
     }
 
     String[] facet(String facet, SpeciesInput species) {
@@ -510,7 +502,7 @@ class SlaveProcess {
         OccurrenceData od = new OccurrenceData()
         String[] s = od.getSpeciesData(joinSpeciesQ(species.q), species.bs, null, null)
 
-        def newFiles = []
+        List<File> newFiles = []
 
         if (s[0] != null) {
             //mkdir in index location
@@ -735,7 +727,7 @@ class SlaveProcess {
     }
 
     private double[][] getLayerFilterExtents(LayerFilter[] envelopes) {
-        double[][] extents = [[-180, -90], [180, 90]]
+        double[][] extents = [[-180.0d, -90.0d], [180.0d, 90.0d]] as double[][]
         for (int i = 0; i < envelopes.length; i++) {
             if (envelopes[i].getLayername().startsWith("cl")) {
                 String[] ids = envelopes[i].getIds()
@@ -1085,11 +1077,11 @@ class SlaveProcess {
         }
     }
 
-    String getSpeciesList(species) {
+    String getSpeciesList(SpeciesInput species) {
         return getSpeciesList(species, null, true, true)
     }
 
-    String getSpeciesList(SpeciesInput species, String extraFq, lookup, count) {
+    String getSpeciesList(SpeciesInput species, String extraFq, boolean lookup, boolean count) {
         String speciesList = null
 
         try {
@@ -1107,7 +1099,7 @@ class SlaveProcess {
         speciesList
     }
 
-    def getAreaWkt(AreaInput area) {
+    String getAreaWkt(AreaInput area) {
         if (area.type == 'envelope') {
             return getEnvelopeWkt(area.pid)
         }
@@ -1130,16 +1122,16 @@ class SlaveProcess {
 
     RegionEnvelope processArea(AreaInput area) {
         log.info("Parsing WKT ")
-        def wkt = getAreaWkt(area)
+        String wkt = getAreaWkt(area)
 
-        def region = null
-        def envelope = null
+        SimpleRegion region = null
+        LayerFilter[] envelope = null
         if (wkt.startsWith("ENVELOPE")) {
             envelope = LayerFilter.parseLayerFilters(wkt)
         } else {
             region = SimpleShapeFile.parseWKT(wkt)
         }
-        log.info("Check BBox: " + region?.bounding_box)
+        log.info("Check BBox: " + region?.getBoundingBox())
         new RegionEnvelope(region, envelope)
     }
 
@@ -1173,14 +1165,14 @@ class SlaveProcess {
             species.wkt = qid.wkt
         }
 
-        def q = species.q as Set
+        Set<String> q = species.q as Set<String>
 
-        def wkt = null
+        String wkt = null
 
         if (area.q && area.q.size() > 0) {
             if (area.q.startsWith('[')) {
                 // parse list
-                q.addAll(area.q.substring(1, area.q.length() - 1).split(','))
+                q.addAll(area.q.substring(1, area.q.length() - 1).split(',').toList())
             } else {
                 q.add(area.q)
             }
@@ -1213,12 +1205,12 @@ class SlaveProcess {
                         species.wkt = intersection.toText()
                     } else {
                         species.wkt = null
-                        q = ["-*:*"]
+                        q = ["-*:*"] as Set<String>
                     }
                 } catch (Exception e) {
                     log.error("Failed to retrieve intersection area", e)
                     species.wkt = null
-                    q = ["-*:*"]
+                    q = ["-*:*"] as Set<String>
                 }
             }
         }
@@ -1235,15 +1227,15 @@ class SlaveProcess {
         species
     }
 
-    def runCmd(String[] cmd, Boolean logToTask, Long timeout) {
+    int runCmd(String[] cmd, Boolean logToTask, Long timeout) {
         Util.runCmd(cmd, logToTask, taskWrapper, timeout, null)
     }
 
-    def setMessage(String msg) {
+    void setMessage(String msg) {
         taskWrapper.task.message = msg
     }
 
-    def taskLog(String msg) {
+    void taskLog(String msg) {
         taskWrapper.task.history.put(System.currentTimeMillis() as String, msg)
         taskWrapper.task.message = msg
     }
@@ -1257,6 +1249,7 @@ class SlaveProcess {
 
 }
 
+@CompileStatic
 class RegionEnvelope {
     SimpleRegion region
     LayerFilter[] envelope

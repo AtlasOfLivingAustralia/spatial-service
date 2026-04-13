@@ -5,10 +5,11 @@
 package au.org.ala.spatial.legend
 
 import au.org.ala.spatial.intersect.Grid
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.codehaus.jackson.annotate.JsonIgnoreProperties
-import org.codehaus.jackson.annotate.JsonSubTypes
-import org.codehaus.jackson.annotate.JsonTypeInfo
 
 import javax.imageio.ImageIO
 import java.awt.*
@@ -31,7 +32,7 @@ import java.awt.image.BufferedImage
 ])
 @JsonIgnoreProperties(["minMax", "cutoffs"])
 @Slf4j
-//@CompileStatic
+@CompileStatic
 abstract class Legend implements Serializable {
 
     /*

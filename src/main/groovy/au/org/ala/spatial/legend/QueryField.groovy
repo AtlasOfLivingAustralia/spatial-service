@@ -4,15 +4,16 @@
  */
 package au.org.ala.spatial.legend
 
-import org.codehaus.jackson.JsonParser
-import org.codehaus.jackson.map.DeserializationContext
-import org.codehaus.jackson.map.JsonDeserializer
-import org.codehaus.jackson.map.annotate.JsonDeserialize
+import groovy.transform.CompileStatic
+import tools.jackson.core.JsonParser
+import tools.jackson.databind.DeserializationContext
+import tools.jackson.databind.ValueDeserializer
+import tools.jackson.databind.annotation.JsonDeserialize
 
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class QueryField implements Serializable {
     /**
      * The sub group that the query field belongs to.  Allows items to be group under common headings
@@ -543,7 +544,8 @@ class QueryFieldComparator implements Comparator<QueryField> {
     }
 }
 
-class GroupTypeDeserializer extends JsonDeserializer<QueryField.GroupType> {
+@CompileStatic
+class GroupTypeDeserializer extends ValueDeserializer<QueryField.GroupType> {
     @Override
     QueryField.GroupType deserialize(JsonParser parser, DeserializationContext context)
             throws IOException {
@@ -551,7 +553,8 @@ class GroupTypeDeserializer extends JsonDeserializer<QueryField.GroupType> {
     }
 }
 
-class FieldTypeDeserializer extends JsonDeserializer<QueryField.FieldType> {
+@CompileStatic
+class FieldTypeDeserializer extends ValueDeserializer<QueryField.FieldType> {
     @Override
     QueryField.FieldType deserialize(JsonParser parser, DeserializationContext context)
             throws IOException {

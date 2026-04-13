@@ -1,11 +1,13 @@
 package au.org.ala.spatial.dto
 
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.sql.Statement
 import java.util.concurrent.ConcurrentLinkedQueue
 
+@CompileStatic
 @Slf4j
 class AreaThread extends Thread {
 

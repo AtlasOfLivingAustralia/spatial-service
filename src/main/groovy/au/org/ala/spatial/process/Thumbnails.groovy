@@ -16,10 +16,11 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Layers
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.util.StreamUtils
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class Thumbnails extends SlaveProcess {
 

@@ -16,6 +16,7 @@ package au.org.ala.spatial.intersect
 
 import au.org.ala.spatial.dto.GridClass
 import au.org.ala.spatial.dto.IntersectionFile
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
 
@@ -26,7 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue
  * @author Adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class SamplingThread extends Thread {
 
     /**

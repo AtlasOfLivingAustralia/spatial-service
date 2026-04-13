@@ -20,8 +20,10 @@ import au.org.ala.spatial.dto.SandboxIngress
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
+@CompileStatic
 @Slf4j
 class GeneratePoints extends SlaveProcess {
 

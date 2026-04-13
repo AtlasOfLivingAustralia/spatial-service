@@ -17,10 +17,13 @@ package au.org.ala.spatial.process
 
 import au.org.ala.spatial.util.RecordsSmall
 import com.opencsv.CSVReader
+import com.opencsv.CSVReaderBuilder
+import com.opencsv.RFC4180ParserBuilder
+import groovy.transform.CompileStatic
 
 import java.util.zip.ZipInputStream
 
-//@CompileStatic
+@CompileStatic
 class DownloadRecords extends SlaveProcess {
 
     void start() {
@@ -34,7 +37,9 @@ class DownloadRecords extends SlaveProcess {
             //only 1 file in the download zip
             zis.getNextEntry()
 
-            CSVReader csv = new CSVReader(new InputStreamReader(zis), '\t' as char, '|' as char)
+            CSVReader csv = new CSVReaderBuilder(new InputStreamReader(zis))
+                    .withCSVParser(new RFC4180ParserBuilder().withSeparator('\t' as char).build())
+                    .build()
             BufferedWriter br = new BufferedWriter(new FileWriter(file))
 
             //convert to unescaped form

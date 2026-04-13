@@ -4,13 +4,16 @@
  */
 
 package au.org.ala.spatial.legend
+
+import groovy.transform.CompileStatic
+
 /**
  * generates legend using equal size of unique values in
  * each catagory.
  *
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class LegendEqualArea extends Legend {
 
     @Override

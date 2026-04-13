@@ -15,21 +15,22 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.Util
+import au.org.ala.spatial.dto.AreaInput
 import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class Classification extends SlaveProcess {
 
     void start() {
         taskLog("Starting Classification")
         //list of layers
-        List<String> layers = getInput('layer').toString().split(',')
+        List<String> layers = getInput('layer').toString().split(',').toList()
         def envnameslist = new String[layers.size()]
         layers.eachWithIndex { l, idx ->
             envnameslist[idx] = l

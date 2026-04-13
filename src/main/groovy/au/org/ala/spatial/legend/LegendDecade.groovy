@@ -1,11 +1,13 @@
 package au.org.ala.spatial.legend
 
+import groovy.transform.CompileStatic
+
 /**
  * Generates a legend based on decades
  *
  * @author Natasha Quimby (natsha.quimby@csiro.au)
  */
-//@CompileStatic
+@CompileStatic
 class LegendDecade extends Legend {
 
     @Override

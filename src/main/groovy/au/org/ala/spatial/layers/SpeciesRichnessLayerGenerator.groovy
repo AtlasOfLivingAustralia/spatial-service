@@ -1,10 +1,11 @@
 package au.org.ala.spatial.layers
 
+import groovy.transform.CompileStatic
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-//@CompileStatic
+@CompileStatic
 class SpeciesRichnessLayerGenerator extends CalculatedLayerGenerator {
 
     SpeciesRichnessLayerGenerator(BigDecimal resolution, File cellSpeciesFile) throws IOException {
@@ -31,7 +32,7 @@ class SpeciesRichnessLayerGenerator extends CalculatedLayerGenerator {
 
             ascPrintWriter.print(cellSpeciesCount)
 
-            ByteBuffer bb = ByteBuffer.wrap(new byte[Float.SIZE / Byte.SIZE])
+            ByteBuffer bb = ByteBuffer.wrap(new byte[(int)(Float.SIZE / Byte.SIZE)])
             bb.order(ByteOrder.LITTLE_ENDIAN)
             bb.putFloat(cellSpeciesCount)
             divaOutputStream.write(bb.array())
@@ -42,7 +43,7 @@ class SpeciesRichnessLayerGenerator extends CalculatedLayerGenerator {
             // is zero.
             ascPrintWriter.print("0")
 
-            ByteBuffer bb = ByteBuffer.wrap(new byte[Float.SIZE / Byte.SIZE])
+            ByteBuffer bb = ByteBuffer.wrap(new byte[(int)(Float.SIZE / Byte.SIZE)])
             bb.order(ByteOrder.LITTLE_ENDIAN)
             bb.putFloat(0)
             divaOutputStream.write(bb.array())

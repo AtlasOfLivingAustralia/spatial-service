@@ -18,8 +18,11 @@ package au.org.ala.spatial.process
 import au.org.ala.spatial.Util
 import au.org.ala.spatial.dto.Tabulation
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.grails.web.json.JSONObject
 
+@CompileStatic
 @Slf4j
 class TabulationCopy extends SlaveProcess {
 
@@ -36,7 +39,7 @@ class TabulationCopy extends SlaveProcess {
 
         for (Tabulation tab : tabulations) {
             if (getField(tab.fid2) && getField(tab.fid1)) {
-                def data = JSON.parse(Util.getUrl("${sourceUrl}/tabulation/data/${tab.fid1}/${tab.fid2}/tabulation.json"))
+                List<JSONObject> data = JSON.parse(Util.getUrl("${sourceUrl}/tabulation/data/${tab.fid1}/${tab.fid2}/tabulation.json")) as List<JSONObject>
 
                 def ids1 = [:]
                 for (def obj : getObjects(tab.fid1)) {
@@ -53,13 +56,13 @@ class TabulationCopy extends SlaveProcess {
 
                 //sql to add new entries
                 StringBuilder sb = new StringBuilder()
-                for (def row : data) {
-                    def id1 = ids1.get(row.name1)
-                    def id2 = ids2.get(row.name2)
+                for (JSONObject row : data) {
+                    def id1 = ids1.get(row.get('name1'))
+                    def id2 = ids2.get(row.get('name2'))
                     if (id1 && id2) {
                         sb.append("INSERT INTO tabulation (fid1, fid2, pid1, pid2, species, occurrences, area, speciest1, speciest2) " +
-                                "VALUES ('${row.fid1}','${row.fid2}','${id1}','${id2}'," +
-                                "${row.species},${row.occurrences},${row.area},${row.speciest1},${row.speciest2});\n")
+                                "VALUES ('${row.get('fid1')}','${row.get('fid2')}','${id1}','${id2}'," +
+                                "${row.get('species')},${row.get('occurrences')},${row.get('area')},${row.get('speciest1')},${row.get('speciest2')});\n")
                     } else {
                         //TODO: log error
                     }

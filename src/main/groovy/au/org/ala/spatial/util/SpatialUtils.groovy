@@ -8,19 +8,18 @@ import au.org.ala.spatial.Util
 import au.org.ala.spatial.grid.Grid2Shape
 import au.org.ala.spatial.intersect.Grid
 import com.opencsv.CSVReader
-
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.geotools.api.data.*
+import org.geotools.api.feature.simple.SimpleFeature
+import org.geotools.api.feature.simple.SimpleFeatureType
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem
+import org.geotools.api.style.Style
 import org.geotools.data.DefaultTransaction
-import org.geotools.data.FileDataStore
-import org.geotools.data.FileDataStoreFinder
-import org.geotools.data.Transaction
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
 import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.data.simple.SimpleFeatureIterator
-import org.geotools.data.simple.SimpleFeatureSource
-import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.FeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
@@ -36,7 +35,6 @@ import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.geotools.renderer.GTRenderer
 import org.geotools.renderer.lite.StreamingRenderer
 import org.geotools.styling.SLD
-import org.geotools.styling.Style
 import org.geotools.xsd.Parser
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryCollection
@@ -44,14 +42,10 @@ import org.locationtech.jts.geom.GeometryFactory
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.io.WKTReader
 import org.locationtech.jts.io.WKTWriter
-import org.opengis.feature.simple.SimpleFeature
-import org.opengis.feature.simple.SimpleFeatureType
-import org.opengis.referencing.crs.CoordinateReferenceSystem
 
-import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.image.BufferedImage
+import java.util.List
 
 @CompileStatic
 @Slf4j

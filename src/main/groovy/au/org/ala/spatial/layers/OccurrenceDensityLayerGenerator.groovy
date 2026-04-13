@@ -1,10 +1,11 @@
 package au.org.ala.spatial.layers
 
+import groovy.transform.CompileStatic
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-//@CompileStatic
+@CompileStatic
 class OccurrenceDensityLayerGenerator extends CalculatedLayerGenerator {
 
     OccurrenceDensityLayerGenerator(BigDecimal resolution, File cellOccurrenceCountsFile) throws IOException {
@@ -29,7 +30,7 @@ class OccurrenceDensityLayerGenerator extends CalculatedLayerGenerator {
 
             ascPrintWriter.print(cellOccurrenceCount)
 
-            ByteBuffer bb = ByteBuffer.wrap(new byte[Float.SIZE / Byte.SIZE])
+            ByteBuffer bb = ByteBuffer.wrap(new byte[(int)(Float.SIZE / Byte.SIZE)])
             bb.order(ByteOrder.LITTLE_ENDIAN)
             bb.putFloat(cellOccurrenceCount)
             divaOutputStream.write(bb.array())
@@ -40,7 +41,7 @@ class OccurrenceDensityLayerGenerator extends CalculatedLayerGenerator {
             // is zero.
             ascPrintWriter.print("0")
 
-            ByteBuffer bb = ByteBuffer.wrap(new byte[Float.SIZE / Byte.SIZE])
+            ByteBuffer bb = ByteBuffer.wrap(new byte[(int)(Float.SIZE / Byte.SIZE)])
             bb.order(ByteOrder.LITTLE_ENDIAN)
             bb.putFloat(0)
             divaOutputStream.write(bb.array())

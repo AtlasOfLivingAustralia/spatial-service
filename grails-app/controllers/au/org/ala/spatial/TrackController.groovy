@@ -15,9 +15,8 @@
 
 package au.org.ala.spatial
 
-
-import au.org.ala.spatial.dto.MapDTO
 import au.org.ala.plugins.openapi.Path
+import au.org.ala.spatial.dto.MapDTO
 import grails.converters.JSON
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter

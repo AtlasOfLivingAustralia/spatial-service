@@ -1,12 +1,12 @@
 package au.org.ala.spatial.scatterplot
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import groovy.transform.CompileStatic
-import org.codehaus.jackson.annotate.JsonIgnoreProperties
 
 /**
  * Created by a on 10/03/2014.
  */
-//@CompileStatic
+@CompileStatic
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ScatterplotDataDTO {
 

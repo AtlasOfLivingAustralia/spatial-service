@@ -18,8 +18,9 @@ package au.org.ala.spatial.dto
 
 import au.org.ala.spatial.StreamGobbler
 import au.org.ala.spatial.Task
+import groovy.transform.CompileStatic
 
-//@CompileStatic
+@CompileStatic
 class TaskWrapper {
     Long id = System.currentTimeMillis()
 

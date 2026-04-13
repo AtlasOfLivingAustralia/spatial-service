@@ -14,6 +14,7 @@
  ***************************************************************************/
 package au.org.ala.spatial.grid
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.util.concurrent.*
@@ -21,8 +22,8 @@ import java.util.concurrent.*
 /**
  * @author Adam
  */
-//@CompileStatic
 
+@CompileStatic
 @Slf4j
 class GridCacheReader {
 

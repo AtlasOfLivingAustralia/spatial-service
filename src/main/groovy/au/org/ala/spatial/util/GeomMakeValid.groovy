@@ -15,25 +15,25 @@
 
 package au.org.ala.spatial.util
 
+import groovy.transform.CompileStatic
+import org.geotools.api.data.FeatureReader
+import org.geotools.api.data.SimpleFeatureSource
+import org.geotools.api.data.SimpleFeatureStore
+import org.geotools.api.data.Transaction
+import org.geotools.api.feature.simple.SimpleFeature
+import org.geotools.api.feature.simple.SimpleFeatureType
 import org.geotools.data.DefaultTransaction
-import org.geotools.data.FeatureReader
-import org.geotools.data.Transaction
 import org.geotools.data.collection.ListFeatureCollection
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
 import org.geotools.data.simple.SimpleFeatureCollection
-import org.geotools.data.simple.SimpleFeatureSource
-import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.geometry.jts.JTSFactoryFinder
 import org.locationtech.jts.geom.Coordinate
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.operation.polygonize.Polygonizer
-import org.opengis.feature.simple.SimpleFeature
-import org.opengis.feature.simple.SimpleFeatureType
 
-import groovy.transform.CompileStatic
 @CompileStatic
 class GeomMakeValid {
 
@@ -106,9 +106,7 @@ class GeomMakeValid {
                 /*
                  * SimpleFeatureStore has a method to add features from a
                  * SimpleFeatureCollection object, so we use the ListFeatureCollection
-                 * import groovy.transform.CompileStatic
-//@CompileStatic
-class to wrap our list of features.
+                 * class to wrap our list of features.
                  */
                 SimpleFeatureCollection collection = new ListFeatureCollection(TYPE, features)
                 featureStore.setTransaction(transaction)

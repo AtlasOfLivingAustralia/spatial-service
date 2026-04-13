@@ -17,18 +17,22 @@ package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.SpeciesInput
 import au.org.ala.spatial.dto.TaskWrapper
-import au.org.ala.ws.service.WebService
 import com.opencsv.CSVReader
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.*
-import org.apache.commons.httpclient.auth.AuthScope
-import org.apache.commons.httpclient.methods.*
-import org.apache.commons.httpclient.params.HttpClientParams
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.methods.HttpPut
+import org.apache.http.HttpEntity
+import org.apache.http.NameValuePair
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.CredentialsProvider
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.*
 import org.apache.http.client.utils.URIBuilder
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.http.message.BasicNameValuePair
 import org.grails.web.json.JSONArray
@@ -40,7 +44,7 @@ import org.springframework.web.util.UriUtils
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-
+@CompileStatic
 @Slf4j
 class Util {
 
@@ -48,7 +52,7 @@ class Util {
         urlResponse("GET", url)?.text
     }
 
-    static String postUrl(String url, NameValuePair[] nameValues = null, Map<String, String> headers = null, RequestEntity entity = null) {
+    static String postUrl(String url, List<NameValuePair> nameValues = null, Map<String, String> headers = null, String entity = null) {
         urlResponse("POST", url, nameValues, headers, entity)?.text
     }
 
@@ -64,193 +68,172 @@ class Util {
     }
 
     static Map<String, Object> getStream(String url, String jwt) {
-        HttpClient client = null
-        HttpMethodBase call = null
+        CloseableHttpClient client = null
+        CloseableHttpResponse response = null
         try {
-            client = new HttpClient()
+            RequestConfig config = RequestConfig.custom()
+                    .setSocketTimeout(60000)
+                    .setConnectTimeout(10000)
+                    .build()
+            client = HttpClientBuilder.create()
+                    .setDefaultRequestConfig(config)
+                    .setConnectionManager(pool)
+                    .setConnectionManagerShared(true)
+                    .build()
 
-            HttpClientParams httpParams = client.getParams()
-            httpParams.setSoTimeout(60000)
-            httpParams.setConnectionManagerTimeout(10000)
-
-            try {
-                call = new GetMethod(url)
-
-                if (jwt) {
-                    call.addRequestHeader("Authorization", "Bearer " + jwt)
-                }
-
-                client.executeMethod(call)
-            } catch (Exception e) {
-                log.error url, e
+            HttpGet request = new HttpGet(url)
+            if (jwt) {
+                request.addHeader("Authorization", "Bearer " + jwt)
             }
+            response = client.execute(request)
         } catch (Exception e) {
             log.error url, e
         }
 
-        return [client: client, call: call]
-    }
-
-    static MultiThreadedHttpConnectionManager mgr
-    static {
-        try {
-            mgr = new MultiThreadedHttpConnectionManager()
-        } catch (err) {
-            err.printStackTrace()
-        }
+        return [client: client, response: response] as Map<String, Object>
     }
 
     /**
      *
      * @param type
      * @param url
-     * @param nameValues passed as queryString in GET , but pass via BODY in POST
+     * @param nameValues passed as queryString in GET, but passed via BODY in POST
      * @param headers
-     * @param entity usually only used for binary data
-     * @param doAuthentication
+     * @param entity string body (e.g. JSON), usually for POST/PUT
      * @param username
      * @param password
      * @return
      */
-    static Map<String, Object> urlResponse(String type, String url, NameValuePair[] nameValues = null,
-                                           Map<String, String> headers = null, RequestEntity entity = null,
+    static Map<String, Object> urlResponse(String type, String url, List<NameValuePair> nameValues = null,
+                                           Map<String, String> headers = null, String entity = null,
                                            Boolean doAuthentication = null, String username = null, String password = null) {
-        HttpClient client
+        RequestConfig config = RequestConfig.custom()
+                .setSocketTimeout(300000)
+                .setConnectTimeout(300000)
+                .build()
+
+        HttpClientBuilder builder = HttpClientBuilder.create()
+                .setDefaultRequestConfig(config)
+                .setConnectionManager(pool)
+                .setConnectionManagerShared(true)
+
+        if (username != null && password != null) {
+            CredentialsProvider credProvider = new BasicCredentialsProvider()
+            credProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
+            builder.setDefaultCredentialsProvider(credProvider)
+        }
+
+        CloseableHttpClient client = builder.build()
+
+        // Parse target url, decouple params in queryString and base url
+        List<NameValuePair> queryParams = new ArrayList<NameValuePair>()
+        def targetUriBuilder = UriComponentsBuilder.fromUriString(url).build()
+        MultiValueMap<String, String> targetParams = targetUriBuilder.getQueryParams()
+        String targetUrl = new java.net.URI(targetUriBuilder.getScheme(), targetUriBuilder.getUserInfo(),
+                targetUriBuilder.getHost(), targetUriBuilder.getPort(), targetUriBuilder.getPath(), null, null).toString()
+
+        for (String key : targetParams.keySet()) {
+            List<String> values = targetParams.get(key)
+            for (String item : values) {
+                if (item) {
+                    queryParams.add(new BasicNameValuePair(key, UriUtils.decode(item, "UTF-8")))
+                }
+            }
+        }
+
+        // nvList will be added into queryString for GET, or body for POST
+        if (nameValues) {
+            queryParams.addAll(nameValues)
+        }
+
         try {
-            client = new HttpClient(new HttpClientParams(), mgr)
+            HttpRequestBase call
 
-            HttpClientParams httpParams = client.getParams()
-            httpParams.setSoTimeout(300000)
-            httpParams.setConnectionManagerTimeout(300000)
-
-            if (username != null && password != null) {
-                client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
+            if (type == HttpGet.METHOD_NAME) {
+                java.net.URI uri = new URIBuilder(targetUrl).setParameters(queryParams).build()
+                call = new HttpGet(uri)
+            } else if (type == "DELETE") {
+                java.net.URI uri = new URIBuilder(targetUrl).setParameters(queryParams).build()
+                call = new HttpDelete(uri)
+            } else if (type == HttpPut.METHOD_NAME) {
+                java.net.URI uri = new URIBuilder(targetUrl).setParameters(queryParams).build()
+                HttpPut put = new HttpPut(uri)
+                if (entity) {
+                    put.setEntity(new StringEntity(entity, "UTF-8"))
+                }
+                call = put
+            } else {
+                // POST
+                java.net.URI uri = new URIBuilder(targetUrl).build()
+                HttpPost post = new HttpPost(uri)
+                if (entity) {
+                    post.setEntity(new StringEntity(entity, "UTF-8"))
+                } else if (nameValues) {
+                    post.setEntity(new org.apache.http.client.entity.UrlEncodedFormEntity(nameValues, "UTF-8"))
+                }
+                call = post
             }
 
-            //nvList will be added into queryString in GET
-            //but in body when POST
-            List<BasicNameValuePair> nvList = new ArrayList()
-            if (nameValues) {
-                nameValues.each {
-                    nvList.add(new BasicNameValuePair(it.getName(), it.getValue()))
+            if (headers) {
+                for (Map.Entry<String, String> h : headers.entrySet()) {
+                    call.addHeader(h.key, h.value)
                 }
             }
 
-            //Parse target url, decouple params in queryString and base url
-            List<BasicNameValuePair> queryParams = new ArrayList()
-            def targetUriBuilder = UriComponentsBuilder.fromUriString(url).build()
-            MultiValueMap<String, String> targetParams = targetUriBuilder.getQueryParams()
-            //remove requestQuery from url
-            String targetUrl = new java.net.URI(targetUriBuilder.getScheme(), targetUriBuilder.getUserInfo(), targetUriBuilder.getHost(), targetUriBuilder.getPort(), targetUriBuilder.getPath(), null, null).toString()
-            Iterator<String> it = targetParams.keySet().iterator()
-            while (it.hasNext()) {
-                String key = (String) it.next()
-                //list always
-                //Support: fq=a&fq=b etc
-                def value = targetParams.get(key)
-
-                value.each { i ->
-                    String item = String.valueOf(i)
-                    if (item) {
-                        queryParams.add(new BasicNameValuePair(key, UriUtils.decode(item, "UTF-8")))
-                    }
-                }
-            }
-
-            HttpMethodBase call = null
-
+            CloseableHttpResponse response = client.execute(call)
             try {
-
-                if (type == HttpGet.METHOD_NAME) {
-                    HttpGet httpGet = new HttpGet(targetUrl)
-                    queryParams.addAll(nvList) //Combine name: value
-                    java.net.URI uri = new URIBuilder(httpGet.getURI()).setParameters(queryParams).build()
-                    call = new GetMethod(uri.toString())
-                } else if (type == "DELETE") {
-                    HttpGet httpGet = new HttpGet(targetUrl)
-                    queryParams.addAll(nvList) //Combine name: value
-                    java.net.URI uri = new URIBuilder(httpGet.getURI()).setParameters(queryParams).build()
-                    call = new DeleteMethod(uri.toString())
-                } else {
-                    HttpPut httpGet = new HttpPut(targetUrl)
-                    java.net.URI uri = new URIBuilder(httpGet.getURI()).setParameters(queryParams).build()
-                    if (type == HttpPut.METHOD_NAME) {
-                        call = new PutMethod(uri.toString())
-                    } else if (type == HttpPost.METHOD_NAME) {
-                        call = new PostMethod(uri.toString())
-                        if (nameValues) {
-                            ((PostMethod) call).addParameters(nameValues)
-                        }
-
-                    }
-
-                    // PUT set the body with the RequestEntity
-                    if (entity) {
-                        ((EntityEnclosingMethod) call).setRequestEntity(entity)
-                    }
-                }
-
-
-                if (doAuthentication != null) {
-                    call.setDoAuthentication(doAuthentication)
-                }
-
-                if (headers) {
-                    headers.each { k, v ->
-                        call.addRequestHeader(k, v)
-                    }
-                }
-
-                client.executeMethod(call)
-
-                BufferedInputStream bis = new BufferedInputStream(call.getResponseBodyAsStream())
-                return [statusCode: call.statusCode, text: bis.text, headers: call.responseHeaders] as Map<String, Object>
-            } catch (Exception e) {
-                log.error url, e
+                HttpEntity responseEntity = response.getEntity()
+                String text = responseEntity ? responseEntity.getContent().text : ""
+                return [statusCode: response.getStatusLine().getStatusCode(), text: text,
+                        headers: response.getAllHeaders()] as Map<String, Object>
             } finally {
-                if (call) {
-                    call.releaseConnection()
-                }
+                response.close()
             }
         } catch (Exception e) {
             log.error url, e
+        } finally {
+            client.close()
         }
 
         return null
     }
 
-    static makeQid(SpeciesInput query, WebService webService) {
-        List<NameValuePair> params = new ArrayList<>()
+    static String makeQid(SpeciesInput query, def webService) {
+        List<NameValuePair> params = new ArrayList<NameValuePair>()
 
-        params.add(new NameValuePair('q', query.q[0].toString()))
-        if (query.q.size() > 1) query.q.subList(1, query.q.size()).each {
-            params.add(new NameValuePair('fq', it.toString()))
+        params.add(new BasicNameValuePair('q', query.q[0].toString()))
+        if (query.q.size() > 1) {
+            for (String fq : query.q.subList(1, query.q.size())) {
+                params.add(new BasicNameValuePair('fq', fq.toString()))
+            }
         }
 
         if (query.wkt) {
-            params.add(new NameValuePair('wkt', query.wkt.toString()))
+            params.add(new BasicNameValuePair('wkt', query.wkt.toString()))
         }
 
         // this causes the qid to fail when there are no occurrences in the area
-        //params.add(new NameValuePair('bbox', 'true'))
+        //params.add(new BasicNameValuePair('bbox', 'true'))
 
         // TODO: JWT and /ws/qid
-        //def qid1 = webService.post("${query.bs}/qid".toString(), [body: params])
-        def qid = postUrl("${query.bs}/qid".toString(), (NameValuePair[]) params.toArray(new NameValuePair[0]))
+        def qid = postUrl("${query.bs}/qid".toString(), params)
 
-        qid
+        return qid
     }
 
-    static SpeciesInput getQid(bs, qid) {
-        def json = JSON.parse(getUrl("$bs/qid/$qid"))
+    static SpeciesInput getQid(String bs, String qid) {
+        JSONObject json = (JSONObject) JSON.parse(getUrl("$bs/qid/$qid"))
         SpeciesInput s = new SpeciesInput()
-        s.q = [json.q]
-        if (json.fq) {
-            s.q.addAll(json.fq)
+        s.q = [json.get('q') as String]
+        if (json.get('fq')) {
+            JSONArray fq = (JSONArray) json.get('fq')
+            for (int i = 0; i < fq.size(); i++) {
+                s.q.add(fq.get(i) as String)
+            }
         }
-        s.wkt = json.wkt
+        s.wkt = json.get('wkt') as String
 
-        return s;
+        return s
     }
 
     static String[] getDistributionsOrChecklists(List<Distributions> ja) {
@@ -276,8 +259,8 @@ class Util {
         if (ja == null || ja.isEmpty()) {
             return new String[0]
         } else {
-            Map<String, List<String>> likely = new HashMap()
-            Map<String, List<String>> maybe = new HashMap()
+            Map<String, String> likely = new HashMap<String, String>()
+            Map<String, String> maybe = new HashMap<String, String>()
             Set<String> keys = new HashSet()
 
             ja.each {Distributions it ->

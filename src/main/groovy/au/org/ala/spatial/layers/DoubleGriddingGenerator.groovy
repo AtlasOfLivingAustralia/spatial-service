@@ -13,17 +13,18 @@
  */
 package au.org.ala.spatial.layers
 
-import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
+import au.org.ala.spatial.util.Records
 import com.opencsv.CSVReader
+import groovy.transform.CompileStatic
 
 /**
  * Generate a sites by species table.
  *
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class DoubleGriddingGenerator {
 
     /**

@@ -15,14 +15,15 @@
 
 package au.org.ala.spatial.tabulation
 
-import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
+import au.org.ala.spatial.util.Records
+import groovy.transform.CompileStatic
 
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class TabulationUtil {
     static int calculateOccurrences(String pathToRecords, String wkt) throws IOException {
         SimpleRegion region = SimpleShapeFile.parseWKT(wkt)

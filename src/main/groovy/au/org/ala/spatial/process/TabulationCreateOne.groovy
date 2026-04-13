@@ -19,22 +19,23 @@ import au.org.ala.spatial.Fields
 import au.org.ala.spatial.Layers
 import au.org.ala.spatial.tabulation.Intersection
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.geotools.data.DataStore
-import org.geotools.data.DataStoreFinder
-import org.geotools.data.FeatureSource
+import org.geotools.api.data.DataStore
+import org.geotools.api.data.DataStoreFinder
+import org.geotools.api.data.FeatureSource
+import org.geotools.api.feature.Property
+import org.geotools.api.feature.simple.SimpleFeature
 import org.geotools.feature.FeatureIterator
 import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.GeometryCollection
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.io.WKTReader
-import org.opengis.feature.Property
-import org.opengis.feature.simple.SimpleFeature
 
 import java.util.zip.ZipInputStream
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class TabulationCreateOne extends SlaveProcess {
 

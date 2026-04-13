@@ -13,6 +13,7 @@
  */
 package au.org.ala.spatial.layers
 
+import groovy.transform.CompileStatic
 
 import java.text.SimpleDateFormat
 
@@ -23,8 +24,7 @@ import java.text.SimpleDateFormat
  *
  * @author Adam
  */
-import groovy.transform.CompileStatic
-//@CompileStatic
+@CompileStatic
 class DensityLayers {
 
 

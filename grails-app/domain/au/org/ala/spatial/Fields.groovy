@@ -1,6 +1,5 @@
 package au.org.ala.spatial
 
-import com.fasterxml.jackson.annotation.JsonInclude
 
 import javax.persistence.GeneratedValue
 

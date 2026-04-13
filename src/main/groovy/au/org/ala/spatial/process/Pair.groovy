@@ -16,7 +16,7 @@
 package au.org.ala.spatial.process
 
 import groovy.transform.CompileStatic
-//@CompileStatic
+@CompileStatic
 class Pair {
 
     String key

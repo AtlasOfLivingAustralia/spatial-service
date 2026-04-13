@@ -15,7 +15,8 @@
 
 package au.org.ala.spatial
 
-import au.org.ala.spatial.SpatialConfig
+
+import groovy.transform.CompileStatic
 import org.apache.commons.io.IOUtils
 
 import java.nio.file.Files
@@ -23,7 +24,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
-//@CompileStatic
+@CompileStatic
 class FileService {
 
     SpatialConfig spatialConfig
@@ -50,8 +51,8 @@ class FileService {
         outputStream.close()
     }
 
-    def info(String name) {
-        def map = [[path: '', exists: false, lastModified: System.currentTimeMillis(), size: 0]]
+    List<Map<String, Object>> info(String name) {
+        List<Map<String, Object>> map = [[path: '', exists: false, lastModified: System.currentTimeMillis(), size: 0]] as List<Map<String, Object>>
 
         List<File> list = getFilesFromBase(name)
         if (list != null && list.size() > 0) {
@@ -62,7 +63,7 @@ class FileService {
                     map.addAll(info(relativePath))
                 } else {
                     map.add([path  : file.getPath().replace(spatialConfig.data.dir.toString(), ''),
-                             exists: file.exists(), lastModified: file.lastModified(), size: file.length()])
+                             exists: file.exists(), lastModified: file.lastModified(), size: file.length()] as Map<String, Object>)
                 }
             }
         }
@@ -85,32 +86,31 @@ class FileService {
      * @param exact only look for an exact match
      * @return
      */
-    List<File> getFilesFromBase(String name, targetDir = null, exact = false) {
+    List<File> getFilesFromBase(String name, String targetDir = null, boolean exact = false) {
         boolean dataDir = name.startsWith('/')
-        def e = dataDir ? spatialConfig.data.dir + name : "$targetDir/${name}"
+        String e = dataDir ? (spatialConfig.data.dir.toString() + name) : "${targetDir}/${name}"
 
         //only include path once
-        def file = new File(e)
+        File file = new File(e)
 
-        def files = []
+        List<File> files = []
+        List<File> subfiles = []
 
         if (file.exists() && !file.isDirectory()) {
             //get this named file
             files.add(file)
         } else {
             //Return everything that starts with 'file.' if file already ends with '.' the extra '.' is not included
-            def search = file.getName()
-            def subfiles = []
-            files = file.getParentFile().listFiles(new FilenameFilter() {
+            String search = file.getName()
+            File[] listed = file.getParentFile()?.listFiles(new FilenameFilter() {
                 boolean accept(File dir, String filename) {
-
                     boolean valid = filename == search ||
                             (!exact && filename.startsWith(search + (search.endsWith('.') ? '' : '.')))
 
                     File f = new File(dir.getPath() + File.separator + filename)
                     if (f.isDirectory() && valid) {
                         if (!Files.isSymbolicLink(f.toPath())) {
-                            f.listFiles().each { sf ->
+                            f.listFiles()?.each { File sf ->
                                 //look for exact subdir matches to avoid duplication
                                 subfiles.addAll(getFilesFromBase(name + File.separator + sf.getName(), targetDir, exact))
                             }
@@ -121,8 +121,8 @@ class FileService {
                     return valid
                 }
             })
-            if (files == null) files = []
-            else files = files.toList()
+            if (listed == null) files = []
+            else files = listed.toList()
             files.addAll(subfiles)
         }
 
@@ -145,14 +145,14 @@ class FileService {
 
         ZipEntry entry
         while ((entry = zf.getNextEntry()) != null) {
-            def e = !upload && entry.getName().startsWith('/') ?
-                    spatialConfig.data.dir + entry.getName() : "$path/${entry.getName()}"
+            String e = (!upload && entry.getName().startsWith('/')) ?
+                    spatialConfig.data.dir.toString() + entry.getName() : "${path}/${entry.getName()}"
             if (e.endsWith('/')) {
                 new File(e).mkdirs()
             } else {
                 new File(e).getParentFile().mkdirs()
 
-                def bos = new BufferedOutputStream(new FileOutputStream(e.toString()))
+                def bos = new BufferedOutputStream(new FileOutputStream(e))
                 IOUtils.copy(zf, bos)
                 bos.flush()
                 bos.close()
@@ -181,8 +181,8 @@ class FileService {
     def zip(String outFilename, String taskDir, List<String> filenames) {
         OutputStream os = new BufferedOutputStream(new FileOutputStream(outFilename))
 
-        def listOfFiles = []
-        filenames.each { f ->
+        List<File> listOfFiles = []
+        filenames.each { String f ->
             listOfFiles.addAll(getFilesFromBase(f, taskDir))
         }
         zip(os, listOfFiles, taskDir, true)

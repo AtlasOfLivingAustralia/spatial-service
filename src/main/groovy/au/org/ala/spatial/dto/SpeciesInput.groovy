@@ -1,7 +1,9 @@
 package au.org.ala.spatial.dto
 
 import groovy.transform.AutoClone
+import groovy.transform.CompileStatic
 
+@CompileStatic
 @AutoClone
 class SpeciesInput {
     List<String> q

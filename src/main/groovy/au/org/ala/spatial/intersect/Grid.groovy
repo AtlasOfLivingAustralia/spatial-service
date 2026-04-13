@@ -15,6 +15,7 @@
 package au.org.ala.spatial.intersect
 
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
@@ -31,7 +32,7 @@ import java.nio.ByteOrder
  *         <p/>
  *         Interface for .gri/.grd files for now
  */
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class Grid { //  implements Serializable
 

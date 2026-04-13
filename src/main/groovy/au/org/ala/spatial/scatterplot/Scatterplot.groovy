@@ -1,23 +1,22 @@
 package au.org.ala.spatial.scatterplot
 
+import au.org.ala.spatial.GridCutterService
 import au.org.ala.spatial.LayerIntersectService
 import au.org.ala.spatial.Util
-import au.org.ala.spatial.intersect.SamplingUtil
-import au.org.ala.spatial.GridCutterService
+import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
 import au.org.ala.spatial.legend.Legend
 import au.org.ala.spatial.legend.LegendObject
-import au.org.ala.spatial.dto.LayerFilter
 import au.org.ala.spatial.util.Occurrences
 import au.org.ala.spatial.util.SpatialUtils
 import com.opencsv.CSVReader
 import com.opencsv.CSVWriter
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
-import org.codehaus.jackson.map.ObjectMapper
 import org.grails.web.json.JSONArray
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.ChartRenderingInfo
@@ -39,23 +38,24 @@ import org.jfree.data.xy.XYDataset
 import org.jfree.data.xy.XYZDataset
 import org.jfree.ui.RectangleAnchor
 import org.jfree.ui.RectangleEdge
-import org.grails.web.json.JSONObject
+import tools.jackson.databind.ObjectMapper
 
 import java.awt.*
 import java.awt.geom.Ellipse2D
 import java.awt.image.BufferedImage
 import java.nio.charset.StandardCharsets
+import java.util.List
 
 /**
  * Created by a on 10/03/2014.
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class Scatterplot {
 
     private static final String NUMBER_SERIES = "Number series"
     private static final String ACTIVE_AREA_SERIES = "In Active Area"
-    private static final String[][] facetNameExceptions = [["cl22", "state"], ["cl20", "ibra"], ["cl21", "imcra"]]
+    private static final String[][] facetNameExceptions = [["cl22", "state"] as String[], ["cl20", "ibra"] as String[], ["cl21", "imcra"] as String[]] as String[][]
 
     JFreeChart jChart
     XYPlot plot
@@ -189,7 +189,7 @@ class Scatterplot {
             ObjectMapper objectMapper = new ObjectMapper()
 
             //convert json string to object
-            JSONArray jo = JSON.parse(file.text)
+            JSONArray jo = (JSONArray) JSON.parse(file.text)
             ScatterplotDTO dto = objectMapper.readValue(new FileReader(new File(file.getPath() + ".dto")), ScatterplotDTO.class)
             ScatterplotStyleDTO style = objectMapper.readValue(new FileReader(new File(file.getPath() + ".style")), ScatterplotStyleDTO.class)
             ScatterplotDataDTO data = objectMapper.readValue(new FileReader(new File(file.getPath() + ".data")), ScatterplotDataDTO.class)
@@ -727,7 +727,7 @@ class Scatterplot {
             try {
                 if (!Double.isNaN(d[j][col1]) && !Double.isNaN(d[j][col2])
                         && region.isWithin(points[j * 2], points[j * 2 + 1])) {
-                    double[] r = [d[j][col1], d[j][col2], 0]0
+                    double[] r = [d[j][col1], d[j][col2], 0] as double[]
                     records.add(r)
                 }
             } catch (Exception ignored) {
@@ -944,7 +944,7 @@ class Scatterplot {
 
             }
 
-            double[][] p = new double[points.length / 2][2]
+            double[][] p = new double[(int)(points.length / 2)][2]
             for (int i = 0; i < points.length; i += 2) {
                 p[(int)(i / 2)][0] = points[i]
                 p[(int)(i / 2)][1] = points[i + 1]
@@ -1097,11 +1097,11 @@ class Scatterplot {
         return renderer
     }
 
-    private double[][] samplePoints(double[][] p, java.util.List<String[]>  layersToSample) {
+    private double[][] samplePoints(double[][] p, List<String> layersToSample) {
 
-        String[] layers = layersToSample
+        String[] layers = layersToSample.toArray(new String[layersToSample.size()])
         log.debug("Sampling points... ")
-        java.util.List<String> sample = layerIntersectService.sampling(layers, p, null)
+        List<String> sample = layerIntersectService.sampling(layers, p, null)
 
         double[][] d = new double[p.length][layers.length]
 
@@ -1583,7 +1583,7 @@ class Scatterplot {
     }
 }
 
-
+@CompileStatic
 class LegendFieldPaintScale implements PaintScale, Serializable {
 
     final LegendObject legend
@@ -1621,6 +1621,7 @@ class LegendFieldPaintScale implements PaintScale, Serializable {
     }
 }
 
+@CompileStatic
 class MyXYShapeRenderer extends XYShapeRenderer {
 
     public int alpha = 255

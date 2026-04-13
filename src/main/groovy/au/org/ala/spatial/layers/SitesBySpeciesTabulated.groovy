@@ -13,18 +13,19 @@
  */
 package au.org.ala.spatial.layers
 
-import au.org.ala.spatial.util.Records
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.intersect.SimpleRegion
 import au.org.ala.spatial.intersect.SimpleShapeFile
+import au.org.ala.spatial.util.Records
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 
 /**
  * Generate a sites by species tabulated table.
  *
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class SitesBySpeciesTabulated {
 
     /**
@@ -177,14 +178,14 @@ class SitesBySpeciesTabulated {
                 for (int j = 0; j < numberOfBioregions; j++) {
                     int group = bsBioregions[j].cardinality()
                     if (group > 0) {
-                        Integer count = bioMap[j].get(group)
+                        Integer count = (Integer) bioMap[j].get(group)
                         bioMap[j].put(group, count == null ? 1 : count + 1)
                     }
                 }
                 for (int j = 0; j < numberOfDecades; j++) {
                     int group = bsDecades[j].cardinality()
                     if (group > 0) {
-                        Integer count = decMap[j].get(group)
+                        Integer count = (Integer) decMap[j].get(group)
                         decMap[j].put(group, count == null ? 1 : count + 1)
                     }
                 }
@@ -205,18 +206,18 @@ class SitesBySpeciesTabulated {
                     }
                 }
                 //count
-                java.util.Arrays.sort(decContinousCounts)
+                Arrays.sort(decContinousCounts)
                 int count = 1
                 for (int j = 1; j < decContinousCounts.length; j++) {
                     if (decContinousCounts[j] == decContinousCounts[j - 1]) {
                         count++
                     } else {
-                        Integer c = decCountMap[decContinousCounts[j - 1]].get(count)
+                        Integer c = (Integer) decCountMap[decContinousCounts[j - 1]].get(count)
                         decCountMap[decContinousCounts[j - 1]].put(count, c == null ? 1 : c + 1)
                         count = 1
                     }
                 }
-                Integer c = decCountMap[decContinousCounts[decContinousCounts.length - 1]].get(count)
+                Integer c = (Integer) decCountMap[decContinousCounts[decContinousCounts.length - 1]].get(count)
                 decCountMap[decContinousCounts[decContinousCounts.length - 1]].put(count, c == null ? 1 : c + 1)
             }
 

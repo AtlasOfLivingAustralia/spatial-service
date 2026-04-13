@@ -14,6 +14,9 @@
  ***************************************************************************/
 
 package au.org.ala.spatial.intersect
+
+import groovy.transform.CompileStatic
+
 /**
  * ComplexRegion is a collection of SimpleRegion, expect POLYGONs for now.
  * <p/>
@@ -23,7 +26,7 @@ package au.org.ala.spatial.intersect
  *
  * @author Adam Collins
  */
-//@CompileStatic
+@CompileStatic
 class ComplexRegion extends SimpleRegion {
 
     /**
@@ -497,7 +500,7 @@ class variables assignment */
                     if (md[i][j] != null && mask[i][j] == GI_PARTIALLY_PRESENT) {
                         int[] d = new int[md[i][j].size()]
                         for (k = 0; k < d.length; k++) {
-                            d[k] = md[i][j].get(k)
+                            d[k] = (Integer) md[i][j].get(k)
                         }
                         maskDepth[i][j] = d
                     }

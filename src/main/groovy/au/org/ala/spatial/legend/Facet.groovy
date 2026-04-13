@@ -3,10 +3,13 @@
  * and open the template in the editor.
  */
 package au.org.ala.spatial.legend
+
+import groovy.transform.CompileStatic
+
 /**
  * @author Adam
  */
-//@CompileStatic
+@CompileStatic
 class Facet implements Serializable {
 
     String field

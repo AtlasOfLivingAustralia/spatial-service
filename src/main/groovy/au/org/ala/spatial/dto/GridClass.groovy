@@ -18,7 +18,8 @@ package au.org.ala.spatial.dto
  * @author Adam
  */
 import groovy.transform.CompileStatic
-//@CompileStatic
+
+@CompileStatic
 class GridClass {
 
     Integer id

@@ -14,16 +14,19 @@
  ***************************************************************************/
 package au.org.ala.spatial
 
-
 import au.org.ala.spatial.dto.IntersectionFile
 import groovy.sql.Sql
-import org.codehaus.jackson.map.DeserializationConfig
-import org.codehaus.jackson.map.ObjectMapper
-import org.postgresql.core.Field
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.springframework.transaction.support.TransactionSynchronizationManager
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 
 import java.sql.ResultSet
+import java.sql.ResultSetMetaData
 
+@CompileStatic
 class FieldService {
 
     LayerService layerService
@@ -43,9 +46,12 @@ class FieldService {
         Sql.newInstance(dataSource).query(sql, [id: id], { ResultSet rs ->
             if (rs.next()) {
                 field = new Fields()
-                rs.fields.each { Field f ->
-                    if (field.properties.containsKey(f.columnLabel)) {
-                        field.properties.putAt(f.columnLabel, rs.getObject(f.columnLabel))
+                ResultSetMetaData meta = rs.getMetaData()
+                int colCount = meta.getColumnCount()
+                for (int col = 1; col <= colCount; col++) {
+                    String label = meta.getColumnLabel(col)
+                    if (field.hasProperty(label)) {
+                        field.setProperty(label, rs.getObject(col))
                     }
                 }
                 if ("a".equalsIgnoreCase(field.type) || "b".equalsIgnoreCase(field.type)) {
@@ -61,95 +67,38 @@ class FieldService {
         field
     }
 
+    @CompileDynamic
     List<Fields> getFieldsByDB() {
         log.debug("Getting a list of all enabled fields with indb")
         Fields.findAllByEnabledAndIndb(true, true)
     }
+
     /**
      * Return the count of fields of a layer, no matter they are enabled or not
-     * @return
      */
-    int countBySpid(spid) {
-        Fields.countBySpid(spid)
+    @CompileDynamic
+    int countBySpid(String spid) {
+        Fields.countBySpid(spid) as int
     }
 
     /**
      * Return the largest sequence number + 1.
-     * Avoid getting the incorrect seq if some of the records in the middle are deleted
-     * @param spid
-     * @return
      */
-    def calculateNextSequenceId(spid) {
-        def requestIds =   Fields.findAllBySpid(spid).collect { it.id }
+    @CompileDynamic
+    def calculateNextSequenceId(String spid) {
+        List<String> requestIds = (Fields.findAllBySpid(spid) as List<Fields>).collect { Fields f -> f.id }
         if (requestIds.size() == 0) {
             return ''
         } else {
-            def maxSequenceNumber = requestIds
-                    .findAll { it.endsWith("${spid}") }
-                    .collect { it.replaceFirst(/^.{2}/, '')
-                            .replaceAll("${spid}", "") }
-                    .collect {it == '' ? 0 : it.toInteger()}
+            int maxSequenceNumber = (int) requestIds
+                    .findAll { String id -> id.endsWith(spid) }
+                    .collect { String id -> id.replaceFirst(/^.{2}/, '').replaceAll(spid, "") }
+                    .collect { String s -> s == '' ? 0 : s.toInteger() }
                     .max()
             return (maxSequenceNumber ? maxSequenceNumber + 1 : '')
         }
     }
 
-
-//    synchronized void addField(Field field) {
-//        log.debug("Add new field for " + field.getName())
-//
-//        Map<String, Object> parameters = field.toMap()
-//        parameters.remove("id")
-//        parameters.remove("layer")
-//
-//        //calc new fieldId
-//        String idPrefix = "Contextual".equalsIgnoreCase(layerDao.getLayerById(Integer.parseInt(field.getSpid()), false).getType())
-//                ? "cl" : "el"
-//
-//        //test for requested id
-//        String newId = field.getId()
-//
-//        if (newId == null || getFieldById(newId) != null) {
-//            newId = getFieldById(idPrefix + field.getSpid()) == null ? idPrefix + field.getSpid() : null
-//            if (newId == null) {
-//                //calculate next field Id using general form: prefix (n x 1000 + layerId)
-//                String idEnd = field.getSpid()
-//                while (idEnd.length() < 3) {
-//                    idEnd = "0" + idEnd
-//                }
-//                int maxNFound = 0
-//                for (Field f : getFields(false)) {
-//                    if (f.getId().startsWith(idPrefix) && f.getId().endsWith(idEnd)) {
-//                        if (f.getId().length() - idEnd.length() > 2) {
-//                            int n = Integer.parseInt(f.getId().substring(2, f.getId().length() - idEnd.length()))
-//                            if (n > maxNFound) {
-//                                maxNFound = n
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                newId = idPrefix + (maxNFound + 1) + idEnd
-//            }
-//        }
-//
-//        parameters.put("id", newId)
-//        //fix for field 'desc' and 'intersect'
-//        if (parameters.containsKey("desc")) {
-//            parameters.put("\"desc\"", parameters.get("desc"))
-//            parameters.remove("desc")
-//        }
-//        if (parameters.containsKey("intersect")) {
-//            parameters.put("\"intersect\"", parameters.get("intersect"))
-//            parameters.remove("intersect")
-//        }
-//
-//        insertField.execute(parameters)
-//
-//        field.setId(newId)
-//    }
-//
-//
     void delete(String fieldId) {
         Fields f = getFieldById(fieldId, false)
 
@@ -196,23 +145,28 @@ class FieldService {
 
         List<Fields> fields = new ArrayList()
 
-        Sql.newInstance(dataSource).query(sql, [keywords: keywords], {
+        Sql.newInstance(dataSource).query(sql, [keywords: keywords], { ResultSet it ->
             while (it.next()) {
                 Fields field = new Fields()
                 Layers layer = new Layers()
 
-                int fieldTableOid = 0
-                it.fields.eachWithIndex { Field fname, Integer idx ->
-                    // field first, then layer
-                    if (idx > 0 && fieldTableOid != fname.tableOid) {
-                        if (layer.properties.containsKey(fname.columnLabel)) {
-                            layer.setProperty(fname.columnLabel, it.getObject(idx + 1))
-                        }
+                ResultSetMetaData meta = it.getMetaData()
+                int colCount = meta.getColumnCount()
+                int firstTableOid = -1
+                int fieldColEnd = -1
+
+                // We can't use PostgreSQL tableOid here; approximate by using column index split
+                // fields columns come first (from 'f.*'), then layer columns (from 'l.*')
+                // Determine field/layer split by checking which properties exist on each
+                for (int col = 1; col <= colCount; col++) {
+                    String label = meta.getColumnLabel(col)
+                    if (field.properties.containsKey(label) && fieldColEnd == -1) {
+                        field.setProperty(label, it.getObject(col))
                     } else {
-                        if (field.properties.containsKey(fname.columnLabel)) {
-                            field.setProperty(fname.columnLabel, it.getObject(idx + 1))
+                        if (fieldColEnd == -1) fieldColEnd = col
+                        if (layer.properties.containsKey(label)) {
+                            layer.setProperty(label, it.getObject(col))
                         }
-                        fieldTableOid = fname.tableOid
                     }
                 }
 
@@ -242,8 +196,9 @@ class FieldService {
     private List<Fields> mapsToFields(List<Map<String, Object>> maps) {
         List<Fields> list = new ArrayList<Fields>()
 
-        ObjectMapper om = new ObjectMapper()
-        om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        ObjectMapper om = JsonMapper.builder()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .build()
         for (Map<String, Object> map : maps) {
             try {
                 Map field = new HashMap()
@@ -269,22 +224,23 @@ class FieldService {
         return list
     }
 
+    @CompileDynamic
     List<Fields> getFields(boolean includeAdmin = false) {
         // wrap in a transaction if it is not already, unsure why this is necessary for some instances
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             if (includeAdmin) {
-                Fields.findAll()
+                Fields.findAll() as List<Fields>
             } else {
-                Fields.findAllByEnabled(true)
+                Fields.findAllByEnabled(true) as List<Fields>
             }
         } else {
             Fields.withTransaction {
                 if (includeAdmin) {
-                    Fields.findAll()
+                    Fields.findAll() as List<Fields>
                 } else {
-                    Fields.findAllByEnabled(true)
+                    Fields.findAllByEnabled(true) as List<Fields>
                 }
-            }
+            } as List<Fields>
         }
     }
 
@@ -313,7 +269,6 @@ class FieldService {
         Fields field = getFieldById(id, false)
 
         if (field) {
-
             //include field objects
             log.debug('field id: ' + id)
             field.objects = spatialObjectsService.getObjectsById(id, start, pageSize, q)

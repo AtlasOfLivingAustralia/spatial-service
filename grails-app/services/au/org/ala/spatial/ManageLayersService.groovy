@@ -20,22 +20,24 @@ import au.org.ala.spatial.grid.Diva2bil
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import groovy.json.JsonSlurper
 import groovy.sql.Sql
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.apache.commons.httpclient.methods.FileRequestEntity
-import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang.StringUtils
+import org.geotools.api.feature.simple.SimpleFeatureType
+import org.geotools.api.feature.type.AttributeDescriptor
+import org.geotools.api.feature.type.GeometryType
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.json.simple.JSONObject
 import org.json.simple.JSONValue
-import org.opengis.feature.simple.SimpleFeatureType
-import org.opengis.feature.type.AttributeDescriptor
 import org.springframework.scheduling.annotation.Scheduled
 
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 
+@CompileStatic
 @Slf4j
 class ManageLayersService {
 
@@ -48,8 +50,8 @@ class ManageLayersService {
     SpatialConfig spatialConfig
     PublishService publishService
 
-    def listUploadedFiles() {
-        def list = []
+    List<Map> listUploadedFiles() {
+        List<Map> list = []
 
         //get all uploaded files
         def layersDir = spatialConfig.data.dir
@@ -119,7 +121,7 @@ class ManageLayersService {
                             upload.put("checklist", checklistFile.text)
                         }
 
-                        List<Task> creationTask = Task.findAllByNameAndTag('LayerCreation', uploadId)
+                        List<Task> creationTask = findTasksByNameAndTag('LayerCreation', uploadId)
                         if (creationTask.size() > 0) {
                             if (creationTask.get(0).status < 2) {
                                 upload.put("layer_creation", "running")
@@ -233,7 +235,7 @@ class ManageLayersService {
                 log.debug("Converting DIVA to BIL")
                 def n = grd.getPath().substring(0, grd.getPath().length() - 4)
                 Diva2bil.diva2bil(n, n)
-                bil = n + '.hdr'
+                bil = new File(n + '.hdr')
                 name = grd.getName().substring(0, grd.getName().length() - 4)
                 count = count + 1
             }
@@ -298,7 +300,7 @@ class ManageLayersService {
             log.error("Path does not exist..." + pth)
         }
 
-        return [error: pth + " does not exist!" ]
+        return [error: pth.toString() + " does not exist!" ]
     }
 
     /**
@@ -316,19 +318,16 @@ class ManageLayersService {
      * @return server response status code as String or empty String if
      * unsuccessful
      */
-    def httpCall(String type, String url, String username, String password, String resourcepath, String resourcestr, String contenttype) {
-        def output = ["", ""]
+    String[] httpCall(String type, String url, String username, String password, String resourcepath, String resourcestr, String contenttype) {
 
-        def entity = null
+        String[] output = ["", ""]
+
+        String entity = null
         if (resourcepath != null) {
-            def input = new File(resourcepath)
-            entity = new FileRequestEntity(input, contenttype)
+            // read file as string if text-based, otherwise use UploadSpatialResource for binary uploads
+            entity = new File(resourcepath).text
         } else if (resourcestr != null) {
-            try {
-                entity = new StringRequestEntity(resourcestr, contenttype, "UTF-8")
-            } catch (UnsupportedEncodingException e) {
-                log.error 'failed to encode contenttype: ' + contenttype, e
-            }
+            entity = resourcestr
         }
 
         def response = Util.urlResponse(type, url, null, [:], entity, type == "PUT" ? true : null, username, password)
@@ -339,7 +338,7 @@ class ManageLayersService {
                 output[0] = String.valueOf(response.statusCode)
             }
             if (response.text) {
-                output[1] = response.text
+                output[1] = response.text as String
             }
             //Add extra info
             switch (response.statusCode) {
@@ -387,18 +386,39 @@ class ManageLayersService {
         }
     }
 
-    List<Layers> getAllLayers(url) {
+    @CompileDynamic
+    private List<Task> findTasksByNameAndTag(String name, String tag) {
+        Task.findAllByNameAndTag(name, tag)
+    }
+
+    @CompileDynamic
+    private boolean countLayersById(String id) {
+        Layers.countById(id.toLong()) > 0
+    }
+
+    @CompileDynamic
+    private boolean countFieldsById(String id) {
+        Fields.countById(id) > 0
+    }
+
+    @CompileDynamic
+    private List<Fields> findAllFieldsBySpid(String spid) {
+        Fields.findAllBySpid(spid)
+    }
+
+    List getAllLayers(String url) {
         List<Layers> layers
         List<Fields> fields
         if (!url) {
             layers = layerService.getLayersForAdmin()
             fields = fieldService.getFields(true)
         } else {
+            def slurper = new JsonSlurper()
             try {
                 layers = []
-                JSON.parse(Util.getUrl("${url}/layers?all=true")).each {
+                slurper.parseText(Util.getUrl("${url}/layers?all=true")).each {
                     Layers layer = it as Layers
-                    layer.id = it['id']
+                    layer.id = (it as Map)['id'] as Long
                     layers.push(layer)
                 }
             } catch (err) {
@@ -406,9 +426,9 @@ class ManageLayersService {
             }
             try {
                 fields = []
-                JSON.parse(Util.getUrl("${url}/fields?all=true")).each {
+                slurper.parseText(Util.getUrl("${url}/fields?all=true")).each {
                     Fields field = it as Fields
-                    field.id = it['id']
+                    field.id = (it as Map)['id'] as String
                     fields.push(field)
                 }
             } catch (err) {
@@ -419,8 +439,8 @@ class ManageLayersService {
         List<Layers> list = []
         layers.each { Layers l ->
             //get fields
-            def fs = []
-            fields.each { f ->
+            List<Fields> fs = []
+            fields.each { Fields f ->
                 if (f.getSpid() == String.valueOf(l.id)) {
                     fs.add(f)
                 }
@@ -481,7 +501,7 @@ class ManageLayersService {
                 map.putAll(layer.properties)
             }
 
-            map.put("fields", Fields.findAllBySpid(map.get('layer_id')))
+            map.put("fields", findAllFieldsBySpid(map.get('layer_id') as String))
 
         } else {
             //fetch defaults
@@ -499,7 +519,7 @@ class ManageLayersService {
             File shp = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".shp")
             File bil = new File(layersDir + "/uploads/" + layerId + "/" + layerId + ".bil")
             if (shp.exists()) {
-                List columns = getShapeFileColumns(shp)
+                List<String> columns = getShapeFileColumns(shp)
 
                 map.put("columns", columns)
                 map.put("type", "Contextual")
@@ -615,9 +635,9 @@ class ManageLayersService {
 
         //layer id in raw upload
         def allUploads = listUploadedFiles()
-        allUploads.each {
-            if (it.containsKey('layer_id') && it.layer_id == id) {
-                new File(spatialConfig.data.dir.toString() + "/uploads/" + it.raw_id + "/layer.id").delete()
+        allUploads.each { Map upload ->
+            if (upload.containsKey('layer_id') && upload.layer_id == id) {
+                new File(spatialConfig.data.dir.toString() + "/uploads/" + upload.raw_id + "/layer.id").delete()
             }
         }
 
@@ -674,7 +694,7 @@ class ManageLayersService {
         }
     }
 
-    def fieldMapDefault(String layerId) {
+    Map fieldMapDefault(String layerId) {
         def layerMap = layerMap(layerId)
 
         String layersDir = spatialConfig.data.dir
@@ -732,12 +752,12 @@ class ManageLayersService {
         if (loadedShp.exists()) {
             fieldMap.put("filetype", "shp")
 
-            List columns = getShapeFileColumns(loadedShp)
+            List<String> columns = getShapeFileColumns(loadedShp)
             fieldMap.put("columns", columns)
         } else if (shp.exists()) {
             fieldMap.put("filetype", "shp")
 
-            List columns = getShapeFileColumns(shp)
+            List<String> columns = getShapeFileColumns(shp)
             fieldMap.put("columns", columns)
         } else if (bil.exists()) {
 //            fieldMap.put("filetype", "bil");
@@ -822,10 +842,10 @@ class ManageLayersService {
      * @param fieldId  It is field id if starts with el/cl, otherwise layer id
      * @return
      */
-    def fieldMap(String fieldId) {
+    Map fieldMap(String fieldId) {
         def layer = layerService.getLayerById(Integer.parseInt(fieldService.getFieldById(fieldId, false).spid), false)
 
-        def map = fieldMapDefault(String.valueOf(layer.id))
+        Map map = fieldMapDefault(String.valueOf(layer.id))
         map.put("layerName", layer.name) // layer name for wms requests
 
         def field = fieldService.getFieldById(fieldId, false)
@@ -887,6 +907,7 @@ class ManageLayersService {
         createOrUpdateLayer(layer, id, createTask)
     }
 
+    @CompileDynamic
     def createOrUpdateLayer(Layers layer, String id, boolean createTask = true) {
         Map retMap = [:]
 
@@ -904,13 +925,13 @@ class ManageLayersService {
                 File idFile = new File(spatialConfig.data.dir.toString() + "/uploads/" + id + "/layer.id")
                 if (idFile.exists()) {
                     //update id
-                    layer.id = idFile.text
+                    layer.id = idFile.text.toLong()
                 }
-                intId = layer.id
+                intId = (int) layer.id
             } catch (ignored) {
                 log.debug 'unable to read uploads layer.id for ' + id
             }
-            if (id != null && id.isInteger() && Layers.countById(id)) {
+            if (id != null && id.isInteger() && countLayersById(id)) {
                 //update select values
                 try {
                     //flag background processes that need running
@@ -1013,15 +1034,15 @@ class ManageLayersService {
         retMap
     }
 
-    def getShapeFileColumns(File shp) {
-        def columns = []
+    List<String> getShapeFileColumns(File shp) {
+        List<String> columns = []
 
         try {
             ShapefileDataStore sds = new ShapefileDataStore(shp.toURI().toURL())
             SimpleFeatureType schema = sds.getSchema()
             for (AttributeDescriptor ad : schema.getAttributeDescriptors()) {
                 // ignore geometry columns
-                if (!(ad.type instanceof org.opengis.feature.type.GeometryType)) {
+                if (!(ad.type instanceof GeometryType)) {
                     columns.add(ad.getLocalName())
                 }
             }
@@ -1075,6 +1096,7 @@ class ManageLayersService {
         createOrUpdateField(field, id, createTask)
     }
 
+    @CompileDynamic
     def createOrUpdateField(Fields field, String id, boolean createTask = true) {
 
         def retMap = [:]
@@ -1230,7 +1252,7 @@ class ManageLayersService {
 //        taskDao.addTask(UPDATE_GRID_CACHE, "", 3);
 //    }
 
-    def distributionMap(String uploadId) {
+    Map distributionMap(String uploadId) {
         String dir = spatialConfig.data.dir
 
         //fetch info
@@ -1258,7 +1280,7 @@ class ManageLayersService {
         return map
     }
 
-    def checklistMap(String uploadId) {
+    Map checklistMap(String uploadId) {
         String dir = spatialConfig.data.dir
 
         //fetch info
@@ -1290,7 +1312,7 @@ class ManageLayersService {
         Map retMap = [:]
         Map dm = distributionMap(uploadId)
 
-        if (data.data_resource_uid == null || data.data_resource_uid.isEmpty()) {
+        if (data.get('data_resource_uid') == null || data.get('data_resource_uid').toString().isEmpty()) {
             retMap.put("error", "data resource uid parameter missing")
             retMap.putAll(dm)
             retMap.putAll(data)
@@ -1392,6 +1414,7 @@ class ManageLayersService {
      * @param fieldId
      * @return
      */
+    @CompileDynamic
     def updateFromRemote(String spatialServiceUrl, String fieldId, String jwt) {
         def f = JSON.parse(httpCall("GET",
                 spatialServiceUrl + "/field/${fieldId}?pageSize=0",
@@ -1400,7 +1423,7 @@ class ManageLayersService {
                 null,
                 "application/json")[1])
         Fields field = f as Fields
-        field.id = f.id
+        field.id = (f as Map).get('id') as String
 
         def l = JSON.parse(httpCall("GET",
                 spatialServiceUrl + "/layer/${field.spid}?pageSize=0",
@@ -1409,7 +1432,7 @@ class ManageLayersService {
                 null,
                 "application/json")[1])
         Layers layer = l as Layers
-        layer.id = l.id
+        layer.id = (l as Map).get('id') as Long
 
         //update postgres
         layer.requestedId = layer.id
@@ -1449,7 +1472,7 @@ class ManageLayersService {
         String geoserverPassword = spatialConfig.geoserver.password
 
         // create outline style
-        def data = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
+        String data = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
                 "<StyledLayerDescriptor version=\"1.0.0\"\n" +
                 "  xsi:schemaLocation=\"http://www.opengis.net/sld http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd\"\n" +
                 "  xmlns=\"http://www.opengis.net/sld\" xmlns:ogc=\"http://www.opengis.net/ogc\"\n" +
@@ -1505,7 +1528,7 @@ class ManageLayersService {
                 UploadSpatialResource.loadCreateStyle(geoserverUrl + "/rest/styles/",
                         extra, geoserverUsername, geoserverPassword, linear)
                 tmpFile = File.createTempFile("sld", "xml")
-                tmpFile.write(getLinearStyle(layerName, false))
+                tmpFile.write(getLinearStyle(layerName, false) as String)
                 UploadSpatialResource.loadSld(geoserverUrl + "/rest/styles/" + linear,
                         extra, geoserverUsername, geoserverPassword, tmpFile.path)
             }

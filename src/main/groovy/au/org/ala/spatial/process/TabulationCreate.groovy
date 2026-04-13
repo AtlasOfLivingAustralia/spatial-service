@@ -16,19 +16,20 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Fields
-import au.org.ala.spatial.dto.Tabulation
 import au.org.ala.spatial.TabulationGeneratorService
+import au.org.ala.spatial.dto.Tabulation
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class TabulationCreate extends SlaveProcess {
 
     void start() {
         Set all = [] as Set
-        List fields = getFields()
-        List tabulations = getTabulations()
+        List<Fields> fields = getFields()
+        List<Tabulation> tabulations = getTabulations() as List<Tabulation>
 
         fields.eachWithIndex { Fields field1, Integer idx1 ->
             fields.eachWithIndex { Fields field2, Integer idx2 ->
@@ -64,7 +65,7 @@ class TabulationCreate extends SlaveProcess {
             }
         }
 
-        getTabulations().each { Tabulation t ->
+        (getTabulations() as List<Tabulation>).each { Tabulation t ->
             String keyA = t.fid1 + ' ' + t.fid2
             String keyB = t.fid2 + ' ' + t.fid1
             String key = keyA < keyB ? keyA : keyB

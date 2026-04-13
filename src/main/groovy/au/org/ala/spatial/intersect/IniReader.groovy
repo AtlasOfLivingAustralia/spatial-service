@@ -32,7 +32,7 @@ package au.org.ala.spatial.intersect
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class IniReader {
 

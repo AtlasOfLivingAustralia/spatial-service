@@ -1,12 +1,15 @@
 package au.org.ala.spatial.tabulation
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.geotools.data.*
+import org.geotools.api.data.*
+import org.geotools.api.feature.simple.SimpleFeature
+import org.geotools.api.feature.simple.SimpleFeatureType
+import org.geotools.api.geometry.BoundingBox
+import org.geotools.data.DefaultTransaction
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
-import org.geotools.data.simple.SimpleFeatureSource
-import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.FeatureIterator
 import org.geotools.feature.simple.SimpleFeatureBuilder
@@ -18,9 +21,6 @@ import org.locationtech.jts.geom.Geometry
 import org.locationtech.jts.geom.MultiPolygon
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.io.WKTReader
-import org.opengis.feature.simple.SimpleFeature
-import org.opengis.feature.simple.SimpleFeatureType
-import org.opengis.geometry.BoundingBox
 import org.springframework.util.StreamUtils
 
 import java.util.concurrent.CountDownLatch
@@ -33,9 +33,8 @@ import java.util.zip.ZipOutputStream
 /**
  * Created by a on 3/02/15.
  */
-import groovy.transform.CompileStatic
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class Intersection {
 
     private static final LinkedBlockingQueue<String> lbqWriter = new LinkedBlockingQueue<String>()

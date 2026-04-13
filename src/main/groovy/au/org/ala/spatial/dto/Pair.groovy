@@ -1,7 +1,9 @@
 package au.org.ala.spatial.dto
 
+import groovy.transform.CompileStatic
 import org.locationtech.jts.geom.Geometry
 
+@CompileStatic
 class Pair {
 
     String key

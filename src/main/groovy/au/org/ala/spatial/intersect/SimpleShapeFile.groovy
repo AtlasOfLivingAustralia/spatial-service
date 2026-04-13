@@ -14,7 +14,7 @@
  ***************************************************************************/
 package au.org.ala.spatial.intersect
 
-
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang3.tuple.ImmutablePair
 
@@ -41,7 +41,7 @@ import java.util.stream.Collectors
  */
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class SimpleShapeFile implements Serializable {
 
     static final long serialVersionUID = -9046250209453575076L
@@ -590,7 +590,7 @@ class SimpleShapeFile implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class ShapeHeader implements Serializable {
 
     static final long serialVersionUID = 1219127870707511387L
@@ -716,7 +716,7 @@ class ShapeHeader implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class ShapeRecords implements Serializable {
 
     static final long serialVersionUID = -8141403235810528840L
@@ -823,7 +823,7 @@ class ShapeRecords implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class ShapeRecord implements Serializable {
 
     static final long serialVersionUID = -4426292545633280160L
@@ -898,7 +898,7 @@ class ShapeRecord implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class Shape implements Serializable {
 
     static final long serialVersionUID = 8573677305368105719L
@@ -937,7 +937,7 @@ class Shape implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class Polygon extends Shape {
 
     /**
@@ -1054,7 +1054,7 @@ class Polygon extends Shape {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class PolygonZ extends Shape {
 
     /**
@@ -1188,7 +1188,7 @@ class PolygonZ extends Shape {
  * https://desktop.arcgis.com/en/arcmap/latest/manage-data/shapefiles/shapefile-file-extensions.htm
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class CPG implements Serializable {
 
     private static final long serialVersionUID = -292802307279651655L
@@ -1223,7 +1223,7 @@ class CPG implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class DBF implements Serializable {
 
     static final long serialVersionUID = -1631837349804567374L
@@ -1383,7 +1383,7 @@ class DBF implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class DBFHeader implements Serializable {
 
     static final long serialVersionUID = -1807390252140128281L
@@ -1570,7 +1570,7 @@ class DBFHeader implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class DBFField implements Serializable {
 
     static final long serialVersionUID = 6130879839715559815L
@@ -1688,7 +1688,7 @@ class DBFField implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class DBFRecords implements Serializable {
 
     static final long serialVersionUID = -2450196133919654852L
@@ -1819,7 +1819,7 @@ class DBFRecords implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class DBFRecord implements Serializable {
 
     static final long serialVersionUID = 584190536943295242L
@@ -1949,7 +1949,7 @@ class DBFRecord implements Serializable {
  * @author adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class ShapesReference implements Serializable {
 
     /**
@@ -2167,7 +2167,7 @@ class ShapesReference implements Serializable {
 }
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class IntersectionThread implements Runnable {
 
     //private static final Logger logger = log.getLogger(IntersectionThread.class);
@@ -2242,7 +2242,7 @@ class IntersectionThread implements Runnable {
 }
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class PointPos {
 
     public double x, y

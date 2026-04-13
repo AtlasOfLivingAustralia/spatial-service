@@ -15,12 +15,13 @@
 package au.org.ala.spatial.grid
 
 import au.org.ala.spatial.intersect.IniReader
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class Diva2bil {
 

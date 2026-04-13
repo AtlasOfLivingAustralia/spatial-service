@@ -17,13 +17,11 @@ package au.org.ala.spatial
 
 import au.ala.org.ws.security.RequireApiKey
 import au.org.ala.plugins.openapi.Path
-import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -33,7 +31,6 @@ import org.grails.web.json.JSONObject
 import javax.ws.rs.Produces
 
 import static au.org.ala.spatial.Util.zip
-import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.PATH
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 

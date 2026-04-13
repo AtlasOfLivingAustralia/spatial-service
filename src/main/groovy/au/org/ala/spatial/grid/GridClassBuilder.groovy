@@ -17,16 +17,18 @@ package au.org.ala.spatial.grid
 import au.org.ala.spatial.dto.GridClass
 import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
-import org.codehaus.jackson.map.ObjectMapper
+import org.geotools.api.data.SimpleFeatureSource
+import org.geotools.api.data.SimpleFeatureStore
+import org.geotools.api.data.Transaction
+import org.geotools.api.feature.simple.SimpleFeature
+import org.geotools.api.feature.simple.SimpleFeatureType
 import org.geotools.data.DataUtilities
 import org.geotools.data.DefaultTransaction
-import org.geotools.data.Transaction
 import org.geotools.data.shapefile.ShapefileDataStore
 import org.geotools.data.shapefile.ShapefileDataStoreFactory
-import org.geotools.data.simple.SimpleFeatureSource
-import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.feature.DefaultFeatureCollection
 import org.geotools.feature.simple.SimpleFeatureBuilder
 import org.geotools.geojson.feature.FeatureJSON
@@ -35,9 +37,7 @@ import org.geotools.kml.KMLConfiguration
 import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.geotools.xsd.Encoder
 import org.locationtech.jts.geom.MultiPolygon
-import org.opengis.feature.simple.SimpleFeature
-import org.opengis.feature.simple.SimpleFeatureType
-
+import tools.jackson.databind.ObjectMapper
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -46,7 +46,7 @@ import java.util.zip.ZipOutputStream
  * @author Adam
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
  class GridClassBuilder {
 
     final public static int[] colours = [0x003366CC, 0x00DC3912, 0x00FF9900, 0x00109618, 0x00990099, 0x000099C6, 0x00DD4477, 0x0066AA00, 0x00B82E2E, 0x00316395, 0x00994499, 0x0022AA99, 0x00AAAA11, 0x006633CC, 0x00E67300, 0x008B0707, 0x00651067, 0x00329262, 0x005574A6, 0x003B3EAC, 0x00B77322, 0x0016D620, 0x00B91383, 0x00F4359E, 0x009C5935, 0x00A9C413, 0x002A778D, 0x00668D1C, 0x00BEA413, 0x000C5922, 0x00743411]

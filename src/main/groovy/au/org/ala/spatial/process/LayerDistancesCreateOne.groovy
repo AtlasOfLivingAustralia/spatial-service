@@ -15,11 +15,12 @@
 
 package au.org.ala.spatial.process
 
-import au.org.ala.spatial.intersect.Grid
 import au.org.ala.spatial.TabulationGeneratorService
+import au.org.ala.spatial.intersect.Grid
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class LayerDistancesCreateOne extends SlaveProcess {
 
@@ -29,7 +30,7 @@ class LayerDistancesCreateOne extends SlaveProcess {
             fieldIds.add(getInput('fieldId' + (i + 1)) as String)
         }
 
-        String[] grdResolutions = getInput('grdResolutions')
+        String[] grdResolutions = getInput('grdResolutions')?.split(',')
 
         File f = new File(spatialConfig.data.dir.toString() + '/public/layerDistances.properties')
         if (!f.exists()) f.write('')

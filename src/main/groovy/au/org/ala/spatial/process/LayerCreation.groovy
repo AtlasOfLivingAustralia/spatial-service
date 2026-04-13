@@ -16,17 +16,18 @@
 package au.org.ala.spatial.process
 
 import au.org.ala.spatial.Layers
-import au.org.ala.spatial.util.GeomMakeValid
-import au.org.ala.spatial.grid.GridClassBuilder
-import au.org.ala.spatial.legend.GridLegend
 import au.org.ala.spatial.grid.Bil2diva
 import au.org.ala.spatial.grid.Diva2bil
+import au.org.ala.spatial.grid.GridClassBuilder
+import au.org.ala.spatial.legend.GridLegend
+import au.org.ala.spatial.util.GeomMakeValid
 import au.org.ala.spatial.util.SpatialUtils
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.io.FileUtils
 
-//@CompileStatic
+@CompileStatic
 @Slf4j
 class LayerCreation extends SlaveProcess {
 

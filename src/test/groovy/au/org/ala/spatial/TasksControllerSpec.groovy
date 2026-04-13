@@ -15,13 +15,11 @@
 
 package au.org.ala.spatial
 
-
 import au.org.ala.web.AuthService
 import grails.converters.JSON
 import grails.testing.gorm.DomainUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
-import org.hibernate.spatial.Spatial
 import spock.lang.Specification
 
 import javax.sql.DataSource

@@ -15,18 +15,26 @@
 
 package au.org.ala.spatial
 
-import au.org.ala.spatial.SpatialConfig
+
 import au.org.ala.spatial.dto.TaskWrapper
 import au.org.ala.spatial.util.UploadSpatialResource
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import org.apache.commons.io.FileUtils
+import org.grails.web.json.JSONArray
+import org.grails.web.json.JSONObject
 
+import javax.sql.DataSource
+import java.sql.Connection
+import java.sql.Statement
+
+@CompileStatic
 class PublishService {
 
-    def manageLayersService
-    def tasksService
-    def fileService
-    def dataSource
+    ManageLayersService manageLayersService
+    TasksService tasksService
+    FileService fileService
+    DataSource dataSource
     LayerService layerService
     FieldService fieldService
     SpatialObjectsService spatialObjectsService
@@ -69,7 +77,7 @@ class PublishService {
                 taskWrapper.task.history.putAll(runSql(output, taskWrapper.path))
             } else if ('append'.equalsIgnoreCase(k)) {
                 if (output.file != null) {
-                    String f = JSON.parse(output.file).get(0)
+                    String f = (JSON.parse(output.file) as JSONArray).get(0) as String
                     def idx = f.indexOf('?')
                     String file = f.substring(0, idx)
                     String append = f.substring(idx + 1) + '\n'
@@ -83,19 +91,20 @@ class PublishService {
         taskWrapper.task.output.each { OutputParameter output ->
             String k = output.name
             if ('process'.equalsIgnoreCase(k)) {
-                JSON.parse(output.file).each { file ->
-                    def pos = file.toString().indexOf(' ')
-                    def name
-                    def input
-                    def tag
+                (JSON.parse(output.file) as JSONArray).each { Object fileObj ->
+                    String fileStr = fileObj.toString()
+                    int pos = fileStr.indexOf(' ')
+                    String name
+                    Object input
+                    String tag
                     if (pos <= 0) {
-                        name = file
+                        name = fileStr
                         input = [:]
                         tag = ''
                     } else {
-                        name = file.substring(0, pos)
-                        input = JSON.parse(file.substring(pos + 1))
-                        tag = file.substring(pos + 1)
+                        name = fileStr.substring(0, pos)
+                        input = JSON.parse(fileStr.substring(pos + 1))
+                        tag = fileStr.substring(pos + 1)
                     }
                     tasksService.create(name, tag, input)
                 }
@@ -106,7 +115,9 @@ class PublishService {
         taskWrapper.task.output.each { OutputParameter output ->
             String k = output.name
             if ('download'.equalsIgnoreCase(k)) {
-                fileService.zip(taskWrapper.path + File.separator + "download.zip", taskWrapper.path, JSON.parse(output.file))
+                List<String> fileList = []
+                (JSON.parse(output.file) as JSONArray).each { Object f -> fileList.add(f.toString()) }
+                fileService.zip(taskWrapper.path + File.separator + "download.zip", taskWrapper.path, fileList)
             }
         }
 
@@ -116,19 +127,19 @@ class PublishService {
         }
     }
 
-    def addStyle(OutputParameter output, path) {
+    def addStyle(OutputParameter output, String path) {
         def errors = [:]
         try {
             if (spatialConfig.geoserver.canDeploy.toBoolean()) {
 
-                def geoserverUrl = spatialConfig.geoserver.url
-                def geoserverUsername = spatialConfig.geoserver.username
-                def geoserverPassword = spatialConfig.geoserver.password
+                String geoserverUrl = spatialConfig.geoserver.url
+                String geoserverUsername = spatialConfig.geoserver.username
+                String geoserverPassword = spatialConfig.geoserver.password
 
-                JSON.parse(output.file).each { file ->
-
-                    def p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
-                    def name = new File(p).getName().replace(".sld", "")
+                (JSON.parse(output.file) as JSONArray).each { Object fileObj ->
+                    String file = fileObj.toString()
+                    String p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
+                    String name = new File(p).getName().replace(".sld", "")
 
                     //Create style
                     String extra = ""
@@ -146,56 +157,39 @@ class PublishService {
                         errors.put(String.valueOf(System.currentTimeMillis()), out)
                     } else {
                         //when the sld is for a field, apply to the layer as the default sld
-                        def field = fieldService.getFieldById(name, false)
+                        Fields field = fieldService.getFieldById(name, false)
                         if (field != null) {
-                            def layer = layerService.getLayerById(Integer.parseInt(field.spid), false)
+                            Layers layer = layerService.getLayerById(Integer.parseInt(field.spid), false)
                             if (layer != null) {
                                 //Apply style
                                 String data = "<layer><enabled>true</enabled><defaultStyle><name>" + name +
                                         "</name></defaultStyle></layer>"
                                 out = UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + layer.name, extra,
                                         geoserverUsername, geoserverPassword, data)
-                                if (!out.startsWith("200") && !out.startsWith("201")) {
-                                    //ignore errors
-                                    // errors.put(String.valueOf(System.currentTimeMillis()), out)
-                                }
-
                                 //add Style to layer styles
                                 data = "<style><name>" + name + "</name></style>"
                                 out = UploadSpatialResource.assignSld(geoserverUrl + "/rest/layers/ALA:" + layer.name + "/styles", extra,
                                         geoserverUsername, geoserverPassword, data)
-                                if (!out.startsWith("200") && !out.startsWith("201")) {
-                                    //ignore errors
-                                    // errors.put(String.valueOf(System.currentTimeMillis()), out)
-                                }
-
                                 out = UploadSpatialResource.addGwcStyle(geoserverUrl, layer.name, name, geoserverUsername, geoserverPassword)
-                                if (!out.startsWith("200") && !out.startsWith("201")) {
-                                    //ignore errors
-                                    // errors.put(String.valueOf(System.currentTimeMillis()), out)
-                                }
                             }
                         }
-
                     }
                 }
-
             }
         } catch (err) {
             log.error 'failed to upload sld: ' + output + ', ' + path, err
         }
 
         errors
-
     }
 
-    def delete(OutputParameter output, path) {
+    def delete(OutputParameter output, String path) {
         def errors = [:]
         try {
-            JSON.parse(output.file).each { file ->
-
-                def p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
-                def f = new File(p)
+            (JSON.parse(output.file) as JSONArray).each { Object fileObj ->
+                String file = fileObj.toString()
+                String p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
+                File f = new File(p)
                 if (f.exists()) {
                     try {
                         f.delete()
@@ -209,21 +203,20 @@ class PublishService {
         }
 
         errors
-
     }
 
     def addArea(OutputParameter output, String path) {
         def errors = [:]
         try {
-            def newAreas = []
-            JSON.parse(output.file).each { json ->
-
-                def values = JSON.parse(json)
-                String p = (values.file.startsWith('/') ? spatialConfig.data.dir + values.file : path + '/' + values.file)
+            List<String> newAreas = []
+            (JSON.parse(output.file) as JSONArray).each { Object jsonObj ->
+                JSONObject values = JSON.parse(jsonObj.toString()) as JSONObject
+                String filePath = values.get('file') as String
+                String p = (filePath.startsWith('/') ? spatialConfig.data.dir + filePath : path + '/' + filePath)
 
                 String wkt = new File(p).text
 
-                String generatedPid = spatialObjectsService.createUserUploadedObject(wkt, values.name, values.description, null)
+                String generatedPid = spatialObjectsService.createUserUploadedObject(wkt, values.get('name') as String, values.get('description') as String, null)
 
                 newAreas.add(generatedPid)
             }
@@ -236,12 +229,13 @@ class PublishService {
         errors
     }
 
-    def runSql(OutputParameter output, path) {
-        def errors = [:]
-        def conn = dataSource.getConnection()
-        def statement = conn.createStatement()
+    Map<String, String> runSql(OutputParameter output, String path) {
+        Map<String, String> errors = [:]
+        Connection conn = dataSource.getConnection()
+        Statement statement = conn.createStatement()
         try {
-            JSON.parse(output.file).each { file ->
+            (JSON.parse(output.file) as JSONArray).each { Object fileObj ->
+                String file = fileObj.toString()
                 String p = (file.startsWith('/') ? spatialConfig.data.dir + file : path + '/' + file)
                 try {
                     statement.execute(new File(p).text)
@@ -251,7 +245,7 @@ class PublishService {
                 }
             }
         } catch (err) {
-            log.error err
+            log.error err.getMessage(), err
         } finally {
             if (statement != null) {
                 statement.close()
@@ -263,7 +257,7 @@ class PublishService {
         errors
     }
 
-    def callGeoserver(String type, String urlPath, String file, String resource) {
+    String[] callGeoserver(String type, String urlPath, String file, String resource) {
         return manageLayersService.httpCall(type,
                 spatialConfig.geoserver.url + urlPath,
                 spatialConfig.geoserver.username,
@@ -271,7 +265,7 @@ class PublishService {
                 file, resource, "text/plain")
     }
 
-    def callGeoserver(String type, String urlPath, String file, String resource, String contentType) {
+    String[] callGeoserver(String type, String urlPath, String file, String resource, String contentType) {
         return manageLayersService.httpCall(type,
                 spatialConfig.geoserver.url + urlPath,
                 spatialConfig.geoserver.username,
@@ -279,8 +273,8 @@ class PublishService {
                 file, resource, contentType)
     }
 
-    def callGeoserverDelete(String urlPath) {
-        def getResponse = callGeoserver("GET", urlPath, null, null)
+    String[] callGeoserverDelete(String urlPath) {
+        String[] getResponse = callGeoserver("GET", urlPath, null, null)
 
         // only delete when there is a response status code 2xx
         if (getResponse && getResponse[0].startsWith("2")) {
@@ -290,23 +284,25 @@ class PublishService {
         }
     }
 
-    Map<String, String> layerToGeoserver(OutputParameter output, path) {
+    Map<String, String> layerToGeoserver(OutputParameter output, String path) {
         Map<String, String> errors = [:]
         if (spatialConfig.geoserver.canDeploy.toBoolean()) {
 
-            def geoserverUrl = spatialConfig.geoserver.url
-            def geoserverUsername = spatialConfig.geoserver.username
-            def geoserverPassword = spatialConfig.geoserver.password
+            String geoserverUrl = spatialConfig.geoserver.url
+            String geoserverUsername = spatialConfig.geoserver.username
+            String geoserverPassword = spatialConfig.geoserver.password
 
-            JSON.parse(output.file).each { f ->
-                def p = path == null ? f : (f.startsWith('/') ? spatialConfig.data.dir + f : path + '/' + f)
-                def file = f
+            (JSON.parse(output.file) as JSONArray).each { Object fObj ->
+                String f = fObj.toString()
+                String p = path == null ? f : (f.startsWith('/') ? spatialConfig.data.dir + f : path + '/' + f)
+                String file = f
 
                 if (f.startsWith("{")) {
                     // parse 'file' out of JSON
-                    def values = JSON.parse(f)
-                    p = (values.file.startsWith('/') ? spatialConfig.data.dir + values.file : path + '/' + values.file)
-                    file = values.file
+                    JSONObject values = JSON.parse(f) as JSONObject
+                    String vFile = values.get('file') as String
+                    p = (vFile.startsWith('/') ? spatialConfig.data.dir + vFile : path + '/' + vFile)
+                    file = vFile
                 }
                 if (!file.endsWith('.tif') && !file.endsWith('.shp')) {
                     if (new File(p + '.tif').exists()) {
@@ -318,16 +314,14 @@ class PublishService {
                     }
                 }
                 if (file.endsWith('.tif')) {
-                    def geotiff = new File(p)
-                    def sld = new File(p.replace(".tif", ".sld"))
-                    def name = geotiff.getName().replace('.tif', '')
+                    File geotiff = new File(p)
+                    File sld = new File(p.replace(".tif", ".sld"))
+                    String name = geotiff.getName().replace('.tif', '')
 
                     if (geotiff.exists()) {
                         try {
-
-                            //TODO: Why is.prj interfering with Geoserver discovering .tif is EPSG:4326?
-                            def oldPrj = new File(p.replace('.tif', '.prj'))
-                            def tmpPrj = new File(p.replace('.tif', '.prj.tmp'))
+                            File oldPrj = new File(p.replace('.tif', '.prj'))
+                            File tmpPrj = new File(p.replace('.tif', '.prj.tmp'))
                             if (oldPrj.exists()) FileUtils.moveFile(oldPrj, tmpPrj)
 
                             //attempt to delete
@@ -394,9 +388,9 @@ class PublishService {
                         }
                     }
                 } else if (file.endsWith('.shp')) {
-                    def shp = new File(p)
-                    def name = shp.getName().replace('.shp', '')
-                    def sld = new File(name + ".sld")
+                    File shp = new File(p)
+                    String name = shp.getName().replace('.shp', '')
+                    File sld = new File(name + ".sld")
 
                     callGeoserverDelete("/rest/workspaces/ALA/datastores/" + name)
 
@@ -415,7 +409,7 @@ class PublishService {
                             // upload the file
                             File uploadFile = new File(shp.getPath().replace(".shp", "." + filetype))
                             if (uploadFile.exists()) {
-                                String[] result =  callGeoserver("PUT", "/rest/resource/data/" + name + "." + filetype, uploadFile.getPath(), null)
+                                String[] result = callGeoserver("PUT", "/rest/resource/data/" + name + "." + filetype, uploadFile.getPath(), null)
                                 if ("201" != result[0]) {
                                     errors.put(String.valueOf(System.currentTimeMillis()), 'failed to upload file to geoserver: ' + uploadFile.getPath())
                                     log.error 'Failed to load shp into co-located geoserver: ' + shp.getPath() + ". Check geoserver logs for details"
@@ -424,10 +418,9 @@ class PublishService {
                         }
                     }
 
-
                     if (sld.exists()) {
                         //Create style
-                        def out = UploadSpatialResource.sld(geoserverUrl + "/rest/styles/", geoserverUsername, geoserverPassword, name, name, sld.getPath())
+                        String out = UploadSpatialResource.sld(geoserverUrl + "/rest/styles/", geoserverUsername, geoserverPassword, name, name, sld.getPath())
 
                         if (!out.startsWith("200") && !out.startsWith("201")) {
                             errors.put(String.valueOf(System.currentTimeMillis()), out)

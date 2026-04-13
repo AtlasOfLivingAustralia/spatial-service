@@ -16,6 +16,7 @@
 package au.org.ala.spatial.intersect
 
 import au.org.ala.spatial.util.SpatialUtils
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import javax.imageio.ImageIO
@@ -31,7 +32,7 @@ import java.awt.image.BufferedImage
  * @author Adam Collins
  */
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class SimpleRegion implements Serializable {
 
     /**
@@ -471,8 +472,8 @@ class SimpleRegion implements Serializable {
         return null
     }
 
-    Double distance(double longitude, double latitude, double distance) {
-        distance(longitude,latitude,distance,false)
+    Double distance(double longitude, double latitude, double distance_) {
+        distance(longitude,latitude,distance_,false)
     }
 
     boolean isWithin_EPSG900913(double longitude, double latitude) {

@@ -17,23 +17,16 @@ package au.org.ala.spatial
 
 import au.org.ala.spatial.dto.ProcessSpecification
 import au.org.ala.spatial.dto.SpeciesInput
-import au.org.ala.spatial.process.SlaveProcess
 import au.org.ala.spatial.dto.TaskWrapper
-import au.org.ala.spatial.util.SpatialUtils
-import au.org.ala.ws.service.WebService
+import au.org.ala.spatial.process.SlaveProcess
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
-import org.apache.commons.lang3.StringUtils
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.AREA
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.DOUBLE
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.INT
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.LAYER
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.PROCESS
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.SPECIES
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.STRING
-import static au.org.ala.spatial.dto.ProcessSpecification.InputType.UPLOAD
+import static au.org.ala.spatial.dto.ProcessSpecification.InputType.*
 
+@CompileStatic
 class TasksService {
 
     SpatialObjectsService spatialObjectsService
@@ -48,7 +41,7 @@ class TasksService {
     GridCutterService gridCutterService
     TabulationGeneratorService tabulationGeneratorService
     FileService fileService
-    WebService webService
+    def webService
     SandboxService sandboxService
 
     PublishService publishService
@@ -61,6 +54,7 @@ class TasksService {
         taskQueueService.cancel(taskId)
     }
 
+    @CompileDynamic
     Map<String, Object> getStatus(taskId) {
         def task = transientTasks.get(taskId)
         if (!task) {
@@ -90,6 +84,7 @@ class TasksService {
     * 'input' is map of [inputName: inputValue]
     * 'identifier' is used to tag the process for making this instance unique, e.g. hash of input
     */
+    @CompileDynamic
     @Transactional(readOnly = false)
     def create(name, identifier, input, sessionId = null, userId = null, email = null) {
         if (input == null) input = [:] as Map
@@ -203,6 +198,7 @@ class TasksService {
     }
 
     // attach final log, message and outputs to a task
+    @CompileDynamic
     @Transactional(readOnly = false)
     def afterPublish(TaskWrapper taskWrapper) {
 
@@ -266,6 +262,7 @@ class TasksService {
      * @param input
      * @return map of errors
      */
+    @CompileDynamic
     def validateInput(name, input, isAdmin) {
         if (input == null) input = [:] as Map
 
@@ -455,6 +452,7 @@ class TasksService {
         errors
     }
 
+    @CompileDynamic
     TaskWrapper reRun(Task task) {
         //reset output
         OutputParameter.withNewTransaction {
@@ -487,6 +485,7 @@ class TasksService {
     def _spec = [:]
     def _specAdmin = [:]
 
+    @CompileDynamic
     def getSpecification(boolean includePrivate) {
         if (!_spec) {
 
@@ -513,6 +512,7 @@ class TasksService {
         }
     }
 
+    @CompileDynamic
     List getAllSpec() {
         List list = []
 

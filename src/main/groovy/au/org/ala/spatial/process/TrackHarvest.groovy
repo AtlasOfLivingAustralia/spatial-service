@@ -16,13 +16,14 @@
 package au.org.ala.spatial.process
 
 import com.opencsv.CSVReader
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.commons.lang.StringUtils
 
 import java.text.MessageFormat
 
 @Slf4j
-//@CompileStatic
+@CompileStatic
 class TrackHarvest extends SlaveProcess {
 
     void start() {
