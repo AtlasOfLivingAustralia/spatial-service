@@ -8,12 +8,11 @@
 
     <meta name="layout" content="ala-main"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'leaflet.css')}"/>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'datatables.min.css')}" type="text/css">
     <script src="${resource(dir: 'js', file: 'jquery.js')}"></script>
-    <script src="${resource(dir: 'js', file: 'jquery.dataTables.min.js')}"></script>
+    <script src="${resource(dir: 'js', file: 'datatables.min.js')}"></script>
     <script src="${resource(dir: 'js', file: 'leaflet.js')}"></script>
     <script src="${resource(dir: 'js', file: 'BetterWMS.js')}"></script>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'fluid.css')}" type="text/css">
 </head>
 
 <body class="fluid">
