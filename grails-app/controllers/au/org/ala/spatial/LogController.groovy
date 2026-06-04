@@ -206,8 +206,8 @@ class LogController {
     @Path("/log/search")
     @Produces("application/json")
     def search() {
-        def searchResult = logService.search(params, authService.getUserId(), spatialAuthService.userInRole(spatialConfig.auth.admin_role))
-        def totalCount = logService.searchCount(params, authService.getUserId(), spatialAuthService.userInRole(spatialConfig.auth.admin_role))
+        def searchResult = logService.search(params, authService.getUserId(), spatialAuthService.isAdmin())
+        def totalCount = logService.searchCount(params, authService.getUserId(), spatialAuthService.isAdmin())
         log.debug("Logs: " + totalCount)
         log.debug("Return as " + request.getHeader("accept"))
         if ("application/csv" == request.getHeader("accept") || "application/csv" == params['accept']) {

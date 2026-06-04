@@ -777,6 +777,16 @@ class SpatialObjectsService {
         }
     }
 
+    String getUserUploadedObjectUserId(int pid) {
+        String userId = null
+        String sql = "SELECT user_id FROM uploaded_objects_metadata WHERE pid = ?"
+        Sql.newInstance(dataSource).query(sql, [Integer.toString(pid)], { ResultSet rs ->
+            if (rs.next()) {
+                userId = rs.getString(1)
+            }
+        })
+        return userId
+    }
 
     @Transactional
     boolean deleteUserUploadedObject(int pid) {

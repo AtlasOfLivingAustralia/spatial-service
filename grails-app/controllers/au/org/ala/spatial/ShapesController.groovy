@@ -55,9 +55,11 @@ import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY
 class ShapesController {
 
     SpatialObjectsService spatialObjectsService
+    SpatialAuthService spatialAuthService
 
     SpatialConfig spatialConfig
     def dataSource
+    def authService
 
     static final String KML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
             "<kml xmlns=\"http://earth.google.com/kml/2.2\">" +
@@ -393,7 +395,7 @@ class ShapesController {
     @RequireApiKey
     def uploadGeojson(Integer id) {
         //id can be null
-        processGeoJSONRequest(request.getJSON() as JSONObject, id)
+        processGeoJSONRequest(normaliseRequest(request.getJSON() as JSONObject), id)
     }
 
     private Map<String, Object> processWKTRequest(JSONObject json, Integer pid, boolean namesearch) {
@@ -462,7 +464,7 @@ class ShapesController {
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
 
         //id can be null
-        def result = processWKTRequest(request.JSON as JSONObject, id, namesearch) as JSON
+        def result = processWKTRequest(normaliseRequest(request.JSON as JSONObject), id, namesearch) as JSON
         response.contentType = 'application/json'
         render result
     }
@@ -496,7 +498,7 @@ class ShapesController {
     @Produces("application/json")
     @RequireApiKey
     def uploadGeoJSON() throws Exception {
-        render processGeoJSONRequest(request.JSON as JSONObject, null) as JSON
+        render processGeoJSONRequest(normaliseRequest(request.JSON as JSONObject), null) as JSON
     }
 
     @Operation(
@@ -541,7 +543,12 @@ class ShapesController {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return
         }
-        render processGeoJSONRequest(request.JSON as JSONObject, pid) as JSON
+
+        if (!spatialAuthService.isAdmin() && authService.getUserId() != spatialObjectsService.getUserUploadedObjectUserId(pid)) {
+            render status: 403, text: "Permission required."
+        }
+
+        render processGeoJSONRequest(normaliseRequest(request.JSON as JSONObject), pid) as JSON
     }
 
     @Operation(
@@ -586,8 +593,13 @@ class ShapesController {
             render status: 400, text: "Path parameter `pid` is not an integer."
             return
         }
+
+        if (!spatialAuthService.isAdmin() && authService.getUserId() != spatialObjectsService.getUserUploadedObjectUserId(pid)) {
+            render status: 403, text: "Permission required."
+        }
+
         def namesearch = params.containsKey('namesearch') ? params.namesearch.toString().toBoolean() : false
-        render processWKTRequest(request.JSON as JSONObject, pid, namesearch) as JSON
+        render processWKTRequest(normaliseRequest(request.JSON as JSONObject), pid, namesearch) as JSON
     }
 
     @Operation(
@@ -677,7 +689,12 @@ class ShapesController {
     @Deprecated
     @RequireApiKey
     def uploadKMLFile() {
-        String userId = params.containsKey("user_id") ? params.user_id : null
+        String userId
+        if (spatialAuthService.isAdmin()) {
+            userId = params.containsKey("user_id") ? params.user_id : null
+        } else {
+            userId = authService.getUserId()
+        }
 
         String name = params.containsKey("name") ? params.name : null
         String description = params.containsKey("description") ? params.description : null
@@ -899,7 +916,7 @@ class ShapesController {
     def saveFeatureFromShapeFile() {
         String shapeId = params.shapeId
         String featureIndex = params.featureIndex
-        JSONObject json = request.JSON as JSONObject
+        JSONObject json = normaliseRequest(request.getJSON() as JSONObject)
         if (!featureIndex) {
             if (json["featureIdx"]) {
                 featureIndex = json["featureIdx"]
@@ -917,7 +934,12 @@ class ShapesController {
             render status: 400, text: "Path parameter `objectPid` is not an integer."
             return
         }
-        render processShapeFileFeatureRequest(request.JSON as JSONObject, objectPid, shapeId, featureIndex) as JSON
+
+        if (!spatialAuthService.isAdmin() && authService.getUserId() != spatialObjectsService.getUserUploadedObjectUserId(objectPid)) {
+            render status: 403, text: "Permission required."
+        }
+
+        render processShapeFileFeatureRequest(normaliseRequest(request.getJSON() as JSONObject), objectPid, shapeId, featureIndex) as JSON
     }
 
     @Deprecated
@@ -935,7 +957,7 @@ class ShapesController {
             render status: 400, text: "Path parameter `radius` is not a number."
             return
         }
-        render processPointRadiusRequest(request.JSON as JSONObject, null, latitude, longitude, radius) as JSON
+        render processPointRadiusRequest(normaliseRequest(request.getJSON() as JSONObject), null, latitude, longitude, radius) as JSON
     }
 
     @Deprecated
@@ -953,7 +975,12 @@ class ShapesController {
             render status: 400, text: "Path parameter `radius` is not a number."
             return
         }
-        render processPointRadiusRequest(request.JSON as JSONObject, objectPid, latitude, longitude, radius) as JSON
+
+        if (!spatialAuthService.isAdmin() && authService.getUserId() != spatialObjectsService.getUserUploadedObjectUserId(objectPid)) {
+            render status: 403, text: "Permission required."
+        }
+
+        render processPointRadiusRequest(normaliseRequest(request.getJSON() as JSONObject), objectPid, latitude, longitude, radius) as JSON
     }
 
     private Map<String, Object> processPointRadiusRequest(JSONObject json, Integer pid, double latitude, double longitude, double radiusKm) {
@@ -1015,6 +1042,10 @@ class ShapesController {
             return
         }
         if (request.method == "DELETE") {
+            if (!spatialAuthService.isAdmin() && authService.getUserId() != spatialObjectsService.getUserUploadedObjectUserId(pid)) {
+                render status: 403, text: "Permission required."
+            }
+
             Map<String, Object> retMap = new HashMap<String, Object>()
             try {
                 boolean success = spatialObjectsService.deleteUserUploadedObject(pid)
@@ -1064,6 +1095,13 @@ class ShapesController {
 
     private static String cleanObjectId(String id) {
         String.valueOf(Long.valueOf(id))
+    }
+
+    private JSONObject normaliseRequest(JSONObject json) {
+        if (!spatialAuthService.isAdmin()) {
+            json['user_id'] = authService.getUserId()
+        }
+        return json
     }
 }
 

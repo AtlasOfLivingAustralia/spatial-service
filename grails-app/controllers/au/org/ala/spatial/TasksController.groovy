@@ -294,10 +294,25 @@ class TasksController {
     @Transactional(readOnly = false)
     @RequireApiKey
     create() {
+        boolean isAdmin = spatialAuthService.isAdmin()
+
         String name = params.containsKey('name') ? params.name : request.JSON.name
         String sessionId = params.containsKey('sessionId') ? params.sessionId : request.JSON.sessionId
         String identifier = params.containsKey('identifier') ? params.identifier : request.JSON.identifier
-        String email = params.containsKey('email') ? params.email : request.JSON.email
+
+        String email
+        if (isAdmin) {
+            email = params.containsKey('email') ? params.email : request.JSON.email
+        } else {
+            email = authService.getEmail()
+        }
+
+        def userId
+        if (isAdmin) {
+            userId = params.containsKey('userId') ? params.userId : request.JSON.userId
+        } else {
+            userId = authService.getUserId()
+        }
 
         Map input = null
         if (params.containsKey('input')) {
@@ -308,9 +323,8 @@ class TasksController {
 
         //Validate input. It may update input
         def errors
-        def userId = params.containsKey('userId') ? params.userId : request.JSON.userId
         if (spatialConfig.security.oidc.enabled || spatialConfig.security.cas.enabled) {
-            errors = tasksService.validateInput(name, input, spatialAuthService.userInRole(spatialConfig.auth.admin_role))
+            errors = tasksService.validateInput(name, input, isAdmin)
             userId = authService.getUserId() ?: userId
         } else {
             errors = tasksService.validateInput(name, input, true)
@@ -370,6 +384,12 @@ class TasksController {
     @RequireApiKey
     cancel() {
         Long id = Long.parseLong(params.id)
+
+        if (!spatialAuthService.isAdmin() && Task.get(id)?.userId != authService.getUserId()) {
+            response.status = 403
+            return
+        }
+
         def task = tasksService.cancel(id)
 
         if (request.contentType?.equalsIgnoreCase("application/json")) {
