@@ -3,6 +3,7 @@ package au.org.ala.spatial
 class SpatialAuthService {
 
     def authService
+    SpatialConfig spatialConfig
 
     // handle instance where role is not copied into userDetails
     boolean userInRole(String role) {
@@ -15,5 +16,9 @@ class SpatialAuthService {
             return false
         }
         return true
+    }
+
+    boolean isAdmin() {
+        return userInRole(spatialConfig.auth.admin_role) || userInRole("ala/internal")
     }
 }

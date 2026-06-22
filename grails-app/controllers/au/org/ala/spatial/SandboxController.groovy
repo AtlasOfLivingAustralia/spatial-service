@@ -41,6 +41,7 @@ class SandboxController {
     def dataSource
     def sandboxService
     AuthService authService
+    SpatialAuthService spatialAuthService
 
     @Operation(
             method = "POST",
@@ -153,7 +154,7 @@ class SandboxController {
         String id = params.id
 
         if (id) {
-            boolean successful = sandboxService.delete(id, authService.getUserId(), authService.userInRole("ROLE_ADMIN"))
+            boolean successful = sandboxService.delete(id, authService.getUserId(), spatialAuthService.isAdmin())
             if (successful) {
                 retMap.put("message", "File deleted")
                 render retMap as JSON

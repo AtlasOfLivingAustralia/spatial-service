@@ -401,7 +401,7 @@ class IntersectController {
     )
     @Path('/intersect/reloadconfig')
     @Produces("application/json")
-    @RequireApiKey
+    @RequireAdmin
     def reloadConfig() {
         Map map = new HashMap()
         layerIntersectService.reload()

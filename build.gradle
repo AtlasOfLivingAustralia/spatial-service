@@ -126,8 +126,8 @@ dependencies {
     implementation group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'
 
     // plugins needed at runtime but not for compilation
-    implementation "org.grails.plugins:ala-admin-plugin:2.4.0-SNAPSHOT"
-    implementation ("org.grails.plugins:ala-bootstrap5:1.0.0-SNAPSHOT") {
+    implementation "org.grails.plugins:ala-admin-plugin:2.4.0"
+    implementation ("org.grails.plugins:ala-bootstrap5:1.0.0") {
         exclude module: 'ala-cas-client'
     }
 

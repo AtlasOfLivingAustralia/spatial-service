@@ -63,7 +63,7 @@ class LoginInterceptor {
         if (authService.getUserId()) {
             //Check role
             if (!Strings.isNullOrEmpty(role)) {
-                if (!spatialAuthService.userInRole(role)) {
+                if (!spatialAuthService.isAdmin()) {
                     return accessDenied(STATUS_FORBIDDEN, 'Forbidden, require a user with role: ' + role)
                 }
             }

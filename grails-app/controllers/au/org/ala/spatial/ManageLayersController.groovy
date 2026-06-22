@@ -34,6 +34,7 @@ class ManageLayersController {
     FileService fileService
     TasksService tasksService
     SpatialConfig spatialConfig
+    SpatialAuthService spatialAuthService
 
     FieldService fieldService
     LayerService layerService
@@ -694,7 +695,7 @@ class ManageLayersController {
     @RequireApiKey
     def resourcePeek() {
         // do permission check
-        if (!authService.userInRole(spatialConfig.layerCopyRole)) {
+        if (!authService.userInRole(spatialConfig.layerCopyRole) && !spatialAuthService.isAdmin()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden, required role: " + spatialConfig.layerCopyRole)
             return
         }

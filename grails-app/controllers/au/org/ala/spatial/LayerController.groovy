@@ -43,6 +43,7 @@ class LayerController {
     SpatialObjectsService spatialObjectsService
     FileService fileService
     SpatialConfig spatialConfig
+    SpatialAuthService spatialAuthService
 
     // HTML Page
     def list() {
@@ -473,6 +474,11 @@ class LayerController {
     @Produces("application/zip")
     @RequireApiKey
     def download() {
+        if (!spatialAuthService.isAdmin()) {
+            response.status = 403
+            return
+        }
+
         String id = params.id
         Layers layer = layerService.getLayerByDisplayName(id)
         if (!layer) {
