@@ -152,7 +152,7 @@ class Facet implements Serializable {
 
             //reverse sign to convert first inner AND into OR
             Facet[] orPart = parseTerms(" AND ", fq.substring(2, p), true)
-            Facet[] andPart = parseTerms(" AND ", fq.substring(p + 6, fq.length() - 1), false)
+            Facet[] andPart = parseTerms(" AND ", fq.substring(p + 6), false)
             return new Facet(fq, orPart, andPart, null)
         } else {//if((hasAnd != hasOr) || (!hasAnd && !hasOr)) {
             //(1) (2) (3) (4) (5) (6) (7) (8) (9) (11) (12)
@@ -296,7 +296,7 @@ class Facet implements Serializable {
                 double d = Double.parseDouble(v)
                 boolean inside = d >= min && d <= max
                 return includeRange == inside
-            } finally {
+            } catch (NumberFormatException | NullPointerException ignored) {
                 return false
             }
         } else {
@@ -337,12 +337,8 @@ class Facet implements Serializable {
 
             return !includeRange
         } else if (getType() == 0) {
-            try {
-                boolean inside = d >= min && d <= max
-                return includeRange == inside
-            } finally {
-                return false
-            }
+            boolean inside = d >= min && d <= max
+            return includeRange == inside
         } else {
             boolean state = true
             if (orInAndTerms != null) {
