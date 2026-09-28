@@ -1,6 +1,5 @@
 package au.org.ala.spatial.intersect
 
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -65,7 +64,6 @@ class GridSpec extends Specification {
         data.length == 740 * 340
     }
 
-    @PendingFeature(reason = "a grid with a resolution of 1 gets its rows and columns swapped when it is read")
     void "a written grid can be read back"() {
         given:
         String name = tmp.resolve('written').toString()
