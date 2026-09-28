@@ -18,7 +18,7 @@ package au.org.ala.spatial
 import groovy.sql.Sql
 
 import java.sql.ResultSet
-import java.time.Instant
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 //@CompileStatic
@@ -194,7 +194,7 @@ class LogService {
 
         if (params.startDate && params.endDate) {
             def start = DateTimeFormatter.ISO_LOCAL_DATE.parse(params.startDate as String)
-            def end = 'now'.equalsIgnoreCase(params.endDate as String) ? Instant.now() : DateTimeFormatter.ISO_LOCAL_DATE.parse(params.endDate as String)
+            def end = 'now'.equalsIgnoreCase(params.endDate as String) ? LocalDate.now() : DateTimeFormatter.ISO_LOCAL_DATE.parse(params.endDate as String)
             clause.add("created between '${DateTimeFormatter.ISO_LOCAL_DATE.format(start)}' and '${DateTimeFormatter.ISO_LOCAL_DATE.format(end)}'")
         }
 
