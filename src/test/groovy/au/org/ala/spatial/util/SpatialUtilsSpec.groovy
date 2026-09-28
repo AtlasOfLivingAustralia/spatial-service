@@ -1,6 +1,5 @@
 package au.org.ala.spatial.util
 
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -135,7 +134,6 @@ class SpatialUtilsSpec extends Specification {
         Math.abs(SpatialUtils.cellArea(1, 40.4) - expected) / expected < 0.001
     }
 
-    @PendingFeature(reason = "cellArea multiplies the row index by the resolution")
     @Unroll
     void "cellArea with resolution #resolution at latitude #latitude matches the area of that cell"() {
         given:

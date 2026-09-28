@@ -861,7 +861,8 @@ class SpatialUtils {
             commonGridLatitudeArea.put(resolution, areas)
         }
 
-        return areas[(int) (Math.floor(Math.abs(latitude / resolution as double)) * resolution)]
+        int row = (int) Math.floor(Math.abs(latitude) / resolution)
+        return areas[Math.min(row, areas.length - 1)]
     }
 
     static double[] buildCommonGridLatitudeArea(double resolution) {
