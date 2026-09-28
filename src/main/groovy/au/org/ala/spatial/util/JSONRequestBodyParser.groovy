@@ -65,6 +65,7 @@ class JSONRequestBodyParser {
                         _parsedParameterValues.put(parameterName, parsedParameterValue)
                     } else {
                         _errorMessages.add("Invalid value for " + parameterName + " expecting a value of type " + _parameterClasses.get(parameterName).getSimpleName())
+                        parseSuccessful = false
                     }
                 } else {
                     if (!_parametersOptionalStatus.get(parameterName)) {
@@ -75,6 +76,7 @@ class JSONRequestBodyParser {
             }
         } catch (Exception ignored) {
             _errorMessages.add("Malformed JSON map")
+            parseSuccessful = false
         }
 
         return parseSuccessful

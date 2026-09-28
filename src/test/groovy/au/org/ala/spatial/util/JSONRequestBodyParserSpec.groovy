@@ -1,6 +1,5 @@
 package au.org.ala.spatial.util
 
-import spock.lang.PendingFeature
 import spock.lang.Specification
 
 class JSONRequestBodyParserSpec extends Specification {
@@ -37,7 +36,6 @@ class JSONRequestBodyParserSpec extends Specification {
         parser.errorMessages == ['Missing compulsory parameter name']
     }
 
-    @PendingFeature(reason = "parseJSON returns true when a value has the wrong type")
     void "a value of the wrong type fails"() {
         expect:
         !parser.parseJSON('{"wkt":"POINT(1 2)","name":42}')
@@ -45,7 +43,6 @@ class JSONRequestBodyParserSpec extends Specification {
         parser.getParsedValue('name') == null
     }
 
-    @PendingFeature(reason = "parseJSON returns true when the JSON is malformed")
     void "malformed JSON fails"() {
         expect:
         !parser.parseJSON('{"wkt":')
