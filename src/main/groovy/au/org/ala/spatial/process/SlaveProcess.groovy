@@ -1155,6 +1155,11 @@ class SlaveProcess {
         // copy species
         SpeciesInput species = speciesIn.clone()
 
+        // the hub may send the pid of an area as the species wkt
+        if (species.wkt && species.wkt.trim().isLong()) {
+            species.wkt = getWkt(species.wkt.trim())
+        }
+
         // check for absent area
         if (areas.size() == 0) {
             return species
