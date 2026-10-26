@@ -136,6 +136,27 @@ class SimpleRegionGridSpec extends Specification {
     }
 
     /**
+     * parseGeometryCollection kept the opening bracket of each ring ("(10 10,..."), so the first
+     * longitude failed to parse and silently became 0.
+     */
+    void "parseWKT reads the polygons of a GEOMETRYCOLLECTION"() {
+        when:
+        def out = runWithTimeout {
+            SimpleShapeFile.parseWKT('GEOMETRYCOLLECTION(POLYGON((10 10,10 11,11 11,11 10,10 10)),POLYGON((20 20,20 21,21 21,21 20,20 20)))')
+        }
+
+        then:
+        out.finished
+
+        and:
+        SimpleRegion r = out.result as SimpleRegion
+        r.isWithin(10.5, 10.5)
+        r.isWithin(20.5, 20.5)
+        !r.isWithin(5, 10.5)
+        !r.isWithin(15, 15)
+    }
+
+    /**
      * parseWKT builds a ComplexRegion for multi part geometries and calls useMask, which rasterises
      * every polygon with getOverlapGridCells, so it hung on the AtlasOfLivingAustralia/spatial-service#230 loop. This is the path used by
      * GeneratePoints, TabulationUtil and TabulationGeneratorService.

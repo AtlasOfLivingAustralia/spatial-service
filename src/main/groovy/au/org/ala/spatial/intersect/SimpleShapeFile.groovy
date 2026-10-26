@@ -252,10 +252,10 @@ class SimpleShapeFile implements Serializable {
 
             if (stringsList.get(i).startsWith("MULTIPOLYGON")) {
                 //remove trailing ")))"
-                regions.addAll(parseMultipolygon(stringsList.get(i).substring(bracket3rd, stringsList.get(i).length() - 3)))
+                regions.addAll(parseMultipolygon(stringsList.get(i).substring(bracket3rd + 1, stringsList.get(i).length() - 3)))
             } else if (stringsList.get(i).startsWith("POLYGON")) {
                 //remove trailing "))"
-                regions.add(parsePolygon(stringsList.get(i).substring(bracket2nd, stringsList.get(i).length() - 2)))
+                regions.add(parsePolygon(stringsList.get(i).substring(bracket2nd + 1, stringsList.get(i).length() - 2)))
             }
         }
 
