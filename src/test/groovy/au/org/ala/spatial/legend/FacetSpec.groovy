@@ -1,6 +1,5 @@
 package au.org.ala.spatial.legend
 
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -79,7 +78,6 @@ class FacetSpec extends Specification {
         facet.toString() == 'el1:[1 TO 4]'
     }
 
-    @PendingFeature(reason = "range facets return false from a finally block, so no value ever matches")
     @Unroll
     void "range facet [1 TO 4] includes #value"() {
         given:
@@ -106,7 +104,6 @@ class FacetSpec extends Specification {
         value << [0.5, 5]
     }
 
-    @PendingFeature(reason = "range facets return false from a finally block, so no value ever matches")
     void "a negated range facet matches values outside the range"() {
         given:
         Facet facet = Facet.parseFacet('-el1:[1 TO 4]')
@@ -122,7 +119,6 @@ class FacetSpec extends Specification {
         !Facet.parseFacet('el1:[1 TO 4]').isValid('abc')
     }
 
-    @PendingFeature(reason = "range facets return false from a finally block, so no value ever matches")
     void "(4) OR of ranges matches values in any range"() {
         when:
         Facet facet = Facet.parseFacet('el1:[1 TO 4] OR el1:[10 TO 20]')
@@ -157,7 +153,6 @@ class FacetSpec extends Specification {
         facet.andTerms.length == 2
     }
 
-    @PendingFeature(reason = "the last character of the query is dropped, parsing fails")
     void "(13) negated ranges combined with non empty fields"() {
         when:
         Facet facet = Facet.parseFacet('-(el1:[1 TO 4] AND el2:[1 TO 4]) AND el1:[* TO *] AND el2:[* TO *]')

@@ -1,6 +1,5 @@
 package au.org.ala.spatial.intersect
 
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -27,7 +26,6 @@ class SimpleRegionSpec extends Specification {
         SimpleRegion.parseSimpleRegion('NONE') == null
     }
 
-    @PendingFeature(reason = "setBox stores the bounding box as [[minx, maxx], [miny, maxy]]")
     void "parseSimpleRegion recognises a four corner box"() {
         when:
         SimpleRegion region = SimpleRegion.parseSimpleRegion('1 2,1 4,3 4,3 2')
@@ -69,7 +67,6 @@ class SimpleRegionSpec extends Specification {
         2   | 5   | false
     }
 
-    @PendingFeature(reason = "setBox stores the bounding box as [[minx, maxx], [miny, maxy]]")
     void "a box is clamped to the world"() {
         given:
         SimpleRegion region = new SimpleRegion()

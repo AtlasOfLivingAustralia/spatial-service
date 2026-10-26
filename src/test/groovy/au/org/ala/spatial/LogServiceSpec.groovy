@@ -1,6 +1,5 @@
 package au.org.ala.spatial
 
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -53,7 +52,6 @@ class LogServiceSpec extends Specification {
                 "WHERE user_id = 'u1' AND created between '2026-01-01' and '2026-02-01' AND ${ALWAYS}"
     }
 
-    @PendingFeature(reason = "Instant.now() cannot be formatted with ISO_LOCAL_DATE")
     void "the end date can be now"() {
         expect:
         service.where([startDate: '2026-01-01', endDate: 'now'], 'u1', false) ==

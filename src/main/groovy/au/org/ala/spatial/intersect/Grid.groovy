@@ -81,8 +81,8 @@ class Grid { //  implements Serializable
 
             //update xres/yres when xres == 1
             if (xres == 1) {
-                xres = (xmax - xmin) / nrows
-                yres = (ymax - ymin) / ncols
+                xres = (xmax - xmin) / ncols
+                yres = (ymax - ymin) / nrows
             }
         } else if (grdfile.exists() && grdfile.isDirectory()) {
             //read dir of grid files
@@ -111,8 +111,8 @@ class Grid { //  implements Serializable
 
             //update xres/yres when xres == 1
             if (xres == 1) {
-                xres = (xmax - xmin) / nrows
-                yres = (ymax - ymin) / ncols
+                xres = (xmax - xmin) / ncols
+                yres = (ymax - ymin) / nrows
             }
         } else if (grdfile.exists() && grdfile.isDirectory()) {
             //read dir of grid files

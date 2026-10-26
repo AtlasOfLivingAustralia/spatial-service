@@ -259,8 +259,8 @@ class SimpleRegion implements Serializable {
 
         bounding_box = new double[2][2]
         bounding_box[0][0] = points[0]
-        bounding_box[0][1] = points[2]
-        bounding_box[1][0] = points[1]
+        bounding_box[0][1] = points[1]
+        bounding_box[1][0] = points[2]
         bounding_box[1][1] = points[3]
     }
 
