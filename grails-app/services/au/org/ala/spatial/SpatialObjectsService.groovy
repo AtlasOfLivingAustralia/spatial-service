@@ -897,7 +897,7 @@ class SpatialObjectsService {
 
                 String query = "select st_astext(st_collect(geom)) as wkt from (select (st_dump(the_geom)).geom as geom from objects where pid in ('" + ids.join("','") + "')) tmp"
                 Sql.newInstance(dataSource).eachRow(query, { GroovyResultSet row ->
-                    os.write(row.getObject(0).toString().bytes)
+                    os.write(row.getObject('wkt').toString().bytes)
                 })
             } else {
                 streamObjectsGeometryById(os, cleanObjectId(id).toString(), 'wkt')
