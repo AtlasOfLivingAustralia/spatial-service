@@ -918,7 +918,7 @@ class SpatialObjectsService {
             if (!file.exists()) {
                 Util.zip(filePrefix + "-shp.zip",
                         [filePrefix + ".shp", filePrefix + ".shx", filePrefix + ".dbf", filePrefix + ".fix"] as String[],
-                        ['envelope.shp', "envelope.shx", "envelope.dbf", "envelope.fix"] as String)
+                        ['envelope.shp', "envelope.shx", "envelope.dbf", "envelope.fix"] as String[])
             }
             InputStream is
             try {
