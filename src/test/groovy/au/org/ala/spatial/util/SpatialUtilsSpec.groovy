@@ -1,5 +1,6 @@
 package au.org.ala.spatial.util
 
+import org.locationtech.jts.io.WKTReader
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -101,6 +102,55 @@ class SpatialUtilsSpec extends Specification {
 
         then:
         Math.abs(multi - 2 * single) / single < 0.001
+    }
+
+    // JTS writes the parts of a MULTIPOLYGON separated by ", " (Geometry.toText()), and that is the
+    // form AooEoo, FieldCreation, GridClassBuilder and the area report pass to calculateArea.
+    void "calculateArea sums the polygons of a MULTIPOLYGON written by JTS"() {
+        given:
+        double single = SpatialUtils.calculateArea('POLYGON((0 0,0 1,1 1,1 0,0 0))')
+        String jts = new WKTReader()
+                .read('MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)),((0 -1,0 0,1 0,1 -1,0 -1)))')
+                .toText()
+
+        expect:
+        jts.contains(')), ((')
+
+        and:
+        Math.abs(SpatialUtils.calculateArea(jts) - 2 * single) / single < 0.001
+    }
+
+    // Areas uploaded through /shape/upload/wkt are normalised by JTS first, so the rings of a polygon
+    // reach calculateArea separated by "), (" and its parts by ")), ((".
+    void "calculateArea separates the rings of a polygon written by JTS"() {
+        given:
+        double shell = SpatialUtils.calculateArea('POLYGON((0 0,0 2,2 2,2 0,0 0))')
+        double hole = SpatialUtils.calculateArea('POLYGON((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5))')
+        String jts = new WKTReader()
+                .read('POLYGON((0 0,0 2,2 2,2 0,0 0),(0.5 0.5,1.5 0.5,1.5 1.5,0.5 1.5,0.5 0.5))')
+                .toText()
+
+        expect:
+        jts.contains('), (')
+
+        and:
+        Math.abs(SpatialUtils.calculateArea(jts) - (shell - hole)) / (shell - hole) < 0.001
+    }
+
+    @Unroll
+    void "calculateArea subtracts a hole drawn #direction the shell"() {
+        given:
+        double shell = SpatialUtils.calculateArea('POLYGON((0 0,0 2,2 2,2 0,0 0))')
+        double hole = SpatialUtils.calculateArea('POLYGON((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5))')
+
+        expect:
+        Math.abs(SpatialUtils.calculateArea(wkt) - (shell - hole)) / (shell - hole) < 0.001
+
+        where:
+        direction               | wkt
+        // WKT does not mandate a ring orientation, so a hole may run either way
+        'the opposite way from' | 'POLYGON((0 0,0 2,2 2,2 0,0 0),(0.5 0.5,1.5 0.5,1.5 1.5,0.5 1.5,0.5 0.5))'
+        'the same way as'       | 'POLYGON((0 0,0 2,2 2,2 0,0 0),(0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5))'
     }
 
     void "calculateArea recognises the whole world"() {

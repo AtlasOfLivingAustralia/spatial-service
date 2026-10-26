@@ -734,7 +734,7 @@ class SpatialUtils {
             }
         } else if (areaWorking.startsWith("MULTIPOLYGON")) {
             //split
-            Collections.addAll(stringsList, areaWorking.split("\\)\\),\\(\\("))
+            Collections.addAll(stringsList, areaWorking.split("\\)\\)\\s*,\\s*\\(\\("))
         } else if (areaWorking.startsWith("POLYGON")) {
             stringsList.add(areaWorking)
         }
@@ -744,8 +744,9 @@ class SpatialUtils {
                 continue
             }
 
-            String[] areas = w.split("\\),\\(")
+            String[] areas = w.split("\\)\\s*,\\s*\\(")
             double shapearea = 0
+            boolean shell = true
 
             for (String area : areas) {
                 area = area.replace("MULTIPOLYGON", "")
@@ -787,7 +788,10 @@ class SpatialUtils {
                     totalarea += Mh(d, areaarr[f], areaarr[f + 1])
                 }
 
-                shapearea += totalarea * 6378137 * 6378137
+                // the first ring is the shell, the others are holes, whatever their orientation
+                double ringArea = Math.abs(totalarea * 6378137 * 6378137)
+                shapearea += shell ? ringArea : -ringArea
+                shell = false
             }
 
             sumarea += Math.abs(shapearea)
