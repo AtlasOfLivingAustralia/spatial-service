@@ -1600,7 +1600,7 @@ class LegendFieldPaintScale implements PaintScale, Serializable {
             return 0
         }
         float[] d = legend.getMinMax()
-        return d.length > 0 ? 0 : d[0]
+        return d.length > 0 ? d[0] : 0
     }
 
     @Override
@@ -1609,7 +1609,7 @@ class LegendFieldPaintScale implements PaintScale, Serializable {
             return 1
         }
         float[] d = legend.getMinMax()
-        return d.length > 0 ? 0 : d[1]
+        return d.length > 1 ? d[1] : 1
     }
 
     @Override
