@@ -24,8 +24,12 @@ class SimpleRegionGridSpec extends Specification {
     static Map runWithTimeout(Closure c) {
         Map out = [finished: false]
         Thread t = new Thread({
-            out.result = c()
-            out.finished = true
+            try {
+                out.result = c()
+                out.finished = true
+            } catch (Throwable e) {
+                out.error = e
+            }
         })
         t.daemon = true
         t.start()
@@ -175,5 +179,54 @@ class SimpleRegionGridSpec extends Specification {
         r.isWithin(140.5, -29.8)
         r.isWithin(150.5, -34.8)
         !r.isWithin(145, -32)
+    }
+
+    /**
+     * A closed five point box is a BOUNDING_BOX now, so it is rasterised by
+     * getOverlapGridCells_Box, which sized its output from unclamped start offsets: a box that does
+     * not reach the grid gave a negative array length when it was outside on one axis, and a
+     * positive one full of zeroed cells when it was outside on both.
+     */
+    @Unroll
+    void "getOverlapGridCells for a box outside the grid returns no cells (#points)"() {
+        given:
+        SimpleRegion r = SimpleRegion.parseSimpleRegion(points)
+
+        expect:
+        r.getType() == SimpleRegion.BOUNDING_BOX
+
+        when:
+        def out = runWithTimeout { r.getOverlapGridCells(0, 0, 1, 1, 10, 10, null) }
+
+        then:
+        out.error == null
+        out.finished
+
+        and:
+        cellsOf(out.result as int[][]).isEmpty()
+
+        where:
+        points << ['2 0.2,2 0.8,3 0.8,3 0.2,2 0.2',
+                   '-3 0.2,-3 0.8,-2 0.8,-2 0.2,-3 0.2',
+                   '0.2 2,0.2 3,0.8 3,0.8 2,0.2 2',
+                   '0.2 -3,0.2 -2,0.8 -2,0.8 -3,0.2 -3',
+                   '2 2,2 3,3 3,3 2,2 2']
+    }
+
+    /** The same box, with a three state map to fill, must not write outside the grid either. */
+    void "getOverlapGridCells for a box outside the grid leaves the three state map untouched"() {
+        given:
+        SimpleRegion r = SimpleRegion.parseSimpleRegion('2 0.2,2 0.8,3 0.8,3 0.2,2 0.2')
+        byte[][] map = new byte[10][10]
+
+        when:
+        def out = runWithTimeout { r.getOverlapGridCells(0, 0, 1, 1, 10, 10, map) }
+
+        then:
+        out.error == null
+        out.finished
+
+        and:
+        map.every { row -> row.every { it == SimpleRegion.GI_UNDEFINED } }
     }
 }

@@ -812,18 +812,12 @@ class SimpleRegion implements Serializable {
         int ystart = (int) Math.floor((bb[0][1] - minlat) / ystep)
         int xend = (int) Math.ceil((bb[1][0] - minlong) / xstep)
         int yend = (int) Math.ceil((bb[1][1] - minlat) / ystep)
-        if (xstart < 0) {
-            xstart = 0
-        }
-        if (ystart < 0) {
-            ystart = 0
-        }
-        if (xend > width) {
-            xend = width
-        }
-        if (yend > height) {
-            yend = height
-        }
+        //clamp both ends of each axis to the grid, so a box that does not reach it has no cells
+        //instead of a start beyond its end and a negative output size
+        xstart = Math.min(Math.max(xstart, 0), width)
+        ystart = Math.min(Math.max(ystart, 0), height)
+        xend = Math.min(Math.max(xend, 0), width)
+        yend = Math.min(Math.max(yend, 0), height)
 
         // fill data with cell coordinates
         int out_width = xend - xstart
