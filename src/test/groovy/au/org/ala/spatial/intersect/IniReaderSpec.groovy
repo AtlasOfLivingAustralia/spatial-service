@@ -71,4 +71,15 @@ Url=http://example.org/?a=b
         copy.getStringValue('General', 'Title') == 'abc'
         copy.getDoubleValue('Data', 'MaxValue') == 42.5d
     }
+
+    // A section name and a key of one character were dropped by two off by one comparisons, so a layer whose
+    // .grd header uses short names lost those values.
+    void "a section name and a key of one character are read"() {
+        when:
+        IniReader ini = read('[D]\na=1\nbb=2\n')
+
+        then:
+        ini.getIntegerValue('D', 'a') == 1
+        ini.getIntegerValue('D', 'bb') == 2
+    }
 }
