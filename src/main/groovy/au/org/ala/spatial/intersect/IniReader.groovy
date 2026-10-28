@@ -81,14 +81,14 @@ class IniReader {
                     i = line.lastIndexOf("]")
                     if (i <= 0 && line.length() > 1) { //last brace might be missing
                         currentSection = line.substring(1)
-                    } else if (i > 2) { //empty section names are ignored
+                    } else if (i > 1) { //empty section names are ignored
                         currentSection = line.substring(1, i)
                     }
                 } else if (line.length() > 2) {
                     key = ""
                     value = ""
                     i = line.indexOf("=") //rather than split incase value contains '='
-                    if (i > 1) {
+                    if (i > 0) {
                         key = line.substring(0, i)
                     }
                     if (i < line.length() - 1) {

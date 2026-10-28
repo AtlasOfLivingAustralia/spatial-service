@@ -148,4 +148,24 @@ class SpatialUtilsSpec extends Specification {
         0.1d       | 35.05d
         2d         | 10.5d
     }
+
+    static String kml(String body) {
+        '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">' + body + '</kml>'
+    }
+
+    static final String PLACEMARK = '<Placemark><name>a</name><Polygon><outerBoundaryIs><LinearRing><coordinates>' +
+            '1,1 1,2 2,2 2,1 1,1</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>'
+
+    // A KML whose Placemark sits directly inside <kml>, as the ones the hub writes do, came back without geometry.
+    @Unroll
+    void "getKMLPolygonAsWKT reads a placemark #description"() {
+        expect:
+        SpatialUtils.getKMLPolygonAsWKT(kml(body)).startsWith('POLYGON')
+
+        where:
+        description         | body
+        'at the root'       | PLACEMARK
+        'inside a document' | '<Document>' + PLACEMARK + '</Document>'
+        'inside a folder'   | '<Document><Folder>' + PLACEMARK + '</Folder></Document>'
+    }
 }

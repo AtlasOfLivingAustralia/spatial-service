@@ -3,6 +3,11 @@ package au.org.ala.spatial.util
 import org.locationtech.jts.geom.Polygon
 import org.locationtech.jts.io.WKTReader
 import spock.lang.Specification
+import spock.lang.TempDir
+
+import java.nio.file.Path
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import spock.lang.Unroll
 
 class SpatialConversionUtilsSpec extends Specification {
@@ -84,5 +89,36 @@ class SpatialConversionUtilsSpec extends Specification {
         then:
         polygon.envelopeInternal.minX > 0
         Math.abs(polygon.centroid.x - 180.01) < 0.001
+    }
+
+    @TempDir
+    Path tmp
+
+    File zipWith(String... names) {
+        File zip = tmp.resolve("shape-${names.length}.zip").toFile()
+        new ZipOutputStream(new FileOutputStream(zip)).withCloseable { out ->
+            names.each { name ->
+                out.putNextEntry(new ZipEntry(name))
+                out.write('x'.bytes)
+                out.closeEntry()
+            }
+        }
+        zip
+    }
+
+    // An archive without the .shx and .dbf still answered with the .shp it had found, so the caller went on to
+    // read a shapefile that cannot be opened.
+    void "extractZippedShapeFile rejects an archive without the .shx and the .dbf"() {
+        expect:
+        SpatialConversionUtils.extractZippedShapeFile(zipWith('area.shp')) == null
+    }
+
+    void "extractZippedShapeFile returns the .shp of a complete archive"() {
+        when:
+        def result = SpatialConversionUtils.extractZippedShapeFile(zipWith('area.shp', 'area.shx', 'area.dbf'))
+
+        then:
+        result != null
+        result.right.name == 'area.shp'
     }
 }
