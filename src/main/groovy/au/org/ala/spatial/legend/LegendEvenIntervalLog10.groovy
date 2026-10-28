@@ -31,8 +31,7 @@ class LegendEvenIntervalLog10 extends Legend {
         cutoffs = new float[divisions]
 
         for (int i = 0; i < divisions; i++) {
-            cutoffs[i] = (float) Math.pow(10, lmin + lrange * ((i + 1) / (double) (divisions)))
-            -offset
+            cutoffs[i] = (float) Math.pow(10, lmin + lrange * ((i + 1) / (double) (divisions))) - offset
         }
 
         //fix max
