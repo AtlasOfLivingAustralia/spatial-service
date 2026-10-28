@@ -478,7 +478,7 @@ import java.util.zip.ZipOutputStream
                     break
                 i++
             }
-            sld.append("<sld:ColorMapEntry color=\"#" + getHexColour(colours[i % colours.length]) + "\" quantity=\"" + (maxValues.get(i) + 1) + ".0\" label=\"" + labels.get(i) + "\" opacity=\"1\"/>\r\n")
+            sld.append("<sld:ColorMapEntry color=\"#" + getHexColour(colours[i % colours.length]) + "\" quantity=\"" + (maxValues.get(i) + 1) + ".0\" label=\"" + labels.get(i).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;") + "\" opacity=\"1\"/>\r\n")
         }
 
         /* footer */
