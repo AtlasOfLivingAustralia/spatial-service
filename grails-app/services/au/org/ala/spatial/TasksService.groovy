@@ -326,11 +326,11 @@ class TasksService {
                     }
                     if (number != null && v.constraints.max && v.constraints.max < number) {
                         if (STRING == v.type)
-                            errors.put(k, "Input parameter $k=$v is too long. Maximum number of characters is ${v.constraints.min}.")
+                            errors.put(k, "Input parameter $k=$v is too long. Maximum number of characters is ${v.constraints.max}.")
                         else if (v.type.toString().endsWith("s"))
-                            errors.put(k, "Input parameter $k has too many ${v.type}. ${number} ${v.type} provided. Maximum number of ${v.type} is ${v.constraints.min}.")
+                            errors.put(k, "Input parameter $k has too many ${v.type}. ${number} ${v.type} provided. Maximum number of ${v.type} is ${v.constraints.max}.")
                         else
-                            errors.put(k, "Input parameter $k=$v is too large. Maximum value is ${v.constraints.min}.")
+                            errors.put(k, "Input parameter $k=$v is too large. Maximum value is ${v.constraints.max}.")
                     }
 
                     if (AREA == v.type) {
@@ -387,20 +387,22 @@ class TasksService {
                     if (LAYER == v.type) {
                         i.each { layer ->
                             Fields f = fieldService.getFieldById(layer, false)
-                            if (f == null) {
-                                if (f?.type == "e" && v.constraints.environmental && !v.constraints.environmental.toString().toBoolean()) {
+                            if (f == null && layerService.getIntersectionFile(layer) == null) {
+                                errors.put(k, "Input parameter $k has an unknown layer: ${layer}.")
+                            } else if (f != null) {
+                                if (f?.type == "e" && v.constraints.environmental != null && !v.constraints.environmental.toString().toBoolean()) {
                                     errors.put(k, "Input parameter $k cannot contain environmental layers. Remove: ${f.name} (${layer}).")
                                 }
-                                if (f?.type == "c" && v.constraints.contextual && !v.constraints.contextual.toString().toBoolean()) {
+                                if (f?.type == "c" && v.constraints.contextual != null && !v.constraints.contextual.toString().toBoolean()) {
                                     errors.put(k, "Input parameter $k cannot contain contextual layers. Remove: ${f.name} (${layer}).")
                                 }
 //                                if (!f?.indb && v.constraints.indb && !v.constraints.indb.toString().toBoolean()) {
 //                                    errors.put(k, "Input parameter $k layers must be in biocache index. Remove: ${f.name} (${layer}).")
 //                                }
                             } else if (layerService.getIntersectionFile(layer) != null &&
-                                    v.constraints.analysis && !v.constraints.analysis.toString().toBoolean()) {
+                                    v.constraints.analysis != null && !v.constraints.analysis.toString().toBoolean()) {
                                 //analysis layers have an IntersectionFile but do not have a Field.
-                                errors.put(k, "Input parameter $k cannot contain analysis layers. Remove: ${f.name} (${layer}).")
+                                errors.put(k, "Input parameter $k cannot contain analysis layers. Remove: ${layer}.")
                             }
                         }
                     }
