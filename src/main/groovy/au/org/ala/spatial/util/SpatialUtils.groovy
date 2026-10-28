@@ -334,9 +334,14 @@ class SpatialUtils {
         SimpleFeature sf = null
 
         //for <Placemark>
-        if (!placemarks.isEmpty() && !placemarks.isEmpty()) {
+        if (placemarks != null && !placemarks.isEmpty()) {
             sf = (SimpleFeature) placemarks.iterator().next()
             g = (Geometry) sf.getAttribute("Geometry")
+        }
+
+        //for a <Placemark> directly inside <kml>
+        if (g == null && sf == null) {
+            g = (Geometry) f.getAttribute("Geometry")
         }
 
         //for <Folder><Placemark>

@@ -161,6 +161,7 @@ class SpatialConversionUtils {
             }
 
             if (!shpPresent || !shxPresent || !dbfPresent) {
+                shpFile = null
                 throw new IllegalArgumentException("Invalid archive. Must contain .shp, .shx and .dbf at a minimum.")
             }
         } catch (Exception e) {
