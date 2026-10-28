@@ -264,8 +264,9 @@ class AooEoo extends SlaveProcess {
     }
 
     static float round(double d, double by) {
-        long l = (long) (d / by)
-        return (float) (l * by + (l < 0 ? -by : 0))
+        // start of the grid cell that contains d
+        long l = (long) Math.floor(d / by)
+        return (float) (l * by)
     }
 
     static String aooWkt(Set<Point2D> pointSet, Double gridsize) {
