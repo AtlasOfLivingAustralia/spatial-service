@@ -175,9 +175,10 @@ class BiocacheLegendObject extends LegendObject {
             int[] value = [readColour(c[1], c[2], c[3]), rc]
             categories.put(c[0], value)
             categoryNameOrder[i - 1] = c[0]
-            double d = Double.NaN
-            d = Double.parseDouble(c[0])
-            categoriesNumeric.put((float) d, value)
+            try {
+                categoriesNumeric.put((float) Double.parseDouble(c[0]), value)
+            } catch (Exception ignored) {
+            }
 
             //check for endpoint (repitition of colour)
             if (p != null && c.length > 4 && p.length > 4
@@ -258,7 +259,7 @@ class BiocacheLegendObject extends LegendObject {
                 first = false
             }
         }
-        if (!first) {
+        if (first) {
             return null
         } else {
             return minmax
