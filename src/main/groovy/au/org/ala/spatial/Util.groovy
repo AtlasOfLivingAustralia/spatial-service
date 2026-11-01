@@ -454,7 +454,7 @@ class Util {
     static void replaceTextInFile(String path, Map<String, String> map) {
         String s = new File(path).text
         map.each { String k, String v ->
-            s = s.replaceAll(k, v)
+            s = s.replace(k, v)
         }
         new File(path).write(s)
     }
@@ -494,7 +494,7 @@ class Util {
             while ((line = reader.readLine()) != null) {
                 if (afterPos < 0 && (afterPos = line.indexOf(start)) >= 0) {
                     line = line.substring(0, afterPos + start.length()) + line.substring(afterPos + start.length()).replaceAll(oldPattern, replPattern)
-                } else if (afterPos > 0) {
+                } else if (afterPos >= 0) {
                     line = line.replaceAll(oldPattern, replPattern)
                 }
                 sb.append(line + "\n")
@@ -521,7 +521,9 @@ class Util {
             start = sb.indexOf(startOldText)
             if (start >= 0) {
                 end = sb.indexOf(endOldText, start + 1)
-                sb.replace(start, end + endOldText.length(), replText)
+                if (end >= 0) {
+                    sb.replace(start, end + endOldText.length(), replText)
+                }
             }
             reader.close()
             BufferedWriter out = new BufferedWriter(new FileWriter(fname))
