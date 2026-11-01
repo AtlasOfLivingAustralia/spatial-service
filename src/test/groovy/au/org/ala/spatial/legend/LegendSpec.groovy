@@ -118,4 +118,34 @@ class LegendSpec extends Specification {
         Legend.getLinearColour(10, 0, 10, 0x000000, 0xFF00FF) == argb(0xFFFF00FF)
         Legend.getLinearColour(5, 0, 10, 0x000000, 0xFF00FF) == argb(0xFF7F007F)
     }
+
+    // The static getColour computed (int) a on a value between 0 and 1, which is 0 for anything under 1, so every
+    // value was interpolated inside the first step of the ramp and extrapolated beyond it.
+    void "the static getColour walks the ramp as the value grows"() {
+        expect:
+        Legend.getColour(0, 0, 100) == (Legend.colours[0] | OPAQUE)
+        Legend.getColour(50, 0, 100) == (Legend.colours[5] | OPAQUE)
+        Legend.getColour(100, 0, 100) == (Legend.colours[10] | OPAQUE)
+        Legend.getColour(Float.NaN as double, 0, 100) == WHITE
+    }
+
+    // The log legends shift the values up by an offset to keep them positive, and subtracted it on a line of its
+    // own, below the assignment: the cutoffs stayed in the shifted range.
+    @Unroll
+    void "#legend.typeName cutoffs stay inside the range of the values"() {
+        given:
+        float[] d = new float[11]
+        (0..10).each { d[it] = (it - 5) as float }
+
+        when:
+        legend.generate(d, 10)
+
+        then:
+        legend.min == -5f
+        legend.max == 5f
+        legend.cutoffs.every { it >= -5f && it <= 5f }
+
+        where:
+        legend << [new LegendEvenIntervalLog(), new LegendEvenIntervalLog10()]
+    }
 }

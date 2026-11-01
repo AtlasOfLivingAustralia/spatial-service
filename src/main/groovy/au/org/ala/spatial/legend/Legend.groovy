@@ -111,7 +111,7 @@ abstract class Legend implements Serializable {
         double a = (d - min) / range
 
         //10 colour steps
-        int pos = (int) (a)  //fit 0 to 10
+        int pos = (int) (a * 10)  //fit 0 to 10
         if (pos == 10) {
             pos--
         }
@@ -441,7 +441,7 @@ class uses to generate the
                 while (pos > 0 && cutoffs[pos - 1] == lower) {
                     pos--
                 }
-                return colours[pos]
+                return colours[pos] | 0xFF000000
             }
             double v = (d - lower) / (upper - lower)
             double vt = 1 - v
