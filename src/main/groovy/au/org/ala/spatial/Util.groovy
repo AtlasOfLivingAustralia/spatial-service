@@ -258,12 +258,12 @@ class Util {
             return new String[0]
         } else {
             String[] lines = new String[ja.size() + 1]
-            lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM"
+            lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM,DATA_RESOURCE_UID,INTERSECT_AREA_SQ_KM"
             ja.eachWithIndex {Distributions it, int idx ->
                 String intersectArea = String.format(Locale.US, "%.2f", Math.round(it.intersectArea ?: 0) as Double / 1000000.0)
 
                 lines[idx + 1] = it.spcode + "," + wrap(it.scientific) + "," + wrap(it.authority_) + "," + wrap(it.common_nam) + "," +
-                    wrap(it.family) + "," + wrap(it.genus_name) + "," + wrap(it.specific_n) + "," + (it.min_depth ?: "") + "," + (it.max_depth ?: "") +
+                    wrap(it.family) + "," + wrap(it.genus_name) + "," + wrap(it.specific_n) + "," + (it.min_depth != null ? it.min_depth : "") + "," + (it.max_depth != null ? it.max_depth : "") +
                         "," + wrap(it.metadata_u) + "," + wrap(it.lsid) + "," + wrap(it.area_name) + "," + String.format(Locale.US, "%.2f", (it.area_km ?: 0) as Double) +
                         "," + wrap(it.data_resource_uid) + "," + intersectArea
             }
@@ -403,8 +403,8 @@ class Util {
                     @Override
                     int compare(String[] o1, String[] o2) {
                         // compare WMS urls
-                        String s1 = getChecklistsBySpcode(o1[0], list).get("wmsurl")
-                        String s2 = getChecklistsBySpcode(o2[0], list).get("wmsurl")
+                        String s1 = getChecklistsBySpcode(o1[0], list)?.wmsurl
+                        String s2 = getChecklistsBySpcode(o2[0], list)?.wmsurl
                         if (s1 == null && s2 == null) {
                             return 0
                         } else if (s1 != null && s2 != null) {
@@ -418,13 +418,13 @@ class Util {
                 })
 
                 lines = new String[records.length]
-                lines[0] = lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM,SPECIES_COUNT"
+                lines[0] = lines[0] = "SPCODE,SCIENTIFIC_NAME,AUTHORITY_FULL,COMMON_NAME,FAMILY,GENUS_NAME,SPECIFIC_NAME,MIN_DEPTH,MAX_DEPTH,METADATA_URL,LSID,AREA_NAME,AREA_SQ_KM,DATA_RESOURCE_UID,INTERSECT_AREA_SQ_KM,SPECIES_COUNT"
                 int len = 1
                 int thisCount = 0
                 for (int i = 0; i < data.length; i++) {
                     thisCount++
-                    String s1 = getChecklistsBySpcode(data[i][0], list).get("wmsurl")
-                    String s2 = i + 1 < data.length ? getChecklistsBySpcode(data[i + 1][0], list).get("wmsurl") : null
+                    String s1 = getChecklistsBySpcode(data[i][0], list)?.wmsurl
+                    String s2 = i + 1 < data.length ? getChecklistsBySpcode(data[i + 1][0], list)?.wmsurl : null
                     if (i == data.length - 1 || (s1 == null && s2 != null) || (s1 != null && s2 == null) ||
                             (s1 != null && s2 != null && s1 != s2)) {
                         StringBuilder sb = new StringBuilder()
