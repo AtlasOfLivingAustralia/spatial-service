@@ -38,6 +38,19 @@ class SimpleRegionSpec extends Specification {
         region.height == 2d
     }
 
+    // The box test compared points.size(), which is the number of values, with 5 instead of 10, so a
+    // ring that repeats its first point as its last one was read as a polygon.
+    void "parseSimpleRegion recognises a closed five point box"() {
+        when:
+        SimpleRegion region = SimpleRegion.parseSimpleRegion('1 2,1 4,3 4,3 2,1 2')
+
+        then:
+        region.type == BOUNDING_BOX
+        region.boundingBox == [[1d, 2d], [3d, 4d]] as double[][]
+        region.width == 2d
+        region.height == 2d
+    }
+
     void "parseSimpleRegion reads any other shape as a polygon"() {
         when:
         SimpleRegion region = SimpleRegion.parseSimpleRegion('0 0,4 0,0 4,0 0')
