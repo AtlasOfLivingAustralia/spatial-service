@@ -111,6 +111,29 @@ class UtilReplaceSpec extends Specification {
         f.text == 'Command line without an end marker\n'
     }
 
+    /**
+     * The file is read line by line and written back with '\n' after each line, so writing it when
+     * nothing was replaced adds a final newline and turns CRLF into LF.
+     */
+    def "readReplaceBetween does not rewrite the file when a marker is missing"() {
+        given:
+        File f = new File(tmp, name)
+        f.bytes = content.getBytes('UTF-8')
+
+        when:
+        Util.readReplaceBetween(f.path, 'Command line', '<br>', '')
+
+        then:
+        f.bytes == content.getBytes('UTF-8')
+
+        where:
+        name                   | content
+        'no-end.html'          | 'Command line without an end marker'
+        'no-end-crlf.html'     | 'a\r\nCommand line without an end marker\r\n'
+        'no-start.html'        | 'nothing to remove'
+        'no-start-crlf.html'   | 'nothing\r\nto remove\r\n'
+    }
+
     // ---- zip ----
 
     def "zip stores each file under the file name of its archive name"() {

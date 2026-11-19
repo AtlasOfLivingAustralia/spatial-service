@@ -514,18 +514,24 @@ class Util {
         try {
             FileInputStream fis = new FileInputStream(fname)
             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n")
-            }
-            int start, end
-            start = sb.indexOf(startOldText)
-            if (start >= 0) {
-                end = sb.indexOf(endOldText, start + 1)
-                if (end >= 0) {
-                    sb.replace(start, end + endOldText.length(), replText)
+            try {
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line + "\n")
                 }
+            } finally {
+                reader.close()
             }
-            reader.close()
+            // Without both markers there is nothing to replace: leave the file untouched, as writing
+            // the lines back would add a final newline and turn CRLF into LF.
+            int start = sb.indexOf(startOldText)
+            if (start < 0) {
+                return
+            }
+            int end = sb.indexOf(endOldText, start + 1)
+            if (end < 0) {
+                return
+            }
+            sb.replace(start, end + endOldText.length(), replText)
             BufferedWriter out = new BufferedWriter(new FileWriter(fname))
             out.write(sb.toString())
             out.close()
