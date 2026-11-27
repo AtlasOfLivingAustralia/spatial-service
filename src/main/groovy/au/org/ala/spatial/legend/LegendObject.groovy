@@ -85,7 +85,7 @@ class name, or in the case of
             if (numericLegend.getMinMax() != null) { //catch manually set numeric fields without numeric data
                 float[] minmax = numericLegend.getMinMax()
                 float[] cutoffs = numericLegend.getCutoffFloats()
-                float[] cutoffMins = numericLegend.getCutoffFloats()
+                float[] cutoffMins = numericLegend.getCutoffMinFloats()
 
                 String format = "%.4f"
                 if (fieldType == QueryField.FieldType.INT
