@@ -384,7 +384,7 @@ class Grid { //  implements Serializable
         //make a rescale value
         if (units != null && units.startsWith("1/")) {
             try {
-                rescale = (long)(1 / Float.parseFloat(units.substring(2, units.indexOf(' '))))
+                rescale = 1 / Float.parseFloat(units.substring(2, units.indexOf(' ')))
             } finally {
             }
         }
@@ -1087,10 +1087,10 @@ class Grid { //  implements Serializable
             fw.append("\r\n").append("Mapunits=DEGREES")
             fw.append("\r\n").append("Columns=").append(String.valueOf(ncols))
             fw.append("\r\n").append("Rows=").append(String.valueOf(nrows))
-            fw.append("\r\n").append("MinX=").append(String.format(Locale.US, "%.2f", xmin))
-            fw.append("\r\n").append("MaxX=").append(String.format(Locale.US, "%.2f", xmax))
-            fw.append("\r\n").append("MinY=").append(String.format(Locale.US, "%.2f", ymin))
-            fw.append("\r\n").append("MaxY=").append(String.format(Locale.US, "%.2f", ymax))
+            fw.append("\r\n").append("MinX=").append(String.valueOf(xmin))
+            fw.append("\r\n").append("MaxX=").append(String.valueOf(xmax))
+            fw.append("\r\n").append("MinY=").append(String.valueOf(ymin))
+            fw.append("\r\n").append("MaxY=").append(String.valueOf(ymax))
             fw.append("\r\n").append("ResolutionX=").append(String.valueOf(xres))
             fw.append("\r\n").append("ResolutionY=").append(String.valueOf(yres))
             fw.append("\r\n").append("[Data]")

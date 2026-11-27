@@ -3,6 +3,8 @@ package au.org.ala.spatial.intersect
 import spock.lang.Specification
 import spock.lang.TempDir
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.file.Path
 
 class GridSpec extends Specification {
@@ -91,5 +93,46 @@ class GridSpec extends Specification {
         values[1] == 5f
         Float.isNaN(values[2])
         Float.isNaN(values[3])
+    }
+    void "the header keeps the extents of a grid whose edges are not on a 0.01 degree boundary"() {
+        given: 'a 30 arc second grid'
+        String name = tmp.resolve('g30').toString()
+        double res = 1 / 120d
+        double xmin = 112.9041667
+        double ymin = -43.7458333
+        Locale previous = Locale.default
+        Locale.default = Locale.GERMANY
+
+        when:
+        new Grid().writeHeader(name, xmin, ymin, xmin + res * 100, ymin + res * 100, res, res, 100, 100, 0, 10)
+        new File(name + '.gri').bytes = new byte[100 * 100 * 4]
+        String header = new File(name + '.grd').text
+        Grid grid = new Grid(name)
+
+        then:
+        !header.contains(',')
+        Math.abs(grid.xmin - xmin) < 1e-9
+        Math.abs(grid.ymin - ymin) < 1e-9
+        Math.abs(grid.xmax - (xmin + res * 100)) < 1e-9
+        Math.abs(grid.ymax - (ymin + res * 100)) < 1e-9
+
+        cleanup:
+        Locale.default = previous
+    }
+
+    void "units '1/N unit' divide the stored values by N"() {
+        given: 'one cell that stores 250 with units of tenths of a degree'
+        String name = tmp.resolve('tenths').toString()
+        new Grid().writeHeader(name, 0, 0, 0.5, 0.5, 0.5, 0.5, 1, 1, 250, 250)
+        File grd = new File(name + '.grd')
+        grd.text = grd.text + '\r\nUnits=1/10 degC'
+        new File(name + '.gri').bytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putFloat(250f).array()
+
+        when:
+        Grid grid = new Grid(name)
+
+        then:
+        grid.units == 'degC'
+        grid.getValues([[0.25d, 0.25d]] as double[][]) == [25f] as float[]
     }
 }
