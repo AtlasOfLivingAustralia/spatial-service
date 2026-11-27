@@ -454,7 +454,7 @@ class Util {
     static void replaceTextInFile(String path, Map<String, String> map) {
         String s = new File(path).text
         map.each { String k, String v ->
-            s = s.replaceAll(k, v)
+            s = s.replace(k, v)
         }
         new File(path).write(s)
     }
@@ -494,7 +494,7 @@ class Util {
             while ((line = reader.readLine()) != null) {
                 if (afterPos < 0 && (afterPos = line.indexOf(start)) >= 0) {
                     line = line.substring(0, afterPos + start.length()) + line.substring(afterPos + start.length()).replaceAll(oldPattern, replPattern)
-                } else if (afterPos > 0) {
+                } else if (afterPos >= 0) {
                     line = line.replaceAll(oldPattern, replPattern)
                 }
                 sb.append(line + "\n")
@@ -514,16 +514,24 @@ class Util {
         try {
             FileInputStream fis = new FileInputStream(fname)
             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n")
+            try {
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line + "\n")
+                }
+            } finally {
+                reader.close()
             }
-            int start, end
-            start = sb.indexOf(startOldText)
-            if (start >= 0) {
-                end = sb.indexOf(endOldText, start + 1)
-                sb.replace(start, end + endOldText.length(), replText)
+            // Without both markers there is nothing to replace: leave the file untouched, as writing
+            // the lines back would add a final newline and turn CRLF into LF.
+            int start = sb.indexOf(startOldText)
+            if (start < 0) {
+                return
             }
-            reader.close()
+            int end = sb.indexOf(endOldText, start + 1)
+            if (end < 0) {
+                return
+            }
+            sb.replace(start, end + endOldText.length(), replText)
             BufferedWriter out = new BufferedWriter(new FileWriter(fname))
             out.write(sb.toString())
             out.close()
