@@ -112,6 +112,18 @@ class LegendSpec extends Specification {
         legend.getColour(101f) == WHITE
     }
 
+    // With constant values every cutoff equals the minimum, so getColour takes the repeated-cutoff branch, which
+    // returned the palette entry without its alpha: a fully transparent colour.
+    void "getColour of a constant-valued legend is the first colour, opaque"() {
+        given:
+        Legend legend = new LegendEvenInterval()
+        legend.generate([7f] as float[], 10)
+
+        expect:
+        legend.cutoffs.every { it == 7f }
+        legend.getColour(7f) == (Legend.colours[0] | OPAQUE)
+    }
+
     void "getLinearColour interpolates each channel"() {
         expect:
         Legend.getLinearColour(0, 0, 10, 0x000000, 0xFF00FF) == argb(0xFF000000)
